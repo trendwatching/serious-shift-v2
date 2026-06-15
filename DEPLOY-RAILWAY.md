@@ -72,17 +72,26 @@ New service → **Deploy from repo**.
 - **Variables:**
   - `DATABASE_URL = ${{Postgres.DATABASE_URL}}`
   - `ANTHROPIC_API_KEY = sk-ant-…` (for `/api/personalize`)
-  - `FRONTEND_ORIGIN` = the frontend's public URL (set after step 4)
-  - `PORT` is provided by Railway automatically; the app reads it.
-- **Networking:** Generate Domain. Health check path `/health`.
+  - `PORT = 8080` — pin it so the frontend can reach the backend over private
+    networking at a known port (Railway otherwise assigns one).
+- **Networking:** No public domain needed — the frontend proxies to it over the
+  **private network** (`<service>.railway.internal`). Enable private networking
+  (on by default within a project). `FRONTEND_ORIGIN`/CORS is no longer required
+  because the browser never calls the backend directly (see step 4).
 
 ## 4. Frontend service
 New service → **Deploy from repo**.
 - **Root Directory:** `apps/frontend` (Nixpacks detects Next.js: `npm ci` → `npm run build` → `npm run start`).
-- **Variables:** `NEXT_PUBLIC_API_BASE = https://<backend-domain>` (from step 3).
-  > `NEXT_PUBLIC_*` is inlined at **build** time — after changing it, redeploy.
-- **Networking:** Generate Domain. Then set the backend's `FRONTEND_ORIGIN` to
-  this domain and redeploy the backend (locks down CORS).
+- **How it talks to the backend:** the browser only ever calls the frontend's own
+  origin (`/api/*`); Next.js proxies that to the backend server-side
+  (`next.config.mjs` → `rewrites`). **No CORS, no public backend URL in the client.**
+- **Variables:** `BACKEND_ORIGIN = http://backend.railway.internal:8080`
+  (the backend service's private address + its `PORT`). Use the backend's public
+  URL instead only if you don't want private networking.
+  > `BACKEND_ORIGIN` is read by the Next **server**, not the browser — it is not a
+  > `NEXT_PUBLIC_*` var and isn't inlined into the client bundle.
+- **Networking:** Generate Domain (this is the only public domain users hit; point
+  `www.yourdomain.com` here).
 
 ## 5. Pipeline (scheduled refresh)
 New service → **Deploy from repo**.

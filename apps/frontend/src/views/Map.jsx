@@ -69,10 +69,10 @@ export function MapError() {
         Couldn&rsquo;t load the map.
       </h1>
       <p className="mt-4 text-neutral-400 text-sm">
-        The app couldn&rsquo;t reach <code>/api/map</code>. Check that{' '}
-        <code>NEXT_PUBLIC_API_BASE</code> points at the backend and that the
-        database has a <code>map</code> document. See the browser console for the
-        exact error.
+        The app couldn&rsquo;t reach <code>/api/map</code>. Check that the
+        frontend&rsquo;s <code>BACKEND_ORIGIN</code> points at the backend (the
+        Next.js proxy target) and that the database has a <code>map</code>{' '}
+        document. See the browser console for the exact error.
       </p>
     </div>
   )
