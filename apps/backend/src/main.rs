@@ -56,12 +56,17 @@ struct AppState {
     // KV store if the backend is scaled horizontally.
     rate: Arc<Mutex<HashMap<String, Vec<Instant>>>>,
     cache: Arc<Mutex<HashMap<String, (Instant, Value)>>>,
+    // Cached document JSON (map/keynote/synthesis/daily), keyed by document key.
+    // These are large and change ~weekly, so we serve the raw JSON text from
+    // memory — skipping the Postgres read + serde round-trip on every request.
+    docs: Arc<Mutex<HashMap<String, (Instant, Arc<str>)>>>,
 }
 
 const PERSONALIZE_MODEL: &str = "claude-sonnet-4-6";
 const RATE_LIMIT: usize = 10;                                   // requests…
 const RATE_WINDOW: Duration = Duration::from_secs(600);         // …per 10 min per IP
 const CACHE_TTL: Duration = Duration::from_secs(3600);          // personalize cache: 1 hour
+const DOC_CACHE_TTL: Duration = Duration::from_secs(60);        // documents: refresh within 60s of a regen
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -77,6 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         anthropic_key: env::var("ANTHROPIC_API_KEY").ok(),
         rate: Arc::new(Mutex::new(HashMap::new())),
         cache: Arc::new(Mutex::new(HashMap::new())),
+        docs: Arc::new(Mutex::new(HashMap::new())),
     };
 
     let app = Router::new()
@@ -99,7 +105,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(state);
 
     let port = env::var("PORT").unwrap_or_else(|_| "8080".into());
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await?;
+    // Bind IPv6 dual-stack: Railway's private network is IPv6-only, so a service
+    // bound to 0.0.0.0 isn't reachable at <svc>.railway.internal. "[::]" accepts
+    // both private IPv6 and the public IPv4 edge (IPv4-mapped).
+    let listener = tokio::net::TcpListener::bind(format!("[::]:{port}")).await?;
     tracing::info!("listening on {}", listener.local_addr()?);
     axum::serve(listener, app).await?;
     Ok(())
@@ -140,19 +149,44 @@ async fn stats(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run
 
 // ── document endpoints (map / keynote / daily) ─────────────────────────────────
 
-async fn fetch_doc(pool: &PgPool, key: &str) -> Result<Json<Value>, AppError> {
-    let body: Option<Value> = sqlx::query_scalar("SELECT body FROM documents WHERE key = $1")
-        .bind(key)
-        .fetch_optional(pool)
-        .await?;
-    body.map(Json)
-        .ok_or_else(|| AppError(StatusCode::NOT_FOUND, format!("document '{key}' not found")))
+/// Serve a cached document as raw JSON. The body is the verbatim text from
+/// Postgres (jsonb::text) — no parse/re-serialize — with cache headers so the
+/// browser/proxy cache it too.
+fn doc_response(body: Arc<str>) -> Response {
+    (
+        [
+            (header::CONTENT_TYPE, HeaderValue::from_static("application/json")),
+            (header::CACHE_CONTROL,
+             HeaderValue::from_static("public, max-age=300, stale-while-revalidate=86400")),
+        ],
+        body.as_ref().to_owned(),
+    ).into_response()
 }
 
-async fn map(State(s): State<AppState>) -> Result<Json<Value>, AppError> { fetch_doc(&s.pool, "map").await }
-async fn keynote(State(s): State<AppState>) -> Result<Json<Value>, AppError> { fetch_doc(&s.pool, "keynote").await }
-async fn synthesis(State(s): State<AppState>) -> Result<Json<Value>, AppError> { fetch_doc(&s.pool, "synthesis").await }
-async fn daily(State(s): State<AppState>) -> Result<Json<Value>, AppError> { fetch_doc(&s.pool, "daily").await }
+async fn fetch_doc(s: &AppState, key: &str) -> Result<Response, AppError> {
+    // Fresh cache hit → serve from memory (no DB, no serde).
+    if let Some(body) = {
+        let cache = s.docs.lock().unwrap();
+        cache.get(key).and_then(|(at, body)| (at.elapsed() < DOC_CACHE_TTL).then(|| body.clone()))
+    } {
+        return Ok(doc_response(body));
+    }
+    // Miss: read the jsonb as text (skips parsing into a Value), cache, serve.
+    let body: Option<String> = sqlx::query_scalar("SELECT body::text FROM documents WHERE key = $1")
+        .bind(key)
+        .fetch_optional(&s.pool)
+        .await?;
+    let body = body
+        .ok_or_else(|| AppError(StatusCode::NOT_FOUND, format!("document '{key}' not found")))?;
+    let body: Arc<str> = Arc::from(body);
+    s.docs.lock().unwrap().insert(key.to_string(), (Instant::now(), body.clone()));
+    Ok(doc_response(body))
+}
+
+async fn map(State(s): State<AppState>) -> Result<Response, AppError> { fetch_doc(&s, "map").await }
+async fn keynote(State(s): State<AppState>) -> Result<Response, AppError> { fetch_doc(&s, "keynote").await }
+async fn synthesis(State(s): State<AppState>) -> Result<Response, AppError> { fetch_doc(&s, "synthesis").await }
+async fn daily(State(s): State<AppState>) -> Result<Response, AppError> { fetch_doc(&s, "daily").await }
 
 // ── /api/personalize (faithful port of api/personalize.js) ─────────────────────
 
