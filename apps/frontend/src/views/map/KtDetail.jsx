@@ -1,66 +1,51 @@
 /**
- * KtDetail — /map/:domainSlug/:ktSlug
+ * KtDetail — the Key Shift page (/map/:domainSlug/:ktSlug).
  *
- * The second layer of the hierarchy (scenario layer removed). Renders the key
- * trend's hero (name + subtitle + velocity + hero statistic + proponents/skeptics)
- * and below it a grid of the sub-trends as warpable cards. Click a sub-trend →
- * warp into the reading layer.
+ * One key shift: quoted title + description, a headline stat, optional
+ * proponents/skeptics, then the sub-shifts beneath it as cards.
  */
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
 import { useMapLookup } from './MapDataContext'
-import StickyBreadcrumb from './components/Breadcrumbs'
-import {
-  useWarpEntry, useWarpExit,
-  WarpResolutionOverlay, WarpAtmosphere, WarpableCard,
-  HIDDEN_UP, VISIBLE, PAGE_EXIT,
-  entranceTiming,
-} from './warp'
+import Breadcrumbs from './components/Breadcrumbs'
+import StatCallout from './components/StatCallout'
 import { paletteFor, VELOCITY_LABEL, pad } from './palette'
-import { STAGGER_CARD, EASE_GENTLE } from './motion'
+import { pageIn, fadeUp, fadeInView } from './atmosphere'
+
+// Pull a leading figure ("50%", "$2.3B", "10x") off a stat sentence so it can
+// render as the oversized numeral; the remainder becomes the context line.
+function splitStat(text) {
+  if (!text) return { value: null, context: null }
+  const m = String(text).match(/^\s*(~?\$?\d[\d,.]*\s?(?:%|x|bn|b|m|k|×)?)\s*(.*)$/i)
+  if (m && /\d/.test(m[1])) return { value: m[1].trim(), context: m[2].trim() || null }
+  return { value: null, context: String(text) }
+}
 
 export default function KtDetail() {
   const { domainSlug, ktSlug: kSlug } = useParams()
   const {
-    isV2, domainMap,
-    subTrendsByKtId, claimsBySubTrendId,
-    ktBySlug, subSlug,
+    isV2, domainMap, subTrendsByKtId, claimsBySubTrendId, ktBySlug, subSlug,
   } = useMapLookup()
 
-  const domain   = domainMap[domainSlug]
-  const kt       = ktBySlug(domainSlug, kSlug)
-  const palette  = paletteFor(domainSlug)
-  const subs     = kt ? (subTrendsByKtId[kt.id] || []) : []
+  const domain  = domainMap[domainSlug]
+  const kt      = ktBySlug(domainSlug, kSlug)
+  const palette = paletteFor(domainSlug)
+  const subs    = kt ? (subTrendsByKtId[kt.id] || []) : []
 
-  const isWarpEntry = useWarpEntry(kSlug)
-  const { phase, selectedKey, launch } = useWarpExit()
-
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-
-  const t = entranceTiming(isWarpEntry)
-  const settleStagger = STAGGER_CARD + 0.04
-
-  if (!isV2 || !domain || !kt) {
-    return <NotFound to={`/map/${domainSlug}`} label="key trend" />
-  }
+  if (!isV2 || !domain || !kt) return <NotFound to={`/map/${domainSlug}`} label="key shift" />
 
   const velocityLabel = VELOCITY_LABEL[kt.velocity] || kt.velocity || ''
-  const totalClaims = subs.reduce(
-    (n, st) => n + (claimsBySubTrendId[st.id] || []).length, 0
-  )
+  const totalClaims = subs.reduce((n, st) => n + (claimsBySubTrendId[st.id] || []).length, 0)
+  const stat = splitStat(kt.hero_stat?.value)
+  const statSource = [kt.hero_stat?.thinker, kt.hero_stat?.source, kt.hero_stat?.year].filter(Boolean).join(' · ')
 
   return (
-    <div
-      className="relative"
-      style={{
-        background: `radial-gradient(ellipse at 50% 0%, color-mix(in oklab, ${palette.color} 5%, transparent) 0%, transparent 60%)`,
-      }}
+    <motion.div
+      {...pageIn}
+      style={{ background: `radial-gradient(120% 50% at 50% 0%, ${palette.soft} 0%, transparent 55%)` }}
     >
-      <WarpResolutionOverlay active={isWarpEntry} tint={palette.color} />
-
-      <StickyBreadcrumb
+      <Breadcrumbs
+        tint={palette.color}
         crumbs={[
           { label: 'Home', to: '/map' },
           { label: domain.name, to: `/map/${domainSlug}` },
@@ -68,284 +53,120 @@ export default function KtDetail() {
         ]}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-16">
-
-        {/* ── KT hero ── */}
-        <div className="mb-12 sm:mb-16">
-          <motion.div
-            initial={HIDDEN_UP}
-            animate={mounted ? VISIBLE : undefined}
-            transition={{ duration: t.dur, ease: t.ease, delay: t.base + 0.05 }}
-            className="flex items-center gap-2 mb-3 flex-wrap"
-          >
-            <span
-              className="font-mono text-[9px] uppercase tracking-widest"
-              style={{ color: palette.color }}
-            >
-              Key Trend
-            </span>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10 pb-12">
+        {/* ── Hero ── */}
+        <header className="mb-10 sm:mb-14">
+          <motion.div {...fadeUp(0.05)} className="flex items-center gap-2 mb-4 flex-wrap">
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em]" style={{ color: palette.color }}>Key Shift</span>
             {velocityLabel && (
-              <span
-                className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border"
-                style={{
-                  color: palette.color,
-                  borderColor: `color-mix(in oklab, ${palette.color} 28%, transparent)`,
-                }}
-              >
+              <span className="font-mono text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border"
+                style={{ color: palette.color, borderColor: `color-mix(in oklab, ${palette.color} 35%, transparent)` }}>
                 {velocityLabel}
               </span>
             )}
           </motion.div>
 
-          <motion.h1
-            initial={HIDDEN_UP}
-            animate={mounted ? VISIBLE : undefined}
-            transition={{ duration: t.dur, ease: t.ease, delay: t.base + 0.12 }}
-            className="font-editorial text-3xl sm:text-4xl lg:text-5xl leading-[1.06] text-cream max-w-3xl mb-5"
-          >
-            {kt.name}
+          <motion.h1 {...fadeUp(0.1)} className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl leading-[1.03] text-ink max-w-4xl">
+            &ldquo;{kt.name}&rdquo;
           </motion.h1>
 
           {kt.description && (
-            <motion.p
-              initial={HIDDEN_UP}
-              animate={mounted ? VISIBLE : undefined}
-              transition={{ duration: t.dur, ease: t.ease, delay: t.base + 0.19 }}
-              className="text-neutral-300 text-base leading-relaxed max-w-3xl mb-6"
-            >
+            <motion.p {...fadeUp(0.16)} className="mt-5 text-ink-soft text-lg leading-relaxed max-w-3xl">
               {kt.description}
             </motion.p>
           )}
 
-          {kt.hero_stat?.value && (
-            <motion.div
-              initial={HIDDEN_UP}
-              animate={mounted ? VISIBLE : undefined}
-              transition={{ duration: t.dur, ease: t.ease, delay: t.base + 0.22 }}
-              className="max-w-3xl mb-6 rounded-lg border pl-5 pr-5 py-4"
-              style={{
-                borderColor: `color-mix(in oklab, ${palette.color} 30%, transparent)`,
-                background: `color-mix(in oklab, ${palette.color} 6%, var(--map-surface-strong))`,
-              }}
-            >
-              <p className="font-mono text-[9px] uppercase tracking-widest text-neutral-500 mb-1.5">
-                The number that matters
-              </p>
-              <p className="font-editorial text-xl sm:text-2xl leading-snug text-cream">
-                {kt.hero_stat.value}
-              </p>
-              {(kt.hero_stat.thinker || kt.hero_stat.source || kt.hero_stat.year) && (
-                <p className="mt-2 text-[11px] text-neutral-500">
-                  {[kt.hero_stat.thinker, kt.hero_stat.source, kt.hero_stat.year]
-                    .filter(Boolean).join(' · ')}
-                </p>
-              )}
-            </motion.div>
-          )}
-
           {(kt.proponents?.length > 0 || kt.skeptics?.length > 0) && (
-            <motion.div
-              initial={HIDDEN_UP}
-              animate={mounted ? VISIBLE : undefined}
-              transition={{ duration: t.dur, ease: t.ease, delay: t.base + 0.24 }}
-              className="flex gap-x-8 gap-y-3 flex-wrap mb-6"
-            >
-              {kt.proponents?.length > 0 && (
-                <ThinkerList label="Proponents" names={kt.proponents} accent={palette.color} />
-              )}
-              {kt.skeptics?.length > 0 && (
-                <ThinkerList label="Skeptics" names={kt.skeptics} accent="rgb(115 115 115)" />
-              )}
+            <motion.div {...fadeUp(0.22)} className="mt-6 flex gap-x-8 gap-y-3 flex-wrap">
+              {kt.proponents?.length > 0 && <ThinkerList label="Proponents" names={kt.proponents} accent={palette.color} />}
+              {kt.skeptics?.length > 0 && <ThinkerList label="Skeptics" names={kt.skeptics} accent="var(--color-ink-faint)" />}
             </motion.div>
           )}
+        </header>
 
-          <motion.div
-            initial={HIDDEN_UP}
-            animate={mounted ? VISIBLE : undefined}
-            transition={{ duration: t.dur, ease: t.ease, delay: t.base + 0.30 }}
-            className="flex flex-wrap items-center gap-x-5 gap-y-1.5"
-          >
-            <MetaStat value={pad(subs.length, 2)} label="Sub-Trends" />
-            <Sep />
-            <MetaStat value={pad(totalClaims, 2)} label="Claims" />
-          </motion.div>
-        </div>
+        {/* ── Headline stat ── */}
+        {stat.value ? (
+          <div className="border-y border-hairline my-10">
+            <StatCallout value={stat.value} context={stat.context} source={statSource || undefined} />
+          </div>
+        ) : stat.context ? (
+          <motion.blockquote {...fadeInView()}
+            className="border-y border-hairline my-10 py-8">
+            <p className="font-display font-medium text-xl sm:text-2xl text-ink leading-snug max-w-3xl">{stat.context}</p>
+            {statSource && <p className="mt-2 font-mono text-[11px] uppercase tracking-widest text-ink-faint">{statSource}</p>}
+          </motion.blockquote>
+        ) : null}
 
-        {/* ── Sub-trend cards — warp on click ── */}
-        <motion.h2
-          initial={HIDDEN_UP}
-          animate={mounted ? VISIBLE : undefined}
-          transition={{ duration: t.dur, ease: t.ease, delay: t.base + 0.34 }}
-          className="font-mono text-[10px] uppercase tracking-widest text-neutral-500 mb-4"
-        >
-          Sub-Trends · {pad(subs.length, 2)}
+        {/* ── Sub-shifts ── */}
+        <motion.h2 {...fadeInView()}
+          className="font-display font-bold text-2xl sm:text-3xl text-ink mb-1">
+          The {subs.length} Sub-shift{subs.length === 1 ? '' : 's'}
         </motion.h2>
+        <p className="text-ink-soft text-sm mb-6">The concrete ways this shift shows up.</p>
 
         {subs.length === 0 ? (
-          <p className="text-neutral-500 text-sm">No sub-trends for this key trend.</p>
+          <p className="text-ink-faint text-sm">No sub-shifts yet.</p>
         ) : (
-          <WarpAtmosphere phase={phase}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-              {subs.map((st, i) => {
-                const claims = claimsBySubTrendId[st.id] || []
-                const stSlug = subSlug(st)
-                return (
-                  <motion.div
-                    key={st.id}
-                    initial={HIDDEN_UP}
-                    animate={mounted ? VISIBLE : undefined}
-                    transition={{
-                      duration: t.dur,
-                      ease: t.ease,
-                      delay: t.base + 0.42 + i * settleStagger,
-                    }}
-                  >
-                    <SubTrendWarpCard
-                      sub={st}
-                      index={i}
-                      claimCount={claims.length}
-                      palette={palette}
-                      phase={phase}
-                      isSelected={selectedKey === stSlug}
-                      onLaunch={() =>
-                        launch(
-                          stSlug,
-                          `/map/${domainSlug}/${kSlug}/${stSlug}`,
-                        )
-                      }
-                    />
-                  </motion.div>
-                )
-              })}
-            </div>
-          </WarpAtmosphere>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            {subs.map((st, i) => (
+              <SubShiftCard
+                key={st.id}
+                index={i + 1}
+                sub={st}
+                color={palette.color}
+                claimCount={(claimsBySubTrendId[st.id] || []).length}
+                href={`/map/${domainSlug}/${kSlug}/${subSlug(st)}`}
+                delay={Math.min(i * 0.04, 0.28)}
+              />
+            ))}
+          </div>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
-// ── SubTrendWarpCard ───────────────────────────────────────────────────────
-function SubTrendWarpCard({ sub, index, claimCount, palette, phase, isSelected, onLaunch }) {
-  const [hovered, setHovered] = useState(false)
-  const active = hovered || isSelected
-
+function SubShiftCard({ index, sub, color, claimCount, href, delay = 0 }) {
   return (
-    <WarpableCard
-      cardKey={sub.id}
-      phase={phase}
-      isSelected={isSelected}
-      onClick={onLaunch}
-      className="group rounded-lg border overflow-hidden relative h-full"
-      style={{
-        borderColor: active
-          ? `color-mix(in oklab, ${palette.color} 40%, transparent)`
-          : 'var(--map-border)',
-        background: active
-          ? `color-mix(in oklab, ${palette.color} 5%, var(--map-surface-strong))`
-          : 'var(--map-surface-strong)',
-        transition: 'border-color 0.22s ease, background 0.22s ease',
-      }}
-      whileHover={{ y: -3, transition: { duration: 0.18, ease: EASE_GENTLE } }}
-    >
-      <div
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        className="contents"
+    <motion.div {...fadeInView(delay)}>
+      <Link
+        to={href}
+        className="group relative block h-full overflow-hidden rounded-2xl border border-hairline bg-paper p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-lg"
+        style={{ '--streak': color }}
       >
-        <div
-          className="absolute left-0 inset-y-0 w-[2px] rounded-l-lg"
-          style={{ background: palette.color, opacity: active ? 1 : 0.45 }}
-        />
-
-        <div className="pl-4 pr-3.5 pt-3.5 pb-3.5">
-          <div className="flex items-center justify-between mb-1.5">
-            <span
-              className="font-mono text-[9px] uppercase tracking-widest tabular-nums"
-              style={{ color: palette.color, opacity: 0.85 }}
-            >
-              ST {pad(index + 1, 2)}
-            </span>
-            <span className="text-neutral-600 text-[9px] select-none" aria-hidden="true">→</span>
-          </div>
-
-          <h3 className="font-editorial text-base sm:text-lg leading-snug text-cream mb-1.5 group-hover:text-white transition-colors">
-            {sub.name}
-          </h3>
-
-          {sub.description && (
-            <p className="text-[12.5px] text-neutral-400 leading-relaxed line-clamp-3">
-              {sub.description}
-            </p>
-          )}
-
-          <div className="mt-3 pt-2 border-t border-neutral-800/60 flex items-center justify-between">
-            <span className="font-mono text-[9px] uppercase tracking-widest text-neutral-500">
-              {pad(claimCount, 2)} {claimCount === 1 ? 'claim' : 'claims'}
-            </span>
-            <span
-              className="font-mono text-[9px] uppercase tracking-widest"
-              style={{ color: palette.color }}
-            >
-              Read →
-            </span>
-          </div>
+        <span className="absolute left-0 top-0 h-full w-1" style={{ background: color }} />
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-mono text-[11px] tabular-nums font-semibold" style={{ color }}>{pad(index, 2)}</span>
+          <span aria-hidden="true" className="text-ink-faint transition-transform group-hover:translate-x-1" style={{ color }}>→</span>
         </div>
-      </div>
-    </WarpableCard>
+        <h3 className="font-display font-bold text-lg sm:text-xl text-ink leading-snug mb-2">
+          &ldquo;{sub.name}&rdquo;
+        </h3>
+        {sub.description && <p className="text-sm text-ink-soft leading-relaxed line-clamp-3">{sub.description}</p>}
+        <p className="mt-4 pt-3 border-t border-hairline font-mono text-[10px] uppercase tracking-widest text-ink-faint">
+          {pad(claimCount, 2)} {claimCount === 1 ? 'claim' : 'claims'}
+        </p>
+      </Link>
+    </motion.div>
   )
 }
-
-// ── Helpers ────────────────────────────────────────────────────────────────
 
 function ThinkerList({ label, names, accent }) {
   return (
     <div>
-      <p className="font-mono text-[9px] uppercase tracking-widest text-neutral-600 mb-1">
-        {label}
-      </p>
-      <p className="text-[12px]" style={{ color: accent }}>
-        {names.join(' · ')}
-      </p>
+      <p className="font-mono text-[10px] uppercase tracking-widest text-ink-faint mb-1">{label}</p>
+      <p className="text-sm" style={{ color: accent }}>{names.join(' · ')}</p>
     </div>
   )
-}
-
-function MetaStat({ value, label }) {
-  return (
-    <div className="flex items-baseline gap-1.5">
-      <span className="font-mono text-sm text-cream">{value}</span>
-      <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-600">{label}</span>
-    </div>
-  )
-}
-
-function Sep() {
-  return <span className="text-neutral-800 select-none font-mono text-xs" aria-hidden="true">·</span>
 }
 
 function NotFound({ to, label }) {
   const navigate = useNavigate()
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={PAGE_EXIT}
-      className="max-w-2xl mx-auto px-4 pt-16 pb-24 text-center"
-    >
-      <p className="font-mono text-[9px] uppercase tracking-widest text-neutral-500 mb-3">
-        Not found
-      </p>
-      <h1 className="font-editorial text-3xl text-cream mb-6">
-        Couldn't find that {label}.
-      </h1>
-      <button
-        type="button"
-        onClick={() => navigate(to)}
-        className="font-mono text-[10px] uppercase tracking-widest text-neutral-500 hover:text-neutral-300 transition-colors"
-      >
-        ← Back
-      </button>
-    </motion.div>
+    <div className="max-w-2xl mx-auto px-4 pt-16 pb-24 text-center">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-ink-faint mb-3">Not found</p>
+      <h1 className="font-display font-bold text-3xl text-ink mb-6">Couldn&rsquo;t find that {label}.</h1>
+      <button type="button" onClick={() => navigate(to)} className="font-mono text-[11px] uppercase tracking-widest text-accent hover:opacity-70">← Back</button>
+    </div>
   )
 }
