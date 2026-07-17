@@ -25,7 +25,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 
-const MAX_SECTIONS: usize = 20;     // /api/personalize abuse guard
+const MAX_SECTIONS: usize = 20; // /api/personalize abuse guard
 const MAX_INDUSTRY_LEN: usize = 100;
 
 /// CORS from FRONTEND_ORIGIN (comma-separated allowlist). Falls back to "any
@@ -63,10 +63,10 @@ struct AppState {
 }
 
 const PERSONALIZE_MODEL: &str = "claude-sonnet-4-6";
-const RATE_LIMIT: usize = 10;                                   // requests…
-const RATE_WINDOW: Duration = Duration::from_secs(600);         // …per 10 min per IP
-const CACHE_TTL: Duration = Duration::from_secs(3600);          // personalize cache: 1 hour
-const DOC_CACHE_TTL: Duration = Duration::from_secs(60);        // documents: refresh within 60s of a regen
+const RATE_LIMIT: usize = 10; // requests…
+const RATE_WINDOW: Duration = Duration::from_secs(600); // …per 10 min per IP
+const CACHE_TTL: Duration = Duration::from_secs(3600); // personalize cache: 1 hour
+const DOC_CACHE_TTL: Duration = Duration::from_secs(60); // documents: refresh within 60s of a regen
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -100,7 +100,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/keynote", get(keynote))
         .route("/api/synthesis", get(synthesis))
         .route("/api/daily", get(daily))
-        .route("/api/personalize", post(personalize).layer(DefaultBodyLimit::max(64 * 1024)))
+        .route(
+            "/api/personalize",
+            post(personalize).layer(DefaultBodyLimit::max(64 * 1024)),
+        )
         .layer(cors_layer())
         .with_state(state);
 
@@ -137,15 +140,33 @@ async fn run(pool: &PgPool, query: &str) -> Result<Json<Value>, AppError> {
     Ok(Json(doc))
 }
 
-async fn thinkers(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run(&s.pool, sql::THINKERS).await }
-async fn sources(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run(&s.pool, sql::SOURCES).await }
-async fn claims(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run(&s.pool, sql::CLAIMS).await }
-async fn predictions(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run(&s.pool, sql::PREDICTIONS).await }
-async fn concepts(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run(&s.pool, sql::CONCEPTS).await }
-async fn tensions(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run(&s.pool, sql::TENSIONS).await }
-async fn disagreements(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run(&s.pool, sql::DISAGREEMENTS).await }
-async fn claim_concepts(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run(&s.pool, sql::CLAIM_CONCEPTS).await }
-async fn stats(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run(&s.pool, sql::STATS).await }
+async fn thinkers(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+    run(&s.pool, sql::THINKERS).await
+}
+async fn sources(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+    run(&s.pool, sql::SOURCES).await
+}
+async fn claims(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+    run(&s.pool, sql::CLAIMS).await
+}
+async fn predictions(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+    run(&s.pool, sql::PREDICTIONS).await
+}
+async fn concepts(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+    run(&s.pool, sql::CONCEPTS).await
+}
+async fn tensions(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+    run(&s.pool, sql::TENSIONS).await
+}
+async fn disagreements(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+    run(&s.pool, sql::DISAGREEMENTS).await
+}
+async fn claim_concepts(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+    run(&s.pool, sql::CLAIM_CONCEPTS).await
+}
+async fn stats(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+    run(&s.pool, sql::STATS).await
+}
 
 // ── document endpoints (map / keynote / daily) ─────────────────────────────────
 
@@ -155,38 +176,58 @@ async fn stats(State(s): State<AppState>) -> Result<Json<Value>, AppError> { run
 fn doc_response(body: Arc<str>) -> Response {
     (
         [
-            (header::CONTENT_TYPE, HeaderValue::from_static("application/json")),
-            (header::CACHE_CONTROL,
-             HeaderValue::from_static("public, max-age=300, stale-while-revalidate=86400")),
+            (
+                header::CONTENT_TYPE,
+                HeaderValue::from_static("application/json"),
+            ),
+            (
+                header::CACHE_CONTROL,
+                HeaderValue::from_static("public, max-age=300, stale-while-revalidate=86400"),
+            ),
         ],
         body.as_ref().to_owned(),
-    ).into_response()
+    )
+        .into_response()
 }
 
 async fn fetch_doc(s: &AppState, key: &str) -> Result<Response, AppError> {
     // Fresh cache hit → serve from memory (no DB, no serde).
     if let Some(body) = {
         let cache = s.docs.lock().unwrap();
-        cache.get(key).and_then(|(at, body)| (at.elapsed() < DOC_CACHE_TTL).then(|| body.clone()))
+        cache
+            .get(key)
+            .and_then(|(at, body)| (at.elapsed() < DOC_CACHE_TTL).then(|| body.clone()))
     } {
         return Ok(doc_response(body));
     }
     // Miss: read the jsonb as text (skips parsing into a Value), cache, serve.
-    let body: Option<String> = sqlx::query_scalar("SELECT body::text FROM documents WHERE key = $1")
-        .bind(key)
-        .fetch_optional(&s.pool)
-        .await?;
-    let body = body
-        .ok_or_else(|| AppError(StatusCode::NOT_FOUND, format!("document '{key}' not found")))?;
+    let body: Option<String> =
+        sqlx::query_scalar("SELECT body::text FROM documents WHERE key = $1")
+            .bind(key)
+            .fetch_optional(&s.pool)
+            .await?;
+    let body =
+        body.ok_or_else(|| AppError(StatusCode::NOT_FOUND, format!("document '{key}' not found")))?;
     let body: Arc<str> = Arc::from(body);
-    s.docs.lock().unwrap().insert(key.to_string(), (Instant::now(), body.clone()));
+    s.docs
+        .lock()
+        .unwrap()
+        .insert(key.to_string(), (Instant::now(), body.clone()));
     Ok(doc_response(body))
 }
 
-async fn map(State(s): State<AppState>) -> Result<Response, AppError> { fetch_doc(&s, "map").await }
-async fn keynote(State(s): State<AppState>) -> Result<Response, AppError> { fetch_doc(&s, "keynote").await }
-async fn synthesis(State(s): State<AppState>) -> Result<Response, AppError> { fetch_doc(&s, "synthesis").await }
-async fn daily(State(s): State<AppState>) -> Result<Response, AppError> { fetch_doc(&s, "daily").await }
+async fn map(State(s): State<AppState>) -> Result<Response, AppError> {
+    fetch_doc(&s, "map").await
+}
+async fn keynote(State(s): State<AppState>) -> Result<Response, AppError> {
+    fetch_doc(&s, "keynote").await
+}
+async fn synthesis(State(s): State<AppState>) -> Result<Response, AppError> {
+    fetch_doc(&s, "synthesis").await
+}
+async fn daily(State(s): State<AppState>) -> Result<Response, AppError> {
+    fetch_doc(&s, "daily").await
+}
 
 // ── /api/personalize (faithful port of api/personalize.js) ─────────────────────
 
@@ -222,7 +263,9 @@ fn rate_ok(state: &AppState, ip: &str) -> bool {
 fn cache_key(industry: &str, sections: &[Value]) -> String {
     let mut h = std::collections::hash_map::DefaultHasher::new();
     industry.hash(&mut h);
-    serde_json::to_string(sections).unwrap_or_default().hash(&mut h);
+    serde_json::to_string(sections)
+        .unwrap_or_default()
+        .hash(&mut h);
     format!("{industry}:{:x}", h.finish())
 }
 
@@ -232,13 +275,22 @@ async fn personalize(
     Json(req): Json<PersonalizeReq>,
 ) -> Result<Json<Value>, AppError> {
     if req.industry.is_empty() || req.sections.is_empty() {
-        return Err(AppError(StatusCode::BAD_REQUEST, "Missing industry or sections".into()));
+        return Err(AppError(
+            StatusCode::BAD_REQUEST,
+            "Missing industry or sections".into(),
+        ));
     }
     if req.industry.len() > MAX_INDUSTRY_LEN || req.sections.len() > MAX_SECTIONS {
-        return Err(AppError(StatusCode::BAD_REQUEST, "Request too large".into()));
+        return Err(AppError(
+            StatusCode::BAD_REQUEST,
+            "Request too large".into(),
+        ));
     }
     if !rate_ok(&s, &client_ip(&headers)) {
-        return Err(AppError(StatusCode::TOO_MANY_REQUESTS, "Rate limit exceeded".into()));
+        return Err(AppError(
+            StatusCode::TOO_MANY_REQUESTS,
+            "Rate limit exceeded".into(),
+        ));
     }
 
     // Cache hit? (lock is dropped before any await)
@@ -255,10 +307,12 @@ async fn personalize(
         c.remove(&ck); // stale or absent
     }
 
-    let key = s
-        .anthropic_key
-        .clone()
-        .ok_or_else(|| AppError(StatusCode::INTERNAL_SERVER_ERROR, "ANTHROPIC_API_KEY not configured".into()))?;
+    let key = s.anthropic_key.clone().ok_or_else(|| {
+        AppError(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "ANTHROPIC_API_KEY not configured".into(),
+        )
+    })?;
 
     let client = reqwest::Client::new();
     let industry = req.industry.clone();
@@ -271,7 +325,10 @@ async fn personalize(
     let rewritten: Vec<Value> = futures::future::join_all(futs).await;
 
     let out = json!({ "sections": rewritten, "industry": industry });
-    s.cache.lock().unwrap().insert(ck, (Instant::now(), out.clone()));
+    s.cache
+        .lock()
+        .unwrap()
+        .insert(ck, (Instant::now(), out.clone()));
     Ok(Json(out))
 }
 
@@ -281,7 +338,11 @@ async fn rewrite_section(
     industry: &str,
     mut section: Value,
 ) -> Value {
-    let body_text = section.get("body").and_then(|b| b.as_str()).unwrap_or("").to_string();
+    let body_text = section
+        .get("body")
+        .and_then(|b| b.as_str())
+        .unwrap_or("")
+        .to_string();
     let prompt = format!(
         r#"Rewrite this trend analysis for the {industry} industry, in the Serious Shift voice:
 a trusted, specific, action-obsessed interpreter for time-pressed leaders. Calm, not alarmed.
