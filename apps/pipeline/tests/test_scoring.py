@@ -1,7 +1,7 @@
 """Pure-function tests for the scoring formulas — no database needed."""
 from datetime import date
 
-from serious_shift_pipeline.scoring import base_freshness, depth_from_chars
+from serious_shift_pipeline.steps.scoring import base_freshness, depth_from_chars
 
 
 def test_depth_from_chars():

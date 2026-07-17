@@ -27,17 +27,25 @@ def client():
 
 def call_claude(prompt: str, *, model: str | None = None, max_tokens: int = 8192,
                 retries: int = 2) -> tuple[str, dict]:
-    """Return (text, usage). usage = {input_tokens, output_tokens}."""
+    """Return (text, usage). usage = {input_tokens, output_tokens}.
+
+    Always streams: with large max_tokens (the map/keynote generators use up to
+    32k) the SDK refuses a non-streaming request that could exceed its 10-minute
+    ceiling. Streaming removes that limit and yields the same final message.
+    """
     last: Exception | None = None
     for attempt in range(retries):
         try:
-            msg = client().messages.create(
+            with client().messages.stream(
                 model=model or EXTRACTION_MODEL,
                 max_tokens=max_tokens,
                 messages=[{"role": "user", "content": prompt}],
-            )
-            usage = {"input_tokens": msg.usage.input_tokens, "output_tokens": msg.usage.output_tokens}
-            return msg.content[0].text, usage
+            ) as stream:
+                parts = [chunk for chunk in stream.text_stream]
+                final = stream.get_final_message()
+            usage = {"input_tokens": final.usage.input_tokens,
+                     "output_tokens": final.usage.output_tokens}
+            return "".join(parts), usage
         except Exception as e:  # noqa: BLE001 — transient API errors, retried below
             last = e
             if attempt < retries - 1:

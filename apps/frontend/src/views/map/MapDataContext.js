@@ -22,8 +22,9 @@ export const findThinkerBySlug = (thinkers, slug) =>
  *   `domains` is an object index {society: {...}, economy: {...}}
  *
  * V2 (domain-first, architecture: "domain-first-v2"):
- *   map.json has `domains` (array), `scenarios`, `key_trends`, `sub_trends`, `claims`
- *   + `domain_flows` top-level key
+ *   map.json has `domains` (array), `key_trends`, `sub_trends`, `claims`
+ *   + `domain_flows` top-level key. Key Trends attach directly to a domain
+ *   (domain → key_trend → sub_trend → claim); there is no scenario layer.
  *
  * LEGACY lookups (v1 drill-down):
  *   macroMap[id]           → macro
@@ -45,17 +46,18 @@ export const findThinkerBySlug = (thinkers, slug) =>
  *   isV2                   → boolean — true when architecture === 'domain-first-v2'
  *   domainsArr             → domain[] (always array regardless of schema)
  *   domainMap[id]          → domain object
- *   scenarios              → scenario[]
- *   scenarioMap[id]        → scenario
- *   scenariosByDomain[did] → [scenarios]
- *   ktsByScenario[sid]     → [key_trends]
- *   ktsByDomain[did]       → [key_trends]
+ *   ktsByDomain[did]       → [key_trends] (keyed by kt.domain_id)
+ *   ktsByDomainId[did]     → [key_trends] (from domain.key_trend_ids, ordered)
+ *   subTrendsByKtId[ktId]  → [sub_trends]
+ *   claimsBySubTrendId[id] → [claims]
+ *   ktBySlug(did, kSlug)         → kt    (URL routing)
+ *   subTrendBySlug(did, k, s)    → sub   (URL routing)
  *   linksByStId[stId]      → [links] for sub_trend with string id like "st-123"
  *   insightsByDomain[did]  → [synthesis_insights] for domain
  *
  * SHARED:
  *   thinkers, synthesis_insights, links, domain_flows
- *   by_thinker, by_velocity, by_horizon
+ *   by_thinker, by_velocity
  */
 export function useMapLookup() {
   const ctx = useContext(MapDataContext)
@@ -69,7 +71,6 @@ export function useMapLookup() {
     // visible UI text never says "AGI". `source_title` is preserved as the
     // verbatim published citation (see src/utils/text.js).
     const macros             = sanitiseList(ctx.macros             || [])
-    const scenarios          = sanitiseList(ctx.scenarios          || [])
     const key_trends         = sanitiseList(ctx.key_trends         || [])
     const sub_trends         = sanitiseList(ctx.sub_trends         || [])
     const claims             = sanitiseList(ctx.claims             || [])
@@ -156,37 +157,19 @@ export function useMapLookup() {
     )
     const domainMap = Object.fromEntries(domainsArr.map(d => [d.id, d]))
 
-    const scenarioMap = Object.fromEntries(scenarios.map(s => [s.id, s]))
-
-    const scenariosByDomain = {}
-    for (const scn of scenarios) {
-      const did = scn.domain_id
-      if (!did) continue
-      ;(scenariosByDomain[did] = scenariosByDomain[did] || []).push(scn)
-    }
-
-    const ktsByScenario = {}
-    for (const kt of key_trends) {
-      const sid = kt.scenario_id
-      if (!sid) continue
-      ;(ktsByScenario[sid] = ktsByScenario[sid] || []).push(kt)
-    }
-
+    // ── v2 domain → key-trend lookups (scenario layer removed) ──
+    // Key Trends attach directly to a domain. ktsByDomain is keyed by the KT's
+    // own domain_id; ktsByDomainId is built from each domain's explicit, ordered
+    // key_trend_ids — the authoritative child list for the domain → KT drill-down.
     const ktsByDomain = {}
     for (const kt of key_trends) {
       const did = kt.domain_id
       if (!did) continue
       ;(ktsByDomain[did] = ktsByDomain[did] || []).push(kt)
     }
-
-    // ── v2 hierarchy lookups by natural ID ──
-    // ktsByScenario (above) is keyed by `scn-{db_id}` (taken from
-    // kt.scenario_id). These three are keyed by natural IDs (scenario.id,
-    // kt.id, sub.id) and derived from the explicit child-id arrays on each
-    // parent — unambiguous lookups for the deep-hierarchy UI.
-    const ktsByScenarioId = {}
-    for (const scn of scenarios) {
-      ktsByScenarioId[scn.id] = (scn.key_trend_ids || [])
+    const ktsByDomainId = {}
+    for (const domain of domainsArr) {
+      ktsByDomainId[domain.id] = (domain.key_trend_ids || [])
         .map(id => keyMap[id])
         .filter(Boolean)
     }
@@ -210,62 +193,39 @@ export function useMapLookup() {
       ;(insightsByDomain[did] = insightsByDomain[did] || []).push(ins)
     }
 
-    // ── Slug-based hierarchy lookups (URLs: /map/:domain/:scenario/:kt/:sub) ──
-    // Scenario / KT / sub-trend names are unique within their parent — we
-    // slugify the `name` field for URL segments. Each entity gets a `_slug`
-    // tag attached, and we build nested maps for O(1) reverse lookup from
-    // URL segments back to the underlying entity.
-    const scenarioSlug = (scn) => slugify(scn.name || scn.id)
-    const ktSlug       = (kt)  => slugify(kt.name  || kt.id)
-    const subSlug      = (st)  => slugify(st.name  || st.id)
+    // ── Slug-based hierarchy lookups (URLs: /map/:domain/:kt/:sub) ──
+    // KT / sub-trend names are unique within their parent — we slugify the
+    // `name` field for URL segments and build nested maps for O(1) reverse
+    // lookup from URL segments back to the underlying entity.
+    const ktSlug  = (kt) => slugify(kt.name || kt.id)
+    const subSlug = (st) => slugify(st.name || st.id)
 
-    // domainSlug → { scenarioSlug → scenario }
-    const scenariosByDomainSlug = {}
-    for (const scn of scenarios) {
-      const did = scn.domain_id
-      if (!did) continue
-      const slug = scenarioSlug(scn)
-      ;(scenariosByDomainSlug[did] = scenariosByDomainSlug[did] || {})[slug] = scn
+    // domainSlug → { ktSlug → kt }
+    const ktsByDomainSlug = {}
+    for (const domain of domainsArr) {
+      const map = {}
+      for (const kt of (ktsByDomain[domain.id] || [])) map[ktSlug(kt)] = kt
+      ktsByDomainSlug[domain.id] = map
     }
 
-    // domainSlug → scenarioSlug → { ktSlug → kt }
-    const ktsByScenarioSlug = {}
-    for (const scn of scenarios) {
-      const did = scn.domain_id
-      if (!did) continue
-      const sSlug = scenarioSlug(scn)
-      const kts = ktsByScenarioId[scn.id] || []
-      const ktMap = {}
-      for (const kt of kts) ktMap[ktSlug(kt)] = kt
-      ;(ktsByScenarioSlug[did] = ktsByScenarioSlug[did] || {})[sSlug] = ktMap
-    }
-
-    // domain → scenario → kt → { subSlug → sub }
+    // domainSlug → ktSlug → { subSlug → sub }
     const subsByKtSlug = {}
-    for (const scn of scenarios) {
-      const did = scn.domain_id
-      if (!did) continue
-      const sSlug = scenarioSlug(scn)
-      const kts = ktsByScenarioId[scn.id] || []
+    for (const domain of domainsArr) {
       const byKt = {}
-      for (const kt of kts) {
-        const subs = subTrendsByKtId[kt.id] || []
+      for (const kt of (ktsByDomain[domain.id] || [])) {
         const subMapBySlug = {}
-        for (const st of subs) subMapBySlug[subSlug(st)] = st
+        for (const st of (subTrendsByKtId[kt.id] || [])) subMapBySlug[subSlug(st)] = st
         byKt[ktSlug(kt)] = subMapBySlug
       }
-      ;(subsByKtSlug[did] = subsByKtSlug[did] || {})[sSlug] = byKt
+      subsByKtSlug[domain.id] = byKt
     }
 
     // ── Lookup helpers used by route components ──
-    const scenarioBySlug = (domainId, scnSlug) =>
-      (scenariosByDomainSlug[domainId] || {})[scnSlug] || null
+    const ktBySlug = (domainId, kSlug) =>
+      (ktsByDomainSlug[domainId] || {})[kSlug] || null
 
-    const ktBySlug = (domainId, scnSlug, kSlug) =>
-      ((ktsByScenarioSlug[domainId] || {})[scnSlug] || {})[kSlug] || null
-
-    const subTrendBySlug = (domainId, scnSlug, kSlug, sSlug) =>
-      (((subsByKtSlug[domainId] || {})[scnSlug] || {})[kSlug] || {})[sSlug] || null
+    const subTrendBySlug = (domainId, kSlug, sSlug) =>
+      ((subsByKtSlug[domainId] || {})[kSlug] || {})[sSlug] || null
 
     const claimsForSubTrend = (subTrendId) =>
       claimsBySubTrendId[subTrendId] || []
@@ -278,7 +238,7 @@ export function useMapLookup() {
 
     return {
       // ── raw arrays ──
-      macros, scenarios, key_trends, sub_trends, claims,
+      macros, key_trends, sub_trends, claims,
 
       // ── v1 legacy ──
       macroMap, keyMap, subMap, claimMap,
@@ -287,17 +247,16 @@ export function useMapLookup() {
       macroByDbId, ktByDbId, stByDbId,
       linksByStDbId, insightsByMacroDbId,
 
-      // ── v2 ──
+      // ── v2 (scenario layer removed: domain → kt → sub-trend) ──
       isV2,
       domainsArr, domainMap,
-      scenarioMap, scenariosByDomain,
-      ktsByScenario, ktsByDomain,
-      // Deep-hierarchy lookups keyed by natural IDs (scenario.id, kt.id, st.id):
-      ktsByScenarioId, subTrendsByKtId, claimsBySubTrendId,
+      ktsByDomain, ktsByDomainId,
+      // Deep-hierarchy lookups keyed by natural IDs (kt.id, st.id):
+      subTrendsByKtId, claimsBySubTrendId,
       linksByStId, insightsByDomain,
       // Slug-based lookups for URL routing
-      scenarioBySlug, ktBySlug, subTrendBySlug, claimsForSubTrend,
-      scenarioSlug, ktSlug, subSlug,
+      ktBySlug, subTrendBySlug, claimsForSubTrend,
+      ktSlug, subSlug,
       thinkerByName,
 
       // ── shared (sanitised above) ──
@@ -312,7 +271,6 @@ export function useMapLookup() {
         Object.entries(ctx.by_thinker || {}).map(([k, v]) => [k, sanitiseList(v)])
       ),
       by_velocity:        ctx.by_velocity        || {},
-      by_horizon:         ctx.by_horizon         || {},
     }
   }, [ctx])
 }

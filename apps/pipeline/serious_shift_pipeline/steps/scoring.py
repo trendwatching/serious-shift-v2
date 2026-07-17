@@ -11,7 +11,7 @@ get ranked — the map/keynote queries order by claim_weight.
                   halved for each older claim in a thinker+domain+concept group
   claim_weight  : (source_depth/5) * signal_numeric * (specificity/5) * freshness
 
-Usage:  DATABASE_URL=... python -m serious_shift_pipeline.scoring [--dry-run]
+Usage:  DATABASE_URL=... python -m serious_shift_pipeline.steps.scoring [--dry-run]
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ import argparse
 from collections import defaultdict
 from datetime import date, datetime
 
-from . import db
+from ..core import db
 
 SIGNAL_NUMERIC = {"strong_signal": 1.0, "signal": 0.7, "background": 0.3, "noise": 0.1}
 MIN_DEPTH_BY_TYPE = {"essay": 4, "book": 4, "policy_paper": 4}

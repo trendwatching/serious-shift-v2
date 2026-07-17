@@ -3,15 +3,16 @@
 Postgres is the **single source of truth** for all data. This package owns the
 schema, its migrations, and the one-off import from the legacy SQLite database.
 Neither app owns the schema via an ORM — both the Python **pipeline** (writer)
-and the Rust **backend** (reader) depend on the migrations here.
+and the Rust **backend** (reader) depend on the migrations here. The pipeline also
+applies these migrations automatically on each run (it bundles a copy), so a fresh
+database self-bootstraps.
 
 ```
 migrations/   SQL migrations (dbmate, forward-only)
-  0001_initial_schema.sql                  core schema
-  0002_documents.sql                       documents blob table
-  0003_thinker_images_and_scrape_sources.sql  thinker images/bios + scrape manifest
+  0001_schema.sql   the full schema (only tables the code uses)
+  0002_seed.sql     bootstrap seed — thinker roster + portraits/bios + scrape manifest
 etl/
-  sqlite_to_postgres.py   one-off import from legacy serious-shift.db
+  sqlite_to_postgres.py   OPTIONAL one-off import from legacy serious-shift.db
   verify_parity.py        proves the import was lossless
 docker-compose.yml        local Postgres 16
 ```
@@ -28,21 +29,27 @@ export DBMATE_MIGRATIONS_DIR=./migrations
 dbmate up        # apply   ·   dbmate status   ·   dbmate rollback
 ```
 
-## Local setup + one-off import
+## Local setup
 
 ```bash
 docker compose up -d
-dbmate up
+dbmate up        # 0001 schema + 0002 seed (thinker roster + scrape manifest)
+```
+
+That fully bootstraps a usable database — no data import needed. The pipeline
+then produces everything else (claims, predictions, and the `documents`
+map/keynote/synthesis/daily blobs); there are **no JSON files**, everything lives
+in the database.
+
+### Optional — import legacy SQLite data
+```bash
 pip install "psycopg[binary]"
 python etl/sqlite_to_postgres.py --sqlite ../../serious-shift.db --truncate
 python etl/verify_parity.py     --sqlite ../../serious-shift.db   # "lossless ✓"
 ```
-
-The ETL normalizes SQLite's dirty data (mixed-type dates → valid dates or NULL)
-and bumps identity sequences; `--truncate` makes re-runs idempotent. After
-import, the `documents` (map/keynote/daily) and per-thinker images/scrape manifest
-are populated by migration `0003` and the pipeline generators — there are **no
-JSON files**; everything lives in the database.
+The ETL normalizes SQLite's dirty data (mixed-type dates → valid dates or NULL),
+copies only tables/columns the current schema still has, and bumps identity
+sequences; `--truncate` makes re-runs idempotent.
 
 ## Tables
 
@@ -59,38 +66,24 @@ bookkeeping table and isn't listed.)
 | `concepts` | cross-thinker concepts (keynote relevance) |
 | `tensions` | mapped disagreements (side_a vs side_b, consumer implications) |
 
-### Tagging & relationships (junctions)
+### Relationships (junctions)
 | Table | Links |
 |---|---|
-| `tags`, `source_tags`, `claim_tags` | free-text tags ↔ sources/claims |
 | `claim_concepts` | claims ↔ concepts |
-| `claim_tensions` | claims ↔ tensions (side A/B/nuanced) |
 | `concept_thinkers` | concepts ↔ thinkers (stance) |
-| `tension_thinkers` | tensions ↔ thinkers (side, stance) |
 | `thinker_disagreements` | thinker ↔ thinker (topic) |
-
-### Keynote
-| Table | Purpose |
-|---|---|
-| `keynote_sections` | keynote section structure/content |
-| `section_claims` | sections ↔ claims (primary/supporting/contrarian) |
 
 ### Trend map — domain-first v2 (canonical)
 | Table | Purpose |
 |---|---|
 | `domains_v2` | 4 strategic domains |
-| `domain_scenarios` | scenarios per domain |
-| `domain_key_trends` | key trends per scenario |
+| `domain_key_trends` | key trends per domain (≥8 each; attach directly to a domain) |
 | `domain_sub_trends` | sub-trends per key trend |
 | `domain_sub_trend_claims` | sub-trends ↔ claims |
 | `domain_synthesis_insights` | synthesis insights per domain |
 | `domain_synthesis_insight_claims` | insights ↔ claims |
 | `domain_links` | typed edges between map nodes |
 | `domain_flows` | domain → domain directional influence |
-
-### Trend map — legacy v1 (retained for parity, not actively written)
-`sub_trends`, `sub_trend_claims`, `macro_scenarios`, `macro_key_links`,
-`key_trend_meta`, `synthesis_insights`, `synthesis_insight_claims`, `scenario_links`.
 
 ### Pipeline operational
 | Table | Purpose |
@@ -101,7 +94,7 @@ bookkeeping table and isn't listed.)
 ### Documents
 | Table | Purpose |
 |---|---|
-| `documents` | whole-JSON blobs keyed `map` / `keynote` / `daily`, served by the backend at `/api/<key>`. Written by the pipeline generators (`generate_map_data`, `generate_keynote`). |
+| `documents` | whole-JSON blobs keyed `map` / `keynote` / `synthesis` / `daily`, served by the backend at `/api/<key>`. Written by the pipeline generators (`generate_map_data`, `generate_keynote`). |
 
 ## Deploy a free Postgres — Neon
 
@@ -114,7 +107,7 @@ bookkeeping table and isn't listed.)
    python etl/verify_parity.py     --sqlite ../../serious-shift.db
    ```
 3. Populate `documents` by running the pipeline generators
-   (`python -m serious_shift_pipeline.generate_map_data --export-only` rebuilds
+   (`python -m serious_shift_pipeline.steps.generate_map_data --export-only` rebuilds
    `documents['map']` from existing rows with no API cost; `generate_keynote`
    rebuilds the keynote). Use the same `DATABASE_URL` for the backend and pipeline.
 

@@ -7,13 +7,13 @@ Converted from the legacy status.py: sqlite3 → db.py; the local `.db` file siz
 and the migrate.py-based migration check are replaced with a query of dbmate's
 `schema_migrations` table.
 
-Usage:  DATABASE_URL=... python -m serious_shift_pipeline.status
+Usage:  DATABASE_URL=... python -m serious_shift_pipeline.tools.status
 """
 import json
 import os
 from datetime import datetime, timezone
 
-from . import db
+from ..core import db
 
 LOGS_DIR    = os.environ.get("SS_LOGS_DIR", os.path.join(os.getcwd(), "logs"))
 ERROR_LOG   = os.path.join(LOGS_DIR, "error_log.jsonl")

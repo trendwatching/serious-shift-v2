@@ -29,6 +29,9 @@ import sys
 
 import psycopg
 
+# Optional one-off import of legacy SQLite data into the current schema. Only the
+# tables that still exist in Postgres are copied (copy_table skips the rest), and
+# only the columns both sides share — so this stays valid as the schema evolves.
 # FK-safe load order: every table appears after all tables it references.
 LOAD_ORDER = [
     "thinkers",
@@ -37,27 +40,11 @@ LOAD_ORDER = [
     "predictions",
     "concepts",
     "tensions",
-    "tags",
     "claim_concepts",
-    "claim_tensions",
     "concept_thinkers",
-    "tension_thinkers",
     "thinker_disagreements",
-    "source_tags",
-    "claim_tags",
-    "keynote_sections",
-    "section_claims",
     "source_state",
-    "sub_trends",
-    "sub_trend_claims",
-    "macro_scenarios",
-    "macro_key_links",
-    "key_trend_meta",
-    "synthesis_insights",
-    "synthesis_insight_claims",
-    "scenario_links",
     "domains_v2",
-    "domain_scenarios",
     "domain_key_trends",
     "domain_sub_trends",
     "domain_sub_trend_claims",
@@ -123,16 +110,36 @@ def coerce(table, col, value, is_date):
     return value
 
 
+def pg_columns(pcur, table):
+    """Columns the Postgres target table actually has (empty set if it doesn't exist)."""
+    pcur.execute(
+        """SELECT column_name FROM information_schema.columns
+           WHERE table_schema = 'public' AND table_name = %s""",
+        (table,),
+    )
+    return {r[0] for r in pcur.fetchall()}
+
+
 def copy_table(scur, pcur, table):
     cols, date_cols = sqlite_columns(scur, table)
     if not cols:
         print(f"  · {table}: not present in SQLite, skipping")
         return 0
 
-    load_cols = cols
+    # Only copy into columns the Postgres schema still has. The schema is owned
+    # by packages/db migrations and has since diverged from the legacy SQLite —
+    # e.g. the scenario layer was removed (domain_scenarios dropped,
+    # domain_key_trends.scenario_id dropped). Skip dropped tables/columns rather
+    # than fail.
+    target = pg_columns(pcur, table)
+    if not target:
+        print(f"  · {table}: not present in Postgres, skipping")
+        return 0
+
+    load_cols = [c for c in cols if c in target]
     if table == "claims":
         # First pass: omit the self-referential FK.
-        load_cols = [c for c in cols if c != "duplicate_of"]
+        load_cols = [c for c in load_cols if c != "duplicate_of"]
 
     collist = ", ".join(load_cols)
     placeholders = ", ".join(["%s"] * len(load_cols))

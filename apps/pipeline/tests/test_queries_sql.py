@@ -8,7 +8,8 @@ the live behaviour is covered by test_queries_integration.py in CI.
 """
 import sqlglot
 
-from serious_shift_pipeline import db, queries
+from serious_shift_pipeline.core import db
+from serious_shift_pipeline.tools import queries
 
 
 class _Capture:

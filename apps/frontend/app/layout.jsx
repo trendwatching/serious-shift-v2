@@ -11,16 +11,19 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark">
+    // Light is the default theme (the new bright "Serious Shi(f)t" look).
+    // useTheme toggles the `light` class off → dark. Rendering `light` here
+    // avoids a first-paint flash of the dark palette.
+    <html lang="en" className="light">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="bg-neutral-950 text-neutral-100">{children}</body>
+      <body className="bg-paper text-ink">{children}</body>
     </html>
   )
 }

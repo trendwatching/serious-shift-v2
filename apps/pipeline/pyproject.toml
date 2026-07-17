@@ -2,8 +2,12 @@
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["serious_shift_pipeline"]
+[tool.setuptools.packages.find]
+include = ["serious_shift_pipeline*"]
+
+[tool.setuptools.package-data]
+# Vendored DB migrations, applied on startup (see core/migrate.py).
+serious_shift_pipeline = ["migrations/*.sql"]
 
 [project]
 name = "serious-shift-pipeline"
@@ -15,7 +19,7 @@ dependencies = [
     "requests>=2.31.0",
     "beautifulsoup4>=4.12.0",
     "feedparser>=6.0.10",
-    "youtube-transcript-api>=0.6.2",
+    "youtube-transcript-api>=1.0",   # instance .fetch() API + proxies module
     "yt-dlp>=2024.1.0",
     "anthropic>=0.40.0",        # Claude API client (extraction + generation)
 ]

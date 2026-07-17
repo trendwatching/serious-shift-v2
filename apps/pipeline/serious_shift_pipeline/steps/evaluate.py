@@ -11,7 +11,7 @@ so it is unit-tested without a database (see tests/test_credibility.py).
 """
 from __future__ import annotations
 
-from . import db
+from ..core import db
 
 # Predictions evaluated as of the current cycle (prediction_id -> (status, notes)).
 EVALUATIONS: dict[str, tuple[str, str]] = {

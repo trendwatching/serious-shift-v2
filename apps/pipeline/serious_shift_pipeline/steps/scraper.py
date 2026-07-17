@@ -29,10 +29,11 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 from datetime import datetime
 
-from . import db
+from ..core import db, parallel
 
 # Source manifest now lives in the DB (scrape_sources); raw_content + logs are cwd-based.
 RAW_DIR     = os.environ.get('RAW_CONTENT_DIR', os.path.join(os.getcwd(), 'raw_content'))
@@ -302,15 +303,17 @@ class Log:
     def __init__(self):
         self.stats = {'found': 0, 'fetched': 0, 'skipped': 0, 'failed': 0}
         self.entries = []
+        self._lock = threading.Lock()   # log() is called from worker threads
 
     def log(self, action, thinker, platform, title='', url='', error=''):
-        self.entries.append({
-            'action': action,
-            'thinker': thinker,
-            'platform': platform,
-            'title': title[:80],
-        })
-        self.stats[action] = self.stats.get(action, 0) + 1
+        with self._lock:
+            self.entries.append({
+                'action': action,
+                'thinker': thinker,
+                'platform': platform,
+                'title': title[:80],
+            })
+            self.stats[action] = self.stats.get(action, 0) + 1
 
     def save(self):
         with open(LOG_PATH, 'w') as f:
@@ -338,6 +341,7 @@ class ErrorLog:
     def __init__(self, run_id: str):
         self.run_id = run_id
         self._count = 0
+        self._lock = threading.Lock()   # record() is called from worker threads
         os.makedirs(LOGS_DIR, exist_ok=True)
 
     def record(self, *, stage, thinker, exc,
@@ -360,9 +364,11 @@ class ErrorLog:
             'outcome':         outcome,
             **{k: str(v)[:200] for k, v in extra.items()},
         }
-        with open(self.PATH, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(entry) + '\n')
-        self._count += 1
+        line = json.dumps(entry) + '\n'
+        with self._lock:
+            with open(self.PATH, 'a', encoding='utf-8') as f:
+                f.write(line)
+            self._count += 1
 
     @property
     def count(self) -> int:
@@ -709,6 +715,47 @@ def scrape_blog(thinker_name, cfg, since, until, log, error_log=None):
 # YOUTUBE SCRAPER
 # ============================================================
 
+def _youtube_proxy_url():
+    """Generic proxy URL for YouTube, if configured (http://user:pass@host:port)."""
+    return os.environ.get('YOUTUBE_PROXY_URL')
+
+
+def _build_ytt():
+    """YouTubeTranscriptApi, optionally routed through a proxy.
+
+    YouTube blocks transcript requests from most datacenter/cloud IPs (Railway,
+    AWS, …). To make YouTube work from a cloud host, set either:
+      * WEBSHARE_PROXY_USERNAME + WEBSHARE_PROXY_PASSWORD  (Webshare residential), or
+      * YOUTUBE_PROXY_URL = http://user:pass@host:port      (any HTTP proxy)
+    Without one of these, transcript fetches from a cloud IP will be IP-blocked and
+    skipped (the rest of the pipeline still runs).
+    """
+    from youtube_transcript_api import YouTubeTranscriptApi
+    ws_user = os.environ.get('WEBSHARE_PROXY_USERNAME')
+    ws_pass = os.environ.get('WEBSHARE_PROXY_PASSWORD')
+    generic = _youtube_proxy_url()
+    try:
+        if ws_user and ws_pass:
+            from youtube_transcript_api.proxies import WebshareProxyConfig
+            return YouTubeTranscriptApi(proxy_config=WebshareProxyConfig(
+                proxy_username=ws_user, proxy_password=ws_pass))
+        if generic:
+            from youtube_transcript_api.proxies import GenericProxyConfig
+            return YouTubeTranscriptApi(proxy_config=GenericProxyConfig(
+                http_url=generic, https_url=generic))
+    except Exception as e:  # noqa: BLE001 — proxy is best-effort; fall back to direct
+        print(f"    ⚠  YouTube proxy config failed ({e}); continuing without a proxy.")
+    return YouTubeTranscriptApi()
+
+
+def _is_ip_block(exc) -> bool:
+    """True if the exception is YouTube IP-blocking us (cloud IP, no proxy)."""
+    name = type(exc).__name__
+    msg = str(exc).lower()
+    return (name in ('RequestBlocked', 'IpBlocked')
+            or 'blocking requests' in msg or 'ipblocked' in msg)
+
+
 def scrape_youtube(thinker_name, cfg, since, until, log):
     """
     YouTube transcript scraper. Returns (newest_date_fetched_or_None, count_fetched).
@@ -728,6 +775,8 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
         '--no-warnings', '--quiet',
         '--match-filter', f'upload_date >= {since.replace("-","")}'
     ]
+    if _youtube_proxy_url():  # route listing through the same proxy as transcripts
+        cmd += ['--proxy', _youtube_proxy_url()]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     except Exception as e:
@@ -768,8 +817,7 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
     if not videos:
         return None, 0
 
-    from youtube_transcript_api import YouTubeTranscriptApi
-    ytt = YouTubeTranscriptApi()
+    ytt = _build_ytt()
 
     fetched = 0
     newest_date = None
@@ -798,6 +846,13 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
                 print(f"    FETCHED: {title[:50]} ({len(text)} chars)")
         except Exception as e:
             log.log('failed', thinker_name, platform, title, url, str(e))
+            if _is_ip_block(e):
+                # The whole channel is blocked from this IP — don't hammer every
+                # video (each would sleep + fail identically). Stop here.
+                print(f"    ⛔  YouTube is IP-blocking transcript requests (cloud IP). "
+                      f"Skipping YouTube for {thinker_name}. Set WEBSHARE_PROXY_USERNAME/"
+                      f"WEBSHARE_PROXY_PASSWORD or YOUTUBE_PROXY_URL to enable it.")
+                break
             print(f"    FAILED: {title[:50]} — {e}")
 
     return newest_date, fetched
@@ -874,7 +929,12 @@ def scrape_thinker(cfg, mode, global_since, until, log, conn, auto_since, error_
     for src in cfg.get('sources', []):
         method   = src.get('method', 'manual')
         platform = src.get('platform', method)
-        src_url  = src.get('url', src.get('channel_url', src.get('rss', 'unknown')))
+        # Stable per-source identifier for the watermark key. Use `or` (not
+        # dict.get defaults): a manifest row has all of url/channel_url/rss/handle
+        # as keys, but most are NULL — e.g. a YouTube source sets only
+        # channel_url, so `src.get('url', …)` would return None, not fall through.
+        src_url  = (src.get('url') or src.get('channel_url') or src.get('rss')
+                    or src.get('handle') or 'unknown')
 
         # Determine effective since for this source
         if auto_since and thinker_id is not None:
@@ -997,11 +1057,22 @@ def main():
     print(f"Mode: {args.mode} | {mode_label} | until={args.until}")
     print(f"Thinkers: {len(thinkers)}")
 
-    for t in thinkers:
-        scrape_thinker(
-            t, args.mode, global_since, args.until,
-            log, conn, auto_since, error_log,
-        )
+    # Scrape thinkers concurrently — this is network-bound. Each worker gets its
+    # own DB connection (psycopg connections aren't shared across threads); the
+    # shared Log/ErrorLog are lock-guarded. Raw files write to per-source paths.
+    def scrape_one(t):
+        wconn = db.raw_connect()
+        try:
+            scrape_thinker(t, args.mode, global_since, args.until,
+                           log, wconn, auto_since, error_log)
+        except Exception as exc:  # noqa: BLE001 — one thinker failing must not stop the rest
+            error_log.record(stage='scrape', thinker=t.get('name', '?'), exc=exc,
+                             retry_attempted=False, outcome='skipped')
+            print(f"  ✗  {t.get('name', '?')} failed: {type(exc).__name__}: {str(exc)[:100]}")
+        finally:
+            wconn.close()
+
+    parallel.pmap(scrape_one, thinkers)
 
     conn.close()
     log.save()

@@ -14,7 +14,7 @@ Conversions applied vs the SQLite original:
 """
 from __future__ import annotations
 
-from . import db
+from ..core import db
 
 ACTIVE_CLAIMS = "c.duplicate_of IS NULL"
 

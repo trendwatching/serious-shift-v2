@@ -7,7 +7,8 @@ import os
 
 import pytest
 
-from serious_shift_pipeline import db, queries
+from serious_shift_pipeline.core import db
+from serious_shift_pipeline.tools import queries
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("DATABASE_URL"), reason="DATABASE_URL not set"

@@ -12,48 +12,51 @@ import {
 /**
  * SynthesisIndex — /map/synthesis
  *
- * Phase 4: Floating insight cards grouped by macro section, each
- * expandable with an animated height reveal. Macro filter stays.
+ * Insight cards grouped by domain (scenario layer removed), each expandable
+ * with an animated height reveal. A domain filter narrows the set.
  * Entrance: staggered fade-up per group then per card within each group.
  */
 export default function SynthesisIndex() {
-  const { synthesis_insights, macros } = useMapLookup()
-  const [selectedMacros, setSelectedMacros] = useState([])
+  const { synthesis_insights, domainsArr, domainMap } = useMapLookup()
+  const [selectedDomains, setSelectedDomains] = useState([])
 
-  const toggleMacro = (dbId) => {
-    setSelectedMacros(prev =>
-      prev.includes(dbId) ? prev.filter(id => id !== dbId) : [...prev, dbId]
+  const toggleDomain = (id) => {
+    setSelectedDomains(prev =>
+      prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]
     )
   }
 
-  const macroByDbId = Object.fromEntries(macros.map(m => [m.db_id, m]))
+  // Domain sort order, for stable grouping.
+  const domainOrder = Object.fromEntries(domainsArr.map((d, i) => [d.id, i]))
 
-  // Sort: by macro db_id then alphabetical within
+  // Sort: by domain order then alphabetical within.
   const sorted = [...(synthesis_insights || [])].sort((a, b) => {
-    if (a.macro_id !== b.macro_id) return a.macro_id - b.macro_id
+    const da = domainOrder[a.domain_id] ?? 99
+    const db = domainOrder[b.domain_id] ?? 99
+    if (da !== db) return da - db
     return a.name.localeCompare(b.name)
   })
 
   // Filter
-  const filtered = selectedMacros.length === 0
+  const filtered = selectedDomains.length === 0
     ? sorted
-    : sorted.filter(ins => selectedMacros.includes(ins.macro_id))
+    : sorted.filter(ins => selectedDomains.includes(ins.domain_id))
 
-  // Group by macro (preserving order from filtered list)
+  // Group by domain (preserving order from filtered list)
   const groups = []
-  const seenMacros = new Set()
+  const seen = new Set()
   for (const ins of filtered) {
-    if (!seenMacros.has(ins.macro_id)) {
-      seenMacros.add(ins.macro_id)
+    if (!seen.has(ins.domain_id)) {
+      seen.add(ins.domain_id)
       groups.push({
-        macroId: ins.macro_id,
-        macro: macroByDbId[ins.macro_id] || null,
-        insights: filtered.filter(i => i.macro_id === ins.macro_id),
+        domainId: ins.domain_id,
+        domain: domainMap[ins.domain_id] || null,
+        insights: filtered.filter(i => i.domain_id === ins.domain_id),
       })
     }
   }
 
-  const hasFilter = selectedMacros.length > 0
+  const hasFilter = selectedDomains.length > 0
 
   return (
     <>
@@ -84,7 +87,7 @@ export default function SynthesisIndex() {
         </motion.p>
       </motion.div>
 
-      {/* ── Macro filter ── */}
+      {/* ── Domain filter ── */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -92,15 +95,15 @@ export default function SynthesisIndex() {
         className="flex flex-wrap gap-2 mb-10 items-center"
       >
         <span className="font-mono text-[9px] uppercase tracking-widest text-neutral-600 mr-1">
-          Filter by scenario
+          Filter by domain
         </span>
-        {macros.map(m => {
-          const active = selectedMacros.includes(m.db_id)
+        {domainsArr.map(d => {
+          const active = selectedDomains.includes(d.id)
           return (
             <motion.button
-              key={m.db_id}
+              key={d.id}
               type="button"
-              onClick={() => toggleMacro(m.db_id)}
+              onClick={() => toggleDomain(d.id)}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               className={`px-2.5 py-1 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors max-w-[160px] truncate ${
@@ -108,16 +111,16 @@ export default function SynthesisIndex() {
                   ? 'border-[var(--map-macro)] text-[var(--map-macro)] bg-[var(--map-macro-soft)]'
                   : 'border-neutral-800 text-neutral-500 hover:border-neutral-700 hover:text-neutral-300'
               }`}
-              title={m.name}
+              title={d.name}
             >
-              {m.name.length > 18 ? m.name.slice(0, 17) + '…' : m.name}
+              {d.name.length > 18 ? d.name.slice(0, 17) + '…' : d.name}
             </motion.button>
           )
         })}
         {hasFilter && (
           <button
             type="button"
-            onClick={() => setSelectedMacros([])}
+            onClick={() => setSelectedDomains([])}
             className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 hover:text-cream transition-colors ml-2"
           >
             Clear
@@ -144,7 +147,7 @@ export default function SynthesisIndex() {
             </p>
             <button
               type="button"
-              onClick={() => setSelectedMacros([])}
+              onClick={() => setSelectedDomains([])}
               className="text-[11px] font-mono uppercase tracking-widest text-neutral-500 hover:text-cream border border-neutral-800 rounded px-3 py-1.5 transition-colors"
             >
               Clear filters
@@ -158,10 +161,10 @@ export default function SynthesisIndex() {
             variants={staggerContainer(0.05, 0.1)}
             className="space-y-12"
           >
-            {groups.map(({ macroId, macro, insights }) => (
+            {groups.map(({ domainId, domain, insights }) => (
               <InsightGroup
-                key={macroId}
-                macro={macro}
+                key={domainId}
+                domain={domain}
                 insights={insights}
               />
             ))}
@@ -175,19 +178,19 @@ export default function SynthesisIndex() {
 
 // ── InsightGroup ──────────────────────────────────────────────────────────────
 
-function InsightGroup({ macro, insights }) {
+function InsightGroup({ domain, insights }) {
   return (
     <motion.section variants={fadeUp}>
-      {/* Macro section divider */}
-      {macro && (
+      {/* Domain section divider */}
+      {domain && (
         <div className="flex items-center gap-3 mb-5">
           <div className="h-px flex-1 bg-neutral-800/80" />
           <Link
-            to={`/map/macros/${macro.id}`}
+            to={`/map/domains/${domain.id}`}
             className="font-mono text-[9px] uppercase tracking-widest text-[var(--map-macro)] hover:text-cream transition-colors shrink-0 px-1"
             onClick={e => e.stopPropagation()}
           >
-            {macro.name}
+            {domain.name}
           </Link>
           <div className="h-px flex-1 bg-neutral-800/80" />
         </div>
@@ -199,7 +202,7 @@ function InsightGroup({ macro, insights }) {
         variants={staggerContainer(STAGGER_CARD, 0)}
       >
         {insights.map(ins => (
-          <InsightCard key={ins.id} insight={ins} macro={macro} />
+          <InsightCard key={ins.id} insight={ins} domain={domain} />
         ))}
       </motion.div>
     </motion.section>
@@ -208,7 +211,7 @@ function InsightGroup({ macro, insights }) {
 
 // ── InsightCard ───────────────────────────────────────────────────────────────
 
-function InsightCard({ insight: ins, macro }) {
+function InsightCard({ insight: ins, domain }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -268,13 +271,13 @@ function InsightCard({ insight: ins, macro }) {
                   <span className="font-mono text-[9px] uppercase tracking-widest text-neutral-600">
                     {ins.contributing_claim_ids.length} supporting claim{ins.contributing_claim_ids.length !== 1 ? 's' : ''}
                   </span>
-                  {macro && (
+                  {domain && (
                     <Link
-                      to={`/map/macros/${macro.id}`}
+                      to={`/map/domains/${domain.id}`}
                       className="ml-auto font-mono text-[9px] uppercase tracking-widest text-[var(--map-macro)] hover:text-cream transition-colors"
                       onClick={e => e.stopPropagation()}
                     >
-                      View scenario →
+                      View domain →
                     </Link>
                   )}
                 </div>

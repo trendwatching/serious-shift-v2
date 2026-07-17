@@ -6,14 +6,18 @@ Sequence (each step is a package module run via `python -m`)
   1. scraper          — fetch new raw content (append-only, per-source watermark)
   2. process_raw      — extract claims via Claude API → Postgres
   2.5 scoring         — source_depth / freshness / claim_weight (free, no API)
-  3. generate_map_data    — rebuild documents['map']     ┐ only runs if process_raw
-  4. generate_keynote     — rebuild documents['keynote'] ┘ added new claims
+  2.6 deduplicate     — mark claims.duplicate_of (free heuristic)
+  2.7 evaluate        — prediction status + thinker credibility_score (free, no API)
+  3. generate_map_data    — rebuild documents['map'] + ['synthesis'] ┐ only runs if
+  4. generate_keynote     — rebuild documents['keynote']             ┘ new claims landed
 
-The gate on steps 3–4 prevents burning the map/keynote regen spend (~$5-15) on a
-week where sources were quiet or broken and nothing new landed in the DB.
+Steps 2.6–2.7 run every cron so credibility scores and duplicate flags stay current
+in the DB. The gate on steps 3–4 prevents burning the map/keynote regen spend
+(~$5-15) on a week where sources were quiet or broken and nothing new landed.
 
-DB migrations (packages/db via dbmate) and config validation are applied by
-deploy/CI before this runs.
+Database migrations (packages/db, dbmate format) are applied automatically at
+the start of each run, so the cron is self-sufficient against a fresh database.
+Pass --skip-migrate if you manage the schema externally.
 
 Usage (run from the repo root; DATABASE_URL + ANTHROPIC_API_KEY in env)
   python -m serious_shift_pipeline.run_weekly
@@ -29,7 +33,7 @@ import subprocess
 import sys
 from datetime import datetime
 
-from . import db
+from .core import db
 
 # Logs live under cwd (the repo root the operator runs from), matching the
 # converted step modules (SS_LOGS_DIR).
@@ -349,12 +353,12 @@ def run_regen_steps(
     if dry_run:
         print(f"\n{'─'*60}")
         print("  STEP 3/4 — Rebuild map (Claude API clustering)")
-        print("  [dry-run] would run: -m serious_shift_pipeline.generate_map_data  [gate: new_claims > 0]")
+        print("  [dry-run] would run: -m serious_shift_pipeline.steps.generate_map_data  [gate: new_claims > 0]")
         map_status = REGEN_DRY_RUN
     else:
         rc3 = run_step(
             "STEP 3/4 — Rebuild map (Claude API clustering)",
-            [PYTHON, '-m', f'{MOD}.generate_map_data'],
+            [PYTHON, '-m', f'{MOD}.steps.generate_map_data'],
             dry_run=False,
             env=subprocess_env,
         )
@@ -372,7 +376,7 @@ def run_regen_steps(
     if dry_run:
         print(f"\n{'─'*60}")
         print("  STEP 4/4 — Rebuild keynote (Claude API synthesis)")
-        print("  [dry-run] would run: -m serious_shift_pipeline.generate_keynote"
+        print("  [dry-run] would run: -m serious_shift_pipeline.steps.generate_keynote"
               "  [gate: new_claims > 0 and map succeeded]")
         keynote_status = REGEN_DRY_RUN
     elif map_status == REGEN_FAILED:
@@ -382,7 +386,7 @@ def run_regen_steps(
     else:
         rc4 = run_step(
             "STEP 4/4 — Rebuild keynote (Claude API synthesis)",
-            [PYTHON, '-m', f'{MOD}.generate_keynote'],
+            [PYTHON, '-m', f'{MOD}.steps.generate_keynote'],
             dry_run=False,
             env=subprocess_env,
         )
@@ -413,12 +417,26 @@ def main():
                         help='Print what would run without making any changes')
     parser.add_argument('--no-notify',   action='store_true',
                         help='Suppress desktop notifications (useful for manual runs)')
+    parser.add_argument('--skip-migrate', action='store_true',
+                        help='Skip the startup migration step (schema managed externally)')
     args = parser.parse_args()
 
     api_key = get_api_key()
     if not args.dry_run and not api_key:
         print("ERROR: ANTHROPIC_API_KEY not set. Set env var or add to .env.local.")
         sys.exit(1)
+
+    # Ensure the schema exists before any query. The weekly cron runs unattended
+    # against the shared Postgres; bootstrapping here means a database that never
+    # had `dbmate up` run against it still works (idempotent, dbmate-compatible).
+    if not args.skip_migrate:
+        from .core import migrate
+        print("\n  Applying database migrations…")
+        try:
+            migrate.apply_pending()
+        except Exception as e:  # noqa: BLE001 — surface a clear, actionable failure
+            print(f"ERROR: could not apply database migrations: {e}")
+            sys.exit(1)
 
     # Pass the key explicitly to subprocesses so they don't need to re-read .env.local
     subprocess_env = {**os.environ, 'ANTHROPIC_API_KEY': api_key} if api_key else None
@@ -444,14 +462,11 @@ def main():
         print("  [DRY-RUN MODE]")
     print(f"{'='*60}")
 
-    # DB migrations (packages/db via dbmate) and config validation are applied
-    # by deploy/CI before this runs, so the orchestrator starts at the scrape step.
-
     # ── Step 1: Scrape ──────────────────────────────────────────────
     if not args.skip_scrape:
         run_step(
             "STEP 1/4 — Scrape (append-only, per-source watermark)",
-            [PYTHON, '-m', f'{MOD}.scraper', '--all'],
+            [PYTHON, '-m', f'{MOD}.steps.scraper', '--all'],
             dry_run=args.dry_run,
             env=subprocess_env,
         )
@@ -461,7 +476,7 @@ def main():
     # ── Step 2: Process raw files ───────────────────────────────────
     run_step(
         "STEP 2/4 — Process raw files (Claude API extraction)",
-        [PYTHON, '-m', f'{MOD}.process_raw'],
+        [PYTHON, '-m', f'{MOD}.steps.process_raw'],
         dry_run=args.dry_run,
         env=subprocess_env,
     )
@@ -469,7 +484,27 @@ def main():
     # ── Step 2.5: Score claims (free; so new claims rank correctly) ──
     run_step(
         "STEP 2.5 — Score claims (source_depth, freshness, claim_weight)",
-        [PYTHON, '-m', f'{MOD}.scoring'],
+        [PYTHON, '-m', f'{MOD}.steps.scoring'],
+        dry_run=args.dry_run,
+        env=subprocess_env,
+    )
+
+    # ── Step 2.6: Deduplicate claims (free heuristic; marks duplicate_of) ──
+    # Runs before the new-claims count so the gate counts net-new *unique* claims,
+    # and before regen so the map/keynote exclude duplicates.
+    run_step(
+        "STEP 2.6 — Deduplicate claims (mark duplicate_of)",
+        [PYTHON, '-m', f'{MOD}.steps.deduplicate', '--execute'],
+        dry_run=args.dry_run,
+        env=subprocess_env,
+    )
+
+    # ── Step 2.7: Evaluate predictions + recompute credibility (free, no API) ──
+    # Updates prediction status/accuracy and thinker credibility_score, which the
+    # map + keynote rank by — so it must run before regen.
+    run_step(
+        "STEP 2.7 — Evaluate predictions + thinker credibility",
+        [PYTHON, '-m', f'{MOD}.steps.evaluate'],
         dry_run=args.dry_run,
         env=subprocess_env,
     )

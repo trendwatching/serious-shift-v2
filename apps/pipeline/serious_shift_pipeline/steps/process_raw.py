@@ -11,7 +11,7 @@ Converted from the legacy process_raw.py:
   * Obsidian markdown notes → dropped (the DB is the source of truth)
 
 Usage:
-  DATABASE_URL=... ANTHROPIC_API_KEY=... python -m serious_shift_pipeline.process_raw
+  DATABASE_URL=... ANTHROPIC_API_KEY=... python -m serious_shift_pipeline.steps.process_raw
   ... --thinker "Ethan Mollick" | --file path.txt | --dry-run | --cost-cap 400
 """
 from __future__ import annotations
@@ -21,11 +21,10 @@ import glob
 import os
 import re
 import sys
-import time
 from datetime import datetime
 
-from . import db, llm
-from .observability import CostTracker, ErrorLog, TokenLog
+from ..core import db, llm, parallel
+from ..core.observability import CostTracker, ErrorLog, TokenLog
 
 RAW_DIR = os.environ.get("RAW_CONTENT_DIR", os.path.join(os.getcwd(), "raw_content"))
 
@@ -157,7 +156,9 @@ Extract the following as JSON:
       "consumer_implication": "",
       "signal_strength": "strong_signal/signal/background/noise",
       "specificity": 3,
-      "quote": ""
+      "quote": "",
+      "has_statistic": false,
+      "statistic": ""
     }}
   ],
   "predictions": [
@@ -182,10 +183,21 @@ Extract the following as JSON:
 
 RULES:
 - Extract EVERY distinct claim. One idea per claim. Aim for 10-30 claims.
+- US English spelling throughout (behavior, organization, analyze — not behaviour/organisation/analyse).
+- signal_strength — assign explicitly, do not leave to interpretation:
+  - strong_signal: a clear, distinct, specific claim worth surfacing on its own
+  - signal: meaningful, but not the loudest signal
+  - background: context only, not a signal
+  - noise: discard-level
+- has_statistic: true ONLY when the claim contains a specific, dated, attributable number.
+  When true, put that number and its attribution in "statistic", e.g.
+  "34% of US consumers used an AI tool to shortlist a purchase, Q1 2025 (Webb)".
+  Otherwise has_statistic=false and statistic="".
+- consumer_implication must answer specifically: "how does this affect how people buy, live,
+  work, or expect things?" A vague answer fails the requirement.
 - Only create predictions for specific, falsifiable future statements.
-- Set novelty to "position_shift" if content contradicts existing positions above.
-- Set novelty to "repeating_position" if restating known views.
-- consumer_implication must answer: "how does this affect how people buy, live, work, or expect things?"
+- Set novelty to "position_shift" if content contradicts existing positions above;
+  "repeating_position" if restating known views.
 - Be aggressive with extraction. More is better.
 
 Return ONLY the JSON. No commentary."""
@@ -233,14 +245,16 @@ def write_to_database(conn, thinker, meta, raw_text, extracted):
         domain = cl.get("domain", "technology_capability")
         if domain not in DOMAIN_VALID:
             domain = "technology_capability"
+        has_stat = bool(cl.get("has_statistic", False))
         cid = db.insert_returning_id(conn, """INSERT INTO claims
             (source_id, thinker_id, claim_text, claim_type, domain, consumer_implication,
-             signal_strength, specificity, quote)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+             signal_strength, specificity, quote, has_statistic, statistic)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
             (source_id, thinker_id, cl["claim_text"], cl.get("claim_type", "analysis"), domain,
              cl.get("consumer_implication", ""),
              cl.get("signal_strength") if cl.get("signal_strength") in {"noise", "background", "signal", "strong_signal"} else "signal",
-             cl.get("specificity", 3), cl.get("quote", "")))
+             cl.get("specificity", 3), cl.get("quote", ""),
+             has_stat, (cl.get("statistic") or "")[:500] if has_stat else None))
         claim_ids.append(cid)
 
     full_text = " ".join(cl["claim_text"] for cl in extracted.get("claims", []))
@@ -272,44 +286,64 @@ def write_to_database(conn, thinker, meta, raw_text, extracted):
 
 # ── per-file orchestration ──────────────────────────────────────────────────
 
-def process_file(filepath, conn, cost_tracker, error_log=None):
-    print(f"\n  Processing: {os.path.basename(filepath)}")
+def prepare_file(filepath, conn, error_log=None):
+    """Serial, fast DB-read phase: skip-filters + load the thinker's context.
+    Returns a work dict ready for extraction, or None if the file is skipped.
+    (DB reads stay on the main thread; the slow Claude call runs in parallel.)"""
     if is_processed(filepath):
-        print("    SKIP: Already processed")
-        return 0, 0
+        return None
 
     file_size = os.path.getsize(filepath)
     if file_size < 1500:
         thinker_dir = os.path.basename(os.path.dirname(filepath)).replace("_", " ")
-        print(f"    SKIP: File too small ({file_size} bytes < 1500)")
         if error_log is not None:
             error_log.record(stage="size_filter", thinker=thinker_dir,
                              exc=ValueError("file_too_small"), retry_attempted=False,
                              outcome="skipped", reason="file_too_small", file_bytes=str(file_size))
-        return 0, 0
+        return None
 
     meta, body = parse_raw_file(filepath)
     if len(body) < 100:
-        print(f"    SKIP: Content too short ({len(body)} chars)")
-        return 0, 0
+        return None
+
+    # Already ingested? Skip BEFORE the (paid) Claude extraction. The scraper's
+    # per-source watermark already limits re-fetches, but raw_content is ephemeral
+    # on cloud hosts, so the DB is the durable "have we seen this URL" record.
+    url = meta.get("url", "")
+    if url and db.query_one(conn, "SELECT 1 AS x FROM sources WHERE url = %s AND url <> ''", (url,)):
+        print(f"    SKIP: already in DB — {os.path.basename(filepath)}")
+        mark_processed(filepath)
+        return None
 
     thinker_name = meta.get("thinker") or os.path.basename(os.path.dirname(filepath)).replace("_", " ")
     thinker = get_thinker(conn, thinker_name)
     if not thinker:
-        print(f"    SKIP: Thinker '{thinker_name}' not found in DB")
-        return 0, 0
+        print(f"    SKIP: Thinker '{thinker_name}' not found in DB ({os.path.basename(filepath)})")
+        return None
 
     context_claims, context_preds = get_thinker_context(conn, thinker["id"])
-    body = body[:30000]
-    extracted = extract_with_claude(body, meta, thinker, context_claims, context_preds, cost_tracker)
-    source_id, claim_count, pred_count = write_to_database(conn, thinker, meta, body, extracted)
-    mark_processed(filepath)
+    return {
+        "filepath": filepath,
+        "thinker": thinker,
+        "thinker_name": thinker_name,
+        "meta": meta,
+        "body": body[:30000],
+        "context_claims": context_claims,
+        "context_preds": context_preds,
+    }
 
+
+def write_prepared(conn, prep, extracted):
+    """Serial DB-write phase for one extracted file. Returns (claims, preds)."""
+    source_id, _claim_count, _pred_count = write_to_database(
+        conn, prep["thinker"], prep["meta"], prep["body"], extracted
+    )
+    mark_processed(prep["filepath"])
     claims = len(extracted.get("claims", []))
     preds = len(extracted.get("predictions", []))
     changes = len(extracted.get("position_changes", []))
-    print(f"    OK: {claims} claims, {preds} predictions, {changes} position changes")
-    print(f"    Source ID: {source_id} | Running cost: ${cost_tracker.cost:.4f}")
+    print(f"    OK {os.path.basename(prep['filepath'])}: "
+          f"{claims} claims, {preds} predictions, {changes} position changes (source {source_id})")
     return claims, preds
 
 
@@ -358,46 +392,66 @@ def main():
     total_claims = total_preds = processed_count = skipped_count = 0
     cost_cap_hit = False
 
+    # Process in chunks: read+extract a chunk in parallel, write it serially, then
+    # check the cost cap. Chunking bounds how far we can overshoot the cap (at most
+    # one chunk of in-flight calls) while still parallelising the slow Claude calls.
+    _MARK_FAILED = object()
+    chunk_size = parallel.max_workers() * 3
+    done = 0
+
     with db.connect() as conn:
-        for file_num, filepath in enumerate(unprocessed, 1):
-            thinker_name = os.path.basename(os.path.dirname(filepath)).replace("_", " ")
-            last_exc = None
-            for attempt in range(2):
+        for start in range(0, len(unprocessed), chunk_size):
+            chunk = unprocessed[start:start + chunk_size]
+
+            # 1. Serial reads → work items (skips return None and drop out).
+            preps = [p for p in (prepare_file(f, conn, error_log) for f in chunk) if p]
+
+            # 2. Parallel Claude extraction (the slow part). Errors become a sentinel
+            #    so one bad file doesn't sink the chunk.
+            def extract(prep):
                 try:
-                    claims, preds = process_file(filepath, conn, cost_tracker, error_log)
-                    last_exc = None
-                    break
-                except Exception as exc:  # noqa: BLE001 — logged + retried, run continues
+                    return extract_with_claude(prep["body"], prep["meta"], prep["thinker"],
+                                               prep["context_claims"], prep["context_preds"], cost_tracker)
+                except Exception as exc:  # noqa: BLE001 — recorded below; run continues
+                    return (_MARK_FAILED, exc)
+
+            extracted_list = parallel.pmap(extract, preps)
+
+            # 3. Serial writes.
+            for prep, extracted in zip(preps, extracted_list):
+                if isinstance(extracted, tuple) and extracted and extracted[0] is _MARK_FAILED:
+                    exc = extracted[1]
+                    print(f"  ✗  {os.path.basename(prep['filepath'])} failed: "
+                          f"{type(exc).__name__}: {str(exc)[:100]}")
+                    error_log.record(stage="extract", thinker=prep["thinker_name"], exc=exc,
+                                     retry_attempted=False, outcome="skipped", source_file=prep["filepath"])
+                    skipped_count += 1
+                    continue
+                try:
+                    claims, preds = write_prepared(conn, prep, extracted)
+                    conn.commit()
+                except Exception as exc:  # noqa: BLE001 — logged; run continues
                     conn.rollback()
-                    last_exc = exc
-                    if attempt == 0:
-                        print(f"  ⚠  attempt 1 failed ({type(exc).__name__}: {str(exc)[:100]}). Retrying in 30 s…")
-                        time.sleep(30)
+                    print(f"  ✗  {os.path.basename(prep['filepath'])} write failed: {str(exc)[:100]}")
+                    error_log.record(stage="write", thinker=prep["thinker_name"], exc=exc,
+                                     retry_attempted=False, outcome="skipped", source_file=prep["filepath"])
+                    skipped_count += 1
+                    continue
+                total_claims += claims
+                total_preds += preds
+                if claims > 0:
+                    processed_count += 1
 
-            if last_exc is not None:
-                print(f"  ✗  {os.path.basename(filepath)} failed after retry — skipping")
-                error_log.record(stage="extract", thinker=thinker_name, exc=last_exc,
-                                 retry_attempted=True, outcome="skipped", source_file=filepath)
-                skipped_count += 1
-                time.sleep(1)
-                continue
-
-            total_claims += claims
-            total_preds += preds
-            if claims > 0:
-                processed_count += 1
-            time.sleep(1)
-
-            if file_num % 10 == 0:
-                print(f"\n  ── PROGRESS: {file_num}/{len(unprocessed)} files  |  "
-                      f"cost so far: ${cost_tracker.cost:.4f} / ${args.cost_cap:.2f} cap ──\n")
+            done += len(chunk)
+            print(f"\n  ── PROGRESS: {done}/{len(unprocessed)} files  |  "
+                  f"cost so far: ${cost_tracker.cost:.4f} / ${args.cost_cap:.2f} cap ──\n")
 
             if cost_tracker.cost >= args.cost_cap:
                 msg = f"COST CAP REACHED: ${cost_tracker.cost:.4f} >= ${args.cost_cap:.2f}."
-                print(f"\n  ⛔  {msg} Halting after {file_num} files.")
+                print(f"\n  ⛔  {msg} Halting after {done} files.")
                 error_log.record(stage="cost_cap_halt", thinker="PIPELINE", exc=RuntimeError(msg),
                                  retry_attempted=False, outcome="halted",
-                                 files_attempted=str(file_num), cost_usd=str(round(cost_tracker.cost, 4)))
+                                 files_attempted=str(done), cost_usd=str(round(cost_tracker.cost, 4)))
                 cost_cap_hit = True
                 break
 

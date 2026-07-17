@@ -1,10 +1,81 @@
 -- migrate:up
--- Thinker portraits/bios and the scraper source manifest, moved into the DB
--- (was apps/frontend/src/data/thinkerImages.json and scraper_config.json).
+-- Bootstrapping seed: the scrapeable thinker roster + their source manifest.
+-- Thinkers are inserted FIRST (by name) so the image/bio updates and the
+-- scrape_sources rows below resolve on a brand-new database — no ETL needed.
+-- Everything else (claims, predictions, the trend map) is produced by the pipeline.
 
-ALTER TABLE thinkers ADD COLUMN image_url TEXT;
+-- 1. Thinker roster (name only; the pipeline + evaluate fill scores over time).
+INSERT INTO thinkers (name) VALUES ('Sam Altman') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Demis Hassabis') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Andrej Karpathy') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Dario Amodei') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Ethan Mollick') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Mustafa Suleyman') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Yann LeCun') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Geoffrey Hinton') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Azeem Azhar') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Satya Nadella') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Daron Acemoglu') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Marc Andreessen') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Joscha Bach') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Scott Belsky') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Franco "Bifo" Berardi') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Rohit Bhargava') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Nick Bostrom') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Sinead Bovell') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Benjamin Bratton') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('James Bridle') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Matt Britton') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Erik Brynjolfsson') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Tyler Cowen') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Peter Diamandis') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Rana el Kaliouby') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Benedict Evans') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Tracey Follows') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Martin Ford') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Scott Galloway') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Elad Gil') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Paul Graham') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Bill Gurley') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Yuval Noah Harari') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Tristan Harris') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Craig Hepburn') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Reid Hoffman') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Jensen Huang') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Charles I. Jones') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Kevin Kelly') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Vinod Khosla') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Anton Korinek') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Ray Kurzweil') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Kai-Fu Lee') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Gerd Leonhard') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Fei-Fei Li') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Annie Lowrey') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('David Mattin') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Mariana Mazzucato') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Andrew McAfee') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Packy McCormick') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Emad Mostaque') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Geoff Mulgan') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Jakob Nielsen') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Dwarkesh Patel') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Scott Santens') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Daniel Schmachtenberger') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Noah Smith') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Roger Spitz') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Balaji Srinivasan') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Nick Srnicek') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Hito Steyerl') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Rohit Talwar') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Max Tegmark') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Ben Thompson') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Amy Webb') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Kevin Werbach') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Alex Williams') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Michell Zappa') ON CONFLICT (name) DO NOTHING;
+INSERT INTO thinkers (name) VALUES ('Shoshana Zuboff') ON CONFLICT (name) DO NOTHING;
 
--- Match by slug computed the same way the frontend does (slugify(name)).
+-- 2. Portraits + bios (match thinkers by slug, exactly as the frontend slugifies).
 UPDATE thinkers SET image_url = 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Andrej_Karpathy%2C_OpenAI.png', bio = COALESCE(NULLIF(bio, ''), 'Andrej Karpathy is a deep learning researcher and former VP of AI at Tesla and research scientist at OpenAI. He created influential educational resources including micrograd and nanoGPT, and is widely credited with popularising the concept of ''vibe coding''. A key figure in making neural networks legible to engineers and builders outside academia.') WHERE trim(both '-' from regexp_replace(lower(name), '[^a-z0-9]+', '-', 'g')) = 'andrej-karpathy';
 UPDATE thinkers SET image_url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Andrew_McAfee_FT-McKinsey_BBYA_2014%28LowerContrast%29.jpg/500px-Andrew_McAfee_FT-McKinsey_BBYA_2014%28LowerContrast%29.jpg', bio = COALESCE(NULLIF(bio, ''), 'Andrew McAfee is a principal research scientist at MIT and co-director of the MIT Initiative on the Digital Economy. Co-author of ''The Second Machine Age'' and ''More from Less'', he is one of the most cited voices on how digital technology reshapes labour markets, productivity, and environmental footprint.') WHERE trim(both '-' from regexp_replace(lower(name), '[^a-z0-9]+', '-', 'g')) = 'andrew-mcafee';
 UPDATE thinkers SET image_url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/ASSA_2026_-_Anton_Korinek_02_%28cropped%29.jpg/500px-ASSA_2026_-_Anton_Korinek_02_%28cropped%29.jpg', bio = COALESCE(NULLIF(bio, ''), 'Anton Korinek is an economist at the University of Virginia and a fellow at the Brookings Institution, specialising in the macroeconomic implications of AI. His research examines how advanced AI affects labour markets, inequality, and economic growth — with an unusual willingness to model extreme AI scenarios rigorously.') WHERE trim(both '-' from regexp_replace(lower(name), '[^a-z0-9]+', '-', 'g')) = 'anton-korinek';
@@ -76,19 +147,7 @@ UPDATE thinkers SET image_url = 'https://upload.wikimedia.org/wikipedia/commons/
 UPDATE thinkers SET image_url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Shoshana_Zuboff_at_Alexander_von_Humboldt_Institut.jpg/500px-Shoshana_Zuboff_at_Alexander_von_Humboldt_Institut.jpg', bio = COALESCE(NULLIF(bio, ''), 'Shoshana Zuboff is an emerita professor at Harvard Business School and author of ''The Age of Surveillance Capitalism'', one of the most influential books on technology published in the last decade. Her concept of ''surveillance capitalism'' — the commodification of human behavioural data as raw material for prediction products — has become the dominant critical framework for understanding how AI systems are funded, trained, and deployed.') WHERE trim(both '-' from regexp_replace(lower(name), '[^a-z0-9]+', '-', 'g')) = 'shoshana-zuboff';
 UPDATE thinkers SET image_url = 'https://images.squarespace-cdn.com/content/v1/5ddb7f1f3ad7035a26308940/c9b78d97-8de2-4844-bb7a-49d301a64051/Roger+S+-+JCo+Studios+-9982.jpg', bio = COALESCE(NULLIF(bio, ''), 'Roger Spitz is a futurist, author, and founder of Techistential, focused on applied futures thinking for boards, executives, and investors. Author of ''The Definitive Guide to Thriving on Disruption'', he specialises in helping organisations build futures literacy — the capacity to think rigorously about uncertainty rather than projecting present trends linearly into a destabilising future.') WHERE trim(both '-' from regexp_replace(lower(name), '[^a-z0-9]+', '-', 'g')) = 'roger-spitz';
 
-CREATE TABLE scrape_sources (
-    id          BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    thinker_id  BIGINT NOT NULL REFERENCES thinkers(id),
-    platform    TEXT NOT NULL,
-    method      TEXT NOT NULL,
-    url         TEXT,
-    rss         TEXT,
-    channel_url TEXT,
-    handle      TEXT,
-    note        TEXT
-);
-CREATE INDEX idx_scrape_sources_thinker ON scrape_sources(thinker_id);
-
+-- 3. Source manifest — what the scraper fetches per thinker.
 INSERT INTO scrape_sources (thinker_id, platform, method, url, rss, channel_url, handle, note) SELECT id, 'blog', 'scrape_index', 'https://blog.samaltman.com', NULL, NULL, NULL, NULL FROM thinkers WHERE name = 'Sam Altman';
 INSERT INTO scrape_sources (thinker_id, platform, method, url, rss, channel_url, handle, note) SELECT id, 'x', 'manual', NULL, NULL, NULL, 'sama', NULL FROM thinkers WHERE name = 'Sam Altman';
 INSERT INTO scrape_sources (thinker_id, platform, method, url, rss, channel_url, handle, note) SELECT id, 'blog', 'scrape_index', 'https://deepmind.google/blog/', NULL, NULL, NULL, NULL FROM thinkers WHERE name = 'Demis Hassabis';
@@ -190,5 +249,5 @@ INSERT INTO scrape_sources (thinker_id, platform, method, url, rss, channel_url,
 INSERT INTO scrape_sources (thinker_id, platform, method, url, rss, channel_url, handle, note) SELECT id, 'blog', 'scrape_index', 'https://www.hks.harvard.edu/centers/carr/our-work/carr-commentary/notes-new-frontier-power', NULL, NULL, NULL, NULL FROM thinkers WHERE name = 'Shoshana Zuboff';
 
 -- migrate:down
-DROP TABLE IF EXISTS scrape_sources;
-ALTER TABLE thinkers DROP COLUMN IF EXISTS image_url;
+DELETE FROM scrape_sources;
+-- thinkers are left in place (claims/sources may reference them).

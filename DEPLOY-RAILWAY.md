@@ -32,8 +32,10 @@ Also set each service's **Watch Paths** (e.g. `apps/backend/**`) so one app's ch
 doesn't rebuild the others. **Postgres is added separately** (a Railway database,
 not from GitHub) and referenced as `${{Postgres.DATABASE_URL}}`.
 
-> Auto-deploy builds and runs the code but does **not** run migrations or load
-> data — that's the one-time step 2 below, run against the Railway DB.
+> The **pipeline cron applies the database migrations automatically** on each run
+> (idempotent, dbmate-compatible), so a fresh database is bootstrapped on the first
+> run. Step 2 below is still the fastest way to stand the DB up immediately and to
+> load the one-time historical data; the backend needs the schema present to serve.
 
 ## 0. Prerequisites
 - A Railway account + the repo pushed to GitHub.
@@ -43,17 +45,25 @@ not from GitHub) and referenced as `${{Postgres.DATABASE_URL}}`.
 New Project → **Add Postgres**. Railway creates it and exposes `DATABASE_URL`
 (reference it from other services as `${{Postgres.DATABASE_URL}}`).
 
-## 2. Schema + data (one-time, from your machine)
+## 2. Schema + seed (one-time, from your machine — optional)
+The pipeline cron applies migrations automatically, so this is only needed if you
+want the schema up *before* the first cron run (e.g. so the backend serves data).
 Grab the Postgres **public** connection string from the Postgres service → Connect.
 ```bash
 export DATABASE_URL='postgres://…railway public url…'   # includes sslmode=require
 cd packages/db
-DBMATE_MIGRATIONS_DIR=./migrations dbmate up                       # 0001–0003
+DBMATE_MIGRATIONS_DIR=./migrations dbmate up
+# → 0001 creates the schema, 0002 seeds the thinker roster + scrape source manifest.
+```
+That's the whole bootstrap — no data import required. The pipeline then scrapes →
+extracts claims → builds the map/keynote on its first run.
+
+**Optional — import legacy SQLite data** (historical claims/predictions) instead of
+scraping from scratch:
+```bash
 python etl/sqlite_to_postgres.py --sqlite ../../serious-shift.db --truncate
-python etl/verify_parity.py     --sqlite ../../serious-shift.db    # "lossless ✓"
-# populate the served documents (no API cost for the map):
-cd ../.. && python -m serious_shift_pipeline.generate_map_data --export-only
-# keynote/daily: run generate_keynote (needs ANTHROPIC_API_KEY) or restore a backup
+# (copies only tables/columns that still exist in the current schema)
+cd ../.. && python -m serious_shift_pipeline.steps.generate_map_data --export-only
 ```
 
 ## 3. Backend service
@@ -62,29 +72,40 @@ New service → **Deploy from repo**.
 - **Variables:**
   - `DATABASE_URL = ${{Postgres.DATABASE_URL}}`
   - `ANTHROPIC_API_KEY = sk-ant-…` (for `/api/personalize`)
-  - `FRONTEND_ORIGIN` = the frontend's public URL (set after step 4)
-  - `PORT` is provided by Railway automatically; the app reads it.
-- **Networking:** Generate Domain. Health check path `/health`.
+  - `PORT = 8080` — pin it so the frontend can reach the backend over private
+    networking at a known port (Railway otherwise assigns one).
+- **Networking:** No public domain needed — the frontend proxies to it over the
+  **private network** (`<service>.railway.internal`). Enable private networking
+  (on by default within a project). `FRONTEND_ORIGIN`/CORS is no longer required
+  because the browser never calls the backend directly (see step 4).
 
 ## 4. Frontend service
 New service → **Deploy from repo**.
 - **Root Directory:** `apps/frontend` (Nixpacks detects Next.js: `npm ci` → `npm run build` → `npm run start`).
-- **Variables:** `NEXT_PUBLIC_API_BASE = https://<backend-domain>` (from step 3).
-  > `NEXT_PUBLIC_*` is inlined at **build** time — after changing it, redeploy.
-- **Networking:** Generate Domain. Then set the backend's `FRONTEND_ORIGIN` to
-  this domain and redeploy the backend (locks down CORS).
+- **How it talks to the backend:** the browser only ever calls the frontend's own
+  origin (`/api/*`); Next.js proxies that to the backend server-side
+  (`next.config.mjs` → `rewrites`). **No CORS, no public backend URL in the client.**
+- **Variables:** `BACKEND_ORIGIN = http://backend.railway.internal:8080`
+  (the backend service's private address + its `PORT`). Use the backend's public
+  URL instead only if you don't want private networking.
+  > `BACKEND_ORIGIN` is read by the Next **server**, not the browser — it is not a
+  > `NEXT_PUBLIC_*` var and isn't inlined into the client bundle.
+- **Networking:** Generate Domain (this is the only public domain users hit; point
+  `www.yourdomain.com` here).
 
 ## 5. Pipeline (scheduled refresh)
 New service → **Deploy from repo**.
-- **Root Directory:** `apps/pipeline`.
-- **Start Command:** `python -m serious_shift_pipeline.run_weekly`
-- **Cron Schedule:** e.g. `0 22 * * 0` (Sundays 22:00 UTC). Railway runs the
-  command on schedule, then the service sleeps.
+- **Root Directory:** `apps/pipeline` (Railway uses the bundled `Dockerfile`).
+- **Cron Schedule:** comes from `railway.json` (`0 22 * * 0`, Sundays 22:00 UTC).
+  Railway runs the container on schedule, then the service sleeps.
+- **Watch Paths:** `apps/pipeline/**` (a migration change is vendored into the
+  package, so it lives under this path too).
 - **Variables:** `DATABASE_URL = ${{Postgres.DATABASE_URL}}`, `ANTHROPIC_API_KEY`.
-- A full refresh spends ~$60–100 of Anthropic credits; the run is cost-guarded and
-  gates the expensive map/keynote steps on new claims. (If Nixpacks doesn't install
-  the package cleanly from `pyproject.toml`, add an `apps/pipeline/Dockerfile` like
-  the backend's; `pip install -e .` then the start command.)
+- On startup the run **applies any pending migrations** to `DATABASE_URL` (the
+  migrations are bundled in the image), then scrapes → processes → (gated)
+  regenerates. Pass `--skip-migrate` only if you manage the schema externally.
+  A full refresh spends ~$60–100 of Anthropic credits; the run is cost-guarded
+  and gates the expensive map/keynote steps on new claims.
 
 ## 6. Verify
 - `https://<backend-domain>/health` → `ok`; `/api/stats` → JSON counts.

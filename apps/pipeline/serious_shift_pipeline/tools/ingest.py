@@ -9,7 +9,7 @@ last_insert_rowid()→RETURNING id; Anthropic urllib call→llm.call_claude;
 `LIKE`→`ILIKE`. The web fetch still uses urllib (that's scraping, not the API).
 
 Usage:
-  DATABASE_URL=... [ANTHROPIC_API_KEY=...] python -m serious_shift_pipeline.ingest \
+  DATABASE_URL=... [ANTHROPIC_API_KEY=...] python -m serious_shift_pipeline.tools.ingest \
       --url URL --thinker "Sam Altman"
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ import re
 import sys
 from datetime import datetime
 
-from . import db, llm
+from ..core import db, llm
 
 INGEST_MODEL = "claude-sonnet-4-6"
 

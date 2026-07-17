@@ -49,14 +49,65 @@ def normalize_date(value):
     return None
 
 
+# Connection-string env vars we accept, in priority order. Railway's Postgres
+# plugin exposes DATABASE_URL on the database service, but other services see it
+# only if referenced (`${{Postgres.DATABASE_URL}}`); the private/public/`POSTGRES_*`
+# variants are common alternatives, so we accept any of them.
+_DSN_ENV_VARS = (
+    "DATABASE_URL",
+    "DATABASE_PRIVATE_URL",
+    "DATABASE_PUBLIC_URL",
+    "POSTGRES_URL",
+    "POSTGRESQL_URL",
+)
+
+
+def _is_unresolved_ref(value: str) -> bool:
+    """A Railway variable reference that didn't resolve, e.g. '${{Postgres.DATABASE_URL}}'."""
+    return value.startswith("${{") and value.endswith("}}")
+
+
 def get_dsn() -> str:
-    dsn = os.environ.get("DATABASE_URL")
-    if not dsn:
-        raise RuntimeError(
-            "DATABASE_URL is not set. Start local Postgres with "
-            "`cd packages/db && docker compose up -d` and export DATABASE_URL."
-        )
-    return dsn
+    for name in _DSN_ENV_VARS:
+        raw = os.environ.get(name)
+        if raw is None:
+            continue
+        value = raw.strip()
+        if value and not _is_unresolved_ref(value):
+            return value
+
+    # Build a per-variable status (names + status only — never the value) so the
+    # most common Railway failure is obvious: the var EXISTS but is empty, which
+    # means a reference like ${{Postgres.DATABASE_URL}} resolved to nothing.
+    statuses = []
+    for name in _DSN_ENV_VARS:
+        if name not in os.environ:
+            continue
+        value = (os.environ.get(name) or "").strip()
+        if not value:
+            statuses.append(f"{name}=<present but EMPTY>")
+        elif _is_unresolved_ref(value):
+            statuses.append(f"{name}=<unresolved reference {value}>")
+        else:  # pragma: no cover — a usable value would have been returned above
+            statuses.append(f"{name}=<set>")
+
+    empty_or_unresolved = any("EMPTY" in s or "unresolved" in s for s in statuses)
+    hint = (
+        "A variable is present but empty (or an unresolved ${{...}} reference). On "
+        "Railway this means the reference didn't resolve: verify the database service "
+        "is named exactly 'Postgres' (case-sensitive) — if it has a different name, "
+        "use ${{<that-name>.DATABASE_URL}} — and that the reference is set on THIS "
+        "service, then redeploy."
+        if empty_or_unresolved else
+        "Set DATABASE_URL on THIS service (Railway: DATABASE_URL = "
+        "${{Postgres.DATABASE_URL}}), then redeploy so the deployment picks it up."
+    )
+    raise RuntimeError(
+        "No usable database connection string in the environment (looked for "
+        f"{', '.join(_DSN_ENV_VARS)}). {hint} "
+        f"Status of DB vars seen: {statuses or 'none present'}. "
+        "Locally: `cd packages/db && docker compose up -d` and export DATABASE_URL."
+    )
 
 
 def raw_connect():

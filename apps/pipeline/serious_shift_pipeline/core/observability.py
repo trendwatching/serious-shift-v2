@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 import traceback as tb
 from datetime import datetime
 
@@ -25,6 +26,7 @@ class ErrorLog:
     def __init__(self, run_id: str):
         self.run_id = run_id
         self._count = 0
+        self._lock = threading.Lock()   # record() is called from worker threads
         self.path = os.path.join(LOGS_DIR, "error_log.jsonl")
         _ensure_logs_dir()
 
@@ -42,9 +44,11 @@ class ErrorLog:
             "outcome": outcome,
             **{k: str(v)[:200] for k, v in extra.items()},
         }
-        with open(self.path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
-        self._count += 1
+        line = json.dumps(entry) + "\n"
+        with self._lock:
+            with open(self.path, "a", encoding="utf-8") as f:
+                f.write(line)
+            self._count += 1
 
     @property
     def count(self) -> int:
@@ -69,17 +73,19 @@ class CostTracker:
         self.output_tokens = 0
         self.calls = 0
         self.by_thinker: dict = {}
+        self._lock = threading.Lock()   # add() is called from worker threads
 
     def add(self, usage: dict, thinker_name: str = "unknown") -> None:
         inp = usage.get("input_tokens", 0)
         out = usage.get("output_tokens", 0)
-        self.input_tokens += inp
-        self.output_tokens += out
-        self.calls += 1
-        t = self.by_thinker.setdefault(thinker_name, {"input_tokens": 0, "output_tokens": 0, "calls": 0})
-        t["input_tokens"] += inp
-        t["output_tokens"] += out
-        t["calls"] += 1
+        with self._lock:
+            self.input_tokens += inp
+            self.output_tokens += out
+            self.calls += 1
+            t = self.by_thinker.setdefault(thinker_name, {"input_tokens": 0, "output_tokens": 0, "calls": 0})
+            t["input_tokens"] += inp
+            t["output_tokens"] += out
+            t["calls"] += 1
 
     @property
     def cost(self) -> float:

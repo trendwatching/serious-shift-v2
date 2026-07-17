@@ -5,21 +5,34 @@ Anthropic API, scores them, and generates the trend map + keynote — all writte
 to **Postgres** (the backend then serves it). A scheduled batch service, not a
 request server.
 
-## Flow
+## Structure — where to change things
 
 ```
-scraper  → raw_content/*.txt              (fetch; append-only, per-source watermark)
-process_raw → claims/sources/predictions  (Claude extraction)
-scoring  → source_depth, freshness, claim_weight   (free, no API)
-generate_map_data    → documents['map']      (Claude; served at /api/map)
-generate_keynote     → documents['keynote']  (Claude; served at /api/keynote)
-evaluate → prediction status + credibility scores
-run_weekly orchestrates 1→2→2.5→(3,4); steps 3-4 are gated on new claims.
+serious_shift_pipeline/
+  run_weekly.py   THE FLOW — read this first; orchestrates the steps below
+  core/           shared infrastructure (no pipeline logic here)
+    db.py            Postgres access (connect / query / execute / normalize_date)
+    llm.py           Anthropic client + robust JSON parsing
+    config.py        model id + pricing (env-overridable)
+    voice.py         the tone of voice — edit here to change how ALL content reads
+    observability.py cost tracking + JSONL logs
+  steps/          the pipeline, in flow order — edit a step here
+    scraper.py          fetch sources → raw_content/*.txt (per-source watermark)
+    process_raw.py      Claude extraction → claims/sources/predictions  (prompt lives here)
+    scoring.py          source_depth · freshness · claim_weight (free, no API)
+    generate_map_data.py  → documents['map']      (Claude; served at /api/map)
+    generate_keynote.py   → documents['keynote']  (Claude; served at /api/keynote)
+    evaluate.py         prediction status + credibility scores
+    deduplicate.py      mark duplicate claims
+  tools/          run on demand, not part of run_weekly
+    ingest.py     ad-hoc single-URL ingest
+    status.py     DB/health dashboard
+    queries.py    read queries (also the backend's functional spec)
 ```
 
-Other modules: `ingest` (ad-hoc single-URL), `deduplicate` (mark duplicate
-claims), `status` (DB/health dashboard), `queries` (read queries; also the
-backend's functional spec), `db`/`llm`/`observability`/`config` (shared).
+`run_weekly` runs `scraper → process_raw → scoring → (generate_map_data, generate_keynote)`;
+the two LLM generators are gated on new claims. **To change behaviour, edit the
+relevant `steps/` file; shared plumbing lives in `core/`.**
 
 ## Configuration (env)
 
@@ -29,8 +42,16 @@ backend's functional spec), `db`/`llm`/`observability`/`config` (shared).
 | `ANTHROPIC_API_KEY` | for extraction/generation | scraper & scoring don't need it |
 | `RAW_CONTENT_DIR` | no | default `./raw_content` |
 | `SS_LOGS_DIR` | no | default `./logs` |
+| `SS_MAX_WORKERS` | no | parallelism for scrape/extract/generate (default `8`). Lower it if you hit API rate limits. |
+| `WEBSHARE_PROXY_USERNAME` / `WEBSHARE_PROXY_PASSWORD` | no | route YouTube transcript fetches through a Webshare residential proxy — needed on cloud hosts, where YouTube IP-blocks datacenter IPs. |
+| `YOUTUBE_PROXY_URL` | no | alternative to Webshare: any `http://user:pass@host:port` proxy for YouTube (used for both yt-dlp listing and transcripts). |
 
 Run modules from the **repo root** (raw_content + logs are cwd-relative).
+
+The I/O-bound steps run concurrently (scraping per thinker, Claude extraction per
+file, map/keynote generation per domain/Key-Trend) via a bounded thread pool —
+DB writes stay serial. This cuts a full run from hours to a fraction. Tune with
+`SS_MAX_WORKERS`.
 
 ## Source manifest — `scrape_sources` table
 
@@ -62,17 +83,17 @@ export DATABASE_URL=postgres://serious:serious@localhost:5432/serious_shift
 export ANTHROPIC_API_KEY=sk-...
 
 pytest                                            # SQL-validation + unit + (DB-gated) integration
-python -m serious_shift_pipeline.status           # health snapshot
+python -m serious_shift_pipeline.tools.status           # health snapshot
 python -m serious_shift_pipeline.run_weekly --dry-run   # plan, no changes
 python -m serious_shift_pipeline.run_weekly             # full run (scrape→extract→score→map→keynote)
 
 # individual steps
-python -m serious_shift_pipeline.scraper --thinker "Ethan Mollick"
-python -m serious_shift_pipeline.process_raw --thinker "Ethan Mollick"
-python -m serious_shift_pipeline.scoring
-python -m serious_shift_pipeline.ingest --url URL --thinker "Sam Altman"
-python -m serious_shift_pipeline.deduplicate --execute [--use-api]
-python -m serious_shift_pipeline.evaluate
+python -m serious_shift_pipeline.steps.scraper --thinker "Ethan Mollick"
+python -m serious_shift_pipeline.steps.process_raw --thinker "Ethan Mollick"
+python -m serious_shift_pipeline.steps.scoring
+python -m serious_shift_pipeline.tools.ingest --url URL --thinker "Sam Altman"
+python -m serious_shift_pipeline.steps.deduplicate --execute [--use-api]
+python -m serious_shift_pipeline.steps.evaluate
 ```
 
 Lint/type: `ruff check` · `mypy serious_shift_pipeline`. CI: `.github/workflows/pipeline.yml`.

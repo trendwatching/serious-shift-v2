@@ -1,5 +1,5 @@
 """Pure-function tests for the credibility formula — no database needed."""
-from serious_shift_pipeline.evaluate import score_thinker
+from serious_shift_pipeline.steps.evaluate import score_thinker
 
 
 def test_no_evaluable_predictions_defaults_to_neutral():

@@ -44,7 +44,7 @@ python etl/verify_parity.py     --sqlite ../../serious-shift.db     # "lossless 
 
 # 2. Pipeline
 cd ../../apps/pipeline && pip install -e ".[dev]" && pytest
-(cd ../.. && python -m serious_shift_pipeline.status)
+(cd ../.. && python -m serious_shift_pipeline.tools.status)
 
 # 3. Backend  (needs Rust)
 cd ../backend && cargo run                                          # :8080

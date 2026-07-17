@@ -10,8 +10,8 @@ Converted from deduplicate_claims.py:
 The word-overlap heuristic, union-find grouping, and primary selection are unchanged.
 
 Usage:
-  DATABASE_URL=... python -m serious_shift_pipeline.deduplicate           # dry run
-  DATABASE_URL=... python -m serious_shift_pipeline.deduplicate --execute [--use-api]
+  DATABASE_URL=... python -m serious_shift_pipeline.steps.deduplicate           # dry run
+  DATABASE_URL=... python -m serious_shift_pipeline.steps.deduplicate --execute [--use-api]
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ import argparse
 import re
 from collections import defaultdict
 
-from . import db, llm
+from ..core import db, llm
 
 DEDUP_MODEL = "claude-sonnet-4-6"
 

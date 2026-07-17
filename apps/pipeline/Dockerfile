@@ -1,6 +1,10 @@
 # Pipeline image — used by the Railway cron service (and any container host).
+# Built from this directory (apps/pipeline) as context.
+#
 # run_weekly subprocesses `python -m serious_shift_pipeline.<step>`, so the
-# package is installed into the image.
+# package is installed into the image. The package bundles the database
+# migrations (serious_shift_pipeline/migrations/*.sql), which run_weekly applies
+# idempotently on startup — so the cron bootstraps a fresh database itself.
 FROM python:3.13-slim
 WORKDIR /app
 COPY pyproject.toml ./

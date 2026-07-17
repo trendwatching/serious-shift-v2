@@ -19,11 +19,10 @@ export default function Map() {
   if (!data)   return <MapError />
 
   const isV2 = data.architecture === 'domain-first-v2'
-  const { macros, scenarios, key_trends, sub_trends, claims } = data
+  const { macros, key_trends, sub_trends, claims } = data
   if (isV2) {
     if (
       !Array.isArray(data.domains) ||
-      !Array.isArray(scenarios)    ||
       !Array.isArray(key_trends)   ||
       !Array.isArray(sub_trends)   ||
       !Array.isArray(claims)
@@ -70,10 +69,10 @@ export function MapError() {
         Couldn&rsquo;t load the map.
       </h1>
       <p className="mt-4 text-neutral-400 text-sm">
-        The app couldn&rsquo;t reach <code>/api/map</code>. Check that{' '}
-        <code>NEXT_PUBLIC_API_BASE</code> points at the backend and that the
-        database has a <code>map</code> document. See the browser console for the
-        exact error.
+        The app couldn&rsquo;t reach <code>/api/map</code>. Check that the
+        frontend&rsquo;s <code>BACKEND_ORIGIN</code> points at the backend (the
+        Next.js proxy target) and that the database has a <code>map</code>{' '}
+        document. See the browser console for the exact error.
       </p>
     </div>
   )
