@@ -67,6 +67,15 @@ def run(conn) -> dict[str, dict]:
             (status, notes, pid),
         )
 
+    # Mean source authority per entity — the reputability signal for entities
+    # that have no evaluable predictions (papers, orgs, labs, discovered authors).
+    authority_by_id = {
+        r["thinker_id"]: r["a"]
+        for r in db.query(conn, """
+            SELECT thinker_id, AVG(authority) AS a
+            FROM sources WHERE authority IS NOT NULL GROUP BY thinker_id""")
+    }
+
     scores: dict[str, dict] = {}
     for t in db.query(conn, "SELECT id, name FROM thinkers"):
         preds = db.query(
@@ -75,10 +84,21 @@ def run(conn) -> dict[str, dict]:
             (t["id"],),
         )
         s = score_thinker([(p["status"], p["consensus_alignment"]) for p in preds])
+        authority = authority_by_id.get(t["id"])
+
+        # For entities with no evaluated predictions, a prediction-derived
+        # credibility (~54) is meaningless — prefer the source-authority signal
+        # when we have one so papers/orgs rank on merit, not a neutral default.
+        credibility = s["credibility"]
+        if s["evaluable"] == 0 and authority is not None:
+            credibility = round(float(authority) * 100.0, 1)
+
         db.execute(
             conn,
-            "UPDATE thinkers SET credibility_score = %s, prediction_accuracy = %s, outlier_factor = %s WHERE id = %s",
-            (s["credibility"], s["accuracy"], s["outlier"], t["id"]),
+            """UPDATE thinkers SET credibility_score = %s, prediction_accuracy = %s,
+                   outlier_factor = %s, authority_score = %s WHERE id = %s""",
+            (credibility, s["accuracy"], s["outlier"],
+             round(float(authority), 3) if authority is not None else None, t["id"]),
         )
         scores[t["name"]] = s
     return scores

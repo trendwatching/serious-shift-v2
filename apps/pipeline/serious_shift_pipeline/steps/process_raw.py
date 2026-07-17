@@ -59,6 +59,29 @@ def get_thinker(conn, name):
     return db.query_one(conn, "SELECT * FROM thinkers WHERE name ILIKE %s", (f"%{name}%",))
 
 
+def get_thinker_exact(conn, name):
+    return db.query_one(conn, "SELECT * FROM thinkers WHERE name = %s", (name,))
+
+
+def upsert_entity(conn, name, *, kind="person", discovered=False, reputation_tier=None):
+    """Ensure an entity (person/org/lab/publication/venue) exists; return its row.
+    Used to auto-create lightweight entities for discovered paper authors/orgs
+    that aren't on the curated roster."""
+    db.execute(conn, """INSERT INTO thinkers (name, entity_kind, discovered, reputation_tier)
+        VALUES (%s,%s,%s,%s) ON CONFLICT (name) DO NOTHING""",
+        (name[:200], kind, discovered, reputation_tier))
+    conn.commit()
+    return get_thinker_exact(conn, name[:200])
+
+
+def venue_tier_from_db(conn, venue):
+    """Curated venue tier from reputable_venues (exact, case-insensitive), else None."""
+    if not venue:
+        return None
+    r = db.query_one(conn, "SELECT tier FROM reputable_venues WHERE lower(name) = lower(%s)", (venue,))
+    return r["tier"] if r else None
+
+
 def get_thinker_context(conn, thinker_id):
     claims = db.query(conn, """SELECT c.claim_text, c.domain, s.date_published
         FROM claims c LEFT JOIN sources s ON c.source_id = s.id
@@ -209,7 +232,11 @@ Return ONLY the JSON. No commentary."""
 # ── DB writer ─────────────────────────────────────────────────────────────────
 
 _TYPE_VALID = {"article", "interview", "talk", "podcast", "blog_post", "essay", "paper",
-               "video", "social_media", "policy_paper", "book"}
+               "video", "social_media", "policy_paper", "book",
+               "research_paper", "working_paper", "lab_post"}
+
+# Venues that are NOT peer-reviewed (preprint servers / aggregators).
+_PREPRINT_VENUES = {"arxiv", "ssrn", "openalex", "biorxiv", "medrxiv", "preprint", "osf"}
 
 
 def write_to_database(conn, thinker, meta, raw_text, extracted):
@@ -225,20 +252,64 @@ def write_to_database(conn, thinker, meta, raw_text, extracted):
             print(f"    Source already in DB (id={existing['id']}). Skipping DB write.")
             return existing["id"], 0, 0
 
+    # ── Paper / venue metadata from the scraper front-matter (ground truth from
+    # the arXiv/OpenAlex APIs); prefer it over LLM-extracted values. ──
+    import json as _json
+    authors_list = ([a.strip() for a in str(meta["authors"]).split(";") if a.strip()]
+                    if meta.get("authors") else None)
+    venue = (meta.get("venue") or "").strip() or None
+    doi = (meta.get("doi") or "").strip() or None
+    external_id = (meta.get("external_id") or "").strip() or None
+    _cit = str(meta.get("citation_count") or "").strip()
+    citation_count = int(_cit) if _cit.isdigit() else None
+    platform = (meta.get("platform") or src.get("platform") or "").strip() or None
+    stype = meta.get("source_type") or src.get("source_type")
+    source_type = stype if stype in _TYPE_VALID else "article"
+    peer_reviewed = (venue.lower() not in _PREPRINT_VENUES) if venue else None
+
+    authority = None
+    if meta.get("authority"):
+        try:
+            authority = float(meta["authority"])
+        except (TypeError, ValueError):
+            authority = None
+    if authority is None and (citation_count is not None or venue):
+        from . import gate as _gate
+        tier = venue_tier_from_db(conn, venue) or _gate.venue_tier(venue)
+        authority = _gate.compute_authority(
+            citation_count=citation_count, tier=tier,
+            entity_tier=thinker.get("reputation_tier"))
+
+    # Cross-post dedup: same paper via a different feed/URL (arXiv ↔ OpenAlex ↔
+    # journal) shares a DOI or external id — skip the duplicate ingest.
+    if doi:
+        dup = db.query_one(conn, "SELECT id FROM sources WHERE doi = %s", (doi,))
+        if dup:
+            print(f"    Paper already in DB by DOI (id={dup['id']}). Skipping.")
+            return dup["id"], 0, 0
+    if external_id:
+        dup = db.query_one(conn, "SELECT id FROM sources WHERE external_id = %s", (external_id,))
+        if dup:
+            print(f"    Paper already in DB by external_id (id={dup['id']}). Skipping.")
+            return dup["id"], 0, 0
+
     filename = f"{date_pub} - {thinker['name'].split()[-1]} - {re.sub(r'[^a-zA-Z0-9 -]', '', title)[:50].strip()}.md"
     source_id = db.insert_returning_id(conn, """INSERT INTO sources
-        (thinker_id, title, date_published, source_type, url, summary, full_text,
-         consumer_implication, signal_strength, novelty, keynote_impact, confidence, filename)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+        (thinker_id, title, date_published, source_type, platform, url, summary, full_text,
+         consumer_implication, signal_strength, novelty, keynote_impact, confidence, filename,
+         doi, venue, external_id, citation_count, peer_reviewed, authors, authority)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s) RETURNING id""",
         (thinker_id, title, date_pub,
-         src.get("source_type") if src.get("source_type") in _TYPE_VALID else "article",
+         source_type, platform,
          url, src.get("summary", "")[:2000], raw_text[:50000],
          src.get("consumer_implication", "")[:1000],
          src.get("signal_strength") if src.get("signal_strength") in {"noise", "background", "signal", "strong_signal"} else "signal",
          src.get("novelty") if src.get("novelty") in {"new_thinking", "repeating_position", "position_shift"} else "repeating_position",
          src.get("keynote_impact") if src.get("keynote_impact") in {"new_slide", "strengthens_existing", "contradicts_current", "obsoletes_section", "background"} else "strengthens_existing",
          src.get("confidence") if src.get("confidence") in {"speculation", "informed_prediction", "data_backed"} else "informed_prediction",
-         filename))
+         filename,
+         doi, venue, external_id, citation_count, peer_reviewed,
+         _json.dumps(authors_list) if authors_list else None, authority))
 
     claim_ids = []
     for cl in extracted.get("claims", []):
@@ -318,8 +389,20 @@ def prepare_file(filepath, conn, error_log=None):
     thinker_name = meta.get("thinker") or os.path.basename(os.path.dirname(filepath)).replace("_", " ")
     thinker = get_thinker(conn, thinker_name)
     if not thinker:
-        print(f"    SKIP: Thinker '{thinker_name}' not found in DB ({os.path.basename(filepath)})")
-        return None
+        # Discovered content (papers / gated sources) is attributed to authors or
+        # orgs that aren't on the curated roster — auto-create a lightweight entity
+        # rather than dropping the item. Curated non-paper sources still skip.
+        is_discovered = (
+            meta.get("source_type") == "research_paper"
+            or meta.get("authors")
+            or meta.get("platform") in {"paper", "lab_blog"}
+        )
+        if is_discovered:
+            kind = "publication" if meta.get("platform") == "lab_blog" else "person"
+            thinker = upsert_entity(conn, thinker_name, kind=kind, discovered=True)
+        if not thinker:
+            print(f"    SKIP: Thinker '{thinker_name}' not found in DB ({os.path.basename(filepath)})")
+            return None
 
     context_claims, context_preds = get_thinker_context(conn, thinker["id"])
     return {

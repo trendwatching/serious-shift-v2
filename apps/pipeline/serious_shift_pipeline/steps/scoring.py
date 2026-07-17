@@ -22,7 +22,8 @@ from datetime import date, datetime
 from ..core import db
 
 SIGNAL_NUMERIC = {"strong_signal": 1.0, "signal": 0.7, "background": 0.3, "noise": 0.1}
-MIN_DEPTH_BY_TYPE = {"essay": 4, "book": 4, "policy_paper": 4}
+MIN_DEPTH_BY_TYPE = {"essay": 4, "book": 4, "policy_paper": 4,
+                     "research_paper": 4, "working_paper": 4, "lab_post": 3}
 MAX_DEPTH_BY_TYPE = {"tweet_thread": 2, "social_media": 2}
 
 
@@ -67,7 +68,7 @@ def score_sources(conn, dry_run: bool) -> dict:
         for r in db.query(conn, "SELECT source_id, SUM(LENGTH(claim_text)) AS n FROM claims GROUP BY source_id")
     }
     depth_map = {}
-    for s in db.query(conn, "SELECT id, source_type, full_text FROM sources"):
+    for s in db.query(conn, "SELECT id, source_type, full_text, peer_reviewed FROM sources"):
         chars = len(s["full_text"]) if s["full_text"] else claim_chars.get(s["id"], 0)
         depth = depth_from_chars(chars)
         st = s["source_type"] or ""
@@ -75,6 +76,10 @@ def score_sources(conn, dry_run: bool) -> dict:
             depth = max(depth, MIN_DEPTH_BY_TYPE[st])
         if st in MAX_DEPTH_BY_TYPE:
             depth = min(depth, MAX_DEPTH_BY_TYPE[st])
+        # Peer-reviewed papers carry the deepest authority regardless of length
+        # (abstracts are short but the work behind them is not).
+        if s["peer_reviewed"] and st in {"research_paper", "working_paper"}:
+            depth = 5
         depth_map[s["id"]] = depth
         if not dry_run:
             db.execute(conn, "UPDATE sources SET source_depth = %s WHERE id = %s", (depth, s["id"]))
@@ -85,7 +90,7 @@ def score_claims(conn, depth_map: dict, today: date, dry_run: bool) -> int:
     """Compute + write claims.freshness_score and claims.claim_weight."""
     claims = db.query(conn, """
         SELECT c.id, c.thinker_id, c.source_id, c.domain, c.signal_strength,
-               c.specificity, s.date_published
+               c.specificity, s.date_published, s.authority
         FROM claims c LEFT JOIN sources s ON c.source_id = s.id""")
     validated = {
         (r["thinker_id"], r["domain"])
@@ -126,7 +131,12 @@ def score_claims(conn, depth_map: dict, today: date, dry_run: bool) -> int:
         depth = depth_map.get(c["source_id"]) or 3
         sig = SIGNAL_NUMERIC.get(c["signal_strength"], 0.5)
         spec = (c["specificity"] or 3) / 5.0
-        weight = round((depth / 5.0) * sig * spec * freshness[c["id"]], 4)
+        # Authority factor: reputable sources keep full weight; low-authority
+        # ones are scaled down to 0.5×. Roster-thinker content (authority NULL)
+        # is unaffected (factor 1.0), preserving existing rankings.
+        auth = c["authority"]
+        auth_factor = (0.5 + 0.5 * float(auth)) if auth is not None else 1.0
+        weight = round((depth / 5.0) * sig * spec * freshness[c["id"]] * auth_factor, 4)
         if not dry_run:
             db.execute(conn, "UPDATE claims SET freshness_score = %s, claim_weight = %s WHERE id = %s",
                        (freshness[c["id"]], weight, c["id"]))
