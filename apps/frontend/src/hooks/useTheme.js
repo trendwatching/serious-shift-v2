@@ -3,19 +3,19 @@ import { useEffect, useState } from 'react'
 /**
  * useTheme — manages dark / light mode.
  *
- * Default: dark (matches the app's existing dark-first design).
- * Persisted in localStorage under the key 'ss-theme'.
+ * Default: light (the bright "Serious Shi(f)t" look). The dark theme is an
+ * opt-in variant. Persisted in localStorage under the key 'ss-theme'.
  *
- * Applies the theme by toggling the 'light' class on <html>.
- * The index.css `html.light { }` block overrides Tailwind's neutral-*
- * CSS variables to produce the warm TrendWatching-inspired light palette.
+ * Applies the theme by toggling the 'light' class on <html> (present = light).
+ * The index.css `html.light { }` block supplies the bright palette; removing
+ * the class falls back to the dark base tokens.
  */
 export function useTheme() {
   const [theme, setTheme] = useState(() => {
     try {
-      return localStorage.getItem('ss-theme') || 'dark'
+      return localStorage.getItem('ss-theme') || 'light'
     } catch {
-      return 'dark'
+      return 'light'
     }
   })
 

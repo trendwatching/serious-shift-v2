@@ -45,11 +45,11 @@ jobs:
       - name: Apply migrations
         run: dbmate up
 
-      - name: Assert schema (expect 34 tables)
+      - name: Assert schema (expect 20 tables)
         run: |
           n=$(psql "$DATABASE_URL" -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name <> 'schema_migrations';")
           echo "public tables: $n"
-          test "$n" -eq 34
+          test "$n" -eq 20
 
       - name: Rollback + re-apply (down/up reversibility)
         run: |

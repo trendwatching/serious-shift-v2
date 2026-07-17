@@ -5,11 +5,15 @@
  * uses the same tint and the colour persists down the warp hierarchy.
  */
 
+// Per-domain hues carried down the whole hierarchy (blob → streak → stat →
+// breadcrumb tint). Values mirror the --color-c-* @theme tokens in index.css.
+// `soft` is a low-alpha tint for backgrounds; `image` is the hero photo used
+// inside the domain's smoke-blob (assets live in /public/domains/).
 export const DOMAIN_COLORS = {
-  society:       { color: 'var(--map-macro)', soft: 'var(--map-macro-soft)' },
-  economy:       { color: 'var(--map-key)',   soft: 'var(--map-key-soft)'   },
-  consumers:     { color: 'var(--map-sub)',   soft: 'var(--map-sub-soft)'   },
-  organisations: { color: '#6ee7b7',          soft: 'color-mix(in oklab, #6ee7b7 14%, transparent)' },
+  society:       { color: '#F6469F', soft: 'color-mix(in oklab, #F6469F 12%, transparent)', image: '/domains/society.jpg' },
+  economy:       { color: '#2E9BE6', soft: 'color-mix(in oklab, #2E9BE6 12%, transparent)', image: '/domains/economy.jpg' },
+  consumers:     { color: '#FF6A3D', soft: 'color-mix(in oklab, #FF6A3D 12%, transparent)', image: '/domains/consumers.jpg' },
+  organisations: { color: '#7FCB3B', soft: 'color-mix(in oklab, #7FCB3B 12%, transparent)', image: '/domains/organisations.jpg' },
 }
 
 export const DEFAULT_PALETTE = DOMAIN_COLORS.society
