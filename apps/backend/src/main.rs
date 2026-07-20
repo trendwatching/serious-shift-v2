@@ -48,6 +48,13 @@ fn cors_layer() -> CorsLayer {
     }
 }
 
+/// Per-IP request timestamps for the /api/personalize rate limiter.
+type RateMap = Arc<Mutex<HashMap<String, Vec<Instant>>>>;
+/// TTL-cached /api/personalize responses, keyed by request signature.
+type ResultCache = Arc<Mutex<HashMap<String, (Instant, Value)>>>;
+/// TTL-cached raw document JSON, keyed by document key.
+type DocCache = Arc<Mutex<HashMap<String, (Instant, Arc<str>)>>>;
+
 #[derive(Clone)]
 struct AppState {
     pool: PgPool,
@@ -55,12 +62,12 @@ struct AppState {
     // In-memory per-IP rate limiter and result cache for /api/personalize.
     // Single-instance scope (fine for the current deploy); move to a shared
     // KV store if the backend is scaled horizontally.
-    rate: Arc<Mutex<HashMap<String, Vec<Instant>>>>,
-    cache: Arc<Mutex<HashMap<String, (Instant, Value)>>>,
+    rate: RateMap,
+    cache: ResultCache,
     // Cached document JSON (map/keynote/synthesis/daily), keyed by document key.
     // These are large and change ~weekly, so we serve the raw JSON text from
     // memory — skipping the Postgres read + serde round-trip on every request.
-    docs: Arc<Mutex<HashMap<String, (Instant, Arc<str>)>>>,
+    docs: DocCache,
 }
 
 const PERSONALIZE_MODEL: &str = "claude-sonnet-4-6";
