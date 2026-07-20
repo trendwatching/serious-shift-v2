@@ -59,7 +59,10 @@ jobs:
           for i in $(seq 1 20); do curl -sf localhost:8080/health && break; sleep 1; done
           set -e
           curl -sf localhost:8080/api/thinkers | grep -q "Smoke Test"
-          curl -sf localhost:8080/api/stats | grep -q '"thinkers":1'
+          # The DB is not empty — `dbmate up` seeds thinkers — so assert a positive
+          # count rather than an exact one (which was a fragile substring match).
+          # The "Smoke Test" check above already proves the insert round-trips.
+          curl -sf localhost:8080/api/stats | grep -qE '"thinkers":[1-9][0-9]*'
           curl -sf localhost:8080/api/map | grep -q '"ok":true'
           curl -sf localhost:8080/api/claims | grep -q '\[\]'   # empty list, valid
           kill $SERVER
