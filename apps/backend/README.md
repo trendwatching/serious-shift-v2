@@ -20,6 +20,7 @@ Stack: Rust · axum · sqlx (Postgres) · reqwest (for `/api/personalize`).
 | `GET /api/stats` | aggregate counts |
 | `GET /api/map` `/api/keynote` `/api/daily` | whole-document blobs (the pipeline writes these) |
 | `POST /api/personalize` | rewrites keynote sections for an industry via Claude |
+| `POST /api/innovations/ingest` | ingests one innovation from the Innovation database → `innovations` table (idempotent on `source_innovation_id`); `ok`/200, 500 on failure |
 
 ## Configuration (env)
 
