@@ -99,7 +99,11 @@ jobs:
 
           check /api/thinkers "Smoke Test"
           check /api/stats '"thinkers":[1-9][0-9]*'
-          check /api/map '"ok":true'
+          # Document endpoints serve raw jsonb text from Postgres (see the doc
+          # cache in main.rs), which renders `{"ok": true}` with a space after
+          # the colon — so tolerate optional whitespace rather than assuming
+          # serde's compact form.
+          check /api/map '"ok": *true'
           check /api/claims '\[\]'
 
           kill "$SERVER" 2>/dev/null || true
