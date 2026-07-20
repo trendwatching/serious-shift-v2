@@ -419,6 +419,8 @@ def main():
                         help='Suppress desktop notifications (useful for manual runs)')
     parser.add_argument('--skip-migrate', action='store_true',
                         help='Skip the startup migration step (schema managed externally)')
+    parser.add_argument('--discover', action='store_true',
+                        help='Run exploratory arXiv/OpenAlex discovery (gated) before scraping')
     args = parser.parse_args()
 
     api_key = get_api_key()
@@ -464,6 +466,15 @@ def main():
 
     # ── Step 1: Scrape ──────────────────────────────────────────────
     if not args.skip_scrape:
+        # Optional discovery: widen beyond curated feeds with gated arXiv/OpenAlex
+        # queries. Emits raw files that Step 2 then extracts like any other source.
+        if args.discover:
+            run_step(
+                "STEP 1.5 — Discover (gated arXiv/OpenAlex expansion)",
+                [PYTHON, '-m', f'{MOD}.steps.discover'],
+                dry_run=args.dry_run,
+                env=subprocess_env,
+            )
         run_step(
             "STEP 1/4 — Scrape (append-only, per-source watermark)",
             [PYTHON, '-m', f'{MOD}.steps.scraper', '--all'],

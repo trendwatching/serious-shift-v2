@@ -89,6 +89,43 @@ def api_check_duplicates(pairs):
     return duplicates
 
 
+def collapse_duplicate_sources(conn, dry_run):
+    """Collapse cross-posted papers (same DOI / external_id across feeds) by
+    marking the non-primary copies' claims as duplicates of the primary copy's
+    top claim. The ingest guards usually prevent this; this is defence-in-depth
+    for rows that predate them. Primary = peer-reviewed > authority > citations."""
+    rows = db.query(conn, """
+        SELECT id, doi, external_id, peer_reviewed, authority, citation_count
+        FROM sources WHERE doi IS NOT NULL OR external_id IS NOT NULL""")
+    groups = defaultdict(list)
+    for r in rows:
+        key = ("doi", r["doi"]) if r["doi"] else ("ext", r["external_id"])
+        groups[key].append(r)
+
+    marked = 0
+    for srcs in groups.values():
+        if len(srcs) < 2:
+            continue
+        primary = max(srcs, key=lambda s: (bool(s["peer_reviewed"]), s["authority"] or 0.0,
+                                           s["citation_count"] or 0, -s["id"]))
+        top = db.query_one(conn, """SELECT id FROM claims WHERE source_id = %s
+            AND duplicate_of IS NULL ORDER BY COALESCE(claim_weight,0) DESC LIMIT 1""",
+            (primary["id"],))
+        if not top:
+            continue
+        for s in srcs:
+            if s["id"] == primary["id"]:
+                continue
+            for c in db.query(conn, "SELECT id FROM claims WHERE source_id = %s AND duplicate_of IS NULL", (s["id"],)):
+                if c["id"] == top["id"]:
+                    continue
+                marked += 1
+                if not dry_run:
+                    db.execute(conn, "UPDATE claims SET duplicate_of = %s WHERE id = %s", (top["id"], c["id"]))
+    print(f"  Cross-post source collapse: {marked} claims marked from duplicate DOI/external_id groups")
+    return marked
+
+
 def main():
     parser = argparse.ArgumentParser(description="Deduplicate claims")
     parser.add_argument("--execute", action="store_true", help="Write changes")
@@ -100,6 +137,7 @@ def main():
 
     with db.connect() as conn:
         print("  Column claims.duplicate_of: managed by migrations")
+        collapse_duplicate_sources(conn, dry_run)
         claims = db.query(conn, """
             SELECT c.id, c.thinker_id, c.domain, c.claim_text, c.specificity,
                    c.signal_strength, t.name AS thinker, c.claim_weight,
