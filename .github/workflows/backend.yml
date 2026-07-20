@@ -79,18 +79,22 @@ jobs:
 
           fail=0
           check() {  # check <path> <extended-regex>
-            local path="$1" pat="$2" code body
-            body=$(curl -sS --max-time 5 -w $'\n%{http_code}' "$BASE$path") || {
+            # Pure-bash string ops only — no pipes to head/tail/sed/grep. Those
+            # consumers close the pipe early on large bodies, and under `bash -e`
+            # + pipefail the resulting SIGPIPE aborts the whole step.
+            local path="$1" pat="$2" resp code body
+            resp=$(curl -sS --max-time 5 -w $'\n%{http_code}' "$BASE$path") || {
               echo "::error::request to $path failed to connect"; fail=1; return; }
-            code=$(printf '%s' "$body" | tail -n1)
-            body=$(printf '%s' "$body" | sed '$d')
-            echo "== GET $path -> HTTP $code =="
-            printf '%s\n' "$body" | head -c 400; echo
+            code="${resp##*$'\n'}"   # last line = http_code
+            body="${resp%$'\n'*}"    # everything before it = body
+            echo "== GET $path -> HTTP $code (${#body} bytes) =="
+            echo "${body:0:400}"
             if [ "$code" != "200" ]; then
               echo "::error::$path returned HTTP $code (expected 200)"; fail=1; return
             fi
-            printf '%s' "$body" | grep -qE "$pat" || {
-              echo "::error::$path body did not match /$pat/"; fail=1; }
+            if [[ ! "$body" =~ $pat ]]; then
+              echo "::error::$path body did not match /$pat/"; fail=1
+            fi
           }
 
           check /api/thinkers "Smoke Test"
