@@ -1,20 +1,24 @@
 /**
  * Shared site-nav + external destinations.
  *
- * The primary nav headers link to sections of the public about page at
- * seriousshift.ai; "Shifts" is the in-app home (the map). Edit the base URL or
- * a section anchor here and it updates the desktop nav, mobile nav, the
- * Subscribe CTA, and the footer together.
+ * The primary nav headers link to the public about page; "Shifts" is the in-app
+ * home (the map). Until seriousshift.ai/about ships, we point at the live about
+ * page it redirects to (TrendWatching's HubSpot) and use the anchor tags that
+ * actually exist there today: #methodology and #subscribe. The Services and
+ * TrendWatching sections exist on that page but have no anchor id yet, so those
+ * links land on the page top — swap in `${ABOUT_URL}#services` / `#trendwatching`
+ * once those ids are added.
  */
 
-export const SITE_URL = 'https://www.seriousshift.ai'
-export const ABOUT_URL = `${SITE_URL}/about`
+// Live about page (what seriousshift.ai/about redirects to for now).
+export const ABOUT_URL = 'https://info.trendwatching.com/serious-shift/about'
 
-// About-page section anchors.
+// About-page section anchors that exist on the live page today.
 export const METHODOLOGY_URL = `${ABOUT_URL}#methodology`
 export const SUBSCRIBE_URL = `${ABOUT_URL}#subscribe`
-export const SERVICES_URL = `${ABOUT_URL}#services`
-export const TRENDWATCHING_URL = `${ABOUT_URL}#trendwatching`
+// No anchor id on the live page yet — land on the about page top for now.
+export const SERVICES_URL = ABOUT_URL
+export const TRENDWATCHING_URL = ABOUT_URL
 
 export const CONTACT_URL = 'mailto:hello@trendwatching.com'
 
