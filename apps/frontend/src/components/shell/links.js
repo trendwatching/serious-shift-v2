@@ -1,27 +1,36 @@
 /**
  * Shared site-nav + external destinations.
  *
- * Per the redesign plan: internal (data-backed) routes stay in-app; the rest
- * link out to TrendWatching / Serious Shift properties. Methodology & Community
- * from the Figma nav are intentionally omitted until they have real pages.
+ * The primary nav headers link to the public about page; "Shifts" is the in-app
+ * home (the map). Until seriousshift.ai/about ships, we point at the live about
+ * page it redirects to (TrendWatching's HubSpot) and use the anchor tags that
+ * actually exist there today: #methodology and #subscribe. The Services and
+ * TrendWatching sections exist on that page but have no anchor id yet, so those
+ * links land on the page top — swap in `${ABOUT_URL}#services` / `#trendwatching`
+ * once those ids are added.
  */
 
-export const SUBSCRIBE_URL =
-  'https://chat.whatsapp.com/EFptoaGlMau7sNog3onRP2?mode=gi_t'
-export const ABOUT_URL =
-  'https://info.trendwatching.com/serious-shift/about'
-export const SERVICES_URL = 'https://www.seriousshift.ai/about#services'
-export const TRENDWATCHING_URL = 'https://trendwatching.com'
+// Live about page (what seriousshift.ai/about redirects to for now).
+export const ABOUT_URL = 'https://info.trendwatching.com/serious-shift/about'
+
+// About-page section anchors that exist on the live page today.
+export const METHODOLOGY_URL = `${ABOUT_URL}#methodology`
+export const SUBSCRIBE_URL = `${ABOUT_URL}#subscribe`
+// No anchor id on the live page yet — land on the about page top for now.
+export const SERVICES_URL = ABOUT_URL
+export const TRENDWATCHING_URL = ABOUT_URL
+
 export const CONTACT_URL = 'mailto:hello@trendwatching.com'
 
-// Primary nav — order matches the Figma. `to` = internal route, `href` = external.
+// Primary nav — matches the approved navbar spec.
+// `to` = in-app route (Shifts = home); `href` = external about-page section.
 export const NAV_LINKS = [
   { label: 'Shifts',        to: '/' },
-  { label: 'Thinkers',      to: '/map/thinkers' },
-  { label: 'Workshops',     href: SERVICES_URL },
+  { label: 'Methodology',   href: METHODOLOGY_URL },
+  { label: 'Subscribe',     href: SUBSCRIBE_URL },
+  { label: 'Services',      href: SERVICES_URL },
   { label: 'TrendWatching', href: TRENDWATCHING_URL },
   { label: 'About',         href: ABOUT_URL },
-  { label: 'Contact Us',    href: CONTACT_URL },
 ]
 
 // Footer link column ("Serious Shi(f)t" explainer prompts).
