@@ -10,7 +10,7 @@ export const SUBSCRIBE_URL =
   'https://chat.whatsapp.com/EFptoaGlMau7sNog3onRP2?mode=gi_t'
 export const ABOUT_URL =
   'https://info.trendwatching.com/serious-shift/about'
-export const WORKSHOPS_URL = 'https://trendwatching.com/services'
+export const SERVICES_URL = 'https://www.seriousshift.ai/about#services'
 export const TRENDWATCHING_URL = 'https://trendwatching.com'
 export const CONTACT_URL = 'mailto:hello@trendwatching.com'
 
@@ -18,7 +18,7 @@ export const CONTACT_URL = 'mailto:hello@trendwatching.com'
 export const NAV_LINKS = [
   { label: 'Shifts',        to: '/' },
   { label: 'Thinkers',      to: '/map/thinkers' },
-  { label: 'Workshops',     href: WORKSHOPS_URL },
+  { label: 'Workshops',     href: SERVICES_URL },
   { label: 'TrendWatching', href: TRENDWATCHING_URL },
   { label: 'About',         href: ABOUT_URL },
   { label: 'Contact Us',    href: CONTACT_URL },
