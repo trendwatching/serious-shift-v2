@@ -25,6 +25,7 @@ from datetime import datetime
 
 from ..core import db, llm, parallel
 from ..core.observability import CostTracker, ErrorLog, TokenLog
+from ..prompts import extraction_prompt
 
 RAW_DIR = os.environ.get("RAW_CONTENT_DIR", os.path.join(os.getcwd(), "raw_content"))
 
@@ -136,95 +137,7 @@ def mark_processed(filepath):
 # ── extraction ──────────────────────────────────────────────────────────────
 
 def extract_with_claude(raw_text, meta, thinker, context_claims, context_preds, cost_tracker):
-    context_text = "WHAT WE ALREADY KNOW ABOUT THIS THINKER'S POSITIONS:\n"
-    for c in context_claims[:15]:
-        context_text += f"  [{c['date_published']}] {c['claim_text'][:150]}\n"
-    context_text += "\nTHEIR EXISTING PREDICTIONS:\n"
-    for p in context_preds:
-        context_text += f"  {p['prediction_id']}: {p['claim_text'][:100]} [{p['status']}]\n"
-
-    text_for_api = raw_text[:12000]
-    prompt = f"""You are extracting structured intelligence from a primary source.
-
-THINKER: {thinker['name']}
-CREDIBILITY SCORE: {thinker['credibility_score']:.1f}
-SOURCE: {meta.get('title', 'Unknown')} ({meta.get('platform', 'unknown')}, {meta.get('date', 'unknown')})
-URL: {meta.get('url', '')}
-
-{context_text}
-
-RAW CONTENT:
-{text_for_api}
-
-Extract the following as JSON:
-
-{{
-  "source": {{
-    "title": "",
-    "date_published": "",
-    "source_type": "",
-    "platform": "",
-    "summary": "",
-    "consumer_implication": "",
-    "signal_strength": "strong_signal/signal/background/noise",
-    "novelty": "new_thinking/repeating_position/position_shift",
-    "keynote_impact": "new_slide/strengthens_existing/contradicts_current/obsoletes_section/background",
-    "confidence": "speculation/informed_prediction/data_backed"
-  }},
-  "claims": [
-    {{
-      "claim_text": "",
-      "claim_type": "prediction/analysis/opinion/fact/recommendation",
-      "domain": "agi_timeline/labor/consumer_behavior/technology_capability/economy/regulation/existential_risk/enterprise/education/geopolitics",
-      "consumer_implication": "",
-      "signal_strength": "strong_signal/signal/background/noise",
-      "specificity": 3,
-      "quote": "",
-      "has_statistic": false,
-      "statistic": ""
-    }}
-  ],
-  "predictions": [
-    {{
-      "claim_text": "",
-      "timeframe": "",
-      "domain": "",
-      "specificity": 4,
-      "consensus_alignment": 0.5,
-      "evaluation_date": ""
-    }}
-  ],
-  "position_changes": [
-    {{
-      "topic": "",
-      "previous_position": "",
-      "new_position": "",
-      "significance": "minor/moderate/major"
-    }}
-  ]
-}}
-
-RULES:
-- Extract EVERY distinct claim. One idea per claim. Aim for 10-30 claims.
-- US English spelling throughout (behavior, organization, analyze — not behaviour/organisation/analyse).
-- signal_strength — assign explicitly, do not leave to interpretation:
-  - strong_signal: a clear, distinct, specific claim worth surfacing on its own
-  - signal: meaningful, but not the loudest signal
-  - background: context only, not a signal
-  - noise: discard-level
-- has_statistic: true ONLY when the claim contains a specific, dated, attributable number.
-  When true, put that number and its attribution in "statistic", e.g.
-  "34% of US consumers used an AI tool to shortlist a purchase, Q1 2025 (Webb)".
-  Otherwise has_statistic=false and statistic="".
-- consumer_implication must answer specifically: "how does this affect how people buy, live,
-  work, or expect things?" A vague answer fails the requirement.
-- Only create predictions for specific, falsifiable future statements.
-- Set novelty to "position_shift" if content contradicts existing positions above;
-  "repeating_position" if restating known views.
-- Be aggressive with extraction. More is better.
-
-Return ONLY the JSON. No commentary."""
-
+    prompt = extraction_prompt(thinker, meta, raw_text, context_claims, context_preds)
     text, usage = llm.call_claude(prompt)
     cost_tracker.add(usage, thinker_name=thinker["name"])
     return llm.parse_model_json(text)

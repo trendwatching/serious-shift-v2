@@ -44,13 +44,15 @@ import random
 from datetime import date
 
 from ..core import db, llm, parallel
-from ..core.voice import VOICE
-
-# ── Model assignment ─────────────────────────────────────────
-# Editorial synthesis (Key Trends, sub-trends, attribution) runs on Sonnet 4.6.
-SYNTHESIS_MODEL = 'claude-sonnet-4-6'
-# Synthesis insights — the most editorially demanding, lowest-volume phase — runs on Opus 4.7.
-INSIGHTS_MODEL  = 'claude-opus-4-7'
+from ..prompts import (
+    SYNTHESIS_MODEL,
+    INSIGHTS_MODEL,
+    prompt_domain_key_trends,
+    prompt_sub_trends,
+    prompt_thinker_attribution,
+    prompt_interrelatedness_batch,
+    prompt_synthesis_insights,
+)
 
 CLAIMS_PER_DOM  = 200   # claims sent to Key Trend generation per domain
 CLAIMS_PER_KT   = 100   # claims sent to sub-trend generation per KT
@@ -376,158 +378,8 @@ def _diversify(candidates: list, min_thinkers: int = 5, total: int = 100) -> lis
 
 
 # ---------------------------------------------------------------------------
-# Claude prompts
+# Claude response parsing (prompts live in serious_shift_pipeline.prompts)
 # ---------------------------------------------------------------------------
-
-def fmt_claims_block(claims: list, max_per: int = None) -> str:
-    if max_per:
-        claims = claims[:max_per]
-    lines = []
-    for c in claims:
-        cred = f"{c['credibility_score']:.0f}" if c['credibility_score'] else '?'
-        text = (c['claim_text'] or '')[:220]
-        lines.append(f"[id:{c['id']}] [{c['thinker']}, cred:{cred}] [{c['signal_strength']}] {text}")
-        if c.get('consumer_implication'):
-            lines.append(f"  → implication: {c['consumer_implication'][:120]}")
-    return '\n'.join(lines)
-
-
-# ── Phase 3: Key Trend generation per domain ───────────────────────────────
-
-def prompt_domain_key_trends(domain: dict, claims: list) -> str:
-    cb = fmt_claims_block(claims, max_per=180)
-    return f"""{VOICE}
-
-You are synthesising trend intelligence for Serious Shift — a consumer trend platform tracking AGI-driven shifts.
-
-STRATEGIC DOMAIN: {domain['name']}
-DOMAIN DESCRIPTION: {domain['description'][:400]}
-
-TASK
-From the evidence below, identify at least {MIN_KTS_PER_DOM} distinct KEY TRENDS for this domain. Each Key Trend is a named signal — a shift already underway in {domain['name']}, grounded in the claims. Together they map the most important things happening in this domain. Prefer more trends over fewer: surface every distinct shift the evidence supports, but never invent one the claims do not back.
-
-RULES FOR KEY TREND NAMES
-- 1–2 words. Short, intriguing, memorable. The name creates curiosity; the subtitle delivers the meaning. Alliteration works well but is not required.
-- Right: "Synthetic Trust", "Delegated Desire", "Proof Premium", "Silent Commerce", "Branded Brands"
-- Wrong: "AI Changes Consumer Behavior" (descriptive, not a name), "The Rise of Authenticity" (generic), "Trust Issues" (category label)
-- Every Key Trend must be distinct from the others — no overlapping trends.
-
-RULES FOR SUBTITLES (mandatory — the name is never shown without one)
-- One complete, specific sentence. Super descriptive: explain exactly what the trend is. The subtitle carries the meaning the name deliberately withholds; if it is vague, the name has failed.
-- Write it as a journalist writes a subheading, not as a marketer.
-- Right: "When consumers rely on AI recommendations over brand reputation"
-
-RULES FOR CLAIM ASSIGNMENT
-- Assign each claim_id to the single Key Trend it best supports
-- Every claim that clearly fits a Key Trend should be assigned
-- Claims that don't fit cleanly may be omitted
-
-Assign a velocity to each Key Trend:
-- "breakout" = explosive growth, tipping point imminent
-- "accelerating" = clear momentum, adoption growing fast
-- "rising" = real signal, still building
-- "steady" = established, not accelerating
-
-EVIDENCE ({len(claims)} claims from the {domain['name']} domain):
-{cb}
-
-Return ONLY valid JSON — no preamble, no markdown fences:
-{{
-  "key_trends": [
-    {{
-      "name": "Key trend name here",
-      "subtitle": "One specific sentence explaining exactly what this trend is",
-      "velocity": "accelerating",
-      "claim_ids": [123, 456, 789]
-    }},
-    ...
-  ]
-}}"""
-
-
-# ── Phase 5: Sub-trend clustering per KT ───────────────────────────────────
-
-def prompt_sub_trends(kt_name: str, kt_subtitle: str, claims: list) -> str:
-    cb = fmt_claims_block(claims, max_per=90)
-    return f"""{VOICE}
-
-You are synthesising trend intelligence for Serious Shift — a consumer trend platform tracking AGI-driven shifts.
-
-KEY TREND: {kt_name}
-FRAMING: {kt_subtitle}
-
-TASK
-Identify 3–5 coherent SUB-TRENDS that emerge from the evidence below. Each sub-trend is a distinct, named micro-pattern that a brand strategist or consumer researcher would recognise as real.
-
-RULES FOR SUB-TREND NAMES
-- 1–2 words. Short, intriguing, memorable (NOT "AI Adoption", "Trust Issues", "Changing Behavior"). Alliteration welcome, not required.
-
-RULES FOR SUBTITLES (mandatory)
-- One complete, specific sentence that fully explains what the sub-trend is. Journalist subheading, not marketing copy.
-
-RULES FOR DESCRIPTIONS
-- Exactly 2 sentences. Strict.
-- Sentence 1: what is happening. Sentence 2: what it means for consumers or brands.
-- Sentence 2 must name the implication, not restate the observation. If sentence 2 could have been sentence 1 reworded, rewrite it.
-- No filler phrases. No em dashes; use periods and commas only.
-
-RULES FOR CLAIM ASSIGNMENT
-- Assign each claim_id to the single sub-trend it best supports
-- Every claim that clearly fits should be assigned
-
-Also assign a velocity to the Key Trend itself:
-- "breakout" | "accelerating" | "rising" | "steady"
-
-EVIDENCE ({len(claims)} claims):
-{cb}
-
-Return ONLY valid JSON — no preamble, no markdown fences:
-{{
-  "key_trend_velocity": "accelerating",
-  "sub_trends": [
-    {{
-      "name": "1-2 word name",
-      "subtitle": "One specific sentence explaining exactly what this sub-trend is",
-      "description": "Sentence one: what is happening. Sentence two: the implication for consumers or brands.",
-      "claim_ids": [123, 456, 789]
-    }},
-    ...
-  ]
-}}"""
-
-
-# ── Phase 6: Thinker attribution ────────────────────────────────────────────
-
-def prompt_thinker_attribution(node_type: str, node_name: str, thinker_groups: dict) -> str:
-    lines = []
-    for thinker, clms in thinker_groups.items():
-        lines.append(f'\n[{thinker}]')
-        for c in clms[:8]:
-            text = c['claim_text'] if isinstance(c, dict) else c
-            lines.append(f'  - {text[:200]}')
-    return f"""You are analysing thinker stances for Serious Shift.
-
-NODE TYPE: {node_type}
-NODE NAME: {node_name}
-
-TASK
-Based on the claims below (grouped by thinker), identify:
-- 2–3 PROPONENTS: thinkers whose claims most strongly support or accelerate this {node_type}
-- 2–3 SKEPTICS: thinkers whose claims question, complicate, or push back on it
-
-For each thinker, include one direct quote or close paraphrase from THEIR evidence
-that demonstrates why they are a proponent or skeptic. Without the quote the
-attribution is unverifiable. Cite nothing they did not say.
-
-THINKER CLAIMS:
-{''.join(lines)}
-
-Return ONLY valid JSON:
-{{
-  "proponents": [{{"name": "Name A", "quote": "short quote from their evidence"}}],
-  "skeptics":   [{{"name": "Name C", "quote": "short quote from their evidence"}}]
-}}"""
-
 
 def parse_thinker_attribution(raw) -> dict:
     """Return {'proponents': [{name, quote}], 'skeptics': [...]}. Accepts either the
@@ -557,41 +409,6 @@ def _collect_by_thinker(claims: list, max_per: int = 8) -> dict:
 
 
 # ── Phase 7: Interrelatedness ───────────────────────────────────────────────
-
-def prompt_interrelatedness_batch(pairs: list) -> str:
-    lines = [
-        f"  Pair ({p['id_a']}, {p['id_b']}): [{p['type_a']}] {p['name_a']} | [{p['type_b']}] {p['name_b']}"
-        for p in pairs
-    ]
-    return f"""You are mapping relationships between trend nodes in Serious Shift.
-
-RELATIONSHIP TYPES (pick exactly one per pair):
-- "reinforces"       — one makes the other more likely/stronger
-- "contradicts"      — the two pull in opposite directions
-- "prerequisite_for" — one must happen for the other to occur
-- "competes_with"    — compete for same resources/attention/adoption
-- "accelerated_by"   — one is sped up by presence of the other
-- "none"             — no meaningful relationship
-
-STRENGTH: 0.0–1.0 (omit pairs with strength < 0.4 or relationship = "none")
-DIRECTIONALITY: source_id → target_id
-
-PAIRS:
-{chr(10).join(lines)}
-
-Return ONLY valid JSON list:
-[
-  {{
-    "source_id": "scn:1",
-    "target_id": "scn:3",
-    "relationship": "reinforces",
-    "strength": 0.8,
-    "reasoning": "One sentence."
-  }},
-  ...
-]
-(Omit pairs with relationship="none" or strength < 0.4)"""
-
 
 def parse_interrelatedness_batch(raw) -> list:
     VALID = {'reinforces','contradicts','prerequisite_for','competes_with','accelerated_by'}
@@ -623,41 +440,6 @@ def parse_interrelatedness_batch(raw) -> list:
 
 
 # ── Phase 8: Synthesis insights per domain ──────────────────────────────────
-
-def prompt_synthesis_insights(domain_name: str, domain_desc: str, claims: list) -> str:
-    cb = fmt_claims_block(claims, max_per=50)
-    return f"""{VOICE}
-
-You are the synthesis intelligence layer of Serious Shift.
-
-DOMAIN: {domain_name}
-DESCRIPTION: {domain_desc[:300]}
-
-TASK
-Generate 3–4 SYNTHESIS INSIGHTS — emergent ideas arising from combining multiple thinkers' claims. These must NOT be directly stated by any single thinker; they emerge from the pattern of evidence.
-
-RULES
-- Each insight combines at least 2 different thinkers from OPPOSING camps (a proponent and a skeptic), not thinkers who already agree.
-- It must NOT be something any single thinker already wrote. Synthesis test: could this appear in any one thinker's writing? If yes, rewrite it. It should feel surprising but inevitable once read.
-- Name: 4–8 words, surprising but inevitable. Right register: "The Collapse of the Awareness Economy", "When Speed Becomes the New Inequality".
-- Description: 2–3 sentences, forward-looking, {domain_name}-specific, written as if you are the first person to have seen this clearly.
-- contributing_claim_ids: 3–8 claim IDs that together generate the insight
-
-EVIDENCE:
-{cb}
-
-Return ONLY valid JSON:
-{{
-  "insights": [
-    {{
-      "name": "Insight name here",
-      "description": "Two to three sentences.",
-      "contributing_claim_ids": [123, 456, 789]
-    }},
-    ...
-  ]
-}}"""
-
 
 def parse_synthesis_insights(raw) -> list:
     if isinstance(raw, dict):
@@ -731,7 +513,7 @@ def phase3_key_trends(conn, api_key: str, domain_claims: dict) -> dict:
     # Parallel: one independent LLM call per domain.
     def generate(d):
         try:
-            return extract_json(call_claude(prompt_domain_key_trends(d, domain_claims[d['id']]), api_key))
+            return extract_json(call_claude(prompt_domain_key_trends(d, domain_claims[d['id']], MIN_KTS_PER_DOM), api_key))
         except ValueError as e:
             print(f'  ERROR parsing JSON for {d["name"]}: {e}')
             return {'key_trends': []}

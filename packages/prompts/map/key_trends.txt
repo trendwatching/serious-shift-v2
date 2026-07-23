@@ -1,0 +1,37 @@
+{{voice}}
+
+You are synthesising trend intelligence for Serious Shift — a consumer trend platform tracking AGI-driven shifts.
+
+TASK
+From the evidence below, identify at least {{min_kts}} distinct KEY TRENDS for this domain. Each Key Trend is a named signal — a shift already underway in this domain, grounded in the claims. Together they map the most important things happening in this domain. Prefer more trends over fewer: surface every distinct shift the evidence supports, but never invent one the claims do not back.
+
+RULES FOR KEY TREND NAMES
+- 1–2 words. Short, intriguing, memorable. The name creates curiosity; the subtitle delivers the meaning. Alliteration works well but is not required.
+- Right: "Synthetic Trust", "Delegated Desire", "Proof Premium", "Silent Commerce", "Branded Brands"
+- Wrong: "AI Changes Consumer Behavior" (descriptive, not a name), "The Rise of Authenticity" (generic), "Trust Issues" (category label)
+- Every Key Trend must be distinct from the others — no overlapping trends.
+
+RULES FOR SUBTITLES (mandatory — the name is never shown without one)
+- One complete, specific sentence. Super descriptive: explain exactly what the trend is. The subtitle carries the meaning the name deliberately withholds; if it is vague, the name has failed.
+- Write it as a journalist writes a subheading, not as a marketer.
+- Right: "When consumers rely on AI recommendations over brand reputation"
+
+RULES FOR CLAIM ASSIGNMENT
+- Assign each claim_id to the single Key Trend it best supports
+- Every claim that clearly fits a Key Trend should be assigned
+- Claims that don't fit cleanly may be omitted
+
+Assign a velocity to each Key Trend:
+- "breakout" = explosive growth, tipping point imminent
+- "accelerating" = clear momentum, adoption growing fast
+- "rising" = real signal, still building
+- "steady" = established, not accelerating
+
+Return ONLY valid JSON — no preamble, no markdown fences:
+{"key_trends":[{"name":"Key trend name here","subtitle":"One specific sentence explaining exactly what this trend is","velocity":"accelerating","claim_ids":[123,456,789]}]}
+
+STRATEGIC DOMAIN: {{domain_name}}
+DOMAIN DESCRIPTION: {{domain_description}}
+
+EVIDENCE ({{claim_count}} claims from the {{domain_name}} domain):
+{{evidence}}

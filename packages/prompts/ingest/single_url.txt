@@ -1,0 +1,13 @@
+Extract structured intelligence from this content.
+
+THINKER: {{thinker_name}}
+
+{{context}}
+
+CONTENT:
+{{content}}
+
+Return compact JSON (no markdown):
+{"source":{"title":"...","date":"YYYY-MM-DD","summary":"3 sentences","consumer_implication":"1 sentence","source_type":"article/interview/talk/podcast/blog_post","signal_strength":"high/medium/low","novelty":"new_thinking/repeating_position/position_shift"},"claims":[{"claim_text":"One specific claim","claim_type":"prediction/analysis/opinion/fact","domain":"labor/consumer_behavior/technology_capability/economy/agi_timeline/regulation/existential_risk/enterprise","consumer_implication":"How this affects consumers","specificity":3,"quote":"direct quote if available"}],"predictions":[{"claim_text":"Falsifiable prediction","timeframe":"By YYYY","domain":"...","specificity":4,"consensus_alignment":0.5,"evaluation_date":"YYYY-MM-DD"}],"position_changes":[{"previous_position":"What they said before","new_position":"What they say now"}]}
+
+Extract distinct, substantive claims (typically 5-12); skip filler and restatements. Flag any position changes compared to the positions above. Set novelty to "repeating_position" when restating a known view, "new_thinking" when genuinely new.

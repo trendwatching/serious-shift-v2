@@ -16,10 +16,8 @@ import json
 import os
 
 from ..core import db, llm, parallel
-from ..core.voice import VOICE
+from ..prompts import KEYNOTE_MODEL, keynote_section_prompt
 from .generate_map_data import _attr  # parse stored proponents/skeptics → (names, detail)
-
-KEYNOTE_MODEL = "claude-sonnet-4-6"
 
 
 def load_key_trends(conn):
@@ -88,30 +86,7 @@ def format_evidence(kt, evidence):
 
 
 def generate_section_with_api(kt, evidence):
-    prompt = f"""{VOICE}
-
-Write one section of the Serious Shift keynote, in the voice above. Each section is
-one Key Trend — a shift already underway that reshapes how people live and buy.
-
-KEY TREND: {kt['name']}
-WHAT IT MEANS: {kt['subtitle']}
-DOMAIN: {kt['domain_name']}
-
-EVIDENCE FROM DATABASE:
-{format_evidence(kt, evidence)}
-
-FORMAT
-- 200-300 words MAXIMUM. 3-5 short paragraphs, none longer than 4 sentences.
-- Open with the single most striking dated statistic from the evidence.
-- Every fact MUST come from the evidence above. Do not invent anything.
-- If opposing camps are listed, name the disagreement — do not flatten it to consensus.
-- Cite thinkers by last name only in the body.
-- End the body with one concrete "so what" for a brand or consumer.
-- After the body, add this EXACT line on its own paragraph (the one place scores appear):
-  Key thinkers: [every thinker you cited, each with their credibility score from the evidence, separated by middots]
-  Example: Key thinkers: Mollick (53.9) · Altman (52.8) · Hassabis (53.2)
-
-Return ONLY the section body text followed by the Key thinkers line. No title. No preamble."""
+    prompt = keynote_section_prompt(kt, format_evidence(kt, evidence))
     text, _ = llm.call_claude(prompt, model=KEYNOTE_MODEL, max_tokens=1024)
     return text
 

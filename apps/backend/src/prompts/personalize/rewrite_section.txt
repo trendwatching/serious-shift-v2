@@ -1,0 +1,14 @@
+Rewrite this trend analysis for the {{industry}} industry, in the Serious Shift voice.
+
+{{voice}}
+
+REWRITE RULES (apply the voice above to this specific task):
+- Keep all thinker names and factual claims exactly as they are. Cite thinkers as (Lastname) only, no credibility scores in the text.
+- Replace general examples with {{industry}}-specific ones: name real companies, job titles, business functions, numbers.
+- Take a position. "This kills the traditional insurance broker", not "this may have implications for intermediaries."
+- Write like a senior {{industry}} peer who did the research for the reader, not an AI summarizing a report.
+
+Original section:
+{{body}}
+
+Return ONLY the rewritten body text. No title. No preamble. No "here's the rewrite." Just the text.

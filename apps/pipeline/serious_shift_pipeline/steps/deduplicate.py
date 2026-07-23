@@ -20,8 +20,7 @@ import re
 from collections import defaultdict
 
 from ..core import db, llm
-
-DEDUP_MODEL = "claude-sonnet-4-6"
+from ..prompts import DEDUP_MODEL, dedup_prompt
 
 STOPWORDS = frozenset([
     "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
@@ -66,16 +65,7 @@ def api_check_duplicates(pairs):
     duplicates = set()
     for i in range(0, len(pairs), 20):
         batch = pairs[i:i + 20]
-        prompt_lines = []
-        for idx, (id_a, text_a, id_b, text_b) in enumerate(batch):
-            prompt_lines += [f"Pair {idx + 1}:", f"  A [{id_a}]: {text_a[:200]}", f"  B [{id_b}]: {text_b[:200]}"]
-        prompt = (
-            "For each pair of claims below, respond with ONLY the pair number and "
-            "DUPLICATE or UNIQUE. Mark DUPLICATE only if a reader would learn nothing "
-            "new from reading both — they make the same core argument even if worded differently.\n\n"
-            + "\n".join(prompt_lines)
-            + "\n\nRespond as: 1: DUPLICATE or 1: UNIQUE (one per line, nothing else)."
-        )
+        prompt = dedup_prompt(batch)
         try:
             text, _ = llm.call_claude(prompt, model=DEDUP_MODEL, max_tokens=1024)
             for line in text.strip().split("\n"):
