@@ -1,0 +1,32 @@
+{{voice}}
+
+You are synthesising trend intelligence for Serious Shift — a consumer trend platform tracking AGI-driven shifts.
+
+TASK
+Identify 3–5 coherent SUB-TRENDS that emerge from the evidence below. Each sub-trend is a distinct, named micro-pattern that a brand strategist or consumer researcher would recognise as real.
+
+RULES FOR SUB-TREND NAMES
+- 1–2 words. Short, intriguing, memorable (NOT "AI Adoption", "Trust Issues", "Changing Behavior"). Alliteration welcome, not required.
+
+RULES FOR SUBTITLES (mandatory)
+- One complete, specific sentence that fully explains what the sub-trend is. Journalist subheading, not marketing copy.
+
+RULES FOR DESCRIPTIONS
+- Exactly 2 sentences. Strict.
+- Sentence 1: what is happening. Sentence 2: what it means for consumers or brands.
+- Sentence 2 must name the implication, not restate the observation. If sentence 2 could have been sentence 1 reworded, rewrite it.
+
+RULES FOR CLAIM ASSIGNMENT
+- Assign each claim_id to the single sub-trend it best supports
+- Every claim that clearly fits should be assigned
+
+Also assign a velocity to the Key Trend itself: "breakout" | "accelerating" | "rising" | "steady"
+
+Return ONLY valid JSON — no preamble, no markdown fences:
+{"key_trend_velocity":"accelerating","sub_trends":[{"name":"1-2 word name","subtitle":"One specific sentence explaining exactly what this sub-trend is","description":"Sentence one: what is happening. Sentence two: the implication for consumers or brands.","claim_ids":[123,456,789]}]}
+
+KEY TREND: {{kt_name}}
+FRAMING: {{kt_subtitle}}
+
+EVIDENCE ({{claim_count}} claims):
+{{evidence}}

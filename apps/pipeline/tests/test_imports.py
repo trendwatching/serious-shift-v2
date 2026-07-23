@@ -11,7 +11,14 @@ def test_all_modules_import():
     import serious_shift_pipeline.core.migrate  # noqa: F401
     import serious_shift_pipeline.core.observability  # noqa: F401
     import serious_shift_pipeline.core.parallel  # noqa: F401
-    import serious_shift_pipeline.core.voice  # noqa: F401
+    # prompts (VOICE + every Claude prompt builder live here)
+    import serious_shift_pipeline.prompts  # noqa: F401
+    import serious_shift_pipeline.prompts.voice  # noqa: F401
+    import serious_shift_pipeline.prompts.map_data  # noqa: F401
+    import serious_shift_pipeline.prompts.keynote  # noqa: F401
+    import serious_shift_pipeline.prompts.extraction  # noqa: F401
+    import serious_shift_pipeline.prompts.dedup  # noqa: F401
+    import serious_shift_pipeline.prompts.ingest  # noqa: F401
     # steps
     import serious_shift_pipeline.steps.scraper  # noqa: F401
     import serious_shift_pipeline.steps.process_raw  # noqa: F401

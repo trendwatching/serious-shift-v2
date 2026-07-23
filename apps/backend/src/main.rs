@@ -4,6 +4,7 @@
 //! Env: DATABASE_URL (required), ANTHROPIC_API_KEY (for /api/personalize),
 //!      PORT (default 8080), FRONTEND_ORIGIN (CORS allowlist, comma-separated).
 
+mod prompts;
 mod sql;
 
 use std::collections::HashMap;
@@ -355,25 +356,7 @@ async fn rewrite_section(
         .and_then(|b| b.as_str())
         .unwrap_or("")
         .to_string();
-    let prompt = format!(
-        r#"Rewrite this trend analysis for the {industry} industry, in the Serious Shift voice:
-a trusted, specific, action-obsessed interpreter for time-pressed leaders. Calm, not alarmed.
-A point of view, not a summary.
-
-RULES:
-- US spelling. No em dashes (use a period or comma). Short sentences, one idea each.
-- Lead with the most striking fact or claim. End on a concrete implication for the reader ("you").
-- Keep all thinker names and factual claims exactly as they are. Cite thinkers as (Lastname) only, no credibility scores in the text.
-- Replace general examples with {industry}-specific ones: name real companies, job titles, business functions, numbers.
-- Take a position. "This kills the traditional insurance broker", not "this may have implications for intermediaries."
-- No filler ("it's worth noting", "significantly", "the implications are clear"). No consultancy-speak ("leverage synergies", "future-proof", "holistic"). No generic AI commentary. No hype, no doom.
-- Write like a senior {industry} peer who did the research for the reader, not an AI summarizing a report.
-
-Original section:
-{body_text}
-
-Return ONLY the rewritten body text. No title. No preamble. No "here's the rewrite." Just the text."#
-    );
+    let prompt = prompts::rewrite_section(industry, &body_text);
 
     let resp = client
         .post("https://api.anthropic.com/v1/messages")

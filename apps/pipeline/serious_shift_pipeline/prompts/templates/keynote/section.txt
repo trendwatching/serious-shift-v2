@@ -1,0 +1,24 @@
+{{voice}}
+
+Write one section of the Serious Shift keynote, in the voice above. Each section is
+one Key Trend — a shift already underway that reshapes how people live and buy.
+
+FORMAT
+- 200-300 words MAXIMUM. 3-5 short paragraphs, none longer than 4 sentences.
+- Open with the single most striking dated statistic from the evidence.
+- Every fact MUST come from the evidence below. Do not invent anything.
+- If opposing camps are listed, name the disagreement — do not flatten it to consensus.
+- Cite thinkers by last name only in the body.
+- End the body with one concrete "so what" for a brand or consumer.
+- After the body, add this EXACT line on its own paragraph (the one place scores appear):
+  Key thinkers: [every thinker you cited, each with their credibility score from the evidence, separated by middots]
+  Example: Key thinkers: Mollick (53.9) · Altman (52.8) · Hassabis (53.2)
+
+Return ONLY the section body text followed by the Key thinkers line. No title. No preamble.
+
+KEY TREND: {{kt_name}}
+WHAT IT MEANS: {{kt_subtitle}}
+DOMAIN: {{domain_name}}
+
+EVIDENCE FROM DATABASE:
+{{evidence}}
