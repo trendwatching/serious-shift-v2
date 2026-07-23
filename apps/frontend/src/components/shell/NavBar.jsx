@@ -51,7 +51,7 @@ export default function NavBar({ theme, onToggleTheme }) {
       <div className="nav-bar max-w-7xl mx-auto">
         <div className="flex items-center justify-between gap-4 px-4 sm:px-6 h-16">
           {/* Logo */}
-          <NavLink to="/map" className="flex items-center shrink-0" aria-label="Serious Shi(f)t — home">
+          <NavLink to="/" className="flex items-center shrink-0" aria-label="Serious Shi(f)t — home">
             <img
               src="/logo.png"
               alt="Serious Shi(f)t"

@@ -16,7 +16,7 @@ export const CONTACT_URL = 'mailto:hello@trendwatching.com'
 
 // Primary nav — order matches the Figma. `to` = internal route, `href` = external.
 export const NAV_LINKS = [
-  { label: 'Shifts',        to: '/map' },
+  { label: 'Shifts',        to: '/' },
   { label: 'Thinkers',      to: '/map/thinkers' },
   { label: 'Workshops',     href: WORKSHOPS_URL },
   { label: 'TrendWatching', href: TRENDWATCHING_URL },

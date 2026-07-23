@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useTheme } from './hooks/useTheme'
+import ScrollToTop from './components/ScrollToTop'
 import NavBar from './components/shell/NavBar'
 import IdeateSection from './components/shell/IdeateSection'
 import TrustedBy from './components/shell/TrustedBy'
@@ -27,12 +28,16 @@ export default function App() {
   const { theme, toggle } = useTheme()
   return (
     <div className="min-h-screen flex flex-col page-canvas text-ink">
+      <ScrollToTop />
       <NavBar theme={theme} onToggleTheme={toggle} />
 
       <main className="flex-1">
         <Routes>
-          {/* Home = the map. */}
-          <Route path="/" element={<Navigate to="/map" replace />} />
+          {/* Home = the map, served directly at the clean root ("/") with no
+             redirect. Detail pages still live under /map/... (see below). */}
+          <Route path="/" element={<Map />}>
+            <Route index element={<MapLanding />} />
+          </Route>
 
           {/* Map — nested routes share data context via layout.
              Static segments (synthesis/thinkers/macros/domains) take
@@ -57,8 +62,8 @@ export default function App() {
           <Route path="/thinker/:name" element={<ThinkerProfile />} />
           <Route path="/daily" element={<Daily />} />
 
-          {/* Anything else falls back to the map. */}
-          <Route path="*" element={<Navigate to="/map" replace />} />
+          {/* Anything else falls back to the home map at the clean root. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
