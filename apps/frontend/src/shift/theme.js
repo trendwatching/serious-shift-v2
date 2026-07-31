@@ -1,0 +1,32 @@
+/**
+ * theme.js — the single source of truth for per-domain identity.
+ *
+ * Gradient + dot are presentation, so they live here rather than in the DB.
+ * `num` is the display order shown as "01 / 04" on the deck panels.
+ * Domain ids match the backend map document exactly.
+ */
+export const DOMAIN_ORDER = ['society', 'economy', 'organisations', 'consumers']
+
+export const DOMAIN_THEME = {
+  society:       { num: '01', dot: '#ED026B', grad: 'var(--grad-society)' },
+  economy:       { num: '02', dot: '#0A7FDA', grad: 'var(--grad-economy)' },
+  organisations: { num: '03', dot: '#9A9A43', grad: 'var(--grad-organisations)' },
+  consumers:     { num: '04', dot: '#E74707', grad: 'var(--grad-consumers)' },
+}
+
+export const themeFor = (id) => DOMAIN_THEME[id] || DOMAIN_THEME.society
+
+export const pad2 = (n) => String(n).padStart(2, '0')
+
+/** URL-safe slug — must match the backend's slugify so deep links resolve. */
+export const slugify = (s) =>
+  String(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+/** "6 min read" from prose, when the source didn't author a read time. */
+export const readTimeOf = (...parts) => {
+  const words = parts.filter(Boolean).join(' ').trim().split(/\s+/).length
+  return `${Math.max(1, Math.round(words / 200))} min read`
+}

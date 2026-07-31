@@ -58,6 +58,41 @@ def prompt_sub_trends(kt_name: str, kt_subtitle: str, claims: list) -> str:
     )
 
 
+# ── Editorial body for the shift / sub-shift reading views ──────────────────
+#
+# The taxonomy phases above only name and cluster. These two write the prose the
+# reader actually sees. They are deliberately separate calls, one per Key Trend,
+# so that a long editorial answer can never truncate the taxonomy it hangs off —
+# and so a failure here degrades a page to hero + dek instead of losing the shift.
+
+def prompt_kt_editorial(kt_name: str, kt_subtitle: str, domain_name: str, claims: list) -> str:
+    return load_and_render(
+        "map/kt_editorial.txt",
+        voice=VOICE,
+        kt_name=kt_name,
+        kt_subtitle=kt_subtitle,
+        domain_name=domain_name,
+        claim_count=len(claims),
+        evidence=fmt_claims_block(claims, max_per=90),
+    )
+
+
+def prompt_st_editorial(kt_name: str, kt_subtitle: str, sub_trends: list, claims: list) -> str:
+    listing = '\n'.join(
+        f"- {st['name']}: {st.get('subtitle') or st.get('description', '')}"
+        for st in sub_trends
+    )
+    return load_and_render(
+        "map/st_editorial.txt",
+        voice=VOICE,
+        kt_name=kt_name,
+        kt_subtitle=kt_subtitle,
+        sub_trends=listing,
+        claim_count=len(claims),
+        evidence=fmt_claims_block(claims, max_per=90),
+    )
+
+
 # ── Phase 6: Thinker attribution ────────────────────────────────────────────
 
 def prompt_thinker_attribution(node_type: str, node_name: str, thinker_groups: dict) -> str:

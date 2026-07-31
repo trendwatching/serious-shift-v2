@@ -1,246 +1,200 @@
 @import "tailwindcss";
 
 /* ════════════════════════════════════════════════════════════════════════
- * Serious Shi(f)t — design tokens
+ * Serious Shi(f)t — design tokens ("Swipe the Domains")
  *
- * THEME MODEL (post-overhaul):
- *   • LIGHT is the default. <html> ships with the `light` class (layout.jsx)
- *     and useTheme toggles it OFF to go dark.
- *   • Base @theme / :root values below are the DARK values.
- *   • The `html.light { … }` block overrides them for the (default) bright look.
- *   • Tailwind v4 reads these CSS custom properties, so `bg-paper`,
- *     `text-ink`, `text-c-society`, etc. all resolve per-theme automatically.
+ * Single light theme. Type: Suez One (shift titles, uppercase) ·
+ * Urbanist (display/UI) · Nunito Sans (body) · JetBrains Mono (labels).
+ * Every colour the new UI uses is a token here; components never hard-code.
  * ════════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  /* Brand accent (CTA orange-red) — identical in both themes. */
-  --color-accent:       #E8503A;
-  --color-accent-light: #FF5A1F;
+  /* ── Type ─────────────────────────────────────────────────────────── */
+  --font-display: 'Urbanist', system-ui, sans-serif;
+  --font-sans:    'Nunito Sans', system-ui, sans-serif;
+  --font-title:   'Suez One', Georgia, serif;
+  --font-serif:   'Suez One', Georgia, serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* Per-domain hues — the thread that carries down the hierarchy.
-     Society = magenta · Economy = azure · Consumers = warm orange ·
-     Organisations = lime. Same values both themes (vivid on either bg). */
-  --color-c-society:       #F6469F;
-  --color-c-economy:       #2E9BE6;
-  --color-c-consumers:     #FF6A3D;
-  --color-c-organisations: #7FCB3B;
+  /* ── Surfaces & ink ──────────────────────────────────────────────── */
+  --color-paper:     #F7F6F9;
+  --color-surface:   #ffffff;
+  --color-ink:       #1B1620;
+  --color-ink-strong:#2C2735;
+  --color-ink-soft:  #4A4459;
+  --color-ink-mid:   #6B6577;
+  --color-ink-dim:   #9A94A8;
+  --color-ink-faint: #B3AEC0;
+  --color-hairline:  #EDEAF2;
+  --color-hairline-soft: #F0EEF4;
 
-  /* Surface tokens — DARK defaults (light overrides in html.light). */
-  --color-paper:     #0b0b0f; /* page base           */
-  --color-ink:       #f4f2ec; /* primary text        */
-  --color-ink-soft:  #a5a29b; /* secondary text      */
-  --color-ink-faint: #6f6c65; /* eyebrows / captions */
-  --color-hairline:  #26262b; /* borders             */
-  --color-cream:     #f4f2ec; /* legacy heading token */
-  --color-warm-gray: #a5a29b; /* legacy secondary token */
+  /* ── Brand ───────────────────────────────────────────────────────── */
+  --color-yellow:      #FDFF85;
+  --color-yellow-soft: #FEFFC6;
+  --color-accent:      #F04E09;   /* orange CTA  */
+  --color-accent-light:#E8503A;
+  --color-link:        #341482;
+  --color-link-hover:  #FA83DD;
+  --color-dark:        #1B1620;
+  --color-darker:      #0D0B10;
 
-  /* Fonts. Poppins = friendly rounded display; Inter = body; mono = labels. */
-  --font-display: 'Poppins', system-ui, sans-serif;
-  --font-sans:    'Inter', system-ui, sans-serif;
-  --font-serif:   'Poppins', system-ui, sans-serif; /* legacy alias → display */
-  --font-mono:    'JetBrains Mono', monospace;
+  /* ── Editorial accents (shift detail) ───────────────────────────── */
+  --color-pink:      #C8006B;
+  --color-pink-hot:  #F5007F;
+  --color-pink-deep: #5E0033;
+  --color-pink-ink:  #A3005A;
+  --color-pink-wash: #FBEAF3;
+  --color-green:     #1F7A4D;
+  --color-green-lit: #269A61;
+  --color-green-deep:#10502F;
+
+  /* ── Per-domain dots ────────────────────────────────────────────── */
+  --color-c-society:       #ED026B;
+  --color-c-economy:       #0A7FDA;
+  --color-c-organisations: #9A9A43;
+  --color-c-consumers:     #E74707;
 }
 
-/* Gradient + shell tokens live on :root so they can be redefined per theme
-   without Tailwind's @theme constraints. These are the DARK values. */
 :root {
-  --grad-canvas:
-    radial-gradient(120% 80% at 50% -10%, rgba(232,80,58,0.10) 0%, transparent 45%),
-    radial-gradient(90% 60% at 100% 0%,  rgba(46,155,230,0.08) 0%, transparent 50%),
-    #0b0b0f;
-  --grad-footer: linear-gradient(180deg, #0b0b0f 0%, #1a140d 100%);
-  --nav-bg:      #111114;
-  --nav-ink:     #f4f2ec;
-  --nav-ink-dim: #9b988f;
-  --blob-lift:   0 24px 60px -30px rgba(0,0,0,0.7);
+  /* Per-domain 135° gradients — the spine of the whole experience. */
+  --grad-society:       linear-gradient(135deg, #FF0B85 0%, #ED026B 46%, #9A0046 100%);
+  --grad-economy:       linear-gradient(135deg, #0F91EE 0%, #0A7FDA 46%, #04528B 100%);
+  --grad-organisations: linear-gradient(135deg, #ADB03A 0%, #9A9A43 42%, #5F6E13 100%);
+  --grad-consumers:     linear-gradient(135deg, #F65510 0%, #E74707 46%, #922E03 100%);
+
+  --grad-pink:  linear-gradient(180deg, #C8006B 0%, #5E0033 100%);
+  --grad-pink-hot: linear-gradient(180deg, #F5007F 0%, #C8006B 46%, #4A0027 100%);
+  --grad-green: linear-gradient(180deg, #1F7A4D 0%, #10502F 100%);
+  --grad-green-lit: linear-gradient(180deg, #269A61 0%, #1F7A4D 55%, #10502F 100%);
+  --grad-grey:  linear-gradient(180deg, #F7F7F7 0%, #EDEDED 100%);
+  --grad-yellow: linear-gradient(180deg, #FDFF85 0%, #FEFFC6 62%, #FFFFFF 100%);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Height of the sticky black bar — the deck sizes itself against this. */
+  --topbar: calc(max(14px, env(safe-area-inset-top)) + 48px);
 }
+
+html { -webkit-text-size-adjust: 100%; }
 
 body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Full-bleed bands break out with calc(50% - 50vw); clip stops the
+     horizontal scrollbar that would otherwise appear. */
+  overflow-x: clip;
 }
 
-.font-display,
-.font-editorial { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; }
+a { color: var(--color-link); text-decoration: none; }
+a:hover { color: var(--color-link-hover); }
 
-/* ── LIGHT THEME (default) ─────────────────────────────────────────────────
- * Activated by the `light` class on <html> (present by default).
- * Bright, warm, editorial — cream/white canvas with soft yellow at the edges.
- * ────────────────────────────────────────────────────────────────────────── */
-html.light {
-  --color-paper:     #ffffff;
-  --color-ink:       #17150f;
-  --color-ink-soft:  #56534b;
-  --color-ink-faint: #8a877d;
-  --color-hairline:  #ece8dd;
-  --color-cream:     #17150f;
-  --color-warm-gray: #56534b;
+/* Hide scrollbars — the design is edge-to-edge and scroll affordances are
+   explicit ("Scroll ›", dots, hints) rather than native bars. */
+::-webkit-scrollbar { width: 0; height: 0; display: none; }
+* { scrollbar-width: none; -ms-overflow-style: none; }
 
-  /* Legacy neutral-* remap (kept for un-migrated views: Thinkers, About,
-     Synthesis, Daily). Semantic inversion: 950 = lightest, 200 = darkest. */
-  --color-neutral-950: #ffffff;
-  --color-neutral-900: #faf8f2;
-  --color-neutral-800: #ece8dd;
-  --color-neutral-700: #d8d3c6;
-  --color-neutral-600: #9a978d;
-  --color-neutral-500: #6f6c62;
-  --color-neutral-400: #3f3d34;
-  --color-neutral-300: #26251d;
-  --color-neutral-200: #17150f;
-  --color-neutral-100: #0b0a07;
-  --color-neutral-50:  #050503;
+/* ── Utilities ─────────────────────────────────────────────────────── */
 
-  /* Relationship / status label hues tuned for white bg. */
-  --color-emerald-400: #15803d;
-  --color-red-400:     #b91c1c;
-  --color-violet-400:  #6d28d9;
-  --color-amber-400:   #b45309;
-  --color-sky-400:     #0369a1;
-  --color-emerald-900: #dcfce7;
-  --color-red-900:     #fee2e2;
-  --color-violet-900:  #ede9fe;
-  --color-amber-900:   #fef3c7;
-  --color-sky-900:     #e0f2fe;
+/* Shift/sub-shift titles: heavy serif, uppercase. Suez One ships 400 only. */
+.t-title {
+  font-family: var(--font-title);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
 }
-
-html.light {
-  --grad-canvas:
-    radial-gradient(110% 70% at 50% -5%,  rgba(255,255,255,0.9) 0%, transparent 40%),
-    radial-gradient(120% 90% at 100% 120%, rgba(253,255,136,0.55) 0%, transparent 55%),
-    radial-gradient(120% 90% at 0% 120%,   rgba(255,241,214,0.6) 0%, transparent 55%),
-    #fffdf7;
-  --grad-footer: linear-gradient(180deg, #ffffff 0%, #fdfb84 100%);
-  --nav-bg:      #111114;
-  --nav-ink:     #ffffff;
-  --nav-ink-dim: #a7a49c;
-  --blob-lift:   0 24px 55px -28px rgba(120,80,20,0.35);
-}
-
-/* ── Shared shell utilities ────────────────────────────────────────────────*/
-
-/* The bright (or dark) page canvas that sits behind every page. */
-.page-canvas { background: var(--grad-canvas); }
-
-/* Dark rounded floating nav bar — same in both themes. */
-.nav-bar {
-  background: var(--nav-bg);
-  color: var(--nav-ink);
-  border-radius: 18px;
-  box-shadow: 0 10px 30px -18px rgba(0,0,0,0.5);
-}
-
-/* Footer gradient band. */
-.footer-band { background: var(--grad-footer); }
-
-/* Primary CTA pill. */
-.pill-cta {
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
-  color: #fff;
-  border-radius: 999px;
-  box-shadow: 0 8px 22px -10px rgba(232,80,58,0.6);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-}
-.pill-cta:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 12px 28px -10px rgba(232,80,58,0.7); }
-
-/* ── Signature visuals ─────────────────────────────────────────────────────*/
-
-/* Smoke-blob: an organic tinted cloud with a feathered edge + comet tail.
-   `--blob` sets the hue; an optional background image can be layered by JSX. */
-.smoke-blob {
-  position: relative;
-  border-radius: 47% 53% 58% 42% / 55% 45% 55% 45%;
-  background:
-    radial-gradient(60% 60% at 38% 38%, color-mix(in oklab, var(--blob) 85%, white 10%) 0%,
-      color-mix(in oklab, var(--blob) 70%, transparent) 55%,
-      transparent 78%);
-  filter: saturate(1.05);
-  box-shadow: var(--blob-lift);
-}
-/* The trailing comet streak behind a blob. */
-.smoke-blob::before {
-  content: "";
-  position: absolute;
-  left: -55%;
-  top: 42%;
-  width: 90%;
-  height: 26%;
-  transform: translateY(-50%);
-  background: linear-gradient(90deg, transparent 0%, color-mix(in oklab, var(--blob) 55%, transparent) 85%);
-  filter: blur(14px);
-  border-radius: 999px;
-  z-index: -1;
-}
-
-/* Comet streak row (Sphere page key-shift item). */
-.comet-streak {
-  --streak: var(--color-c-society);
-  position: relative;
-  isolation: isolate;
-}
-.comet-streak::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: linear-gradient(90deg,
-    color-mix(in oklab, var(--streak) 42%, transparent) 0%,
-    color-mix(in oklab, var(--streak) 14%, transparent) 45%,
-    transparent 82%);
-  filter: blur(6px);
-  z-index: -1;
-  opacity: 0.9;
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-.comet-streak:hover::before { opacity: 1; transform: translateX(6px); }
-
-/* Oversized stat numeral. */
-.stat-numeral {
+/* Eyebrow: tiny, wide-tracked, uppercase. */
+.t-eyebrow {
   font-family: var(--font-display);
-  font-weight: 800;
-  line-height: 0.9;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.t-display { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.03em; }
+
+/* Full-bleed band inside a padded/centred column. */
+.bleed { margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - 50%); }
+
+/* Yellow pill CTA (the design's primary action). */
+.pill-yellow {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 44px; padding: 0 20px; border-radius: 999px;
+  background: var(--color-yellow); color: var(--color-ink);
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  transition: transform 0.24s var(--ease-out), box-shadow 0.24s ease;
+}
+.pill-yellow:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.22); color: var(--color-ink); }
+
+/* Orange subscribe CTA. */
+.pill-cta {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; background: var(--color-accent); color: #fff;
+  font-family: var(--font-display); font-weight: 650;
+  transition: transform 0.24s var(--ease-out), box-shadow 0.24s ease;
+}
+.pill-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(240,78,9,0.4); color: #fff; }
+
+/* Card surface used across detail sections. */
+.card {
+  border-radius: 18px; border: 1px solid var(--color-hairline);
+  background: var(--color-surface);
+  box-shadow: 0 3px 12px rgba(27,22,32,0.05);
+}
+.card-lift { transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease, border-color 0.3s ease; }
+.card-lift:hover { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(27,22,32,0.13); border-color: #DCD3E4; }
+
+/* Logo asset is dark artwork; force white on dark bars. */
+.ss-logo--on-dark { filter: invert(1); }
+
+/* ── Keyframes (ported verbatim from the design) ───────────────────── */
+@keyframes ssRise  { from { opacity: 0; transform: translateY(26px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes ssFade  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ssWord  { from { opacity: 0; transform: translateY(34px) rotate(1.5deg); } to { opacity: 1; transform: none; } }
+@keyframes ssExpand{ from { opacity: 0.4; transform: translateY(180px) scale(0.88); border-radius: 26px; } to { opacity: 1; transform: none; border-radius: 0; } }
+@keyframes ssSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes ssPop   { 0% { transform: scale(1); } 45% { transform: scale(1.22) rotate(-8deg); } 100% { transform: scale(1); } }
+@keyframes ssCue   { 0%, 100% { transform: translateY(0); opacity: 0.55; } 50% { transform: translateY(7px); opacity: 1; } }
+@keyframes ssMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Hero orb drift. */
+@keyframes ssFloat {
+  0%   { transform: translate(0, 0) scale(1); }
+  14%  { transform: translate(-118px, 96px) scale(1.1); }
+  30%  { transform: translate(-186px, 268px) scale(0.92); }
+  46%  { transform: translate(-40px, 402px) scale(1.16); }
+  60%  { transform: translate(72px, 250px) scale(1.02); }
+  76%  { transform: translate(-96px, 140px) scale(1.12); }
+  88%  { transform: translate(30px, 44px) scale(0.96); }
+  100% { transform: translate(0, 0) scale(1); }
 }
 
-/* Scroll-reveal helper for non-Framer contexts (optional). */
-.reveal { opacity: 0; transform: translateY(14px); }
-.reveal.is-in { opacity: 1; transform: none; transition: opacity 0.6s ease, transform 0.6s ease; }
+/* From/To card cross-fade. */
+@keyframes ssPanelA { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes ssPanelB { 0%, 45% { opacity: 0; } 50%, 95% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes ssInkA   { 0%, 45% { color: #fff; } 50%, 95% { color: #1B1620; } 100% { color: #fff; } }
+@keyframes ssInkB   { 0%, 45% { color: #1B1620; } 50%, 95% { color: #fff; } 100% { color: #1B1620; } }
 
-/* ── Prose + badges (legacy, theme-aware) ─────────────────────────────────*/
-.prose-body p { margin-bottom: 1rem; line-height: 1.75; }
-.prose-body strong { color: var(--color-ink); font-weight: 600; }
-.prose-body em { font-style: italic; color: var(--color-ink-soft); }
+/* Now / next / beyond timeline sweep. */
+@keyframes ssFill1 { 0%, 32% { background-color: #F6D6E6; color: #4A0027; } 34%, 100% { background-color: #FBFAFD; color: #2C2735; } }
+@keyframes ssFill2 { 0%, 32% { background-color: #FBFAFD; color: #2C2735; } 34%, 65% { background-color: #F6D6E6; color: #4A0027; } 67%, 100% { background-color: #FBFAFD; color: #2C2735; } }
+@keyframes ssFill3 { 0%, 65% { background-color: #FBFAFD; color: #2C2735; } 67%, 99% { background-color: #F6D6E6; color: #4A0027; } 100% { background-color: #FBFAFD; color: #2C2735; } }
+@keyframes ssDot1  { 0%, 32% { background: #C8006B; } 34%, 100% { background: #fff; } }
+@keyframes ssDot2  { 0%, 32% { background: #fff; } 34%, 65% { background: #C8006B; } 67%, 100% { background: #fff; } }
+@keyframes ssDot3  { 0%, 65% { background: #fff; } 67%, 99% { background: #C8006B; } 100% { background: #fff; } }
 
-.badge-true { background: #166534; color: #bbf7d0; }
-.badge-false { background: #991b1b; color: #fecaca; }
-.badge-partially_true { background: #854d0e; color: #fef08a; }
-.badge-pending { background: #27272a; color: #a1a1aa; }
-.badge-expired { background: #3f3f46; color: #a1a1aa; }
-html.light .badge-true { background: #dcfce7; color: #166534; }
-html.light .badge-false { background: #fee2e2; color: #991b1b; }
-html.light .badge-partially_true { background: #fef3c7; color: #92400e; }
-html.light .badge-pending { background: #ece8dd; color: #56534b; }
-html.light .badge-expired { background: #e4e0d4; color: #56534b; }
-
-/* Logo — dark artwork PNG. On the dark nav bar it must read white in BOTH
-   themes, so nav usage forces invert via .ss-logo--on-dark. The footer/other
-   usages follow the theme: invert in dark, leave as-is in light. */
-.ss-logo { filter: invert(1); }
-html.light .ss-logo { filter: none; }
-.ss-logo--on-dark { filter: invert(1) !important; }
-
-/* Dropdown / small entrance animation. */
-.animate-in { animation: fadeSlideIn 150ms ease-out; }
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+/* Entrance helpers. */
+.a-rise { animation: ssRise 0.7s var(--ease-out) both; }
+.a-fade { animation: ssFade 0.5s ease both; }
+.a-expand { animation: ssExpand 0.55s var(--ease-out) both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
-  .smoke-blob, .comet-streak::before { transition: none !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

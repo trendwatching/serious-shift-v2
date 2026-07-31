@@ -1,0 +1,52 @@
+{{voice}}
+
+You are writing the sub-shift pages for Serious Shift — a consumer trend platform tracking AGI-driven shifts.
+
+The sub-trends below already have names and framings. Write the editorial body for EACH of them: a lede, a From→To pair, a tension quote, the strongest statistic, two narrative panels, a human-needs pair, signals and counter-signals, a horizon, and opportunity territories.
+
+RULES — GENERAL
+- Ground every field in the evidence. Never invent a statistic, a study, a percentage, or a source.
+- Journalist briefing a strategist: specific, declarative, no marketing register.
+- British/international English.
+- Return one object per sub-trend, matching on `name` exactly as given. Do not add, drop, merge or rename sub-trends.
+
+PER SUB-TRENDS FIELDS
+
+`lede` — one sentence, the sharpest statement of what this sub-shift is. It is the first line the reader sees.
+
+`from` / `to` — the assumption that is ending, and what replaces it. One clause each, 12–24 words, a genuine pair (the same variable, moved).
+
+`quote` — one short, quotable line that names the uncomfortable truth of this sub-shift. Not attributed to anyone; it is the editorial voice landing a point.
+  Right: "The floor was already falling. AI just removed the warning signs."
+  Wrong: a summary sentence, or a statistic in prose form.
+
+`stat` — the single strongest statistic in the evidence for this sub-shift, as `{"value","text","source"}`.
+  - `value`: the bare figure as displayed, short (e.g. "25%", "3×", "2:1", "18-34").
+  - `text`: one or two sentences explaining what it measures and why it matters.
+  - `source`: who produced it, as specifically as the evidence allows.
+  - If the evidence has no attributable statistic for this sub-shift, omit `stat` entirely rather than inventing one.
+
+`whats_changing` — 3–5 sentences on the mechanism: what is actually moving, and why the obvious reading is wrong.
+`why_now` — 3–4 sentences on why this lands in this window. Name the converging forces. Must not overlap `whats_changing`.
+
+`human_needs` — `{"unlocked","threatened"}`. The need this genuinely satisfies (steelmanned) and the need it puts at risk. One or two sentences each, starting with the need itself.
+
+`signals` — 3–5 strings. Each is one concrete, evidenced development that shows this sub-shift is real. A complete sentence. No numbering — the interface numbers them.
+
+`counter_signals` — 2–3 strings. The honest case against: evidence that this sub-shift is weaker, slower, or more reversible than it appears. This section is what makes the analysis credible; do not straw-man it.
+
+`timeline` — `{"now","next","beyond"}` for 0–12 months, 1–3 years, 3–10 years. One or two sentences each, each a different order of consequence.
+
+`territories` — 2–3 entries of `{"name","text"}`: commercial spaces this sub-shift opens that do not yet exist at scale. `name` is 2–4 words.
+
+Return ONLY valid JSON — no preamble, no markdown fences:
+{"sub_trends":[{"name":"exact name as given","lede":"…","from":"…","to":"…","quote":"…","stat":{"value":"…","text":"…","source":"…"},"whats_changing":"…","why_now":"…","human_needs":{"unlocked":"…","threatened":"…"},"signals":["…"],"counter_signals":["…"],"timeline":{"now":"…","next":"…","beyond":"…"},"territories":[{"name":"…","text":"…"}]}]}
+
+PARENT KEY TREND: {{kt_name}}
+FRAMING: {{kt_subtitle}}
+
+SUB-TRENDS TO WRITE:
+{{sub_trends}}
+
+EVIDENCE ({{claim_count}} claims):
+{{evidence}}

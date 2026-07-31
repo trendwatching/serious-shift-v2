@@ -12,6 +12,7 @@ Pipeline
   Phase 2: Claim routing     — SQL heuristic maps claims.domain → strategic domain (no API)
   Phase 3: KT gen            — 4 calls (one per domain), ≥8 fresh KTs from the domain pool
   Phase 4: Sub-trend gen     — M calls (one per KT)
+  Phase 4b: Editorial body   — 2 calls per KT: the shift + sub-shift reading views
   Phase 5: Thinker attrib    — 1 per KT
   Phase 6: Interrelatedness  — typed edges (KT↔KT, cross-domain)
   Phase 7: Synthesis insights — 4 calls (one per domain)
@@ -49,6 +50,8 @@ from ..prompts import (
     INSIGHTS_MODEL,
     prompt_domain_key_trends,
     prompt_sub_trends,
+    prompt_kt_editorial,
+    prompt_st_editorial,
     prompt_thinker_attribution,
     prompt_interrelatedness_batch,
     prompt_synthesis_insights,
@@ -81,6 +84,7 @@ DOMAINS = [
             "the one brands and organizations are least prepared to address."
         ),
         'sort_order': 1,
+        'horizon': '2028',
         # claims.domain values that belong primarily to this strategic domain
         'primary_claim_domains': ['agi_timeline', 'existential_risk', 'geopolitics', 'regulation', 'education'],
         'secondary_claim_domains': ['labor'],
@@ -108,6 +112,7 @@ DOMAINS = [
             "who gets the surplus, and what do the rest do next?"
         ),
         'sort_order': 2,
+        'horizon': '2027',
         'primary_claim_domains': ['economy', 'labor'],
         'secondary_claim_domains': ['geopolitics'],
         'tech_keywords': ['gdp', 'produc', 'wage', 'capital', 'invest', 'wealth', 'market',
@@ -134,6 +139,7 @@ DOMAINS = [
             "changing everything."
         ),
         'sort_order': 3,
+        'horizon': '2026',
         'primary_claim_domains': ['consumer_behavior'],
         'secondary_claim_domains': ['education'],
         'tech_keywords': ['consumer', 'customer', 'brand', 'purchas', 'personali', 'experienc',
@@ -142,8 +148,8 @@ DOMAINS = [
     },
     {
         'id':    'organisations',
-        'name':  'Organizations',
-        'label': 'AGI × Organizations',
+        'name':  'Organisations',
+        'label': 'AGI × Organisations',
         'short_description': (
             'How firms and institutions adapt — or fail to — when AI can perform, '
             'plan, and decide faster than any hierarchy was built to handle.'
@@ -160,6 +166,7 @@ DOMAINS = [
             "to matter."
         ),
         'sort_order': 4,
+        'horizon': '2026',
         'primary_claim_domains': ['enterprise'],
         'secondary_claim_domains': ['regulation', 'education'],
         'tech_keywords': ['enterpris', 'organiz', 'corporat', 'firm', 'workforc', 'employe',
@@ -467,13 +474,15 @@ def phase1_domain_definitions(conn):
     print('\nPhase 1 — Writing domain definitions to DB…')
     for d in DOMAINS:
         conn.execute("""
-            INSERT INTO domains_v2 (id, name, label, short_description, description, sort_order)
-            VALUES (%s,%s,%s,%s,%s,%s)
+            INSERT INTO domains_v2 (id, name, label, short_description, description, sort_order, horizon)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (id) DO UPDATE SET
               name = EXCLUDED.name, label = EXCLUDED.label,
               short_description = EXCLUDED.short_description,
-              description = EXCLUDED.description, sort_order = EXCLUDED.sort_order
-        """, (d['id'], d['name'], d['label'], d['short_description'], d['description'], d['sort_order']))
+              description = EXCLUDED.description, sort_order = EXCLUDED.sort_order,
+              horizon = EXCLUDED.horizon
+        """, (d['id'], d['name'], d['label'], d['short_description'], d['description'],
+              d['sort_order'], d.get('horizon')))
     for f in DOMAIN_FLOWS_PRESET:
         conn.execute("""
             INSERT INTO domain_flows (source_id, target_id, strength, description)
@@ -601,6 +610,157 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         print(f'  ✓  {kt["name"][:48]}: {len(sub_trends)} sub-trends, vel={velocity}')
 
     conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Phase 4b — Editorial body for each Key Trend and its sub-trends
+#
+# Phases 3 and 4 name and cluster; this writes the prose the reader sees on the
+# shift and sub-shift pages (From→To, what's changing / why now, human needs,
+# consumer tension, horizon, industries, opportunity territories).
+#
+# Kept as its own phase, one call per Key Trend, for two reasons: a long
+# editorial answer can never truncate the taxonomy it hangs off, and a parse
+# failure here leaves the shift intact — the page just falls back to hero + dek,
+# because the front end renders each section only when its field is present.
+# ---------------------------------------------------------------------------
+
+def _as_steps(timeline) -> list | None:
+    """Normalise a {now,next,beyond} object into the [{label,text}] the map
+    document carries. Tolerates a model that already returned a list."""
+    if isinstance(timeline, list):
+        return [t for t in timeline if isinstance(t, dict) and t.get('text')] or None
+    if isinstance(timeline, dict):
+        steps = [{'label': k.capitalize(), 'text': timeline[k]}
+                 for k in ('now', 'next', 'beyond') if timeline.get(k)]
+        return steps or None
+    return None
+
+
+def _as_pairs(items) -> list | None:
+    """Normalise [{name,text}] lists (industries, opportunities, territories)."""
+    if not isinstance(items, list):
+        return None
+    out = [{'name': i.get('name', ''), 'text': i.get('text', '')}
+           for i in items if isinstance(i, dict) and i.get('name')]
+    return out or None
+
+
+def _as_strings(items) -> list | None:
+    """Normalise a list of plain strings (signals, counter-signals)."""
+    if not isinstance(items, list):
+        return None
+    out = [s.strip() for s in items if isinstance(s, str) and s.strip()]
+    return out or None
+
+
+def _jsonb(value) -> str | None:
+    """Serialise for a `%s::jsonb` placeholder; empty/None stays SQL NULL so the
+    front end treats the section as absent."""
+    return json.dumps(value) if value else None
+
+
+def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict):
+    """Fills the rich editorial columns on domain_key_trends + domain_sub_trends."""
+    print('\nPhase 4b — Writing editorial body per Key Trend (parallel)…')
+
+    pool = {c['id']: c for d in DOMAINS for c in domain_claims[d['id']]}
+    by_id = {d['id']: d for d in DOMAINS}
+
+    # One work item per KT, carrying its claims and its already-written sub-trends.
+    work = []
+    for d in DOMAINS:
+        for kt in domain_kts.get(d['id'], []):
+            claims = [pool[cid] for cid in kt.get('_claim_ids', []) if cid in pool]
+            if not claims:
+                claims = domain_claims[d['id']][:CLAIMS_PER_KT]
+            subs = conn.execute("""
+                SELECT id, name, subtitle, description FROM domain_sub_trends
+                WHERE kt_id=%s ORDER BY sort_order
+            """, (kt['_db_id'],)).fetchall()
+            work.append((d['id'], kt, claims, [dict(s) for s in subs]))
+
+    if not work:
+        print('  (no Key Trends to enrich)')
+        return
+
+    def generate(item):
+        d_id, kt, claims, subs = item
+        out = {}
+        try:
+            out['kt'] = extract_json(call_claude(
+                prompt_kt_editorial(kt['name'], kt.get('subtitle', ''), by_id[d_id]['name'], claims),
+                api_key))
+        except (ValueError, Exception) as e:   # noqa: B014 - report and continue
+            print(f'  ERROR kt editorial ({kt["name"][:30]}): {e}')
+        if subs:
+            try:
+                out['st'] = extract_json(call_claude(
+                    prompt_st_editorial(kt['name'], kt.get('subtitle', ''), subs, claims),
+                    api_key))
+            except (ValueError, Exception) as e:   # noqa: B014
+                print(f'  ERROR st editorial ({kt["name"][:30]}): {e}')
+        return out
+
+    results = parallel.pmap(generate, work)
+
+    kt_done = st_done = 0
+    for (_d_id, kt, _claims, subs), result in zip(work, results):
+        e = result.get('kt') or {}
+        if e:
+            needs = e.get('human_needs') if isinstance(e.get('human_needs'), dict) else None
+            conn.execute("""
+                UPDATE domain_key_trends SET
+                  from_text=%s, to_text=%s, whats_changing=%s, why_now=%s, stat_text=%s,
+                  human_needs=%s::jsonb, consumer_tension=%s, timeline=%s::jsonb,
+                  industries=%s::jsonb, opportunities=%s::jsonb, read_time=%s
+                WHERE id=%s
+            """, (
+                e.get('from') or None, e.get('to') or None,
+                e.get('whats_changing') or None, e.get('why_now') or None,
+                e.get('stat_text') or None,
+                _jsonb(needs),
+                e.get('consumer_tension') or None,
+                _jsonb(_as_steps(e.get('timeline'))),
+                _jsonb(_as_pairs(e.get('industries'))),
+                _jsonb(_as_pairs(e.get('opportunities'))),
+                e.get('read_time') or None,
+                kt['_db_id'],
+            ))
+            kt_done += 1
+
+        # Match editorial back to sub-trends by name (the prompt is told not to
+        # rename them); anything unmatched is skipped rather than guessed at.
+        written = {s['name'].strip().lower(): s['id'] for s in subs}
+        for se in (result.get('st') or {}).get('sub_trends', []) or []:
+            sid = written.get(str(se.get('name', '')).strip().lower())
+            if not sid:
+                continue
+            needs = se.get('human_needs') if isinstance(se.get('human_needs'), dict) else None
+            stat = se.get('stat') if isinstance(se.get('stat'), dict) and se['stat'].get('value') else None
+            conn.execute("""
+                UPDATE domain_sub_trends SET
+                  lede=%s, from_text=%s, to_text=%s, tension=%s, stat=%s::jsonb,
+                  whats_changing=%s, why_now=%s, human_needs=%s::jsonb,
+                  signals=%s::jsonb, counter_signals=%s::jsonb,
+                  timeline=%s::jsonb, territories=%s::jsonb
+                WHERE id=%s
+            """, (
+                se.get('lede') or None, se.get('from') or None, se.get('to') or None,
+                se.get('quote') or None,
+                _jsonb(stat),
+                se.get('whats_changing') or None, se.get('why_now') or None,
+                _jsonb(needs),
+                _jsonb(_as_strings(se.get('signals'))),
+                _jsonb(_as_strings(se.get('counter_signals'))),
+                _jsonb(_as_steps(se.get('timeline'))),
+                _jsonb(_as_pairs(se.get('territories'))),
+                sid,
+            ))
+            st_done += 1
+
+    conn.commit()
+    print(f'  ✓  {kt_done}/{len(work)} shifts and {st_done} sub-shifts given an editorial body.')
 
 
 # ---------------------------------------------------------------------------
@@ -829,6 +989,7 @@ def build_map_json_v2(conn) -> dict:
             'label':             d['label'],
             'short_description': d['short_description'],
             'description':       d['description'],
+            'horizon':           d['horizon'],
             'key_trend_ids':     [f'kt-{r["id"]}' for r in kt_rows],
             'synthesis_insight_ids': [r['id'] for r in si_rows],
         })
@@ -837,7 +998,10 @@ def build_map_json_v2(conn) -> dict:
     kt_rows_all = conn.execute("""
         SELECT kt.id, kt.slug, kt.domain_id,
                kt.name, kt.subtitle, kt.velocity, kt.sort_order,
-               kt.proponents, kt.skeptics, kt.hero_stat
+               kt.proponents, kt.skeptics, kt.hero_stat,
+               kt.from_text, kt.to_text, kt.whats_changing, kt.why_now,
+               kt.stat_text, kt.human_needs, kt.consumer_tension, kt.timeline,
+               kt.industries, kt.opportunities, kt.read_time
         FROM domain_key_trends kt
         ORDER BY kt.domain_id, kt.sort_order
     """).fetchall()
@@ -861,11 +1025,27 @@ def build_map_json_v2(conn) -> dict:
             'skeptics':    _attr(kt['skeptics'])[0],
             'proponents_detail': _attr(kt['proponents'])[1],
             'skeptics_detail':   _attr(kt['skeptics'])[1],
+            # Editorial body (phase 4b). Null until written — the front end
+            # renders each section only when its field is present.
+            'from_text':        kt['from_text'],
+            'to_text':          kt['to_text'],
+            'whats_changing':   kt['whats_changing'],
+            'why_now':          kt['why_now'],
+            'stat_text':        kt['stat_text'],
+            'human_needs':      kt['human_needs'],
+            'consumer_tension': kt['consumer_tension'],
+            'timeline':         kt['timeline'],
+            'industries':       kt['industries'],
+            'opportunities':    kt['opportunities'],
+            'read_time':        kt['read_time'],
         })
 
     # ---- sub_trends ----
     st_rows_all = conn.execute("""
-        SELECT st.id, st.slug, st.kt_id, st.domain_id, st.name, st.subtitle, st.description
+        SELECT st.id, st.slug, st.kt_id, st.domain_id, st.name, st.subtitle, st.description,
+               st.lede, st.from_text, st.to_text, st.tension, st.stat,
+               st.whats_changing, st.why_now, st.human_needs,
+               st.signals, st.counter_signals, st.timeline, st.territories
         FROM domain_sub_trends st
         ORDER BY st.kt_id, st.sort_order
     """).fetchall()
@@ -884,6 +1064,19 @@ def build_map_json_v2(conn) -> dict:
             'subtitle':    st['subtitle'],
             'description': st['description'],
             'claim_ids':   [f'c_{r["claim_id"]}' for r in c_rows],
+            # Editorial body (phase 4b).
+            'lede':            st['lede'],
+            'from_text':       st['from_text'],
+            'to_text':         st['to_text'],
+            'tension':         st['tension'],
+            'stat':            st['stat'],
+            'whats_changing':  st['whats_changing'],
+            'why_now':         st['why_now'],
+            'human_needs':     st['human_needs'],
+            'signals':         st['signals'],
+            'counter_signals': st['counter_signals'],
+            'timeline':        st['timeline'],
+            'territories':     st['territories'],
         })
 
     # ---- claims ----
@@ -1104,6 +1297,8 @@ def main():
 
     # ── Phase 4: sub-trend clustering ────────────────────────────────────────
     phase4_sub_trends(conn, api_key, domain_claims, domain_kts)
+
+    phase4b_editorial(conn, api_key, domain_claims, domain_kts)
 
     # ── Phase 5: thinker attribution ─────────────────────────────────────────
     phase5_thinker_attribution(conn, api_key, domain_claims, domain_kts)
