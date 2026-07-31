@@ -32,6 +32,12 @@ HUMAN_NEEDS
 - `threatened`: the need it puts at risk. Name the need, then the fear in the reader's own voice.
 - One or two sentences each, starting with the need itself (e.g. "Cognitive relief — …").
 
+PULL_QUOTE (the editorial verdict, set immediately after From→To)
+- One short, declarative line — the sentence a reader would screenshot. This is the analyst's judgement, not a consumer speaking, and NOT the same line as `consumer_tension`.
+- Aim for under 15 words. No attribution, no hedging, no statistics.
+- Right: "The tool that thinks for you eventually thinks instead of you."
+- Wrong: "AI may have negative effects on human reasoning over time." (hedged, not quotable)
+
 CONSUMER_TENSION
 - One sentence, first person, that a real consumer could say out loud. It must contain the contradiction, not describe it.
 - Right: "I use AI because it makes me more capable — but I'm starting to suspect it's making me less capable."
@@ -42,8 +48,8 @@ TIMELINE
 - Each step must be a different order of consequence, not the same claim escalated by adverbs.
 
 INDUSTRIES
-- Return one entry for EACH of these 15 sectors, in this exact order and with these exact names:
-  Beauty & Personal Care, Consumer Tech, Digital Tech, Entertainment, Fashion & Accessories, Financial Services, Food & Beverage, Government & Public Sector, Health & Wellbeing, Home & Living, Mobility & Transport, Nonprofit & Social Cause, Retail & Commerce, Travel & Hospitality, Work & Education
+- Return one entry for EACH of these 16 TrendWatching sectors, in this exact order and with these exact names:
+  Beauty & Personal Care, Consumer Tech, Digital Tech, Entertainment, Fashion & Accessories, Financial Services, Food & Beverage, Government & Public Sector, Health & Wellbeing, Home & Living, Media & Publishing, Mobility & Transport, Nonprofit & Social Cause, Retail & Commerce, Travel & Hospitality, Work & Education
 - 2–3 sentences each: what this shift means for that sector specifically, and where the commercial move is.
 - If a sector is genuinely peripheral to this shift, say so plainly and name the residual stake. Do not pad.
 
@@ -55,7 +61,7 @@ READ_TIME
 - Estimate honestly from the length of what you wrote, e.g. "5 min read".
 
 Return ONLY valid JSON — no preamble, no markdown fences:
-{"from":"…","to":"…","whats_changing":"…","why_now":"…","stat_value":"25%","stat_text":"…","human_needs":{"unlocked":"…","threatened":"…"},"consumer_tension":"…","timeline":{"now":"…","next":"…","beyond":"…"},"industries":[{"name":"Beauty & Personal Care","text":"…"}],"opportunities":[{"name":"…","text":"…"}],"read_time":"5 min read"}
+{"from":"…","to":"…","whats_changing":"…","why_now":"…","pull_quote":"…","stat_value":"25%","stat_text":"…","human_needs":{"unlocked":"…","threatened":"…"},"consumer_tension":"…","timeline":{"now":"…","next":"…","beyond":"…"},"industries":[{"name":"Beauty & Personal Care","text":"…"}],"opportunities":[{"name":"…","text":"…"}],"read_time":"5 min read"}
 
 KEY TREND: {{kt_name}}
 FRAMING: {{kt_subtitle}}

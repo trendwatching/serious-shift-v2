@@ -319,6 +319,60 @@ export function TensionBand({ quote, label = 'Consumer tension' }) {
   )
 }
 
+/* ── Pull quote: the editorial verdict, set right after From/To ──────────── */
+
+export function PullQuote({ quote }) {
+  if (!quote) return null
+  return (
+    <figure className="relative m-0 py-2 pl-5 lg:pl-7">
+      <span className="absolute left-0 top-2 bottom-2 w-1 rounded-full" style={{ backgroundImage: 'var(--grad-pink)' }} />
+      <blockquote
+        className="t-display m-0 text-[21px] leading-[1.3] text-pretty lg:text-[27px]"
+        style={{ fontWeight: 600, letterSpacing: '-0.018em', color: 'var(--color-ink)' }}
+      >
+        “{quote}”
+      </blockquote>
+    </figure>
+  )
+}
+
+/* ── Innovations in the wild: real branded examples ──────────────────────── */
+
+export function Innovations({ items }) {
+  if (!items?.length) return null
+  return (
+    <div className="flex flex-col gap-2.5">
+      <SectionHead title="Innovations in the wild" aside={`${items.length}`} />
+      <div className="grid gap-2.5 lg:grid-cols-2">
+        {items.map((n, i) => {
+          const Card = n.url ? 'a' : 'div'
+          return (
+            <Card
+              key={i}
+              {...(n.url ? { href: n.url, target: '_blank', rel: 'noopener noreferrer' } : {})}
+              className="card card-lift flex flex-col gap-2 overflow-hidden p-4 lg:p-5"
+            >
+              {n.image && (
+                <img src={n.image} alt="" loading="lazy" decoding="async"
+                     className="mb-1 h-[132px] w-full rounded-xl object-cover" />
+              )}
+              {n.brand && (
+                <span className="t-eyebrow" style={{ color: 'var(--color-pink-ink)', fontSize: 10, letterSpacing: '0.14em' }}>
+                  {n.brand}
+                </span>
+              )}
+              <span className="t-display text-[15px] leading-[1.25]" style={{ letterSpacing: '-0.01em' }}>{n.title}</span>
+              {n.description && (
+                <span className="text-[13.5px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{n.description}</span>
+              )}
+            </Card>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 /* ── Now / next / beyond ─────────────────────────────────────────────── */
 
 export function Timeline({ steps }) {

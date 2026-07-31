@@ -50,6 +50,7 @@ import sys
 import argparse
 import random
 from datetime import date
+from pathlib import Path
 
 from ..core import db, llm, parallel
 from ..prompts import (
@@ -63,6 +64,24 @@ from ..prompts import (
     prompt_interrelatedness_batch,
     prompt_synthesis_insights,
 )
+
+def _load_module_order() -> dict:
+    """Canonical module order per scope, from packages/contracts/shift_modules.json.
+
+    Falls back to an empty mapping (export then preserves whatever order the
+    modules were written in) so a missing contract file can never break a run.
+    """
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / 'packages' / 'contracts' / 'shift_modules.json'
+        if candidate.is_file():
+            try:
+                return json.loads(candidate.read_text()).get('order') or {}
+            except (ValueError, OSError):
+                return {}
+    return {}
+
+
+MODULE_ORDER = _load_module_order()
 
 CLAIMS_PER_DOM  = 200   # claims sent to Key Trend generation per domain
 CLAIMS_PER_KT   = 100   # claims sent to sub-trend generation per KT
@@ -739,6 +758,7 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
     candidates = [
         _module('dek', {'text': kt_row.get('subtitle') or ''}, ('text',)),
         _module('from_to', {'from': e.get('from') or '', 'to': e.get('to') or ''}, ('from', 'to')),
+        _module('pull_quote', {'quote': e.get('pull_quote') or ''}, ('quote',)),
         _module('stat_band', {
             # The model is asked for a display figure; hero_stat.value is a
             # fallback and is usually prose, so it has to be reduced first.
@@ -1201,6 +1221,22 @@ def build_map_json_v2(conn) -> dict:
         out.insert(idx + 1 if idx >= 0 else len(out), module)
         return out
 
+    def _ordered(modules: list, scope: str) -> list:
+        """Sort a module list into the canonical reading order.
+
+        The order lives in packages/contracts/shift_modules.json, so a change to
+        the page composition re-composes on the next --export-only rather than
+        needing every shift regenerated. Unknown types keep their relative
+        position at the end rather than being dropped.
+        """
+        order = MODULE_ORDER.get(scope) or []
+        rank = {t: i for i, t in enumerate(order)}
+        fallback = len(rank)
+        return sorted(
+            modules or [],
+            key=lambda m: (rank.get(m.get('type'), fallback), 0),
+        )
+
     def resolve_modules(scope: str, slug: str, generated):
         key = (scope, slug)
         if key in overrides:
@@ -1295,7 +1331,7 @@ def build_map_json_v2(conn) -> dict:
                 break
         if items:
             mods = mods + [{'type': 'related_shifts', 'data': {'items': items}}]
-        entry['modules'] = mods
+        entry['modules'] = _ordered(mods, 'key_trend')
 
     # ---- sub_trends ----
     st_rows_all = conn.execute("""
@@ -1334,6 +1370,7 @@ def build_map_json_v2(conn) -> dict:
                     ('counter_signals', 'signals', 'peel_tabs'),
                     {'type': 'evidence', 'data': {'items': evidence}},
                 )
+        sub_trends_j[-1]['modules'] = _ordered(sub_trends_j[-1]['modules'], 'sub_trend')
 
     unmatched = sorted(f'{s}:{sl}' for (s, sl) in overrides.keys() - used_overrides)
     if unmatched:

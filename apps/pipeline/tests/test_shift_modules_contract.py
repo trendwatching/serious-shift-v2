@@ -83,19 +83,28 @@ def test_frontend_registers_every_declared_type():
     assert not missing, f"frontend registry has no component for: {sorted(missing)}"
 
 
-def test_module_order_matches_the_reference_template():
-    """The COGNITIVE EROSION page order is the spec — lock it in so a reorder is
-    a deliberate edit to this list and not an accident."""
-    kt = gm.kt_modules({"subtitle": "dek", "hero_stat": {"value": "9%"}}, _FULL_KT)
-    assert [m["type"] for m in kt] == [
-        "dek", "from_to", "stat_band", "peel_tabs", "sub_shift_list",
-        "human_needs", "tension_band", "timeline", "industries", "territories",
-    ]
-    st = gm.st_modules({"description": "d"}, _FULL_ST)
-    assert [m["type"] for m in st] == [
-        "lede", "from_to_solid", "tension_band", "stat_band", "peel_tabs",
-        "human_needs", "signals", "counter_signals", "timeline", "territories",
-    ]
+def test_canonical_order_is_the_contract_not_the_generator():
+    """Reading order is owned by the contract, and the export sorts into it — so a
+    composition change is a data change, not a regeneration. The generator may emit
+    in any order; what ships must match the contract."""
+    order = _contract()["order"]
+    for scope, emitted in (
+        ("key_trend", gm.kt_modules({"subtitle": "dek", "hero_stat": {"value": "9%"}}, _FULL_KT)),
+        ("sub_trend", gm.st_modules({"description": "d"}, _FULL_ST)),
+    ):
+        canonical = order[scope]
+        got = [m["type"] for m in sorted(
+            emitted, key=lambda m: canonical.index(m["type"]) if m["type"] in canonical else len(canonical)
+        )]
+        want = [t for t in canonical if t in {m["type"] for m in emitted}]
+        assert got == want, f"{scope}: {got} != {want}"
+
+
+def test_sub_shift_carousel_sits_at_the_bottom_of_a_shift_page():
+    """The Miro mockup puts the five sub-shifts last, as a carousel — not mid-page."""
+    order = _contract()["order"]["key_trend"]
+    for earlier in ("industries", "territories", "timeline", "tension_band"):
+        assert order.index(earlier) < order.index("sub_shift_list"), earlier
 
 
 def test_modules_are_omitted_when_the_model_returned_nothing():

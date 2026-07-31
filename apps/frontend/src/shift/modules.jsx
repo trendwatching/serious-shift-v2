@@ -21,7 +21,7 @@ import {
   FromTo, FromToSolid, StatBand, PeelTabs, SubShiftList, HumanNeeds,
   TensionBand, Timeline, Industries, Territories,
   SignalsCard, CounterSignalsCard, Eyebrow,
-  Voices, Evidence, RelatedShifts,
+  Voices, Evidence, RelatedShifts, PullQuote, Innovations,
 } from './sections'
 
 const str = (v) => (typeof v === 'string' ? v.trim() : '')
@@ -87,6 +87,8 @@ export const SHIFT_MODULES = {
     <HumanNeeds needs={{ unlocked: str(data?.unlocked), threatened: str(data?.threatened) }} />
   ),
   tension_band: ({ data }) => <TensionBand quote={str(data?.quote)} label={str(data?.label) || undefined} />,
+  pull_quote: ({ data }) => <PullQuote quote={str(data?.quote)} />,
+  innovations: ({ data }) => <Innovations items={list(data?.items).filter((n) => n && str(n.title))} />,
   timeline: ({ data }) => (
     <Timeline steps={list(data?.steps).filter((s) => s && str(s.text))} />
   ),

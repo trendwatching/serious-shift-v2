@@ -1,7 +1,35 @@
 # Design audit — what the concept asks for vs. what is built
 
 Reference: `Serious Shift Homepage.dc.html` §4A "Swipe the Domains" (the chosen
-direction), the `ShiftDetail.dc.html` component it imports, and `SiteFooter.dc.html`.
+direction), the `ShiftDetail.dc.html` component it imports, `SiteFooter.dc.html`,
+and the content spec in Miro → **SERIOUS SHIFT 2026 → Content Mockup- July'26**.
+
+## Corrections from the Miro content spec
+
+The mockup HTML and the Miro spec disagreed in four places. The Miro is the content
+authority, so it won:
+
+| | Was | Now |
+|---|---|---|
+| **Pull-quote** | Missing. The only quote was the consumer tension. | Separate `pull_quote` module directly after From/To — the analyst's verdict ("The tool that thinks for you eventually thinks instead of you"), distinct from the consumer's voice later. Added to the prompt. |
+| **Sub-shift position** | Mid-page, 5th of 10. | Bottom of the page, per *"Swipe/Carousel at the bottom of the KeyShift"*. |
+| **Industry sectors** | 15 | **16** — `Media & Publishing` was missing. Recorded in `industry_sectors` in the contract so the prompt and UI share one list. |
+| **Reading order** | Hard-coded in the generator. | Owned by `order` in [shift_modules.json](packages/contracts/shift_modules.json); the export sorts to it, so a composition change re-composes on the next free `--export-only` instead of needing 58 shifts regenerated. |
+
+Deliberate deviations from the Miro, kept because the design mockup is the visual
+authority:
+
+- **Industries stay a chip selector**, not a native dropdown. The Miro says
+  "drop down showing all 16 industries"; the mockup implements a chip row. All 16
+  are reachable — scrolled on mobile, wrapped on desktop.
+- **The two undesigned visual slots are treated as covered.** The Miro marks
+  "a visual about the shift" near the top and "a simple flowchart/visual of some
+  sort" before the industries. The From/To cross-fading cards and the
+  Now/next/beyond timeline already occupy those slots; no placeholder artwork was
+  invented.
+- **Title face stays Suez One.** The Miro notes a "special (TrendWatching naming)
+  font — need to look up that exact font"; the mockup specifies Suez One. Swap the
+  `--font-title` token if the real brand face turns up.
 
 ## Fixed in this pass
 
@@ -55,9 +83,15 @@ if you want them. That is now a data + registry change, not a redesign.
 - **No frontend tests.** The pipeline has 42; the front end has none. The module
   registry, the adapter's live/fallback branching and the drag maths are all
   untested.
-- **`innovations` kept.** Empty, but `POST /api/innovations/ingest` is a live
-  integration point for the upstream Innovation database. Dropping it would break
-  that producer, so it survives 0008 pending confirmation the feed is retired.
+- **"Innovations in the wild" cannot be populated yet.** The Miro's AI × Consumer
+  sub-shift page calls for real branded examples, and `POST /api/innovations/ingest`
+  exists to receive them — but the `innovations` table has **no link to a shift or
+  sub-shift** (no join table; `tags` is free-form JSONB and the table is empty in
+  every environment). The `innovations` module type, its data contract and its
+  component are all in place and render-ready; what is missing is a linking step in
+  the pipeline — tag→domain mapping, or matching innovations to sub-shifts the way
+  claims are matched. Not invented here, because guessing the join would silently
+  attach the wrong brands to the wrong shift.
 - **Unused-but-served endpoints remain**: `/api/thinkers`, `/sources`, `/claims`,
   `/predictions`, `/stats`, `/keynote`, `/synthesis`, `/daily`, `/personalize`.
   The UI calls only `/api/map`. `keynote` in particular is regenerated weekly at
