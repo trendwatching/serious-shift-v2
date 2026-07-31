@@ -81,6 +81,8 @@ function toShift(live, fallback, i, domain) {
     kicker: first(src.kicker, fb.kicker, `Shift ${pad2(i + 1)}`),
     title,
     dek,
+    // Generated every run by the taxonomy phase; shown on the domain sheet row.
+    velocity: first(src.velocity, fb.velocity),
     read: first(src.read_time, fb.read, readTimeOf(dek)),
     modules: nonEmpty(src.modules) || (live ? projectKtModules(src) : fb.modules) || [],
     subshifts,
@@ -141,6 +143,11 @@ export function useDomains() {
           ? first(live?.key_trend_ids?.length, liveKts.length)
           : first(deck.count, keyShifts.length),
         keyShifts,
+        // Per-domain closing insights from the synthesis phase. Generated every
+        // run and previously unrendered; the domain sheet now closes on them.
+        insights: (data?.synthesis_insights || [])
+          .filter((s) => s?.domain_id === id && s?.name && s?.description)
+          .map((s) => ({ id: s.id, name: s.name, description: s.description })),
       }
     })
   }, [data])

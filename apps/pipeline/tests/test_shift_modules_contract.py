@@ -108,6 +108,37 @@ def test_modules_are_omitted_when_the_model_returned_nothing():
     assert [m["type"] for m in st] == ["lede"]
 
 
+def test_stat_band_rejects_prose_as_a_numeral():
+    """hero_stat.value is prose lifted from a claim, but the band renders it at
+    ~99px. A leading figure is salvaged; unsalvageable prose drops the module."""
+    prose = "200 years of encyclical history, first time dedicated entirely to technology (2026)"
+    kt = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": prose}}, {})
+    band = next((m for m in kt if m["type"] == "stat_band"), None)
+    assert band and band["data"]["value"] == "200", band
+    # the full prose is kept as the explanatory text, not thrown away
+    assert prose in band["data"]["text"]
+
+    # no leading figure at all → no band
+    kt2 = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": "Boom Supersonic achieved flight"}}, {})
+    assert "stat_band" not in {m["type"] for m in kt2}
+
+    # an explicit stat_value from the model always wins
+    kt3 = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": prose}}, {"stat_value": "2:1"})
+    assert next(m for m in kt3 if m["type"] == "stat_band")["data"]["value"] == "2:1"
+
+
+def test_short_figure_extraction():
+    for raw, want in [
+        ("25%", "25%"), ("18-34", "18-34"), ("3×", "3×"),
+        ("200 years of encyclical history, first time dedicated to tech", "200"),
+        ("16 million Claude chats harvested via 24,000 fake accounts", "16 million"),
+        ("195 references verified in 30 minutes with zero errors", "195"),
+        ("Boom Supersonic achieved supersonic flight in 2025", None),
+        ("", None), (None, None),
+    ]:
+        assert gm._short_figure(raw) == want, f"{raw!r} -> {gm._short_figure(raw)!r}, want {want!r}"
+
+
 def test_stat_band_needs_a_value_not_just_prose():
     """stat_text alone can't render the band — the numeral comes from hero_stat."""
     kt = gm.kt_modules({"subtitle": "d", "hero_stat": None}, {"stat_text": "prose only"})

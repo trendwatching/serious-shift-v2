@@ -661,6 +661,37 @@ def _as_strings(items) -> list | None:
     return out or None
 
 
+#: A leading display figure: 200 · 25% · 3× · 2:1 · $4.2bn · 18-34.
+_FIGURE_RE = re.compile(
+    r'^[$€£]?\d[\d,.]*(?:\s?[-–]\s?\d[\d,.]*)?'          # 200 · 4.2 · 18-34
+    r'(?:\s?(?:%|×|x\b|:\s?\d+))?'                        # % · × · :1
+    r'(?:\s?(?:million|billion|trillion|bn|m|k))?',       # 4.2bn · 16 million
+    re.IGNORECASE,
+)
+
+
+def _short_figure(text, limit: int = 14) -> str | None:
+    """A numeral fit for the stat band, or None.
+
+    `hero_stat.value` is prose lifted from a claim ("200 years of encyclical
+    history, first time dedicated entirely to technology"), but the band renders
+    it at ~99px on desktop, so only a short figure works. Take a leading figure
+    if there is one and give up otherwise — an overflowing band is worse than no
+    band, and the module is dropped when this returns nothing.
+    """
+    if not text:
+        return None
+    t = ' '.join(str(text).split())
+    if len(t) <= limit:
+        return t
+    m = _FIGURE_RE.match(t)
+    if m:
+        figure = m.group(0).strip().rstrip('.,;:')
+        if figure and len(figure) <= limit:
+            return figure
+    return None
+
+
 def _jsonb(value) -> str | None:
     """Serialise for a `%s::jsonb` placeholder; empty/None stays SQL NULL so the
     front end treats the section as absent."""
@@ -709,8 +740,10 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
         _module('dek', {'text': kt_row.get('subtitle') or ''}, ('text',)),
         _module('from_to', {'from': e.get('from') or '', 'to': e.get('to') or ''}, ('from', 'to')),
         _module('stat_band', {
-            'value': hero.get('value') or '',
-            'text': e.get('stat_text') or '',
+            # The model is asked for a display figure; hero_stat.value is a
+            # fallback and is usually prose, so it has to be reduced first.
+            'value': (e.get('stat_value') or '').strip() or _short_figure(hero.get('value')) or '',
+            'text': e.get('stat_text') or hero.get('value') or '',
             'source': hero.get('source') or hero.get('thinker') or '',
         }, ('value',)),
         _module('peel_tabs', {
@@ -1092,6 +1125,82 @@ def build_map_json_v2(conn) -> dict:
     }
     used_overrides: set = set()
 
+    # ── Modules derived from data other phases already produced ──────────────
+    # Thinker attribution (phase 5), interrelatedness (phase 6) and the claim
+    # graph are all generated every run. Composing them into modules here — at
+    # export, from rows that already exist — surfaces that work on the page
+    # without another model call.
+    RELATIONSHIP_LABELS = {
+        'reinforces': 'Reinforces',
+        'accelerated_by': 'Accelerated by',
+        'accelerates': 'Accelerates',
+        'tension_with': 'In tension with',
+        'contradicts': 'Contradicts',
+        'depends_on': 'Depends on',
+        'enables': 'Enables',
+    }
+
+    def _voices_module(kt_row):
+        pro = _attr(kt_row['proponents'])[1] or []
+        sk = _attr(kt_row['skeptics'])[1] or []
+        keep = lambda xs: [
+            {'name': x.get('name', ''), 'quote': x.get('quote', '')}
+            for x in xs if isinstance(x, dict) and x.get('name') and x.get('quote')
+        ]
+        pro, sk = keep(pro), keep(sk)
+        if not pro and not sk:
+            return None
+        return {'type': 'voices', 'data': {'proponents': pro, 'skeptics': sk}}
+
+    # Typed KT↔KT edges. domain_links stores ids as 'kt:<id>'.
+    links_by_kt: dict = {}
+    for r in conn.execute("""
+        SELECT source_id, target_id, relationship, strength, reasoning
+        FROM domain_links
+        WHERE source_type = 'kt' AND target_type = 'kt'
+        ORDER BY strength DESC NULLS LAST
+    """).fetchall():
+        for a, b in ((r['source_id'], r['target_id']), (r['target_id'], r['source_id'])):
+            try:
+                src = int(str(a).split(':')[-1])
+                dst = int(str(b).split(':')[-1])
+            except (ValueError, TypeError):
+                continue
+            links_by_kt.setdefault(src, []).append((dst, r['relationship'], r['reasoning']))
+
+    claim_rows_by_st: dict = {}
+    for r in conn.execute("""
+        SELECT stc.sub_trend_id, c.claim_text, t.name AS thinker, s.title AS source,
+               s.date_published, c.signal_strength, c.consumer_implication
+        FROM domain_sub_trend_claims stc
+        JOIN claims c   ON c.id = stc.claim_id
+        JOIN thinkers t ON t.id = c.thinker_id
+        LEFT JOIN sources s ON s.id = c.source_id
+        WHERE c.duplicate_of IS NULL AND c.claim_text IS NOT NULL
+        ORDER BY stc.sub_trend_id, COALESCE(c.claim_weight, 0) DESC
+    """).fetchall():
+        claim_rows_by_st.setdefault(r['sub_trend_id'], []).append({
+            'text': r['claim_text'],
+            'thinker': r['thinker'] or '',
+            'source': r['source'] or '',
+            'date': str(r['date_published'])[:10] if r['date_published'] else '',
+            'strength': r['signal_strength'] or '',
+            'implication': r['consumer_implication'] or '',
+        })
+
+    def _insert_after(modules: list, after_types: tuple, module) -> list:
+        """Place a module directly after the last of `after_types` present, or
+        append. Keeps the design's reading order stable as types come and go."""
+        if not module:
+            return modules
+        idx = -1
+        for i, m in enumerate(modules):
+            if m.get('type') in after_types:
+                idx = i
+        out = list(modules)
+        out.insert(idx + 1 if idx >= 0 else len(out), module)
+        return out
+
     def resolve_modules(scope: str, slug: str, generated):
         key = (scope, slug)
         if key in overrides:
@@ -1155,7 +1264,38 @@ def build_map_json_v2(conn) -> dict:
             # above so the page still renders.
             'slug':    url_slug,
             'modules': resolve_modules('key_trend', url_slug, kt['modules']),
+            '_kt_row': kt,   # dropped below; used to compose derived modules
         })
+
+    # Compose the derived modules once every shift's slug is known (related
+    # shifts need to link to siblings). An override replaces the whole list, so
+    # it is left untouched — the editor's ordering wins.
+    kt_title_by_id = {kt['id']: kt['name'] for kt in kt_rows_all}
+    kt_domain_by_id = {kt['id']: kt['domain_id'] for kt in kt_rows_all}
+    for entry in key_trends_j:
+        row = entry.pop('_kt_row')
+        if ('key_trend', entry['slug']) in used_overrides:
+            continue
+        mods = entry['modules']
+        mods = _insert_after(mods, ('tension_band', 'timeline'), _voices_module(row))
+
+        seen, items = set(), []
+        for dst, rel, why in links_by_kt.get(row['id'], []):
+            if dst in seen or dst == row['id'] or dst not in kt_slug_by_id:
+                continue
+            seen.add(dst)
+            items.append({
+                'title': kt_title_by_id.get(dst, ''),
+                'href': f'/map/{kt_domain_by_id.get(dst, "")}/{kt_slug_by_id[dst]}',
+                'relationship': RELATIONSHIP_LABELS.get(rel, (rel or '').replace('_', ' ').title()),
+                'reasoning': why or '',
+                'domain': kt_domain_by_id.get(dst, ''),
+            })
+            if len(items) == 6:
+                break
+        if items:
+            mods = mods + [{'type': 'related_shifts', 'data': {'items': items}}]
+        entry['modules'] = mods
 
     # ---- sub_trends ----
     st_rows_all = conn.execute("""
@@ -1185,6 +1325,15 @@ def build_map_json_v2(conn) -> dict:
             'slug':    url_slug,
             'modules': resolve_modules('sub_trend', url_slug, st['modules']),
         })
+        # The sourced claims behind this sub-shift, beside the written signals.
+        if ('sub_trend', url_slug) not in used_overrides:
+            evidence = claim_rows_by_st.get(st['id'], [])[:8]
+            if evidence:
+                sub_trends_j[-1]['modules'] = _insert_after(
+                    sub_trends_j[-1]['modules'],
+                    ('counter_signals', 'signals', 'peel_tabs'),
+                    {'type': 'evidence', 'data': {'items': evidence}},
+                )
 
     unmatched = sorted(f'{s}:{sl}' for (s, sl) in overrides.keys() - used_overrides)
     if unmatched:
@@ -1394,6 +1543,10 @@ def main():
     parser.add_argument('--editorial-only', action='store_true',
                         help='Regenerate the editorial modules for existing Key Trends, then '
                              're-export. Does NOT reset the v2 tables or re-cluster.')
+    parser.add_argument('--limit', type=int, default=0, metavar='N',
+                        help='With --editorial-only: only process the first N Key Trends per '
+                             'domain. Use a small N to smoke-test the path before paying for '
+                             'the full set.')
     args = parser.parse_args()
 
     conn = get_conn()
@@ -1408,11 +1561,19 @@ def main():
             sys.exit(1)
         print('--editorial-only: regenerating modules for the existing map…')
         domain_kts = load_kts_from_db(conn)
+        if args.limit:
+            domain_kts = {k: v[:args.limit] for k, v in domain_kts.items()}
+            print(f'  --limit {args.limit}: capped to the first {args.limit} shift(s) per domain.')
         total = sum(len(v) for v in domain_kts.values())
         if not total:
             print('ERROR: no Key Trends in the database — run a full rebuild first.')
             conn.close(); sys.exit(1)
         print(f'  {total} Key Trends found across {len(DOMAINS)} domains.')
+        # Domain definitions are an idempotent upsert with no truncate, so they
+        # are safe here — and necessary: horizon and the domain labels live on
+        # domains_v2 and would otherwise stay unset on a database that has only
+        # ever had the taxonomy phases run against it.
+        phase1_domain_definitions(conn)
         domain_claims = phase2_claim_routing(conn)
         phase8_hero_stats(conn)          # stat_band module needs hero_stat first
         phase4b_editorial(conn, api_key, domain_claims, domain_kts)

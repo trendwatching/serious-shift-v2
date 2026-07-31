@@ -14,7 +14,9 @@
   --font-sans:    'Nunito Sans', system-ui, sans-serif;
   --font-title:   'Suez One', Georgia, serif;
   --font-serif:   'Suez One', Georgia, serif;
-  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* The design specifies the platform mono stack, not a webfont — so the mono
+     labels match it exactly and there is one less font to download. */
+  --font-mono:    ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* ── Surfaces & ink ──────────────────────────────────────────────── */
   --color-paper:     #F7F6F9;

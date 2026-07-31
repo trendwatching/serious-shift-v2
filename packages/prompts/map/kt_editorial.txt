@@ -20,9 +20,12 @@ WHATS_CHANGING / WHY_NOW (two panels the reader toggles between)
 - `why_now`: 3–4 sentences. Why this is landing in this window rather than five years ago or five years hence. Name the converging forces.
 - These must not overlap. If `why_now` could be pasted into `whats_changing`, rewrite it.
 
-STAT_TEXT
-- One or two sentences of prose that explain the single strongest statistic in the evidence and why it matters. Do not repeat the bare number — the number is displayed separately.
-- If the evidence contains no attributable, dated statistic, return "".
+STAT_VALUE / STAT_TEXT (a headline figure and the prose beside it)
+- `stat_value` is the bare figure, displayed very large on its own. Keep it SHORT — at most about 12 characters, no sentence, no trailing unit words unless they are part of the figure.
+- Right: "25%", "3×", "2:1", "18-34", "$4.2bn", "6 of 9", "100%"
+- Wrong: "200 years of encyclical history, first time dedicated entirely to technology" (that is prose, not a figure), "16 million Claude chats harvested via fake accounts"
+- `stat_text` is one or two sentences explaining what the figure measures and why it matters. Do not restate the bare number — it is displayed separately.
+- Both must come from the same statistic in the evidence. If the evidence contains no attributable, dated statistic, return "" for both.
 
 HUMAN_NEEDS
 - `unlocked`: the human need this shift genuinely satisfies. Steelman it — the reader must believe the appeal.
@@ -52,7 +55,7 @@ READ_TIME
 - Estimate honestly from the length of what you wrote, e.g. "5 min read".
 
 Return ONLY valid JSON — no preamble, no markdown fences:
-{"from":"…","to":"…","whats_changing":"…","why_now":"…","stat_text":"…","human_needs":{"unlocked":"…","threatened":"…"},"consumer_tension":"…","timeline":{"now":"…","next":"…","beyond":"…"},"industries":[{"name":"Beauty & Personal Care","text":"…"}],"opportunities":[{"name":"…","text":"…"}],"read_time":"5 min read"}
+{"from":"…","to":"…","whats_changing":"…","why_now":"…","stat_value":"25%","stat_text":"…","human_needs":{"unlocked":"…","threatened":"…"},"consumer_tension":"…","timeline":{"now":"…","next":"…","beyond":"…"},"industries":[{"name":"Beauty & Personal Care","text":"…"}],"opportunities":[{"name":"…","text":"…"}],"read_time":"5 min read"}
 
 KEY TREND: {{kt_name}}
 FRAMING: {{kt_subtitle}}

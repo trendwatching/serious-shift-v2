@@ -78,10 +78,28 @@ export function DomainSheet() {
               <div className="flex flex-1 flex-col gap-1.5">
                 <div className="t-title text-[19px] leading-[1.2] lg:text-[22px]" style={{ color: 'var(--color-ink)' }}>{s.title}</div>
                 <div className="text-[13.5px] leading-[1.5]" style={{ color: 'var(--color-ink-mid)' }}>{s.dek}</div>
-                <div className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Key shift · {s.read}</div>
+                <div className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Key shift{s.velocity ? ` · ${s.velocity}` : ''} · {s.read}
+                </div>
               </div>
             </Link>
           ))}
+
+          {/* The synthesis phase writes a few cross-cutting insights per domain
+              every run. This is where they land. */}
+          {domain.insights?.length > 0 && (
+            <section className="flex flex-col gap-2.5 pt-10">
+              <Eyebrow>What it adds up to</Eyebrow>
+              <div className="grid gap-2.5 lg:grid-cols-2">
+                {domain.insights.map((s) => (
+                  <div key={s.id} className="card flex flex-col gap-2 p-4 lg:p-5">
+                    <span className="t-display text-[15px] leading-[1.25] lg:text-[17px]" style={{ letterSpacing: '-0.01em' }}>{s.name}</span>
+                    <span className="text-[13.5px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{s.description}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
@@ -118,6 +136,7 @@ export function ShiftDetail() {
             domain,
             subs: shift.subshifts,
             onOpenSub: (b) => navigate(`/map/${domain.slug}/${shift.slug}/${b.slug}`),
+            onNavigate: (r) => navigate(r.href),
           }}
         />
       </Column>

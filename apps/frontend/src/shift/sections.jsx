@@ -464,3 +464,106 @@ export const SignalsCard = ({ items }) => (
 export const CounterSignalsCard = ({ items }) => (
   <NumberedCard title="Counter-signals" items={items} grad="var(--grad-green-lit)" shadow="0 12px 28px rgba(16,80,47,0.22)" />
 )
+
+/* ── Voices: who backs the shift and who disputes it ─────────────────────── */
+
+function VoiceColumn({ title, people, grad, shadow }) {
+  if (!people?.length) return null
+  return (
+    <div className="flex-1 min-w-0 rounded-[22px] overflow-hidden flex flex-col" style={{ backgroundImage: grad, boxShadow: shadow }}>
+      <div className="t-eyebrow px-5 pt-5 pb-3.5 text-white" style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.16em' }}>{title}</div>
+      <div className="flex flex-col gap-3 px-4 pb-[18px]">
+        {people.map((p, i) => (
+          <div key={`${p.name}-${i}`} className="rounded-2xl bg-white px-4 py-4 flex flex-col gap-2" style={{ boxShadow: '0 4px 14px rgba(27,22,32,0.12)' }}>
+            <span className="t-display text-[14px]" style={{ letterSpacing: '-0.01em' }}>{p.name}</span>
+            <span className="text-[13.5px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-strong)' }}>“{p.quote}”</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Real attributed positions from the thinker-attribution phase. */
+export function Voices({ proponents, skeptics }) {
+  if (!proponents?.length && !skeptics?.length) return null
+  return (
+    <div className="flex flex-col gap-2.5">
+      <SectionHead title="Who is saying this" aside={`${(proponents?.length || 0) + (skeptics?.length || 0)} voices`} />
+      <div className="flex flex-col gap-3 lg:flex-row lg:gap-4 lg:items-start">
+        <VoiceColumn title="Argue for" people={proponents} grad="var(--grad-green-lit)" shadow="0 12px 28px rgba(16,80,47,0.22)" />
+        <VoiceColumn title="Push back" people={skeptics} grad="var(--grad-pink-hot)" shadow="0 12px 28px rgba(94,0,51,0.22)" />
+      </div>
+    </div>
+  )
+}
+
+/* ── Evidence: the sourced claims behind a sub-shift ─────────────────────── */
+
+const STRENGTH_LABEL = {
+  strong_signal: 'Strong signal',
+  signal: 'Signal',
+  background: 'Background',
+  noise: 'Noise',
+}
+
+export function Evidence({ items }) {
+  if (!items?.length) return null
+  return (
+    <div className="flex flex-col gap-2.5">
+      <SectionHead title="The evidence" aside={`${items.length} sourced`} />
+      <div className="flex flex-col gap-2.5">
+        {items.map((c, i) => (
+          <div key={i} className="card flex flex-col gap-2.5 p-4 lg:p-5">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="t-display text-[13.5px]" style={{ letterSpacing: '-0.01em' }}>{c.thinker}</span>
+              {c.strength && (
+                <span
+                  className="t-eyebrow inline-flex h-[20px] items-center rounded-full px-2"
+                  style={{ background: 'var(--color-pink-wash)', color: 'var(--color-pink-ink)', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.12em' }}
+                >{STRENGTH_LABEL[c.strength] || c.strength}</span>
+              )}
+              {c.date && <span className="ml-auto font-mono text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{c.date}</span>}
+            </span>
+            <span className="text-[14px] leading-[1.55] text-pretty" style={{ color: 'var(--color-ink-strong)' }}>{c.text}</span>
+            {c.implication && (
+              <span className="text-[13px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>
+                <span className="font-semibold">So what — </span>{c.implication}
+              </span>
+            )}
+            {c.source && <span className="text-[11.5px]" style={{ color: 'var(--color-ink-dim)' }}>{c.source}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ── Related shifts: typed edges from the interrelatedness phase ─────────── */
+
+export function RelatedShifts({ items, onOpen }) {
+  if (!items?.length) return null
+  return (
+    <div className="flex flex-col gap-2.5">
+      <SectionHead title="Connected shifts" aside={`${items.length}`} />
+      <div className="flex flex-col">
+        {items.map((r, i) => (
+          <button
+            key={`${r.href}-${i}`} type="button" onClick={() => onOpen?.(r)}
+            className="flex gap-4 border-b py-4 text-left transition-colors hover:bg-[var(--color-paper)]"
+            style={{ borderColor: 'var(--color-hairline-soft)' }}
+          >
+            <span className="flex flex-1 flex-col gap-1.5">
+              <span className="t-eyebrow" style={{ color: 'var(--color-pink-ink)', fontSize: 10, letterSpacing: '0.14em' }}>{r.relationship}</span>
+              <span className="t-title text-[16px] leading-[1.2] lg:text-[18px]">{r.title}</span>
+              {r.reasoning && (
+                <span className="text-[13px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{r.reasoning}</span>
+              )}
+            </span>
+            <span className="pt-1 text-[15px]" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}

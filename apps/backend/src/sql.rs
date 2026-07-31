@@ -39,27 +39,9 @@ FROM (
   LEFT JOIN sources s ON p.source_id = s.id
 ) q"#;
 
-pub const CONCEPTS: &str =
-    "SELECT coalesce(json_agg(row_to_json(q)), '[]'::json) FROM (SELECT * FROM concepts) q";
 
-pub const TENSIONS: &str =
-    "SELECT coalesce(json_agg(row_to_json(q)), '[]'::json) FROM (SELECT * FROM tensions) q";
 
-pub const DISAGREEMENTS: &str = r#"
-SELECT coalesce(json_agg(row_to_json(q)), '[]'::json)
-FROM (
-  SELECT td.*, t1.name AS thinker_a_name, t2.name AS thinker_b_name
-  FROM thinker_disagreements td
-  JOIN thinkers t1 ON td.thinker_a_id = t1.id
-  JOIN thinkers t2 ON td.thinker_b_id = t2.id
-) q"#;
 
-pub const CLAIM_CONCEPTS: &str = r#"
-SELECT coalesce(json_agg(row_to_json(q)), '[]'::json)
-FROM (
-  SELECT cc.claim_id, cc.concept_id, c2.name AS concept_name
-  FROM claim_concepts cc JOIN concepts c2 ON cc.concept_id = c2.id
-) q"#;
 
 pub const STATS: &str = r#"
 SELECT json_build_object(
@@ -67,9 +49,6 @@ SELECT json_build_object(
   'sources',               (SELECT count(*) FROM sources),
   'claims',                (SELECT count(*) FROM claims),
   'predictions',           (SELECT count(*) FROM predictions),
-  'concepts',              (SELECT count(*) FROM concepts),
-  'tensions',              (SELECT count(*) FROM tensions),
-  'disagreements',         (SELECT count(*) FROM thinker_disagreements),
   'evaluated_predictions', (SELECT count(*) FROM predictions WHERE status <> 'pending'),
   'avg_credibility',       (SELECT round(avg(credibility_score)::numeric, 1) FROM thinkers),
   'claims_by_domain',      (SELECT coalesce(json_object_agg(domain, c), '{}'::json)

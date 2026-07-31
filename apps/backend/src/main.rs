@@ -101,10 +101,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/sources", get(sources))
         .route("/api/claims", get(claims))
         .route("/api/predictions", get(predictions))
-        .route("/api/concepts", get(concepts))
-        .route("/api/tensions", get(tensions))
-        .route("/api/disagreements", get(disagreements))
-        .route("/api/claim_concepts", get(claim_concepts))
         .route("/api/stats", get(stats))
         .route("/api/map", get(map))
         .route("/api/keynote", get(keynote))
@@ -171,18 +167,6 @@ async fn claims(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
 }
 async fn predictions(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
     run(&s.pool, sql::PREDICTIONS).await
-}
-async fn concepts(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
-    run(&s.pool, sql::CONCEPTS).await
-}
-async fn tensions(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
-    run(&s.pool, sql::TENSIONS).await
-}
-async fn disagreements(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
-    run(&s.pool, sql::DISAGREEMENTS).await
-}
-async fn claim_concepts(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
-    run(&s.pool, sql::CLAIM_CONCEPTS).await
 }
 async fn stats(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
     run(&s.pool, sql::STATS).await

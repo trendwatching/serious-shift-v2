@@ -125,6 +125,13 @@ export default function Home() {
         ))}
       </div>
 
+      {/* Bottom scrim, straight from the design: a short dark wash so the dots
+          and the swipe hint hold against a light panel as well as a gradient. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-10 z-[16]"
+        style={{ background: 'linear-gradient(180deg, rgba(27,22,32,0) 0%, rgba(27,22,32,0.42) 100%)' }}
+      />
+
       {/* Hint + dots. Both read the settled index only. */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-[54px] text-center text-[11.5px] uppercase"

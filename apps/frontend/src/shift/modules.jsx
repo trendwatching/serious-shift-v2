@@ -21,6 +21,7 @@ import {
   FromTo, FromToSolid, StatBand, PeelTabs, SubShiftList, HumanNeeds,
   TensionBand, Timeline, Industries, Territories,
   SignalsCard, CounterSignalsCard, Eyebrow,
+  Voices, Evidence, RelatedShifts,
 } from './sections'
 
 const str = (v) => (typeof v === 'string' ? v.trim() : '')
@@ -93,6 +94,19 @@ export const SHIFT_MODULES = {
   territories: ({ data }) => <Territories items={list(data?.items).filter((i) => i && str(i.name))} />,
   signals: ({ data }) => <SignalsCard items={list(data?.items).filter((s) => str(s))} />,
   counter_signals: ({ data }) => <CounterSignalsCard items={list(data?.items).filter((s) => str(s))} />,
+  voices: ({ data }) => (
+    <Voices
+      proponents={list(data?.proponents).filter((p) => p && str(p.name) && str(p.quote))}
+      skeptics={list(data?.skeptics).filter((p) => p && str(p.name) && str(p.quote))}
+    />
+  ),
+  evidence: ({ data }) => <Evidence items={list(data?.items).filter((c) => c && str(c.text))} />,
+  related_shifts: ({ data, ctx }) => (
+    <RelatedShifts
+      items={list(data?.items).filter((r) => r && str(r.title) && str(r.href))}
+      onOpen={ctx.onNavigate}
+    />
+  ),
 }
 
 /* ── Isolation ───────────────────────────────────────────────────────────── */

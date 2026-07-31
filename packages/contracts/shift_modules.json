@@ -81,6 +81,34 @@
       "data": { "items": ["string"] },
       "required": ["items"]
     },
+    "voices": {
+      "summary": "Who backs this shift and who disputes it, with their own words. Built at export from the thinker-attribution phase — no extra model spend.",
+      "data": {
+        "proponents": [{ "name": "string", "quote": "string" }],
+        "skeptics": [{ "name": "string", "quote": "string" }]
+      },
+      "required": []
+    },
+    "evidence": {
+      "summary": "The sourced claims behind a sub-shift: what was said, by whom, where, and when. Distinct from `signals`, which is written prose.",
+      "data": {
+        "items": [{
+          "text": "string", "thinker": "string", "source": "string?",
+          "date": "string?", "strength": "string?", "implication": "string?"
+        }]
+      },
+      "required": ["items"]
+    },
+    "related_shifts": {
+      "summary": "Typed links to other shifts (reinforces, accelerated_by, …) from the interrelatedness phase.",
+      "data": {
+        "items": [{
+          "title": "string", "href": "string", "relationship": "string",
+          "reasoning": "string?", "domain": "string?"
+        }]
+      },
+      "required": ["items"]
+    },
     "rich_text": {
       "summary": "Escape hatch for editor-authored prose. Never generated.",
       "data": { "heading": "string?", "body": "string" },
