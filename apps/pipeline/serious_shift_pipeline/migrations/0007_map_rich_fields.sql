@@ -1,76 +1,62 @@
 -- migrate:up
-
--- ── Rich editorial fields for the shift reading views ─────────────────────────
+-- =============================================================================
+-- 0007 — Module-driven shift pages.
 --
--- The "Swipe the Domains" front end renders a shift as a sequence of editorial
--- sections (From→To, What's changing / Why now, a stat band, human needs, a
--- consumer tension, a now/next/beyond horizon, implications by industry and
--- opportunity territories). Each section is rendered only when its field is
--- present, so every column here is nullable: the site degrades to hero + dek
--- until the pipeline backfills a row.
+-- A shift page is an ordered list of MODULES ({type, data}) rather than a fixed
+-- sequence of sections, so composition is data: the pipeline emits the list, the
+-- front end renders whatever it is given and skips types it does not know.
 --
--- JSONB is used where the shape is a list or a small record, matching how the
--- map document already stores hero_stat.
+-- Two places store modules, and the split is deliberate:
+--
+--   * GENERATED modules live in a JSONB column on the row they describe. The
+--     rebuild TRUNCATEs domain_key_trends/domain_sub_trends with RESTART
+--     IDENTITY CASCADE (see generate_map_data.reset_v2_tables), so a child table
+--     keyed on those ids would be emptied every week and a recycled id would
+--     point at a different shift. A column travels with its row and is written
+--     in the same run that creates it, which sidesteps identity entirely.
+--
+--   * AUTHORED modules live in shift_module_overrides, which is intentionally
+--     NOT a child of the v2 tables — that is the whole point, since TRUNCATE …
+--     CASCADE cannot reach it. It is keyed by the URL slug (what an editor sees
+--     in the address bar), so an override keeps applying across rebuilds.
+-- =============================================================================
 
 ALTER TABLE domain_key_trends
-    ADD COLUMN from_text        TEXT,    -- "From" side of the shift
-    ADD COLUMN to_text          TEXT,    -- "To" side of the shift
-    ADD COLUMN whats_changing   TEXT,
-    ADD COLUMN why_now          TEXT,
-    ADD COLUMN stat_text        TEXT,    -- prose beside hero_stat.value
-    ADD COLUMN human_needs      JSONB,   -- { unlocked, threatened }
-    ADD COLUMN consumer_tension TEXT,    -- the pull-quote
-    ADD COLUMN timeline         JSONB,   -- [{ label, text }] now / next / beyond
-    ADD COLUMN industries       JSONB,   -- [{ name, text }]
-    ADD COLUMN opportunities    JSONB,   -- [{ name, text }] opportunity territories
-    ADD COLUMN read_time        TEXT;    -- "6 min read"
+    ADD COLUMN modules   JSONB,   -- generated: [{type, data}], render order
+    ADD COLUMN read_time TEXT;    -- "6 min read" — shown on the domain sheet row
 
 ALTER TABLE domain_sub_trends
-    ADD COLUMN lede             TEXT,
-    ADD COLUMN from_text        TEXT,
-    ADD COLUMN to_text          TEXT,
-    ADD COLUMN tension          TEXT,
-    ADD COLUMN stat             JSONB,   -- { value, text, source }
-    ADD COLUMN whats_changing   TEXT,
-    ADD COLUMN why_now          TEXT,
-    ADD COLUMN human_needs      JSONB,   -- { unlocked, threatened }
-    ADD COLUMN signals          JSONB,   -- [text]
-    ADD COLUMN counter_signals  JSONB,   -- [text]
-    ADD COLUMN timeline         JSONB,   -- [{ label, text }]
-    ADD COLUMN territories      JSONB;   -- [{ name, text }]
+    ADD COLUMN modules JSONB;
 
 -- The deck labels each domain with a horizon year.
 ALTER TABLE domains_v2
     ADD COLUMN horizon TEXT;
 
+-- Editor-authored module lists. Full replacement: when an enabled row exists for
+-- a slug, its ordered list is served instead of the generated one. Seed a row
+-- from the generated list to start editing (see DEPLOY-RAILWAY.md).
+CREATE TABLE shift_module_overrides (
+    scope      TEXT NOT NULL CHECK (scope IN ('key_trend', 'sub_trend')),
+    -- URL slug: 'cognitive-erosion' for a shift,
+    -- 'cognitive-erosion/capacity-collapse' for a sub-shift.
+    slug       TEXT NOT NULL,
+    modules    JSONB NOT NULL,
+    note       TEXT,
+    enabled    BOOLEAN NOT NULL DEFAULT true,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (scope, slug)
+);
+
 -- migrate:down
 
-ALTER TABLE domain_key_trends
-    DROP COLUMN from_text,
-    DROP COLUMN to_text,
-    DROP COLUMN whats_changing,
-    DROP COLUMN why_now,
-    DROP COLUMN stat_text,
-    DROP COLUMN human_needs,
-    DROP COLUMN consumer_tension,
-    DROP COLUMN timeline,
-    DROP COLUMN industries,
-    DROP COLUMN opportunities,
-    DROP COLUMN read_time;
-
-ALTER TABLE domain_sub_trends
-    DROP COLUMN lede,
-    DROP COLUMN from_text,
-    DROP COLUMN to_text,
-    DROP COLUMN tension,
-    DROP COLUMN stat,
-    DROP COLUMN whats_changing,
-    DROP COLUMN why_now,
-    DROP COLUMN human_needs,
-    DROP COLUMN signals,
-    DROP COLUMN counter_signals,
-    DROP COLUMN timeline,
-    DROP COLUMN territories;
+DROP TABLE shift_module_overrides;
 
 ALTER TABLE domains_v2
     DROP COLUMN horizon;
+
+ALTER TABLE domain_sub_trends
+    DROP COLUMN modules;
+
+ALTER TABLE domain_key_trends
+    DROP COLUMN modules,
+    DROP COLUMN read_time;

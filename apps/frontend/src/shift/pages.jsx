@@ -7,22 +7,21 @@
  *
  * Each is a real route so shifts deep-link and the browser Back button works;
  * the entrance animation is what gives them the design's "sheet slides up" feel.
- * Sections render only when the content has the matching field, which is why a
- * headline-only shift shows hero + dek and the fully-authored one shows all of it.
+ *
+ * The two detail views deliberately contain no section logic: the page body is
+ * whatever module list the backend supplied, rendered by <Modules>. Adding,
+ * removing or reordering a section is a data change (see modules.jsx).
  */
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useResolved } from './useDomains'
 import { ShiftFooter } from './chrome'
-import {
-  GradientHero, FromTo, FromToSolid, StatBand, PeelTabs, SubShiftList,
-  HumanNeeds, TensionBand, Timeline, Industries, Territories,
-  SignalsCard, CounterSignalsCard, Eyebrow,
-} from './sections'
+import { Modules } from './modules'
+import { GradientHero, Eyebrow } from './sections'
 
 /** Reading column: full-bleed on mobile, centred measure on desktop. */
 const Column = ({ children }) => (
-  <div className="mx-auto flex w-full flex-col gap-[30px] px-[22px] pt-[26px] lg:max-w-[760px] lg:gap-10 lg:pt-12">
+  <div className="mx-auto flex w-full flex-col gap-[30px] px-[22px] pt-[26px] lg:max-w-[860px] lg:gap-10 lg:pt-12">
     {children}
   </div>
 )
@@ -41,7 +40,7 @@ function Missing({ what }) {
 
 const Loading = () => <div className="min-h-[60vh]" aria-busy="true" />
 
-/* ── Domain sheet ────────────────────────────────────────────────────── */
+/* ── Domain sheet ────────────────────────────────────────────────────────── */
 
 export function DomainSheet() {
   const { domainSlug } = useParams()
@@ -67,7 +66,7 @@ export function DomainSheet() {
         className="mt-2 min-h-[520px] bg-white pb-[130px] pt-2"
         style={{ borderRadius: '28px 28px 0 0' }}
       >
-        <div className="mx-auto w-full px-[22px] lg:max-w-[760px]">
+        <div className="mx-auto w-full px-[22px] lg:max-w-[860px]">
           {domain.keyShifts.map((s, i) => (
             <Link
               key={s.id}
@@ -91,7 +90,7 @@ export function DomainSheet() {
   )
 }
 
-/* ── Shift detail ────────────────────────────────────────────────────── */
+/* ── Shift detail ────────────────────────────────────────────────────────── */
 
 export function ShiftDetail() {
   const { domainSlug, ktSlug } = useParams()
@@ -112,22 +111,15 @@ export function ShiftDetail() {
       />
 
       <Column>
-        <p className="t-display text-[19px] leading-[1.35] text-pretty lg:text-[23px]" style={{ fontWeight: 600, letterSpacing: '-0.01em' }}>
-          {shift.dek}
-        </p>
-
-        <FromTo from={shift.from} to={shift.to} grad={domain.grad} />
-        <StatBand stat={shift.stat} />
-        <PeelTabs whatChanging={shift.whatChanging} whyNow={shift.whyNow} />
-        <SubShiftList
-          subs={shift.subshifts}
-          onOpen={(b) => navigate(`/map/${domain.slug}/${shift.slug}/${b.slug}`)}
+        <Modules
+          modules={shift.modules}
+          ctx={{
+            scope: 'shift',
+            domain,
+            subs: shift.subshifts,
+            onOpenSub: (b) => navigate(`/map/${domain.slug}/${shift.slug}/${b.slug}`),
+          }}
         />
-        <HumanNeeds needs={shift.needs} />
-        <TensionBand quote={shift.tension} />
-        <Timeline steps={shift.horizonSteps} />
-        <Industries items={shift.industries} />
-        <Territories items={shift.territories} />
       </Column>
 
       <div className="mt-[22px]"><ShiftFooter /></div>
@@ -135,7 +127,7 @@ export function ShiftDetail() {
   )
 }
 
-/* ── Sub-shift detail ────────────────────────────────────────────────── */
+/* ── Sub-shift detail ────────────────────────────────────────────────────── */
 
 export function SubShiftDetail() {
   const { domainSlug, ktSlug, subSlug } = useParams()
@@ -161,21 +153,7 @@ export function SubShiftDetail() {
       />
 
       <Column>
-        {sub.lede && (
-          <p className="text-[16.5px] leading-[1.55] text-pretty lg:text-[19px]" style={{ color: 'var(--color-ink-strong)' }}>
-            {sub.lede}
-          </p>
-        )}
-
-        <FromToSolid from={sub.from} to={sub.to} />
-        <TensionBand quote={sub.quote} label="The tension" />
-        <StatBand stat={sub.stat} size={52} />
-        <PeelTabs whatChanging={sub.whatChanging} whyNow={sub.whyNow} />
-        <HumanNeeds needs={sub.needs} />
-        <SignalsCard items={sub.signals} />
-        <CounterSignalsCard items={sub.counter} />
-        <Timeline steps={sub.horizonSteps} />
-        <Territories items={sub.territories} />
+        <Modules modules={sub.modules} ctx={{ scope: 'sub_shift', domain, subs: [] }} />
       </Column>
 
       <div className="mt-[22px]"><ShiftFooter /></div>

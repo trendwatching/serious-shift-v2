@@ -113,3 +113,12 @@ def apply_pending(verbose: bool = True) -> int:
         msg = f"{applied} applied" if applied else "already up to date"
         print(f"  migrate: schema {msg} ({len(files)} migrations total).")
     return applied
+
+
+if __name__ == "__main__":  # pragma: no cover — operational entrypoint
+    # `python -m serious_shift_pipeline.core.migrate` applies pending migrations
+    # and exits. The weekly run does this on startup anyway; having it standalone
+    # means a schema change can be rolled out without waiting for (or paying for)
+    # a full pipeline run — e.g. `railway run --service pipeline python -m
+    # serious_shift_pipeline.core.migrate`.
+    apply_pending()

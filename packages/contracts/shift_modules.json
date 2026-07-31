@@ -1,0 +1,90 @@
+{
+  "$comment": [
+    "Canonical module types for the shift / sub-shift reading views.",
+    "A shift page is an ordered list of {type, data} modules; this file is the",
+    "contract between the pipeline (which emits them) and the front end (which",
+    "renders them). Adding a type means: add it here, emit it from the pipeline's",
+    "MODULE_TEMPLATE, and register a component in",
+    "apps/frontend/src/shift/modules.jsx. The front end skips unknown types, so a",
+    "new type can ship backend-first without breaking the page.",
+    "Guarded by apps/pipeline/tests/test_shift_modules_contract.py."
+  ],
+  "version": 1,
+  "types": {
+    "dek": {
+      "summary": "Standfirst under the shift hero.",
+      "data": { "text": "string" },
+      "required": ["text"]
+    },
+    "lede": {
+      "summary": "Opening line of a sub-shift page.",
+      "data": { "text": "string" },
+      "required": ["text"]
+    },
+    "from_to": {
+      "summary": "The shift's spine as two cards whose gradient fills cross-fade.",
+      "data": { "from": "string", "to": "string" },
+      "required": ["from", "to"]
+    },
+    "from_to_solid": {
+      "summary": "From/To pair with solid green/pink fills (sub-shift variant).",
+      "data": { "from": "string", "to": "string" },
+      "required": ["from", "to"]
+    },
+    "stat_band": {
+      "summary": "Full-bleed band: oversized numeral, prose, source.",
+      "data": { "value": "string", "text": "string", "source": "string" },
+      "required": ["value"]
+    },
+    "peel_tabs": {
+      "summary": "Two stacked cards the reader toggles: what's changing / why now.",
+      "data": { "whats_changing": "string", "why_now": "string" },
+      "required": []
+    },
+    "sub_shift_list": {
+      "summary": "Cards linking to this shift's sub-shifts. Resolved from context, not data.",
+      "data": {},
+      "required": []
+    },
+    "human_needs": {
+      "summary": "Two expanding cards: the need unlocked and the need threatened.",
+      "data": { "unlocked": "string", "threatened": "string" },
+      "required": []
+    },
+    "tension_band": {
+      "summary": "Dark full-bleed band carrying a pull-quote.",
+      "data": { "quote": "string", "label": "string?" },
+      "required": ["quote"]
+    },
+    "timeline": {
+      "summary": "Now / next / beyond, as a vertical timeline.",
+      "data": { "steps": [{ "label": "string", "text": "string" }] },
+      "required": ["steps"]
+    },
+    "industries": {
+      "summary": "Sector chips plus a detail card that swaps on selection.",
+      "data": { "items": [{ "name": "string", "text": "string" }] },
+      "required": ["items"]
+    },
+    "territories": {
+      "summary": "Opportunity-territory cards plus a work-with-us card.",
+      "data": { "items": [{ "name": "string", "text": "string" }] },
+      "required": ["items"]
+    },
+    "signals": {
+      "summary": "Numbered evidence that the shift is real (sub-shift).",
+      "data": { "items": ["string"] },
+      "required": ["items"]
+    },
+    "counter_signals": {
+      "summary": "The honest case against (sub-shift).",
+      "data": { "items": ["string"] },
+      "required": ["items"]
+    },
+    "rich_text": {
+      "summary": "Escape hatch for editor-authored prose. Never generated.",
+      "data": { "heading": "string?", "body": "string" },
+      "required": ["body"]
+    }
+  }
+}

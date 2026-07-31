@@ -25,6 +25,7 @@ use serde_json::{json, Value};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::types::Json as SqlxJson;
 use sqlx::PgPool;
+use tower_http::compression::CompressionLayer;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 
 const MAX_SECTIONS: usize = 20; // /api/personalize abuse guard
@@ -117,6 +118,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/api/innovations/ingest",
             post(ingest_innovation).layer(DefaultBodyLimit::max(1024 * 1024)),
         )
+        // The assembled documents are large — the map is ~1 MB of JSON once every
+        // shift carries its editorial modules — and they compress to roughly a
+        // quarter of that. Applied to the whole router so /api/keynote and
+        // /api/claims benefit too; responses are only encoded when the client
+        // sends Accept-Encoding, so nothing else has to change.
+        .layer(CompressionLayer::new().gzip(true))
         .layer(cors_layer())
         .with_state(state);
 

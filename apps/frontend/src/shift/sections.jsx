@@ -59,7 +59,7 @@ export function GradientHero({ grad, onBack, eyebrow, eyebrowColor, title, sub, 
     >
       {/* Content shares the reading column's exact measure and padding so the
           hero lines up with the body copy instead of hugging the edge. */}
-      <div className="mx-auto flex w-full flex-1 flex-col px-[22px] lg:max-w-[760px]">
+      <div className="mx-auto flex w-full flex-1 flex-col px-[22px] lg:max-w-[860px]">
         {onBack && <BackButton onClick={onBack} />}
         <div className="mt-auto a-rise" style={{ animationDelay: '0.14s' }}>
           {eyebrow && (
@@ -92,11 +92,11 @@ function FromToCard({ label, text, grad, panel, ink }) {
     >
       <div className="absolute inset-0" style={{ backgroundImage: grad, animation: `${panel} 8s ease-in-out infinite` }} />
       <div
-        className="relative flex flex-col items-center justify-center text-center gap-2.5 box-border h-[208px] px-[15px] py-5"
+        className="relative box-border flex h-[208px] flex-col items-center justify-center gap-2.5 px-[15px] py-5 text-center lg:h-[264px] lg:gap-3.5 lg:px-8"
         style={{ animation: `${ink} 8s ease-in-out infinite` }}
       >
-        <span className="t-display text-[25px]" style={{ letterSpacing: '-0.02em' }}>{label}</span>
-        <span className="text-[13.5px] leading-[1.42]">{text}</span>
+        <span className="t-display text-[25px] lg:text-[32px]" style={{ letterSpacing: '-0.02em' }}>{label}</span>
+        <span className="text-[13.5px] leading-[1.42] lg:text-[16px] lg:leading-[1.5]">{text}</span>
       </div>
     </div>
   )
@@ -134,15 +134,24 @@ export function StatBand({ stat, size = 58 }) {
   if (!stat?.value) return null
   return (
     <div
-      className="bleed box-border text-white flex items-center gap-[18px] py-[34px]"
+      className="bleed box-border flex items-center gap-[18px] py-[34px] text-white lg:gap-10 lg:py-14"
       style={{ backgroundImage: "url('/shift/stat-band-gradient.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}
     >
-      <span className="shrink-0 leading-[0.9]" style={{ fontFamily: 'var(--font-title)', fontSize: size, letterSpacing: '-0.015em' }}>
+      <span
+        className="shrink-0 leading-[0.9]"
+        style={{
+          fontFamily: 'var(--font-title)',
+          // The numeral is the anchor of the band; give it real scale once
+          // there's room, but keep the mobile size exactly as designed.
+          fontSize: `clamp(${size}px, ${size / 3.9}vw, ${Math.round(size * 1.7)}px)`,
+          letterSpacing: '-0.015em',
+        }}
+      >
         {stat.value}
       </span>
-      <span className="flex-1 flex flex-col gap-2">
-        <span className="text-[13.5px] leading-[1.45] text-pretty">{stat.text}</span>
-        {stat.source && <span className="text-[11px] leading-[1.4] opacity-75">{stat.source}</span>}
+      <span className="flex flex-1 flex-col gap-2">
+        <span className="text-[13.5px] leading-[1.45] text-pretty lg:text-[17px] lg:leading-[1.5]">{stat.text}</span>
+        {stat.source && <span className="text-[11px] leading-[1.4] opacity-75 lg:text-[12.5px]">{stat.source}</span>}
       </span>
     </div>
   )
@@ -350,13 +359,18 @@ export function Industries({ items }) {
   return (
     <div className="flex flex-col gap-2.5">
       <SectionHead title="Implications by industry" aside={`${Math.min(i, items.length - 1) + 1} of ${items.length}`} />
-      <div className="bleed flex gap-2 overflow-x-auto pt-0.5 pb-1" style={{ scrollSnapType: 'x proximity' }}>
+      {/* Mobile scrolls the chip row; desktop has room to wrap, which shows the
+          whole sector list at once instead of hiding it behind a swipe. */}
+      <div
+        className="bleed flex gap-2 overflow-x-auto pt-0.5 pb-1 lg:flex-wrap lg:overflow-x-visible"
+        style={{ scrollSnapType: 'x proximity' }}
+      >
         {items.map((n, k) => {
           const on = k === i
           return (
             <button
               key={n.name} type="button" onClick={() => setI(k)}
-              className="shrink-0 h-[34px] px-3.5 flex items-center rounded-full whitespace-nowrap text-[12.5px]"
+              className="flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[12.5px]"
               style={{
                 scrollSnapAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 650,
                 border: `1px solid ${on ? 'var(--color-ink)' : '#E7E3EF'}`,
@@ -368,9 +382,9 @@ export function Industries({ items }) {
           )
         })}
       </div>
-      <div key={active.name} className="card a-rise p-[18px] flex flex-col gap-2" style={{ animationDuration: '0.42s' }}>
-        <span className="t-display text-[15px]" style={{ letterSpacing: '-0.01em' }}>{active.name}</span>
-        <span className="text-[14.5px] leading-[1.55] text-pretty" style={{ color: '#4E485C' }}>{active.text}</span>
+      <div key={active.name} className="card a-rise flex flex-col gap-2 p-[18px] lg:gap-3 lg:p-7" style={{ animationDuration: '0.42s' }}>
+        <span className="t-display text-[15px] lg:text-[19px]" style={{ letterSpacing: '-0.01em' }}>{active.name}</span>
+        <span className="text-[14.5px] leading-[1.55] text-pretty lg:text-[16.5px]" style={{ color: '#4E485C' }}>{active.text}</span>
       </div>
     </div>
   )
@@ -382,12 +396,17 @@ export function Territories({ items }) {
   if (!items?.length) return null
   return (
     <div className="flex flex-col gap-2.5">
-      <SectionHead title="Opportunity territories" aside="Scroll ›" />
-      <div className="bleed flex gap-3 overflow-x-auto pt-0.5 pb-1.5" style={{ scrollSnapType: 'x mandatory' }}>
+      <SectionHead title="Opportunity territories" aside={<span className="lg:hidden">Scroll ›</span>} />
+      {/* A scroller on mobile; on desktop the cards fit as a grid, so show them
+          all rather than making a wide screen swipe. */}
+      <div
+        className="bleed flex gap-3 overflow-x-auto pt-0.5 pb-1.5 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-x-visible"
+        style={{ scrollSnapType: 'x mandatory' }}
+      >
         {items.map((t, i) => (
           <div
             key={t.name}
-            className="card card-lift a-rise shrink-0 w-[236px] box-border p-4 flex flex-col gap-[9px]"
+            className="card card-lift a-rise box-border flex w-[236px] shrink-0 flex-col gap-[9px] p-4 lg:w-auto lg:p-5"
             style={{ scrollSnapAlign: 'center', animationDelay: `${(0.05 + i * 0.07).toFixed(2)}s` }}
           >
             <span
@@ -399,7 +418,7 @@ export function Territories({ items }) {
           </div>
         ))}
         <div
-          className="shrink-0 w-[250px] box-border rounded-[18px] px-[18px] py-5 text-white flex flex-col gap-2.5 a-rise"
+          className="a-rise box-border flex w-[250px] shrink-0 flex-col gap-2.5 rounded-[18px] px-[18px] py-5 text-white lg:w-auto lg:p-6"
           style={{ scrollSnapAlign: 'center', backgroundImage: 'var(--grad-pink-hot)', boxShadow: '0 12px 26px rgba(94,0,51,0.24)', animationDelay: '0.34s' }}
         >
           <span className="t-eyebrow" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--color-yellow)' }}>Work with us</span>

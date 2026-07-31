@@ -12,18 +12,25 @@ Pipeline
   Phase 2: Claim routing     — SQL heuristic maps claims.domain → strategic domain (no API)
   Phase 3: KT gen            — 4 calls (one per domain), ≥8 fresh KTs from the domain pool
   Phase 4: Sub-trend gen     — M calls (one per KT)
-  Phase 4b: Editorial body   — 2 calls per KT: the shift + sub-shift reading views
+  Phase 8: Hero-stat select  — per KT, the single strongest dated statistic (SQL, no API).
+                               Runs here, before 4b, because the stat_band module is
+                               built from hero_stat.value.
+  Phase 4b: Editorial body   — 2 calls per KT; writes the ordered MODULE LIST that
+                               composes the shift + sub-shift pages (see kt_modules /
+                               st_modules — editing those two functions changes the
+                               page composition for every shift)
   Phase 5: Thinker attrib    — 1 per KT
   Phase 6: Interrelatedness  — typed edges (KT↔KT, cross-domain)
   Phase 7: Synthesis insights — 4 calls (one per domain)
-  Phase 8: Hero-stat select  — per KT, the single strongest dated statistic (SQL, no API)
-  Phase 9: Export            — write documents['map'] (served by the backend at /api/map)
+  Phase 9: Export            — write documents['map'] (served by the backend at /api/map),
+                               merging any editor-authored module overrides
 
 Usage (DATABASE_URL + ANTHROPIC_API_KEY in env)
   python -m serious_shift_pipeline.steps.generate_map_data
   python -m serious_shift_pipeline.steps.generate_map_data --dry-run      # claim counts only, no API
   python -m serious_shift_pipeline.steps.generate_map_data --phase1       # DB setup only, no API
   python -m serious_shift_pipeline.steps.generate_map_data --export-only  # re-export from existing data
+  python -m serious_shift_pipeline.steps.generate_map_data --editorial-only  # regenerate modules only
 
 v2 tables (schema owned by packages/db migrations):
   domains_v2                  4 domain rows, hand-coded
@@ -660,12 +667,121 @@ def _jsonb(value) -> str | None:
     return json.dumps(value) if value else None
 
 
+# ── The module template ─────────────────────────────────────────────────────
+#
+# A shift page is an ordered list of {type, data} modules. These two functions
+# ARE the template: the order below is the order the reader sees, and a module is
+# omitted when the model gave us nothing for it (the page then simply doesn't
+# have that section). To add, drop or reorder a section for every shift at once,
+# edit these lists — no frontend change is needed as long as the type is
+# registered in apps/frontend/src/shift/modules.jsx.
+#
+# Canonical type list + data shapes: packages/contracts/shift_modules.json.
+
+def _module(type_: str, data, required: tuple = ()) -> dict | None:
+    """A module, or None when it has nothing to render.
+
+    `required` names the keys the module cannot render without. A stat band with
+    prose but no numeral, or a tension band with a label but no quote, is not a
+    section — it is an empty box. With no `required` given the module survives as
+    long as any one value is set, which is what peel_tabs and human_needs want
+    (both render happily with only one side filled). Mirrors the `required` lists
+    in packages/contracts/shift_modules.json.
+    """
+    if not data:
+        return None
+    if isinstance(data, dict):
+        if required:
+            if any(not data.get(k) for k in required):
+                return None
+        elif not any(v for v in data.values()):
+            return None
+    return {'type': type_, 'data': data}
+
+
+def kt_modules(kt_row: dict, editorial: dict) -> list:
+    """Module list for a key shift, in the design's reading order."""
+    e = editorial or {}
+    needs = e.get('human_needs') if isinstance(e.get('human_needs'), dict) else {}
+    hero = kt_row.get('hero_stat') or {}
+
+    candidates = [
+        _module('dek', {'text': kt_row.get('subtitle') or ''}, ('text',)),
+        _module('from_to', {'from': e.get('from') or '', 'to': e.get('to') or ''}, ('from', 'to')),
+        _module('stat_band', {
+            'value': hero.get('value') or '',
+            'text': e.get('stat_text') or '',
+            'source': hero.get('source') or hero.get('thinker') or '',
+        }, ('value',)),
+        _module('peel_tabs', {
+            'whats_changing': e.get('whats_changing') or '',
+            'why_now': e.get('why_now') or '',
+        }),
+        # Resolved from the shift's sub-shifts at render time, so it carries no
+        # data of its own — but it still has to sit in the order.
+        {'type': 'sub_shift_list', 'data': {}},
+        _module('human_needs', {
+            'unlocked': needs.get('unlocked') or '',
+            'threatened': needs.get('threatened') or '',
+        }),
+        _module('tension_band', {'quote': e.get('consumer_tension') or ''}, ('quote',)),
+        _module('timeline', {'steps': _as_steps(e.get('timeline')) or []}, ('steps',)),
+        _module('industries', {'items': _as_pairs(e.get('industries')) or []}, ('items',)),
+        _module('territories', {'items': _as_pairs(e.get('opportunities')) or []}, ('items',)),
+    ]
+    return [m for m in candidates if m]
+
+
+def st_modules(st_row: dict, editorial: dict) -> list:
+    """Module list for a sub-shift, in the design's reading order."""
+    e = editorial or {}
+    needs = e.get('human_needs') if isinstance(e.get('human_needs'), dict) else {}
+    stat = e.get('stat') if isinstance(e.get('stat'), dict) else {}
+
+    candidates = [
+        _module('lede', {'text': e.get('lede') or st_row.get('description') or ''}, ('text',)),
+        _module('from_to_solid', {'from': e.get('from') or '', 'to': e.get('to') or ''}, ('from', 'to')),
+        _module('tension_band', {'quote': e.get('quote') or '', 'label': 'The tension'}, ('quote',)),
+        _module('stat_band', {
+            'value': stat.get('value') or '',
+            'text': stat.get('text') or '',
+            'source': stat.get('source') or '',
+        }, ('value',)),
+        _module('peel_tabs', {
+            'whats_changing': e.get('whats_changing') or '',
+            'why_now': e.get('why_now') or '',
+        }),
+        _module('human_needs', {
+            'unlocked': needs.get('unlocked') or '',
+            'threatened': needs.get('threatened') or '',
+        }),
+        _module('signals', {'items': _as_strings(e.get('signals')) or []}, ('items',)),
+        _module('counter_signals', {'items': _as_strings(e.get('counter_signals')) or []}, ('items',)),
+        _module('timeline', {'steps': _as_steps(e.get('timeline')) or []}, ('steps',)),
+        _module('territories', {'items': _as_pairs(e.get('territories')) or []}, ('items',)),
+    ]
+    return [m for m in candidates if m]
+
+
 def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict):
-    """Fills the rich editorial columns on domain_key_trends + domain_sub_trends."""
-    print('\nPhase 4b — Writing editorial body per Key Trend (parallel)…')
+    """Writes the module list for every Key Trend and sub-trend."""
+    print('\nPhase 4b — Writing editorial modules per Key Trend (parallel)…')
 
     pool = {c['id']: c for d in DOMAINS for c in domain_claims[d['id']]}
     by_id = {d['id']: d for d in DOMAINS}
+
+    # The KT rows as stored — `hero_stat` (phase 8, which runs before this) and
+    # `subtitle` both feed modules, so read them once rather than per KT.
+    kt_rows = {r['id']: dict(r) for r in conn.execute(
+        'SELECT id, subtitle, hero_stat FROM domain_key_trends').fetchall()}
+
+    # Sub-trends grouped by parent in one query (rather than one query per KT).
+    subs_by_kt: dict = {}
+    for r in conn.execute("""
+        SELECT id, kt_id, name, subtitle, description FROM domain_sub_trends
+        ORDER BY kt_id, sort_order
+    """).fetchall():
+        subs_by_kt.setdefault(r['kt_id'], []).append(dict(r))
 
     # One work item per KT, carrying its claims and its already-written sub-trends.
     work = []
@@ -674,11 +790,7 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
             claims = [pool[cid] for cid in kt.get('_claim_ids', []) if cid in pool]
             if not claims:
                 claims = domain_claims[d['id']][:CLAIMS_PER_KT]
-            subs = conn.execute("""
-                SELECT id, name, subtitle, description FROM domain_sub_trends
-                WHERE kt_id=%s ORDER BY sort_order
-            """, (kt['_db_id'],)).fetchall()
-            work.append((d['id'], kt, claims, [dict(s) for s in subs]))
+            work.append((d['id'], kt, claims, subs_by_kt.get(kt['_db_id'], [])))
 
     if not work:
         print('  (no Key Trends to enrich)')
@@ -707,57 +819,31 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     kt_done = st_done = 0
     for (_d_id, kt, _claims, subs), result in zip(work, results):
         e = result.get('kt') or {}
+        kt_row = kt_rows.get(kt['_db_id'], {'subtitle': kt.get('subtitle', ''), 'hero_stat': None})
+        modules = kt_modules(kt_row, e)
+        conn.execute(
+            'UPDATE domain_key_trends SET modules=%s::jsonb, read_time=%s WHERE id=%s',
+            (_jsonb(modules), e.get('read_time') or None, kt['_db_id']),
+        )
         if e:
-            needs = e.get('human_needs') if isinstance(e.get('human_needs'), dict) else None
-            conn.execute("""
-                UPDATE domain_key_trends SET
-                  from_text=%s, to_text=%s, whats_changing=%s, why_now=%s, stat_text=%s,
-                  human_needs=%s::jsonb, consumer_tension=%s, timeline=%s::jsonb,
-                  industries=%s::jsonb, opportunities=%s::jsonb, read_time=%s
-                WHERE id=%s
-            """, (
-                e.get('from') or None, e.get('to') or None,
-                e.get('whats_changing') or None, e.get('why_now') or None,
-                e.get('stat_text') or None,
-                _jsonb(needs),
-                e.get('consumer_tension') or None,
-                _jsonb(_as_steps(e.get('timeline'))),
-                _jsonb(_as_pairs(e.get('industries'))),
-                _jsonb(_as_pairs(e.get('opportunities'))),
-                e.get('read_time') or None,
-                kt['_db_id'],
-            ))
             kt_done += 1
 
         # Match editorial back to sub-trends by name (the prompt is told not to
-        # rename them); anything unmatched is skipped rather than guessed at.
-        written = {s['name'].strip().lower(): s['id'] for s in subs}
-        for se in (result.get('st') or {}).get('sub_trends', []) or []:
-            sid = written.get(str(se.get('name', '')).strip().lower())
-            if not sid:
-                continue
-            needs = se.get('human_needs') if isinstance(se.get('human_needs'), dict) else None
-            stat = se.get('stat') if isinstance(se.get('stat'), dict) and se['stat'].get('value') else None
-            conn.execute("""
-                UPDATE domain_sub_trends SET
-                  lede=%s, from_text=%s, to_text=%s, tension=%s, stat=%s::jsonb,
-                  whats_changing=%s, why_now=%s, human_needs=%s::jsonb,
-                  signals=%s::jsonb, counter_signals=%s::jsonb,
-                  timeline=%s::jsonb, territories=%s::jsonb
-                WHERE id=%s
-            """, (
-                se.get('lede') or None, se.get('from') or None, se.get('to') or None,
-                se.get('quote') or None,
-                _jsonb(stat),
-                se.get('whats_changing') or None, se.get('why_now') or None,
-                _jsonb(needs),
-                _jsonb(_as_strings(se.get('signals'))),
-                _jsonb(_as_strings(se.get('counter_signals'))),
-                _jsonb(_as_steps(se.get('timeline'))),
-                _jsonb(_as_pairs(se.get('territories'))),
-                sid,
-            ))
-            st_done += 1
+        # rename them); anything unmatched still gets a module list built from the
+        # row itself, so the sub-shift page is never empty.
+        editorial_by_name = {
+            str(se.get('name', '')).strip().lower(): se
+            for se in ((result.get('st') or {}).get('sub_trends') or [])
+            if isinstance(se, dict)
+        }
+        for sub in subs:
+            se = editorial_by_name.get(sub['name'].strip().lower()) or {}
+            conn.execute(
+                'UPDATE domain_sub_trends SET modules=%s::jsonb WHERE id=%s',
+                (_jsonb(st_modules(sub, se)), sub['id']),
+            )
+            if se:
+                st_done += 1
 
     conn.commit()
     print(f'  ✓  {kt_done}/{len(work)} shifts and {st_done} sub-shifts given an editorial body.')
@@ -994,23 +1080,61 @@ def build_map_json_v2(conn) -> dict:
             'synthesis_insight_ids': [r['id'] for r in si_rows],
         })
 
+    # ---- editor-authored module overrides ----
+    # Keyed by URL slug so they survive the weekly TRUNCATE…RESTART IDENTITY of
+    # the v2 tables. An override that matches nothing is reported rather than
+    # silently ignored — that almost always means the shift was renamed.
+    overrides = {
+        (r['scope'], r['slug']): r['modules']
+        for r in conn.execute(
+            'SELECT scope, slug, modules FROM shift_module_overrides WHERE enabled'
+        ).fetchall()
+    }
+    used_overrides: set = set()
+
+    def resolve_modules(scope: str, slug: str, generated):
+        key = (scope, slug)
+        if key in overrides:
+            used_overrides.add(key)
+            return overrides[key]
+        return generated or []
+
+    # ---- child-id lookups, pre-grouped (one query each, not one per parent) ----
+    st_ids_by_kt: dict = {}
+    for r in conn.execute(
+        'SELECT kt_id, id FROM domain_sub_trends ORDER BY kt_id, sort_order'
+    ).fetchall():
+        st_ids_by_kt.setdefault(r['kt_id'], []).append(r['id'])
+
+    claim_ids_by_st: dict = {}
+    for r in conn.execute(
+        'SELECT sub_trend_id, claim_id FROM domain_sub_trend_claims'
+    ).fetchall():
+        claim_ids_by_st.setdefault(r['sub_trend_id'], []).append(r['claim_id'])
+
     # ---- key_trends ----
     kt_rows_all = conn.execute("""
         SELECT kt.id, kt.slug, kt.domain_id,
                kt.name, kt.subtitle, kt.velocity, kt.sort_order,
                kt.proponents, kt.skeptics, kt.hero_stat,
-               kt.from_text, kt.to_text, kt.whats_changing, kt.why_now,
-               kt.stat_text, kt.human_needs, kt.consumer_tension, kt.timeline,
-               kt.industries, kt.opportunities, kt.read_time
+               kt.modules, kt.read_time
         FROM domain_key_trends kt
         ORDER BY kt.domain_id, kt.sort_order
     """).fetchall()
+    # URL slugs are derived from the name (that is what the front end routes on
+    # and what an override is keyed by). Two shifts in one domain could slugify
+    # the same, so disambiguate in a stable order — the query is ORDER BY
+    # domain_id, sort_order, so the same input always yields the same slug.
+    kt_slug_by_id: dict = {}
+    _seen_kt: dict = {}
+    for kt in kt_rows_all:
+        base = slugify(kt['name'])
+        n = _seen_kt.get((kt['domain_id'], base), 0) + 1
+        _seen_kt[(kt['domain_id'], base)] = n
+        kt_slug_by_id[kt['id']] = base if n == 1 else f'{base}-{n}'
     key_trends_j = []
     for kt in kt_rows_all:
-        st_rows = conn.execute(
-            'SELECT id FROM domain_sub_trends WHERE kt_id=%s ORDER BY sort_order',
-            (kt['id'],)
-        ).fetchall()
+        url_slug = kt_slug_by_id[kt['id']]
         key_trends_j.append({
             'id':          f'kt-{kt["id"]}',
             'db_id':       kt['id'],
@@ -1020,41 +1144,35 @@ def build_map_json_v2(conn) -> dict:
             'description': kt['subtitle'],   # back-compat alias
             'velocity':    kt['velocity'] or 'rising',
             'hero_stat':   kt['hero_stat'],  # {value, thinker, source, year} or null
-            'sub_trend_ids': [f'st-{r["id"]}' for r in st_rows],
+            'sub_trend_ids': [f'st-{i}' for i in st_ids_by_kt.get(kt['id'], [])],
             'proponents':  _attr(kt['proponents'])[0],
             'skeptics':    _attr(kt['skeptics'])[0],
             'proponents_detail': _attr(kt['proponents'])[1],
             'skeptics_detail':   _attr(kt['skeptics'])[1],
-            # Editorial body (phase 4b). Null until written — the front end
-            # renders each section only when its field is present.
-            'from_text':        kt['from_text'],
-            'to_text':          kt['to_text'],
-            'whats_changing':   kt['whats_changing'],
-            'why_now':          kt['why_now'],
-            'stat_text':        kt['stat_text'],
-            'human_needs':      kt['human_needs'],
-            'consumer_tension': kt['consumer_tension'],
-            'timeline':         kt['timeline'],
-            'industries':       kt['industries'],
-            'opportunities':    kt['opportunities'],
-            'read_time':        kt['read_time'],
+            'read_time':   kt['read_time'],
+            # The ordered page composition. Empty until phase 4b has run, in
+            # which case the front end projects a minimal list from the fields
+            # above so the page still renders.
+            'slug':    url_slug,
+            'modules': resolve_modules('key_trend', url_slug, kt['modules']),
         })
 
     # ---- sub_trends ----
     st_rows_all = conn.execute("""
-        SELECT st.id, st.slug, st.kt_id, st.domain_id, st.name, st.subtitle, st.description,
-               st.lede, st.from_text, st.to_text, st.tension, st.stat,
-               st.whats_changing, st.why_now, st.human_needs,
-               st.signals, st.counter_signals, st.timeline, st.territories
+        SELECT st.id, st.slug, st.kt_id, st.domain_id,
+               st.name, st.subtitle, st.description, st.modules
         FROM domain_sub_trends st
         ORDER BY st.kt_id, st.sort_order
     """).fetchall()
     sub_trends_j = []
+    _seen_st: dict = {}
     for st in st_rows_all:
-        c_rows = conn.execute(
-            'SELECT claim_id FROM domain_sub_trend_claims WHERE sub_trend_id=%s',
-            (st['id'],)
-        ).fetchall()
+        # A sub-shift slug is only unique beneath its parent, so the override key
+        # is the two-segment URL path. Same stable disambiguation as above.
+        base = slugify(st['name'])
+        n = _seen_st.get((st['kt_id'], base), 0) + 1
+        _seen_st[(st['kt_id'], base)] = n
+        url_slug = f'{kt_slug_by_id.get(st["kt_id"], "")}/{base if n == 1 else f"{base}-{n}"}'
         sub_trends_j.append({
             'id':          f'st-{st["id"]}',
             'db_id':       st['id'],
@@ -1063,21 +1181,16 @@ def build_map_json_v2(conn) -> dict:
             'name':        st['name'],
             'subtitle':    st['subtitle'],
             'description': st['description'],
-            'claim_ids':   [f'c_{r["claim_id"]}' for r in c_rows],
-            # Editorial body (phase 4b).
-            'lede':            st['lede'],
-            'from_text':       st['from_text'],
-            'to_text':         st['to_text'],
-            'tension':         st['tension'],
-            'stat':            st['stat'],
-            'whats_changing':  st['whats_changing'],
-            'why_now':         st['why_now'],
-            'human_needs':     st['human_needs'],
-            'signals':         st['signals'],
-            'counter_signals': st['counter_signals'],
-            'timeline':        st['timeline'],
-            'territories':     st['territories'],
+            'claim_ids':   [f'c_{i}' for i in claim_ids_by_st.get(st['id'], [])],
+            'slug':    url_slug,
+            'modules': resolve_modules('sub_trend', url_slug, st['modules']),
         })
+
+    unmatched = sorted(f'{s}:{sl}' for (s, sl) in overrides.keys() - used_overrides)
+    if unmatched:
+        print(f'  ⚠  {len(unmatched)} module override(s) matched no shift '
+              f'(renamed?): {", ".join(unmatched[:5])}'
+              + (' …' if len(unmatched) > 5 else ''))
 
     # ---- claims ----
     all_cids: set = set()
@@ -1244,14 +1357,74 @@ def _write_synthesis_document(conn, out):
     conn.commit()
 
 
+def load_kts_from_db(conn) -> dict:
+    """Rebuild the {domain_id: [kt, …]} shape that the paid phases expect, from
+    the Key Trends already stored. Used by --editorial-only so modules can be
+    (re)generated for an existing map without a full rebuild."""
+    domain_kts: dict = {d['id']: [] for d in DOMAINS}
+    claim_ids: dict = {}
+    for r in conn.execute("""
+        SELECT st.kt_id, stc.claim_id
+        FROM domain_sub_trends st
+        JOIN domain_sub_trend_claims stc ON stc.sub_trend_id = st.id
+    """).fetchall():
+        claim_ids.setdefault(r['kt_id'], []).append(r['claim_id'])
+
+    for r in conn.execute("""
+        SELECT id, domain_id, name, subtitle, velocity
+        FROM domain_key_trends ORDER BY domain_id, sort_order
+    """).fetchall():
+        if r['domain_id'] not in domain_kts:
+            continue
+        domain_kts[r['domain_id']].append({
+            '_db_id': r['id'],
+            '_claim_ids': claim_ids.get(r['id'], []),
+            'name': r['name'],
+            'subtitle': r['subtitle'] or '',
+            'velocity': r['velocity'],
+        })
+    return domain_kts
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry-run',     action='store_true', help='Print claim counts only')
     parser.add_argument('--phase1',      action='store_true', help='DB setup + domain insert only (no API)')
     parser.add_argument('--export-only', action='store_true', help='Re-export from existing v2 data')
+    parser.add_argument('--editorial-only', action='store_true',
+                        help='Regenerate the editorial modules for existing Key Trends, then '
+                             're-export. Does NOT reset the v2 tables or re-cluster.')
     args = parser.parse_args()
 
     conn = get_conn()
+
+    # ── Editorial-only ───────────────────────────────────────────────────────
+    # Deliberately on this side of reset_v2_tables: the taxonomy is left exactly
+    # as it is, so slugs (and therefore any authored module overrides) still match.
+    if args.editorial_only:
+        api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+        if not api_key:
+            print('ERROR: ANTHROPIC_API_KEY not set.')
+            sys.exit(1)
+        print('--editorial-only: regenerating modules for the existing map…')
+        domain_kts = load_kts_from_db(conn)
+        total = sum(len(v) for v in domain_kts.values())
+        if not total:
+            print('ERROR: no Key Trends in the database — run a full rebuild first.')
+            conn.close(); sys.exit(1)
+        print(f'  {total} Key Trends found across {len(DOMAINS)} domains.')
+        domain_claims = phase2_claim_routing(conn)
+        phase8_hero_stats(conn)          # stat_band module needs hero_stat first
+        phase4b_editorial(conn, api_key, domain_claims, domain_kts)
+        print('\nPhase 9 — Exporting map…')
+        out = build_map_json_v2(conn)
+        _write_map_document(conn, out)
+        _write_synthesis_document(conn, out)
+        n_mod = sum(len(kt.get('modules') or []) for kt in out['key_trends'])
+        print("✓  map written → documents['map']")
+        print(f'   {len(out["key_trends"])} KTs carrying {n_mod} modules · '
+              f'{len(out["sub_trends"])} sub-trends')
+        conn.close(); return
 
     # ── Export-only ──────────────────────────────────────────────────────────
     if args.export_only:
@@ -1298,6 +1471,11 @@ def main():
     # ── Phase 4: sub-trend clustering ────────────────────────────────────────
     phase4_sub_trends(conn, api_key, domain_claims, domain_kts)
 
+    # ── Hero stats (free, SQL) — must precede the editorial phase, whose
+    #    stat_band module is built from hero_stat.value. ────────────────────────
+    phase8_hero_stats(conn)
+
+    # ── Phase 4b: editorial modules ──────────────────────────────────────────
     phase4b_editorial(conn, api_key, domain_claims, domain_kts)
 
     # ── Phase 5: thinker attribution ─────────────────────────────────────────
@@ -1308,9 +1486,6 @@ def main():
 
     # ── Phase 7: synthesis insights ───────────────────────────────────────────
     phase7_synthesis(conn, api_key, domain_claims)
-
-    # ── Phase 8: hero-stat selection ──────────────────────────────────────────
-    phase8_hero_stats(conn)
 
     # ── Phase 9: export ───────────────────────────────────────────────────────
     print('\nPhase 9 — Exporting map…')
