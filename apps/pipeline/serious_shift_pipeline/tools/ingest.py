@@ -21,8 +21,7 @@ import sys
 from datetime import datetime
 
 from ..core import db, llm
-
-INGEST_MODEL = "claude-sonnet-4-6"
+from ..prompts import INGEST_MODEL, ingest_prompt
 
 
 def fetch_content(url):
@@ -54,40 +53,7 @@ def get_thinker_context(conn, thinker_id):
 
 
 def extract_with_api(content, thinker_name, context):
-    context_text = "EXISTING POSITIONS:\n"
-    for c in context["recent_claims"][:10]:
-        context_text += f"  [{c['date_published']}] {c['claim_text'][:120]}\n"
-    context_text += "\nACTIVE PREDICTIONS:\n"
-    for p in context["predictions"]:
-        context_text += f"  {p['prediction_id']}: {p['claim_text'][:100]} [{p['status']}]\n"
-
-    prompt = f"""Extract structured intelligence from this content.
-
-THINKER: {thinker_name}
-
-{context_text}
-
-CONTENT:
-{content[:8000]}
-
-Return JSON:
-{{
-  "source": {{ "title": "...", "date": "YYYY-MM-DD", "summary": "3 sentences", "consumer_implication": "1 sentence", "source_type": "article/interview/talk/podcast/blog_post", "signal_strength": "high/medium/low", "novelty": "new_thinking/repeating_position/position_shift" }},
-  "claims": [
-    {{ "claim_text": "One specific claim", "claim_type": "prediction/analysis/opinion/fact", "domain": "labor/consumer_behavior/technology_capability/economy/agi_timeline/regulation/existential_risk/enterprise", "consumer_implication": "How this affects consumers", "specificity": 3, "quote": "direct quote if available" }}
-  ],
-  "predictions": [
-    {{ "claim_text": "Falsifiable prediction", "timeframe": "By YYYY", "domain": "...", "specificity": 4, "consensus_alignment": 0.5, "evaluation_date": "YYYY-MM-DD" }}
-  ],
-  "position_changes": [
-    {{ "previous_position": "What they said before", "new_position": "What they say now" }}
-  ]
-}}
-
-Extract 5-15 claims. Flag any position changes compared to existing positions above.
-If the thinker is REPEATING an existing position, set novelty to "repeating_position".
-If they say something genuinely new, set novelty to "new_thinking"."""
-
+    prompt = ingest_prompt(thinker_name, content, context)
     text, _ = llm.call_claude(prompt, model=INGEST_MODEL, max_tokens=4096)
     return llm.parse_model_json(text)
 

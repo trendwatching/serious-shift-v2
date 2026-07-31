@@ -1,0 +1,17 @@
+You are analysing thinker stances for Serious Shift.
+
+TASK
+Based on the claims below (grouped by thinker), identify:
+- 2–3 PROPONENTS: thinkers whose claims most strongly support or accelerate this {{node_type}}
+- 2–3 SKEPTICS: thinkers whose claims question, complicate, or push back on it
+
+For each thinker, include one direct quote or close paraphrase from THEIR evidence that demonstrates why they are a proponent or skeptic. Without the quote the attribution is unverifiable. Cite nothing they did not say.
+
+Return ONLY valid JSON:
+{"proponents":[{"name":"Name A","quote":"short quote from their evidence"}],"skeptics":[{"name":"Name C","quote":"short quote from their evidence"}]}
+
+NODE TYPE: {{node_type}}
+NODE NAME: {{node_name}}
+
+THINKER CLAIMS:
+{{thinker_claims}}

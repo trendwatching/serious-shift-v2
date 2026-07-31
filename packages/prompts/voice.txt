@@ -1,11 +1,3 @@
-"""
-Serious Shift tone of voice — the single source of truth for how generated
-content reads. Every content-producing prompt (keynote, scenarios, key trends,
-sub-trends, synthesis insights, and the backend's /api/personalize) includes
-this block. Edit the voice HERE and it changes everywhere.
-"""
-
-VOICE = """\
 SERIOUS SHIFT — TONE OF VOICE (follow exactly; this governs how you write)
 
 WHO YOU ARE
@@ -52,5 +44,4 @@ synergies", "future-proof", "holistic approach"), LinkedIn inspiration,
 ungrounded pseudo-futurism, or generic AI commentary ("AI is transforming every
 industry", "the pace of change has never been faster"). If someone at KPMG could
 have written it, rewrite it. If a generic AI summary tool could have produced it,
-rewrite it. The reader should want to forward it to a colleague.\
-"""
+rewrite it. The reader should want to forward it to a colleague.

@@ -4,6 +4,7 @@
 //! Env: DATABASE_URL (required), ANTHROPIC_API_KEY (for /api/personalize),
 //!      PORT (default 8080), FRONTEND_ORIGIN (CORS allowlist, comma-separated).
 
+mod prompts;
 mod sql;
 
 use std::collections::HashMap;
@@ -22,6 +23,7 @@ use axum::{
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::postgres::PgPoolOptions;
+use sqlx::types::Json as SqlxJson;
 use sqlx::PgPool;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 
@@ -47,6 +49,13 @@ fn cors_layer() -> CorsLayer {
     }
 }
 
+/// Per-IP request timestamps for the /api/personalize rate limiter.
+type RateMap = Arc<Mutex<HashMap<String, Vec<Instant>>>>;
+/// TTL-cached /api/personalize responses, keyed by request signature.
+type ResultCache = Arc<Mutex<HashMap<String, (Instant, Value)>>>;
+/// TTL-cached raw document JSON, keyed by document key.
+type DocCache = Arc<Mutex<HashMap<String, (Instant, Arc<str>)>>>;
+
 #[derive(Clone)]
 struct AppState {
     pool: PgPool,
@@ -54,12 +63,12 @@ struct AppState {
     // In-memory per-IP rate limiter and result cache for /api/personalize.
     // Single-instance scope (fine for the current deploy); move to a shared
     // KV store if the backend is scaled horizontally.
-    rate: Arc<Mutex<HashMap<String, Vec<Instant>>>>,
-    cache: Arc<Mutex<HashMap<String, (Instant, Value)>>>,
+    rate: RateMap,
+    cache: ResultCache,
     // Cached document JSON (map/keynote/synthesis/daily), keyed by document key.
     // These are large and change ~weekly, so we serve the raw JSON text from
     // memory — skipping the Postgres read + serde round-trip on every request.
-    docs: Arc<Mutex<HashMap<String, (Instant, Arc<str>)>>>,
+    docs: DocCache,
 }
 
 const PERSONALIZE_MODEL: &str = "claude-sonnet-4-6";
@@ -103,6 +112,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route(
             "/api/personalize",
             post(personalize).layer(DefaultBodyLimit::max(64 * 1024)),
+        )
+        .route(
+            "/api/innovations/ingest",
+            post(ingest_innovation).layer(DefaultBodyLimit::max(1024 * 1024)),
         )
         .layer(cors_layer())
         .with_state(state);
@@ -343,25 +356,7 @@ async fn rewrite_section(
         .and_then(|b| b.as_str())
         .unwrap_or("")
         .to_string();
-    let prompt = format!(
-        r#"Rewrite this trend analysis for the {industry} industry, in the Serious Shift voice:
-a trusted, specific, action-obsessed interpreter for time-pressed leaders. Calm, not alarmed.
-A point of view, not a summary.
-
-RULES:
-- US spelling. No em dashes (use a period or comma). Short sentences, one idea each.
-- Lead with the most striking fact or claim. End on a concrete implication for the reader ("you").
-- Keep all thinker names and factual claims exactly as they are. Cite thinkers as (Lastname) only, no credibility scores in the text.
-- Replace general examples with {industry}-specific ones: name real companies, job titles, business functions, numbers.
-- Take a position. "This kills the traditional insurance broker", not "this may have implications for intermediaries."
-- No filler ("it's worth noting", "significantly", "the implications are clear"). No consultancy-speak ("leverage synergies", "future-proof", "holistic"). No generic AI commentary. No hype, no doom.
-- Write like a senior {industry} peer who did the research for the reader, not an AI summarizing a report.
-
-Original section:
-{body_text}
-
-Return ONLY the rewritten body text. No title. No preamble. No "here's the rewrite." Just the text."#
-    );
+    let prompt = prompts::rewrite_section(industry, &body_text);
 
     let resp = client
         .post("https://api.anthropic.com/v1/messages")
@@ -399,4 +394,71 @@ Return ONLY the rewritten body text. No title. No preamble. No "here's the rewri
             section
         }
     }
+}
+
+// ── /api/innovations/ingest (write endpoint) ───────────────────────────────────
+
+/// One innovation pushed by the upstream Innovation database. Scalars we
+/// query/join on become columns; the variable-shape nested fields stay as JSON.
+/// Everything is optional so a partial payload still ingests (nulls, not 400s).
+#[derive(Deserialize)]
+struct IngestInnovationReq {
+    #[serde(default)]
+    source_innovation_id: Option<i64>,
+    #[serde(default)]
+    article_url: Option<String>,
+    #[serde(default)]
+    source_urls: Value,
+    #[serde(default)]
+    title: Option<String>,
+    #[serde(default)]
+    body: Option<String>,
+    #[serde(default)]
+    trendbite: Option<String>,
+    #[serde(default)]
+    brands: Value,
+    #[serde(default)]
+    tags: Value,
+    #[serde(default)]
+    cover_image: Option<Value>,
+}
+
+/// Ingest one innovation into the `innovations` table. Idempotent on
+/// `source_innovation_id` (re-POSTing updates in place). Returns 200 `ok` on
+/// success; any DB error becomes a 500 via `From<sqlx::Error> for AppError`.
+async fn ingest_innovation(
+    State(s): State<AppState>,
+    Json(req): Json<IngestInnovationReq>,
+) -> Result<Response, AppError> {
+    sqlx::query(
+        r#"
+        INSERT INTO innovations
+          (source_innovation_id, article_url, source_urls, title, body,
+           trendbite, brands, tags, cover_image)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (source_innovation_id) DO UPDATE SET
+          article_url = EXCLUDED.article_url,
+          source_urls = EXCLUDED.source_urls,
+          title       = EXCLUDED.title,
+          body        = EXCLUDED.body,
+          trendbite   = EXCLUDED.trendbite,
+          brands      = EXCLUDED.brands,
+          tags        = EXCLUDED.tags,
+          cover_image = EXCLUDED.cover_image,
+          updated_at  = now()
+        "#,
+    )
+    .bind(req.source_innovation_id)
+    .bind(req.article_url)
+    .bind(SqlxJson(req.source_urls))
+    .bind(req.title)
+    .bind(req.body)
+    .bind(req.trendbite)
+    .bind(SqlxJson(req.brands))
+    .bind(SqlxJson(req.tags))
+    .bind(req.cover_image.map(SqlxJson))
+    .execute(&s.pool)
+    .await?;
+
+    Ok((StatusCode::OK, "ok").into_response())
 }

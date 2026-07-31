@@ -54,12 +54,57 @@ jobs:
       - name: Smoke test endpoints
         working-directory: apps/backend
         run: |
+          set -uo pipefail
+          # Use 127.0.0.1 (not "localhost"): the server binds "[::]", and on some
+          # runners "localhost" resolves to ::1/127.0.0.1 in an order that races the
+          # dual-stack socket. Forcing IPv4 is unambiguous against a v6only=0 bind.
+          BASE="http://127.0.0.1:8080"
           ./target/release/serious-shift-backend &
           SERVER=$!
-          for i in $(seq 1 20); do curl -sf localhost:8080/health && break; sleep 1; done
-          set -e
-          curl -sf localhost:8080/api/thinkers | grep -q "Smoke Test"
-          curl -sf localhost:8080/api/stats | grep -q '"thinkers":1'
-          curl -sf localhost:8080/api/map | grep -q '"ok":true'
-          curl -sf localhost:8080/api/claims | grep -q '\[\]'   # empty list, valid
-          kill $SERVER
+
+          # Wait for readiness; bail loudly if the process dies during startup.
+          ready=""
+          for i in $(seq 1 30); do
+            if ! kill -0 "$SERVER" 2>/dev/null; then
+              echo "::error::backend exited during startup"; wait "$SERVER"; exit 1
+            fi
+            if curl -fsS --max-time 2 "$BASE/health" >/dev/null 2>&1; then
+              echo "server ready after ${i}s"; ready=1; break
+            fi
+            sleep 1
+          done
+          if [ -z "$ready" ]; then
+            echo "::error::backend never became ready on $BASE"; kill "$SERVER" 2>/dev/null; exit 1
+          fi
+
+          fail=0
+          check() {  # check <path> <extended-regex>
+            # Pure-bash string ops only — no pipes to head/tail/sed/grep. Those
+            # consumers close the pipe early on large bodies, and under `bash -e`
+            # + pipefail the resulting SIGPIPE aborts the whole step.
+            local path="$1" pat="$2" resp code body
+            resp=$(curl -sS --max-time 5 -w $'\n%{http_code}' "$BASE$path") || {
+              echo "::error::request to $path failed to connect"; fail=1; return; }
+            code="${resp##*$'\n'}"   # last line = http_code
+            body="${resp%$'\n'*}"    # everything before it = body
+            echo "== GET $path -> HTTP $code (${#body} bytes) =="
+            echo "${body:0:400}"
+            if [ "$code" != "200" ]; then
+              echo "::error::$path returned HTTP $code (expected 200)"; fail=1; return
+            fi
+            if [[ ! "$body" =~ $pat ]]; then
+              echo "::error::$path body did not match /$pat/"; fail=1
+            fi
+          }
+
+          check /api/thinkers "Smoke Test"
+          check /api/stats '"thinkers":[1-9][0-9]*'
+          # Document endpoints serve raw jsonb text from Postgres (see the doc
+          # cache in main.rs), which renders `{"ok": true}` with a space after
+          # the colon — so tolerate optional whitespace rather than assuming
+          # serde's compact form.
+          check /api/map '"ok": *true'
+          check /api/claims '\[\]'
+
+          kill "$SERVER" 2>/dev/null || true
+          exit "$fail"

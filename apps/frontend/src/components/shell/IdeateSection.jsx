@@ -4,7 +4,7 @@
  * Appears near the foot of every page (above TrustedBy + Footer). Pitches
  * the workshops offering and nods to the LLMs behind the intelligence.
  */
-import { WORKSHOPS_URL } from './links'
+import { SERVICES_URL } from './links'
 
 const MODELS = ['ChatGPT', 'Claude', 'Gemini']
 
@@ -35,7 +35,7 @@ export default function IdeateSection() {
               economy, consumers and organisations — then run a workshop with us.
             </p>
             <a
-              href={WORKSHOPS_URL}
+              href={SERVICES_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="pill-cta inline-flex items-center px-6 py-3 text-sm font-semibold tracking-wide"

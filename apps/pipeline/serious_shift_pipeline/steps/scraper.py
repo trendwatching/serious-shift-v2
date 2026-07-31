@@ -86,14 +86,44 @@ def url_in_db(url):
     except Exception:
         return False
 
-def save_raw(thinker_name, date_str, platform, title, url, content):
+def external_id_in_db(external_id):
+    """Check whether a paper (by arXiv id / OpenAlex id) is already ingested —
+    collapses arXiv↔OpenAlex cross-posts that have different URLs but the same
+    external id. Own short-lived connection so callers don't thread `conn`."""
+    if not external_id:
+        return False
+    try:
+        with db.connect() as c:
+            return db.query_one(
+                c, "SELECT id FROM sources WHERE external_id = %s", (external_id,)
+            ) is not None
+    except Exception:
+        return False
+
+
+def save_raw(thinker_name, date_str, platform, title, url, content, meta=None):
+    """Persist one raw item. `meta` (optional) carries paper/venue metadata
+    (authors, venue, doi, external_id, citation_count, source_type) which is
+    emitted into the front-matter so process_raw can attribute the item without
+    re-deriving it. `thinker_name` is the ATTRIBUTED entity (for papers this is
+    the primary author, not the feed owner)."""
     fname = f"{date_str}_{platform}_{slugify(title)}.txt"
     path = os.path.join(thinker_dir(thinker_name), fname)
     if os.path.exists(path):
         return None
+    extra = ""
+    if meta:
+        for key in ("authors", "venue", "doi", "external_id", "citation_count", "source_type", "authority"):
+            val = meta.get(key)
+            if val is None or val == "":
+                continue
+            if key == "authors" and isinstance(val, (list, tuple)):
+                val = "; ".join(str(a) for a in val)
+            extra += f"{key}: {str(val).replace(chr(10), ' ')}\n"
     header = (
         f"---\nthinker: {thinker_name}\ntitle: {title}\ndate: {date_str}\n"
         f"platform: {platform}\nurl: {url}\n"
+        f"{extra}"
         f"scraped_at: {datetime.now().isoformat()}\n---\n\n"
     )
     with open(path, 'w', encoding='utf-8') as f:
@@ -879,6 +909,156 @@ def handle_manual(thinker_name, cfg, log):
 
 
 # ============================================================
+# RESEARCH-PAPER SCRAPERS (arXiv + OpenAlex)
+# ============================================================
+
+def _load_gate_context():
+    """Load (allowlist, venue_overrides) for the reputability gate from the DB.
+    Best-effort: returns empty defaults if the DB isn't reachable so the scraper
+    still runs (the gate then falls back to venue/citation heuristics)."""
+    allowlist: set[str] = set()
+    overrides: dict[str, int] = {}
+    try:
+        with db.connect() as c:
+            for r in db.query(c, "SELECT name, reputation_tier FROM thinkers"):
+                allowlist.add(r['name'])
+            for r in db.query(c, "SELECT name, tier FROM reputable_venues"):
+                overrides[r['name']] = r['tier']
+    except Exception:
+        pass
+    return allowlist, overrides
+
+
+def _ingest_papers(papers, since, until, platform, log, error_log=None,
+                   apply_gate=False, gate_params=None):
+    """Shared paper ingest: gate for reputability, attribute to the primary
+    author, save abstract + metadata. Returns (watermark_date, count_fetched)."""
+    from . import gate as _gate
+    gp = gate_params or {}
+    allowlist, overrides = _load_gate_context() if apply_gate else (set(), {})
+
+    fetched = 0
+    success_dates: list[str] = []
+    for p in papers:
+        title = p.get('title') or 'Untitled'
+        url   = p.get('url') or ''
+        date_str = p.get('date') or datetime.now().strftime('%Y-%m-%d')
+        if not in_range(date_str, since, until):
+            continue
+        abstract = (p.get('abstract') or '').strip()
+        if len(abstract) < 80:
+            continue  # too thin to extract meaningful claims
+
+        # Reputability gate (discovery paths). Curated feeds pass apply_gate=False.
+        authority = None
+        if apply_gate:
+            passed, authority = _gate.is_reputable(
+                p, allowlist=allowlist, venue_overrides=overrides,
+                min_citations=int(gp.get('min_citations', 0)),
+                min_authority=float(gp.get('min_authority', 0.35)),
+            )
+            if not passed:
+                log.log('skipped', p.get('venue') or 'paper', platform, title, url)
+                continue
+
+        authors = p.get('authors') or []
+        primary = (authors[0] if authors else (p.get('venue') or 'Unknown')).strip()
+        if (url_in_db(url) or external_id_in_db(p.get('external_id'))
+                or raw_file_exists(primary, date_str, platform, title)):
+            log.log('skipped', primary, platform, title, url)
+            continue
+        meta = {
+            'authors': authors,
+            'venue': p.get('venue'),
+            'doi': p.get('doi'),
+            'external_id': p.get('external_id'),
+            'citation_count': p.get('citation_count'),
+            'source_type': 'research_paper',
+            'authority': authority,
+        }
+        body = (
+            f"{title}\n\nAuthors: {', '.join(authors)}\n"
+            f"Venue: {p.get('venue')}"
+            + (f"  |  Citations: {p['citation_count']}" if p.get('citation_count') is not None else "")
+            + f"\n\nAbstract:\n{abstract}"
+        )
+        log.log('found', primary, platform, title, url)
+        if save_raw(primary, date_str, platform, title, url, body, meta=meta):
+            log.log('fetched', primary, platform, title, url)
+            fetched += 1
+            success_dates.append(date_str)
+            print(f"    FETCHED [paper]: {title[:60]} — {primary}")
+    return (max(success_dates) if success_dates else None), fetched
+
+
+def scrape_arxiv_category(thinker_name, cfg, since, until, log, error_log=None):
+    """arXiv API by category (title + abstract). Returns (watermark, count)."""
+    from ..core import sources_api
+    params = cfg.get('params') or {}
+    categories = params.get('categories') or ['cs.AI']
+    max_results = int(params.get('max_results', 60))
+    print(f"  arXiv categories {categories} | since={since}")
+    papers = sources_api.arxiv_search(categories, since=since, max_results=max_results)
+    print(f"    {len(papers)} papers returned")
+    return _ingest_papers(papers, since, until, cfg.get('platform', 'paper'), log, error_log)
+
+
+def scrape_arxiv_author(thinker_name, cfg, since, until, log, error_log=None):
+    from ..core import sources_api
+    params = cfg.get('params') or {}
+    author = params.get('author') or cfg.get('handle') or thinker_name
+    max_results = int(params.get('max_results', 30))
+    print(f"  arXiv author '{author}' | since={since}")
+    papers = sources_api.arxiv_by_author(author, since=since, max_results=max_results)
+    return _ingest_papers(papers, since, until, cfg.get('platform', 'paper'), log, error_log)
+
+
+def scrape_openalex(thinker_name, cfg, since, until, log, error_log=None):
+    """OpenAlex works search, citation-gated. Returns (watermark, count)."""
+    from ..core import sources_api
+    params = cfg.get('params') or {}
+    search = params.get('search') or 'artificial intelligence'
+    min_citations = int(params.get('min_citations', 0))
+    per_page = int(params.get('per_page', 50))
+    print(f"  OpenAlex '{search}' | min_citations={min_citations} | since={since}")
+    papers = sources_api.openalex_search(
+        search, since=since, min_citations=min_citations, per_page=per_page)
+    print(f"    {len(papers)} works returned")
+    return _ingest_papers(
+        papers, since, until, cfg.get('platform', 'paper'), log, error_log,
+        apply_gate=True, gate_params=params)
+
+
+def scrape_org_blog(thinker_name, cfg, since, until, log, error_log=None):
+    """AI lab / org blog: RSS when a feed exists, else index scrape."""
+    if cfg.get('rss'):
+        return scrape_rss(thinker_name, cfg, since, until, log, error_log)
+    return scrape_blog(thinker_name, cfg, since, until, log, error_log)
+
+
+def _run_scraper(method, name, src, since, until, mode, log, error_log):
+    """Dispatch a source to its scraper. Central registry so new source types
+    register in one place. Every scraper returns (watermark_date, count)."""
+    if method == 'rss':
+        if src.get('platform') == 'substack':
+            return scrape_substack(name, src, since, until, mode, log, error_log)
+        return scrape_rss(name, src, since, until, log, error_log)
+    if method == 'scrape_index':
+        return scrape_blog(name, src, since, until, log, error_log)
+    if method == 'org_blog':
+        return scrape_org_blog(name, src, since, until, log, error_log)
+    if method == 'youtube':
+        return scrape_youtube(name, src, since, until, log)
+    if method == 'arxiv_category':
+        return scrape_arxiv_category(name, src, since, until, log, error_log)
+    if method == 'arxiv_author':
+        return scrape_arxiv_author(name, src, since, until, log, error_log)
+    if method == 'openalex_query':
+        return scrape_openalex(name, src, since, until, log, error_log)
+    raise ValueError(f"Unknown scrape method '{method}'")
+
+
+# ============================================================
 # ORCHESTRATOR
 # ============================================================
 
@@ -886,14 +1066,14 @@ def load_thinker_sources(conn, name_filter=None):
     """Load the scrape manifest from the DB as [{name, sources:[{platform, method,
     url, rss, channel_url, handle, note}, …]}, …] — replaces scraper_config.json."""
     rows = db.query(conn, """
-        SELECT t.name, ss.platform, ss.method, ss.url, ss.rss, ss.channel_url, ss.handle, ss.note
+        SELECT t.name, ss.platform, ss.method, ss.url, ss.rss, ss.channel_url, ss.handle, ss.note, ss.params
         FROM scrape_sources ss JOIN thinkers t ON t.id = ss.thinker_id
         ORDER BY t.name, ss.id""")
     by_name: dict = {}
     for r in rows:
         entry = by_name.setdefault(r["name"], {"name": r["name"], "sources": []})
         entry["sources"].append({k: r[k] for k in
-                                 ("platform", "method", "url", "rss", "channel_url", "handle", "note")})
+                                 ("platform", "method", "url", "rss", "channel_url", "handle", "note", "params")})
     thinkers = list(by_name.values())
     if name_filter:
         thinkers = [t for t in thinkers if name_filter.lower() in t["name"].lower()]
@@ -956,24 +1136,9 @@ def scrape_thinker(cfg, mode, global_since, until, log, conn, auto_since, error_
 
         for attempt in range(2):
             try:
-                if method == 'rss':
-                    if src.get('platform') == 'substack':
-                        newest_date, count = scrape_substack(
-                            name, src, since, until, mode, log, error_log
-                        )
-                    else:
-                        newest_date, count = scrape_rss(
-                            name, src, since, until, log, error_log
-                        )
-                elif method == 'scrape_index':
-                    newest_date, count = scrape_blog(
-                        name, src, since, until, log, error_log
-                    )
-                elif method == 'youtube':
-                    newest_date, count = scrape_youtube(name, src, since, until, log)
-                else:
-                    print(f"  Unknown method '{method}' — skipping")
-                    status = 'failed'
+                newest_date, count = _run_scraper(
+                    method, name, src, since, until, mode, log, error_log
+                )
                 last_exc = None   # success — clear any previous attempt error
                 break
             except Exception as exc:
