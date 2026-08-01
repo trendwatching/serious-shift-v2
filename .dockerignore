@@ -13,8 +13,13 @@
 **/*.egg-info
 **/build
 **/dist
-logs/
-raw_content/
+# `**/` because the pipeline image does `COPY packages/ ./packages/` — a bare
+# `logs/` only matches the context root, so 18 MB of stale scraped text under
+# packages/raw_content was shipping in every build. Neither is read from there:
+# raw_content is written under the working dir at runtime, and run history now
+# lives in Postgres.
+**/logs/
+**/raw_content/
 serious-shift.db
 docs/
 **/.DS_Store
