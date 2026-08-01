@@ -42,9 +42,12 @@ pip install "psycopg[binary]"
 python etl/sqlite_to_postgres.py --sqlite ../../serious-shift.db --truncate
 python etl/verify_parity.py     --sqlite ../../serious-shift.db     # "lossless ✓"
 
-# 2. Pipeline
+# 2. Pipeline — two independently triggerable stages
 cd ../../apps/pipeline && pip install -e ".[dev]" && pytest
 (cd ../.. && python -m serious_shift_pipeline.tools.status)
+(cd ../.. && python -m serious_shift_pipeline.run all --dry-run)   # plan only
+# python -m serious_shift_pipeline.run ingest       # scrape -> ... -> evaluate
+# python -m serious_shift_pipeline.run synthesize   # rebuild the trend map
 
 # 3. Backend  (needs Rust)
 cd ../backend && cargo run                                          # :8080

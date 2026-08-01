@@ -33,7 +33,8 @@ map. Two independently triggerable stages (`python -m serious_shift_pipeline.run
 ingest` / `synthesize`): ingest is Haiku spend proportional to what landed,
 synthesis is a flat ~$5 of Sonnet and is gated on new claims. Each step is also
 a standalone module (`python -m serious_shift_pipeline.<step>`).
-- **Key files:** `scraper.py`, `process_raw.py` (LLM extraction), `scoring.py`,
+- **Key files:** `run.py` (the step table), `steps/scraper/` (content · watermark ·
+  handlers · runner), `process_raw.py` (LLM extraction), `scoring.py`,
   `mapgen/` (map generation, one module per phase), `evaluate.py`, plus shared
   `db.py` / `llm.py` / `observability.py`.
 - **Why:** kept in Python because the scraping + LLM ecosystem (beautifulsoup,
