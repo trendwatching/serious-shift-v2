@@ -16,6 +16,7 @@ from datetime import datetime
 
 import feedparser
 import requests
+from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 
 from ...core import db
@@ -25,6 +26,15 @@ from .content import (
     in_range, parse_date, raw_file_exists, save_raw, should_skip_url, thinker_dir,
     url_in_db,
 )
+
+#: Most items one source may contribute per run.
+#:
+#: Extraction cost is per raw file, so without a cap a single high-volume feed
+#: sets the bill for the whole run. One did: huggingface.co/blog took $4.78 of a
+#: $5.01 run. A cap keeps spend proportional to the roster rather than to
+#: whichever source publishes most, and the backlog drains over successive runs
+#: instead of being dropped.
+MAX_ITEMS_PER_SOURCE = int(os.environ.get('SS_MAX_ITEMS_PER_SOURCE', '30'))
 
 
 def scrape_substack(thinker_name, cfg, since, until, mode, log, error_log=None):
@@ -150,6 +160,17 @@ def scrape_rss(thinker_name, cfg, since, until, log, error_log=None):
     all_dates:    list[str] = []    # dates of every in-range item attempted
     had_fetch_failure = False
 
+    # Oldest first, capped. The blog crawler has always capped at 30 per source;
+    # this path did not, so one high-volume feed could take the whole run. It
+    # did: huggingface.co/blog produced 142 of one run's sources and $4.78 of
+    # its $5.01, crowding out the curated roster it is supposed to complement.
+    #
+    # OLDEST first, not newest, and this matters: the watermark advances to the
+    # newest item actually fetched, so draining from the old end resumes exactly
+    # where this run stopped. Taking the newest N instead would advance the mark
+    # past everything older and lose it silently — the same class of bug as the
+    # failed-fetch watermark rule below.
+    candidates = []
     for entry in feed.entries:
         title    = entry.get('title', 'Untitled')
         url      = entry.get('link', '')
@@ -161,7 +182,15 @@ def scrape_rss(thinker_name, cfg, since, until, log, error_log=None):
         if raw_file_exists(thinker_name, date_str, platform, title) or url_in_db(url):
             log.log('skipped', thinker_name, platform, title, url)
             continue
+        candidates.append((date_str, title, url, entry))
 
+    candidates.sort(key=lambda c: c[0])
+    if len(candidates) > MAX_ITEMS_PER_SOURCE:
+        print(f"    {len(candidates)} new items; taking the oldest "
+              f"{MAX_ITEMS_PER_SOURCE} — the rest follow on the next run")
+        candidates = candidates[:MAX_ITEMS_PER_SOURCE]
+
+    for date_str, title, url, entry in candidates:
         all_dates.append(date_str)
         log.log('found', thinker_name, platform, title, url)
         time.sleep(2)
@@ -238,6 +267,7 @@ def scrape_blog(thinker_name, cfg, since, until, log, error_log=None):
         return scrape_rss(thinker_name, cfg, since, until, log, error_log)
 
     base_url = cfg['url'].rstrip('/')
+    base_domain = urlparse(base_url).netloc
     platform = cfg.get('platform', 'blog')
 
     print(f"  Scraping blog: {base_url}")
@@ -256,10 +286,7 @@ def scrape_blog(thinker_name, cfg, since, until, log, error_log=None):
     archive_urls = [base_url]
     for a in soup.find_all('a', href=True):
         if 'archive' in a['href'].lower():
-            href = a['href']
-            if href.startswith('/'):
-                href = base_url + href
-            archive_urls.append(href)
+            archive_urls.append(urljoin(base_url, a['href']))
 
     links = set()
     for page_url in archive_urls[:2]:
@@ -275,12 +302,14 @@ def scrape_blog(thinker_name, cfg, since, until, log, error_log=None):
                 text = a.get_text(strip=True)
                 if not text or len(text) < 8:
                     continue
-                if href.startswith('/'):
-                    href = base_url + href
+                # urljoin, not string concatenation: `base_url` carries a path
+                # (e.g. https://deepmind.google/blog), so an absolute href like
+                # /blog/some-post became .../blog/blog/some-post. That doubled
+                # segment 404s, and it accounted for 61 item failures in one run.
+                href = urljoin(base_url, href)
                 if not href.startswith('http'):
                     continue
-                base_domain = base_url.split('//')[1].split('/')[0]
-                if base_domain not in href:
+                if urlparse(href).netloc != base_domain:
                     continue
                 if should_skip_url(href):
                     continue
@@ -300,7 +329,7 @@ def scrape_blog(thinker_name, cfg, since, until, log, error_log=None):
         d = extract_date_from_url(url)
         return ('0', d) if d else ('1', '')
 
-    candidates = sorted(links, key=_date_sort_key, reverse=True)[:30]
+    candidates = sorted(links, key=_date_sort_key, reverse=True)[:MAX_ITEMS_PER_SOURCE]
 
     fetched = 0
     success_dates: list[str] = []

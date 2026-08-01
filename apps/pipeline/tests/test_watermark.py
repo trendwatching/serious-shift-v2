@@ -220,3 +220,51 @@ def test_blocked_sources_do_not_count_toward_the_failure_alert(source):
     # The two counters must not overlap, or the alert is pinned forever.
     assert run.count_failed_sources() + run.count_blocked_sources() >= 1
     assert run.count_blocked_sources() >= 1
+
+
+# ── Per-source item cap ───────────────────────────────────────────────────────
+#
+# Extraction cost is per raw file, so an uncapped feed sets the bill for the
+# whole run. huggingface.co/blog took $4.78 of a $5.01 run and 142 of its
+# sources. The cap's *direction* is the subtle part: it has to drain from the
+# old end, because the watermark advances to the newest item fetched.
+
+def _capped(dates, cap):
+    """Mirror the selection in scrape_rss: oldest-first, then truncate."""
+    return sorted(dates)[:cap]
+
+
+def test_cap_takes_the_oldest_items_not_the_newest():
+    dates = ["2025-01-01", "2025-02-01", "2025-03-01", "2025-04-01"]
+    assert _capped(dates, 2) == ["2025-01-01", "2025-02-01"]
+
+
+def test_successive_runs_drain_the_backlog_without_a_gap():
+    """The property that matters: nothing is skipped between runs.
+
+    Taking the NEWEST N would advance the watermark past everything older and
+    lose it permanently — silently, which is the whole failure mode this file
+    exists to prevent.
+    """
+    backlog = ["2025-01-01", "2025-02-01", "2025-03-01", "2025-04-01", "2025-05-01"]
+    cap, seen, remaining = 2, [], list(backlog)
+    while remaining:
+        batch = _capped(remaining, cap)
+        seen += batch
+        watermark = max(batch)
+        # Next run resumes from the watermark, exactly as get_since_for_source does.
+        remaining = [d for d in remaining if d > watermark]
+    assert seen == backlog, "items were skipped or reordered across runs"
+
+
+def test_a_cap_larger_than_the_backlog_is_a_no_op():
+    dates = ["2025-01-01", "2025-02-01"]
+    assert _capped(dates, 30) == dates
+
+
+def test_the_cap_is_configurable_and_shared_by_both_fetch_paths():
+    # The blog crawler used a hard-coded 30 while the RSS path had none; one
+    # constant now governs both, so they cannot drift apart again.
+    from serious_shift_pipeline.steps.scraper import handlers
+    assert isinstance(handlers.MAX_ITEMS_PER_SOURCE, int)
+    assert handlers.MAX_ITEMS_PER_SOURCE > 0
