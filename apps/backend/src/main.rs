@@ -15,7 +15,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use axum::{
-    extract::{DefaultBodyLimit, State},
+    extract::{DefaultBodyLimit, Query, State},
     http::{header, HeaderMap, HeaderValue, Method, StatusCode},
     response::{IntoResponse, Response},
     routing::{any, get, post},
@@ -225,25 +225,58 @@ impl From<sqlx::Error> for AppError {
 
 // ── read endpoints (one SQL each) ──────────────────────────────────────────────
 
-async fn run(pool: &PgPool, query: &str) -> Result<Json<Value>, AppError> {
-    let doc: Value = sqlx::query_scalar(query).fetch_one(pool).await?;
+/// Rows returned by a list endpoint when the caller doesn't say.
+const DEFAULT_LIST_LIMIT: i64 = 500;
+/// Ceiling on `?limit=`. Whole-table dumps stay possible from psql, not from a
+/// public URL: unbounded, `/api/claims` answered ~7 MB and `/api/sources` ~8 MB,
+/// which a handful of concurrent requests turns into an outage.
+const MAX_LIST_LIMIT: i64 = 5_000;
+
+/// `?limit=` clamped into range. A missing or unparseable value takes the
+/// default rather than 400-ing — these are inspection endpoints, and being
+/// lenient about the query string is worth more here than being strict.
+fn list_limit(q: &HashMap<String, String>) -> i64 {
+    q.get("limit")
+        .and_then(|v| v.parse::<i64>().ok())
+        .unwrap_or(DEFAULT_LIST_LIMIT)
+        .clamp(1, MAX_LIST_LIMIT)
+}
+
+async fn run_list(pool: &PgPool, query: &str, limit: i64) -> Result<Json<Value>, AppError> {
+    let doc: Value = sqlx::query_scalar(query)
+        .bind(limit)
+        .fetch_one(pool)
+        .await?;
     Ok(Json(doc))
 }
 
-async fn thinkers(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
-    run(&s.pool, sql::THINKERS).await
+async fn thinkers(
+    State(s): State<AppState>,
+    Query(q): Query<HashMap<String, String>>,
+) -> Result<Json<Value>, AppError> {
+    run_list(&s.pool, sql::THINKERS, list_limit(&q)).await
 }
-async fn sources(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
-    run(&s.pool, sql::SOURCES).await
+async fn sources(
+    State(s): State<AppState>,
+    Query(q): Query<HashMap<String, String>>,
+) -> Result<Json<Value>, AppError> {
+    run_list(&s.pool, sql::SOURCES, list_limit(&q)).await
 }
-async fn claims(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
-    run(&s.pool, sql::CLAIMS).await
+async fn claims(
+    State(s): State<AppState>,
+    Query(q): Query<HashMap<String, String>>,
+) -> Result<Json<Value>, AppError> {
+    run_list(&s.pool, sql::CLAIMS, list_limit(&q)).await
 }
-async fn predictions(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
-    run(&s.pool, sql::PREDICTIONS).await
+async fn predictions(
+    State(s): State<AppState>,
+    Query(q): Query<HashMap<String, String>>,
+) -> Result<Json<Value>, AppError> {
+    run_list(&s.pool, sql::PREDICTIONS, list_limit(&q)).await
 }
 async fn stats(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
-    run(&s.pool, sql::STATS).await
+    let doc: Value = sqlx::query_scalar(sql::STATS).fetch_one(&s.pool).await?;
+    Ok(Json(doc))
 }
 
 // ── /api/map ───────────────────────────────────────────────────────────────────
@@ -582,4 +615,50 @@ async fn ingest_innovation(
     .await?;
 
     Ok((StatusCode::OK, "ok").into_response())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn q(pairs: &[(&str, &str)]) -> HashMap<String, String> {
+        pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect()
+    }
+
+    #[test]
+    fn absent_limit_takes_the_default() {
+        assert_eq!(list_limit(&q(&[])), DEFAULT_LIST_LIMIT);
+    }
+
+    #[test]
+    fn explicit_limit_is_honoured() {
+        assert_eq!(list_limit(&q(&[("limit", "25")])), 25);
+    }
+
+    #[test]
+    fn limit_is_clamped_to_the_ceiling() {
+        // Unbounded, /api/claims answered ~7 MB. The ceiling is what keeps a
+        // public URL from being a whole-table dump.
+        assert_eq!(list_limit(&q(&[("limit", "999999")])), MAX_LIST_LIMIT);
+    }
+
+    #[test]
+    fn nonsense_and_negative_limits_do_not_produce_an_error_or_an_empty_page() {
+        // These are inspection endpoints; leniency beats a 400 here. A negative
+        // or zero limit must still return a usable page, not nothing.
+        assert_eq!(list_limit(&q(&[("limit", "abc")])), DEFAULT_LIST_LIMIT);
+        assert_eq!(list_limit(&q(&[("limit", "-5")])), 1);
+        assert_eq!(list_limit(&q(&[("limit", "0")])), 1);
+    }
+
+    #[test]
+    fn secret_comparison_is_length_and_content_sensitive() {
+        assert!(secret_eq("abc123", "abc123"));
+        assert!(!secret_eq("abc123", "abc124"));
+        assert!(!secret_eq("abc", "abc123"));
+        assert!(!secret_eq("", "x"));
+    }
 }

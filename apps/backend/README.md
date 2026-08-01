@@ -12,6 +12,12 @@ Stack: Rust · axum · sqlx (Postgres) · reqwest (for `/api/personalize`).
 
 ## Endpoints
 
+The four list endpoints (`/api/thinkers`, `/api/sources`, `/api/claims`,
+`/api/predictions`) take `?limit=` — default 500, ceiling 5000. Unbounded they
+answered ~7-8 MB each, which on a public URL is a denial of service a handful
+of concurrent requests wide. They have no UI contract; the app only reads
+`/api/map`.
+
 | Route | Returns |
 |---|---|
 | `GET /health` | `ok` — queries Postgres, so it fails when the DB is unreachable |

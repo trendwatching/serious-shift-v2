@@ -1,6 +1,12 @@
 //! Read queries. Each returns a single `json` scalar so the handler is trivial.
 //! Shapes mirror the legacy export_to_json.py byte-for-byte (same columns,
 //! same ordering) so the frontend contract is unchanged.
+//!
+//! The list endpoints take `$1` as a row limit. They are inspection surfaces
+//! with no UI contract, and unbounded they answered ~8 MB per request against a
+//! public URL — enough that a handful of concurrent calls is a denial of
+//! service, and enough to make the whole table transit the wire to answer a
+//! question about its first page. `?limit=` overrides; see `list_limit`.
 
 pub const THINKERS: &str = r#"
 SELECT coalesce(json_agg(row_to_json(q) ORDER BY q.credibility_score DESC NULLS LAST), '[]'::json)
@@ -11,6 +17,8 @@ FROM (
     (SELECT count(*) FROM claims      WHERE thinker_id = t.id)                        AS claim_count,
     (SELECT count(*) FROM sources     WHERE thinker_id = t.id)                        AS source_count
   FROM thinkers t
+  ORDER BY t.credibility_score DESC NULLS LAST, t.id
+  LIMIT $1
 ) q"#;
 
 pub const SOURCES: &str = r#"
@@ -18,6 +26,8 @@ SELECT coalesce(json_agg(row_to_json(q) ORDER BY q.date_published DESC NULLS LAS
 FROM (
   SELECT s.*, t.name AS thinker_name
   FROM sources s JOIN thinkers t ON s.thinker_id = t.id
+  ORDER BY s.date_published DESC NULLS LAST, s.id
+  LIMIT $1
 ) q"#;
 
 pub const CLAIMS: &str = r#"
@@ -28,6 +38,8 @@ FROM (
   FROM claims c
   JOIN thinkers t ON c.thinker_id = t.id
   LEFT JOIN sources s ON c.source_id = s.id
+  ORDER BY coalesce(c.claim_weight, 0) DESC, c.id
+  LIMIT $1
 ) q"#;
 
 pub const PREDICTIONS: &str = r#"
@@ -37,6 +49,8 @@ FROM (
   FROM predictions p
   JOIN thinkers t ON p.thinker_id = t.id
   LEFT JOIN sources s ON p.source_id = s.id
+  ORDER BY p.evaluation_date NULLS LAST, p.id
+  LIMIT $1
 ) q"#;
 
 pub const STATS: &str = r#"
