@@ -122,7 +122,15 @@ export function useDomains() {
       ktsByDomain.set(kt.domain_id, arr)
     }
 
-    return DOMAIN_ORDER.map((id) => {
+    // Order comes from the document — `domains` is emitted in display order by
+    // the pipeline. DOMAIN_ORDER is only the fallback for when there is no
+    // document yet; hard-coding it as the source would silently drop a fifth
+    // domain the moment the pipeline produced one.
+    const order = data?.domains?.length
+      ? data.domains.map((d) => d.id)
+      : DOMAIN_ORDER
+
+    return order.map((id) => {
       const deck = DECK.find((d) => d.id === id) || {}
       const live = liveDomains.get(id)
       const liveKts = ktsByDomain.get(id) || []
