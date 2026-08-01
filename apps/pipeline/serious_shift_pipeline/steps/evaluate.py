@@ -13,18 +13,6 @@ from __future__ import annotations
 
 from ..core import db
 
-# Predictions evaluated as of the current cycle (prediction_id -> (status, notes)).
-EVALUATIONS: dict[str, tuple[str, str]] = {
-    "P014": ("false", 'Reality: Google ~25%, Microsoft ~30% AI-generated code. Far from "essentially all."'),
-    "P013": ("false", "No AI system matches Nobel-level performance across biology, math, engineering simultaneously by end 2026."),
-    "P025": ("partially_true", "Entry-level hiring in tech/consulting declined measurably in 2025-2026; major firms cite AI. But not dramatic enough to call fully true yet."),
-    "P054": ("partially_true", "Call center automation accelerated significantly. Software engineering augmented but not displaced. Partially correct on sequencing."),
-    "P028": ("partially_true", 'AI agents improved significantly (Claude Code, Codex) but still require heavy oversight for multi-step tasks. "Slop" is harsh but directionally correct.'),
-    "P046": ("partially_true", "P&G study replicated. Additional evidence from consulting firms. But not yet broadly confirmed across industries."),
-    "P057": ("partially_true", "Multi-agent orchestration emerging (Claude Code, Copilot agents) but still early. Shift visible but not complete."),
-    "P044": ("partially_true", "GPT-5 and Claude 4 showed smaller gains than GPT-3->4 leap. Scaling continues but with diminishing capability jumps per compute dollar. LeCun directionally correct."),
-}
-
 _ACCURACY = {"true": 1.0, "partially_true": 0.5, "false": 0.0, "expired": 0.3}
 
 
@@ -57,16 +45,33 @@ def score_thinker(predictions: list[tuple[str, float | None]]) -> dict:
     }
 
 
-def run(conn) -> dict[str, dict]:
-    """Apply EVALUATIONS and recompute every thinker's credibility. Returns
-    {thinker_name: score dict}."""
-    for pid, (status, notes) in EVALUATIONS.items():
-        db.execute(
-            conn,
-            "UPDATE predictions SET status = %s, evaluation_notes = %s WHERE prediction_id = %s",
-            (status, notes, pid),
-        )
+def evaluable_backlog(conn) -> dict:
+    """Predictions whose evaluation date has passed but which are still pending.
 
+    Nothing in the pipeline resolves a prediction. There was a hard-coded table
+    of eight hand-written verdicts here; every id in it (P013-P057) was absent
+    from the database, which starts at P070, so it updated zero rows on every
+    run since. Removing it does not change behaviour — it just stops the step
+    from looking like it evaluates something.
+
+    The consequence is worth stating plainly, because it is invisible from the
+    outside: `accuracy` defaults to 0.5 for every thinker, and accuracy carries
+    85% of the credibility weight, so credibility currently varies only through
+    the 15% outlier term. Ranking runs on a fraction of its intended signal
+    until predictions are actually resolved — by a judge model, or by a human
+    review surface writing `status` back.
+    """
+    return db.query_one(conn, """
+        SELECT COUNT(*) FILTER (WHERE status = 'pending'
+                                  AND evaluation_date <= current_date) AS due,
+               COUNT(*) FILTER (WHERE status <> 'pending')             AS resolved,
+               COUNT(*)                                                AS total
+        FROM predictions""") or {"due": 0, "resolved": 0, "total": 0}
+
+
+def run(conn) -> dict[str, dict]:
+    """Recompute every thinker's credibility from whatever is resolved.
+    Returns {thinker_name: score dict}."""
     # Mean source authority per entity — the reputability signal for entities
     # that have no evaluable predictions (papers, orgs, labs, discovered authors).
     authority_by_id = {
@@ -106,7 +111,13 @@ def run(conn) -> dict[str, dict]:
 
 def main():
     with db.connect() as conn:
+        backlog = evaluable_backlog(conn)
         scores = run(conn)
+    if backlog["due"]:
+        print(f"  ⚠  {backlog['due']:,} predictions are past their evaluation date and "
+              f"still pending ({backlog['resolved']:,}/{backlog['total']:,} resolved "
+              f"overall). Credibility is running on the outlier term alone until "
+              f"something resolves them.")
     for name, s in sorted(scores.items(), key=lambda kv: -kv[1]["credibility"]):
         print(f"  {name}: {s['credibility']}/100 (acc={s['accuracy']}, "
               f"outlier={s['outlier']}, {s['evaluable']}/{s['total']} eval)")
