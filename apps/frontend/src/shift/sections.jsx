@@ -126,7 +126,7 @@ export function FromToSolid({ from, to }) {
       <span className="text-[13.5px] leading-[1.45]">{text}</span>
     </div>
   )
-  return <div className="flex gap-2.5 items-stretch">{card('From', from, 'var(--grad-green)')}{card('To', to, 'var(--grad-pink)')}</div>
+  return <div className="flex gap-2.5 items-stretch">{card('From', from, 'var(--pos-grad)')}{card('To', to, 'var(--a-grad)')}</div>
 }
 
 /* ── Stat band ───────────────────────────────────────────────────────── */
@@ -136,7 +136,14 @@ export function StatBand({ stat, size = 58 }) {
   return (
     <div
       className="bleed box-border flex items-center gap-[18px] py-[34px] text-white lg:gap-10 lg:py-14"
-      style={{ backgroundImage: "url('/shift/stat-band-gradient.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}
+      // The design shipped this band as a pink PNG, which only ever suited
+      // Society — and cost 256 KB. A gradient built from the accent gives every
+      // domain its own band and removes the request entirely.
+      style={{
+        backgroundImage:
+          'radial-gradient(120% 140% at 12% 15%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 55%), ' +
+          'linear-gradient(115deg, var(--a-hot) 0%, var(--a) 46%, var(--a-abyss) 100%)',
+      }}
     >
       <span
         className="shrink-0 leading-[0.9]"
@@ -180,7 +187,7 @@ export function PeelTabs({ whatChanging, whyNow }) {
   if (!cards.length) return null
   if (cards.length === 1) {
     return (
-      <div className="rounded-[20px] p-5 text-white" style={{ backgroundImage: 'var(--grad-pink)' }}>
+      <div className="rounded-[20px] p-5 text-white" style={{ backgroundImage: 'var(--a-grad)' }}>
         <div className="t-eyebrow mb-2.5" style={{ letterSpacing: '0.04em' }}>{cards[0].label}</div>
         <div className="text-[14.5px] leading-[1.58] text-pretty">{cards[0].text}</div>
       </div>
@@ -192,7 +199,7 @@ export function PeelTabs({ whatChanging, whyNow }) {
       {cards.map((c, i) => {
         const front = i === top
         const left = i === 0
-        const bg = front ? 'var(--grad-pink)' : 'var(--grad-grey)'
+        const bg = front ? 'var(--a-grad)' : 'var(--grad-grey)'
         const fg = front ? '#fff' : 'var(--color-ink)'
         return (
           <div key={c.label} className="absolute inset-0 pointer-events-none" style={{ zIndex: front ? 12 : 10 }}>
@@ -245,16 +252,16 @@ export function SubShiftList({ subs, onOpen }) {
             className="card card-lift a-rise relative overflow-hidden text-left flex flex-col gap-[9px] pl-[17px] pr-4 py-[15px]"
             style={{ animationDelay: `${(0.05 + i * 0.06).toFixed(2)}s` }}
           >
-            <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundImage: 'var(--grad-pink)' }} />
+            <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundImage: 'var(--a-grad)' }} />
             <span className="flex items-center gap-2">
               <span
                 className="inline-flex items-center h-[22px] px-[9px] rounded-full t-eyebrow"
-                style={{ background: 'var(--color-pink-wash)', color: 'var(--color-pink-ink)', fontSize: 10, fontWeight: 800, letterSpacing: '0.14em' }}
+                style={{ background: 'var(--a-wash)', color: 'var(--a-ink)', fontSize: 10, fontWeight: 800, letterSpacing: '0.14em' }}
               >Sub-shift {b.num}</span>
-              <span className="ml-auto text-[11.5px] font-semibold" style={{ color: 'var(--color-pink-ink)' }}>Open</span>
+              <span className="ml-auto text-[11.5px] font-semibold" style={{ color: 'var(--a-ink)' }}>Open</span>
               <span
                 className="grid place-items-center w-[22px] h-[22px] rounded-full text-[13px]"
-                style={{ background: 'var(--color-pink-wash)', color: 'var(--color-pink-ink)' }}
+                style={{ background: 'var(--a-wash)', color: 'var(--a-ink)' }}
               >↗</span>
             </span>
             <span className="t-title text-[15px] leading-[1.24]">{quoteTitle(b.title)}</span>
@@ -299,8 +306,8 @@ export function HumanNeeds({ needs }) {
     <div className="flex flex-col gap-2.5">
       <Eyebrow>Human needs</Eyebrow>
       <div className="flex gap-2.5 items-stretch">
-        {card('u', 'Unlocked', needs.unlocked, 'var(--grad-green)', '0 12px 26px rgba(16,80,47,0.24)')}
-        {card('t', 'Threatened', needs.threatened, 'var(--grad-pink)', '0 12px 26px rgba(94,0,51,0.22)')}
+        {card('u', 'Unlocked', needs.unlocked, 'var(--pos-grad)', '0 12px 26px var(--pos-shadow)')}
+        {card('t', 'Threatened', needs.threatened, 'var(--a-grad)', '0 12px 26px var(--a-shadow)')}
       </div>
     </div>
   )
@@ -326,7 +333,7 @@ export function PullQuote({ quote }) {
   if (!quote) return null
   return (
     <figure className="relative m-0 py-2 pl-5 lg:pl-7">
-      <span className="absolute left-0 top-2 bottom-2 w-1 rounded-full" style={{ backgroundImage: 'var(--grad-pink)' }} />
+      <span className="absolute left-0 top-2 bottom-2 w-1 rounded-full" style={{ backgroundImage: 'var(--a-grad)' }} />
       <blockquote
         className="t-display m-0 text-[21px] leading-[1.3] text-pretty lg:text-[27px]"
         style={{ fontWeight: 600, letterSpacing: '-0.018em', color: 'var(--color-ink)' }}
@@ -358,7 +365,7 @@ export function Innovations({ items }) {
                      className="mb-1 h-[132px] w-full rounded-xl object-cover" />
               )}
               {n.brand && (
-                <span className="t-eyebrow" style={{ color: 'var(--color-pink-ink)', fontSize: 10, letterSpacing: '0.14em' }}>
+                <span className="t-eyebrow" style={{ color: 'var(--a-ink)', fontSize: 10, letterSpacing: '0.14em' }}>
                   {n.brand}
                 </span>
               )}
@@ -391,7 +398,7 @@ export function Timeline({ steps }) {
           >
             <span
               className="absolute w-[13px] h-[13px] rounded-full box-border"
-              style={{ left: -26, top: 18, border: '2.5px solid var(--color-pink)', background: '#fff', animation: `ssDot${i + 1} 12s linear infinite` }}
+              style={{ left: -26, top: 18, border: '2.5px solid var(--a)', background: '#fff', animation: `ssDot${i + 1} 12s linear infinite` }}
             />
             <span className="flex items-baseline gap-2.5">
               <span className="t-display text-[14.5px]" style={{ letterSpacing: '-0.005em' }}>{h.label}</span>
@@ -474,7 +481,7 @@ export function Territories({ items }) {
         ))}
         <div
           className="a-rise box-border flex w-[250px] shrink-0 flex-col gap-2.5 rounded-[18px] px-[18px] py-5 text-white lg:w-auto lg:p-6"
-          style={{ scrollSnapAlign: 'center', backgroundImage: 'var(--grad-pink-hot)', boxShadow: '0 12px 26px rgba(94,0,51,0.24)', animationDelay: '0.34s' }}
+          style={{ scrollSnapAlign: 'center', backgroundImage: 'var(--a-grad-hot)', boxShadow: '0 12px 26px var(--a-shadow)', animationDelay: '0.34s' }}
         >
           <span className="t-eyebrow" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--color-yellow)' }}>Work with us</span>
           <span style={{ fontFamily: 'var(--font-title)', fontSize: 21, lineHeight: 1.14 }}>Don’t see your angle here?</span>
@@ -514,10 +521,10 @@ function NumberedCard({ title, items, grad, shadow }) {
 }
 
 export const SignalsCard = ({ items }) => (
-  <NumberedCard title="Signals" items={items} grad="var(--grad-pink-hot)" shadow="0 12px 28px rgba(94,0,51,0.22)" />
+  <NumberedCard title="Signals" items={items} grad="var(--a-grad-hot)" shadow="0 12px 28px var(--a-shadow)" />
 )
 export const CounterSignalsCard = ({ items }) => (
-  <NumberedCard title="Counter-signals" items={items} grad="var(--grad-green-lit)" shadow="0 12px 28px rgba(16,80,47,0.22)" />
+  <NumberedCard title="Counter-signals" items={items} grad="var(--pos-grad-lit)" shadow="0 12px 28px var(--pos-shadow)" />
 )
 
 /* ── Voices: who backs the shift and who disputes it ─────────────────────── */
@@ -546,8 +553,8 @@ export function Voices({ proponents, skeptics }) {
     <div className="flex flex-col gap-2.5">
       <SectionHead title="Who is saying this" aside={`${(proponents?.length || 0) + (skeptics?.length || 0)} voices`} />
       <div className="flex flex-col gap-3 lg:flex-row lg:gap-4 lg:items-start">
-        <VoiceColumn title="Argue for" people={proponents} grad="var(--grad-green-lit)" shadow="0 12px 28px rgba(16,80,47,0.22)" />
-        <VoiceColumn title="Push back" people={skeptics} grad="var(--grad-pink-hot)" shadow="0 12px 28px rgba(94,0,51,0.22)" />
+        <VoiceColumn title="Argue for" people={proponents} grad="var(--pos-grad-lit)" shadow="0 12px 28px var(--pos-shadow)" />
+        <VoiceColumn title="Push back" people={skeptics} grad="var(--a-grad-hot)" shadow="0 12px 28px var(--a-shadow)" />
       </div>
     </div>
   )
@@ -575,7 +582,7 @@ export function Evidence({ items }) {
               {c.strength && (
                 <span
                   className="t-eyebrow inline-flex h-[20px] items-center rounded-full px-2"
-                  style={{ background: 'var(--color-pink-wash)', color: 'var(--color-pink-ink)', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.12em' }}
+                  style={{ background: 'var(--a-wash)', color: 'var(--a-ink)', fontSize: 9.5, fontWeight: 800, letterSpacing: '0.12em' }}
                 >{STRENGTH_LABEL[c.strength] || c.strength}</span>
               )}
               {c.date && <span className="ml-auto font-mono text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{c.date}</span>}
@@ -609,7 +616,7 @@ export function RelatedShifts({ items, onOpen }) {
             style={{ borderColor: 'var(--color-hairline-soft)' }}
           >
             <span className="flex flex-1 flex-col gap-1.5">
-              <span className="t-eyebrow" style={{ color: 'var(--color-pink-ink)', fontSize: 10, letterSpacing: '0.14em' }}>{r.relationship}</span>
+              <span className="t-eyebrow" style={{ color: 'var(--a-ink)', fontSize: 10, letterSpacing: '0.14em' }}>{r.relationship}</span>
               <span className="t-title text-[16px] leading-[1.2] lg:text-[18px]">{quoteTitle(r.title)}</span>
               {r.reasoning && (
                 <span className="text-[13px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{r.reasoning}</span>

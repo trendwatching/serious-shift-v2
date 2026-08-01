@@ -73,6 +73,77 @@
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
+  /* ── Accent, inherited from the domain ────────────────────────────────
+   * A shift page is coloured by its parent domain: Society pink, Economy
+   * blue, Organisations olive, Consumers orange. Every accented element
+   * reads `--a-*`, and the page root sets those from `data-domain`, so a
+   * component never names a hue.
+   *
+   * `--pos-*` is the semantic opposite — the need a shift unlocks, the
+   * counter-signals, the voices arguing for it. It stays green, because the
+   * meaning is "the other side", not "the other domain".
+   *
+   * Defaults are Society's, which are the design's own values verbatim.
+   * ------------------------------------------------------------------- */
+  --a-hot:   #F5007F;
+  --a:       #C8006B;
+  --a-deep:  #5E0033;
+  --a-abyss: #4A0027;
+  --a-ink:   #A3005A;   /* accent text on white — must stay readable      */
+  --a-wash:  #FBEAF3;   /* pale accent fill behind small labels           */
+  --a-shadow: rgba(94, 0, 51, 0.22);
+
+  --pos-lit:  #269A61;
+  --pos:      #1F7A4D;
+  --pos-deep: #10502F;
+  --pos-shadow: rgba(16, 80, 47, 0.22);
+}
+
+[data-domain='economy'] {
+  --a-hot:   #0F91EE;
+  --a:       #0A6FBF;
+  --a-deep:  #04528B;
+  --a-abyss: #033D68;
+  --a-ink:   #0A5FA3;
+  --a-wash:  #E8F3FC;
+  --a-shadow: rgba(4, 82, 139, 0.22);
+}
+
+[data-domain='organisations'] {
+  --a-hot:   #ADB03A;
+  --a:       #7E7F2E;   /* darkened from the domain mid so white type holds */
+  --a-deep:  #5F6E13;
+  --a-abyss: #46520E;
+  --a-ink:   #5F6120;
+  --a-wash:  #F3F4E3;
+  --a-shadow: rgba(95, 110, 19, 0.24);
+
+  /* Green beside olive reads as one muddy family, so the positive side
+     shifts to teal — still unmistakably "the other side", but separable. */
+  --pos-lit:  #17897C;
+  --pos:      #126E63;
+  --pos-deep: #0B4A42;
+  --pos-shadow: rgba(11, 74, 66, 0.22);
+}
+
+[data-domain='consumers'] {
+  --a-hot:   #F65510;
+  --a:       #C93B05;
+  --a-deep:  #922E03;
+  --a-abyss: #6E2202;
+  --a-ink:   #B03505;
+  --a-wash:  #FDEDE6;
+  --a-shadow: rgba(146, 46, 3, 0.22);
+}
+
+/* Derived from whichever accent is in scope. */
+:root,
+[data-domain] {
+  --a-grad:      linear-gradient(180deg, var(--a) 0%, var(--a-deep) 100%);
+  --a-grad-hot:  linear-gradient(180deg, var(--a-hot) 0%, var(--a) 46%, var(--a-abyss) 100%);
+  --pos-grad:    linear-gradient(180deg, var(--pos) 0%, var(--pos-deep) 100%);
+  --pos-grad-lit: linear-gradient(180deg, var(--pos-lit) 0%, var(--pos) 55%, var(--pos-deep) 100%);
+
   /* Height of the sticky black bar — the deck sizes itself against this. */
   --topbar: calc(max(14px, env(safe-area-inset-top)) + 48px);
 }
@@ -180,13 +251,15 @@ a:hover { color: var(--color-link-hover); }
 @keyframes ssInkA   { 0%, 45% { color: #fff; } 50%, 95% { color: #1B1620; } 100% { color: #fff; } }
 @keyframes ssInkB   { 0%, 45% { color: #1B1620; } 50%, 95% { color: #fff; } 100% { color: #1B1620; } }
 
-/* Now / next / beyond timeline sweep. */
-@keyframes ssFill1 { 0%, 32% { background-color: #F6D6E6; color: #4A0027; } 34%, 100% { background-color: #FBFAFD; color: #2C2735; } }
-@keyframes ssFill2 { 0%, 32% { background-color: #FBFAFD; color: #2C2735; } 34%, 65% { background-color: #F6D6E6; color: #4A0027; } 67%, 100% { background-color: #FBFAFD; color: #2C2735; } }
-@keyframes ssFill3 { 0%, 65% { background-color: #FBFAFD; color: #2C2735; } 67%, 99% { background-color: #F6D6E6; color: #4A0027; } 100% { background-color: #FBFAFD; color: #2C2735; } }
-@keyframes ssDot1  { 0%, 32% { background: #C8006B; } 34%, 100% { background: #fff; } }
-@keyframes ssDot2  { 0%, 32% { background: #fff; } 34%, 65% { background: #C8006B; } 67%, 100% { background: #fff; } }
-@keyframes ssDot3  { 0%, 65% { background: #fff; } 67%, 99% { background: #C8006B; } 100% { background: #fff; } }
+/* Now / next / beyond timeline sweep. The lit state reads the accent in scope
+   (var() resolves against the animated element), so the sweep is the domain's
+   colour rather than a fixed pink. */
+@keyframes ssFill1 { 0%, 32% { background-color: var(--a-wash); color: var(--a-ink); } 34%, 100% { background-color: #FBFAFD; color: #2C2735; } }
+@keyframes ssFill2 { 0%, 32% { background-color: #FBFAFD; color: #2C2735; } 34%, 65% { background-color: var(--a-wash); color: var(--a-ink); } 67%, 100% { background-color: #FBFAFD; color: #2C2735; } }
+@keyframes ssFill3 { 0%, 65% { background-color: #FBFAFD; color: #2C2735; } 67%, 99% { background-color: var(--a-wash); color: var(--a-ink); } 100% { background-color: #FBFAFD; color: #2C2735; } }
+@keyframes ssDot1  { 0%, 32% { background: var(--a); } 34%, 100% { background: #fff; } }
+@keyframes ssDot2  { 0%, 32% { background: #fff; } 34%, 65% { background: var(--a); } 67%, 100% { background: #fff; } }
+@keyframes ssDot3  { 0%, 65% { background: #fff; } 67%, 99% { background: var(--a); } 100% { background: #fff; } }
 
 /* Entrance helpers. */
 .a-rise { animation: ssRise 0.7s var(--ease-out) both; }

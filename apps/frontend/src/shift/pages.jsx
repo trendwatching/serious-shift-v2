@@ -52,7 +52,7 @@ export function DomainSheet() {
   if (!domain) return <Missing what="domain" />
 
   return (
-    <article className="a-expand min-h-dvh" style={{ backgroundImage: domain.grad }}>
+    <article className="a-expand min-h-dvh" data-domain={domain.id} style={{ backgroundImage: domain.grad }}>
       <GradientHero
         grad={domain.grad}
         face="display"
@@ -120,7 +120,7 @@ export function ShiftDetail() {
   if (!domain || !shift) return <Missing what="shift" />
 
   return (
-    <article className="a-expand min-h-dvh bg-white">
+    <article className="a-expand min-h-dvh bg-white" data-domain={domain.id}>
       <GradientHero
         grad={domain.grad}
         stripes
@@ -161,9 +161,9 @@ export function SubShiftDetail() {
   if (!domain || !shift || !sub) return <Missing what="sub-shift" />
 
   return (
-    <article className="a-expand min-h-dvh bg-white">
+    <article className="a-expand min-h-dvh bg-white" data-domain={domain.id}>
       <GradientHero
-        grad="var(--grad-pink-hot)"
+        grad="var(--a-grad-hot)"
         minHeight={260}
         onBack={() => navigate(`/map/${domain.slug}/${shift.slug}`)}
         eyebrow={`Sub-shift ${sub.num}`}
