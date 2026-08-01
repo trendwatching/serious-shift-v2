@@ -17,7 +17,7 @@ from datetime import datetime
 
 from ...core import db, observability, parallel
 from ...core.observability import ErrorLog, RunLog
-from .handlers import _run_scraper, handle_manual
+from .handlers import _run_scraper, handle_manual, is_ip_block
 from .watermark import (
     FALLBACK_SINCE, get_since_for_source, get_thinker_id, update_source_state,
 )
@@ -147,15 +147,25 @@ def scrape_thinker(cfg, mode, global_since, until, log, conn, auto_since, error_
                     time.sleep(10)
 
         if last_exc is not None:
-            status = 'failed'
+            # A host refusing our IP is a configuration gap, not a broken
+            # source. Recording both as 'failed' meant the failed-source alert
+            # fired every run for a known cause with a known remedy, which is
+            # how a real breakage gets lost in the noise.
+            blocked = is_ip_block(last_exc)
+            status = 'blocked' if blocked else 'failed'
             newest_date, count = None, 0
-            print(f"  ✗  {platform} | {src_url[:60]} failed after retry: {last_exc}")
+            if blocked:
+                print(f"  ⛔  {platform} | {src_url[:60]} is blocking this IP. "
+                      f"Set YOUTUBE_PROXY_URL or WEBSHARE_PROXY_USERNAME/"
+                      f"WEBSHARE_PROXY_PASSWORD to fetch it from a cloud host.")
+            else:
+                print(f"  ✗  {platform} | {src_url[:60]} failed after retry: {last_exc}")
             error_log.record(
                 step='scrape',
                 thinker=name,
                 exc=last_exc,
                 retry_attempted=True,
-                outcome='skipped',
+                outcome='blocked' if blocked else 'skipped',
                 platform=platform,
                 source_url=src_url,
             )

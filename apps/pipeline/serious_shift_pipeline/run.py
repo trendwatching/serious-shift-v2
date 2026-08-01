@@ -126,11 +126,27 @@ def count_high_quality_claims() -> int:
 
 
 def count_failed_sources() -> int:
+    """Sources that are broken — deliberately NOT counting 'blocked'.
+
+    A blocked source needs a proxy credential, not a fix. Counting the two
+    together pinned this alert permanently at 11 (every YouTube source), which
+    made it useless for spotting the next source that actually breaks.
+    """
     try:
         with db.connect() as conn:
             return db.scalar(conn,
                 "SELECT COUNT(*) FROM source_state WHERE last_run_status = 'failed'")
     except Exception:  # noqa: BLE001 — a missing table must not fail the run
+        return 0
+
+
+def count_blocked_sources() -> int:
+    """Sources the host is refusing from this IP. Reported once, not alarmed on."""
+    try:
+        with db.connect() as conn:
+            return db.scalar(conn,
+                "SELECT COUNT(*) FROM source_state WHERE last_run_status = 'blocked'")
+    except Exception:  # noqa: BLE001
         return 0
 
 
@@ -454,6 +470,11 @@ def main() -> int:
     else:
         print('  Errors:       0')
     print('=' * 60)
+
+    blocked = count_blocked_sources()
+    if blocked:
+        print(f"\n  {blocked} source(s) blocked by the host from this IP "
+              f"(set YOUTUBE_PROXY_URL or WEBSHARE_PROXY_USERNAME/PASSWORD).")
 
     alerts = check_escalation(
         errors=errors,

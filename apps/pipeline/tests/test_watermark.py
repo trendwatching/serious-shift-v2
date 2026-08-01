@@ -163,3 +163,60 @@ def test_each_source_carries_its_own_watermark(source):
     scraper.update_source_state(conn, tid, PLATFORM, other, date(2024, 1, 1), 1, "ok")
     assert _since(conn, tid) == "2025-06-01"
     assert scraper.get_since_for_source(conn, tid, PLATFORM, other, "2023-01-01") == "2024-01-01"
+
+
+# ── Blocked vs broken ─────────────────────────────────────────────────────────
+#
+# All 11 sources that were sitting in `failed` were YouTube, blocked because
+# Railway runs on datacenter IPs. That is a missing proxy credential, not 11
+# broken feeds — and recording it as a failure pinned the failed-source alert
+# permanently above its threshold, which is how the next real breakage gets
+# missed.
+
+class _Blocked(Exception):
+    pass
+
+
+@pytest.mark.parametrize("exc", [
+    _Blocked("YouTube is blocking requests from your IP"),
+    _Blocked("Sign in to confirm you're not a bot"),
+    _Blocked("HTTP Error 429: Too Many Requests"),
+    _Blocked("The provided YouTube account cookies are no longer valid"),
+])
+def test_host_refusals_are_classified_as_blocked(exc):
+    from serious_shift_pipeline.steps.scraper.handlers import is_ip_block
+    assert is_ip_block(exc)
+
+
+def test_request_blocked_exception_type_is_recognised():
+    from serious_shift_pipeline.steps.scraper.handlers import is_ip_block
+    # The transcript library signals this by type, not message.
+    assert is_ip_block(type("RequestBlocked", (Exception,), {})())
+
+
+@pytest.mark.parametrize("exc", [
+    _Blocked("HTTP Error 404: Not Found"),
+    _Blocked("Connection timed out"),
+    _Blocked("no such channel"),
+    _Blocked("yt-dlp exited 1 with no output. stderr: (empty)"),
+])
+def test_genuine_breakage_is_not_misread_as_blocked(exc):
+    """The important direction: a real failure must not be filed as 'blocked'
+    and quietly excluded from the alert that exists to catch it."""
+    from serious_shift_pipeline.steps.scraper.handlers import is_ip_block
+    assert not is_ip_block(exc)
+
+
+def test_blocked_sources_do_not_count_toward_the_failure_alert(source):
+    from serious_shift_pipeline import run
+    conn, tid = source
+    scraper.update_source_state(conn, tid, PLATFORM, URL, None, 0, "blocked")
+    row = db.query_one(
+        conn,
+        """SELECT last_run_status FROM source_state
+           WHERE thinker_id = %s AND platform = %s AND source_url = %s""",
+        (tid, PLATFORM, URL))
+    assert row["last_run_status"] == "blocked"
+    # The two counters must not overlap, or the alert is pinned forever.
+    assert run.count_failed_sources() + run.count_blocked_sources() >= 1
+    assert run.count_blocked_sources() >= 1

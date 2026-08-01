@@ -392,12 +392,28 @@ def _build_ytt():
     return YouTubeTranscriptApi()
 
 
-def _is_ip_block(exc) -> bool:
-    """True if the exception is YouTube IP-blocking us (cloud IP, no proxy)."""
-    name = type(exc).__name__
+#: Phrases in an exception that mean "the host refused this IP", not "this
+#: source is broken". Matched against yt-dlp's stderr as well as the transcript
+#: library's exceptions, because the listing and the transcript fetch are
+#: blocked by the same thing but fail through different paths.
+_BLOCK_SIGNS = (
+    'blocking requests', 'ipblocked', 'sign in to confirm', 'not a bot',
+    'too many requests', 'http error 429', 'cookies are no longer valid',
+)
+
+
+def is_ip_block(exc) -> bool:
+    """True when the host is refusing this IP rather than the source being broken.
+
+    YouTube blocks datacenter IPs, which is what any cloud host runs on. That is
+    a configuration gap (no proxy credential), not a fault in the source, and
+    conflating the two meant the failed-source alert fired every run forever.
+    """
+    if type(exc).__name__ in ('RequestBlocked', 'IpBlocked'):
+        return True
     msg = str(exc).lower()
-    return (name in ('RequestBlocked', 'IpBlocked')
-            or 'blocking requests' in msg or 'ipblocked' in msg)
+    return any(sign in msg for sign in _BLOCK_SIGNS)
+
 
 
 def scrape_youtube(thinker_name, cfg, since, until, log):
@@ -490,7 +506,7 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
                 print(f"    FETCHED: {title[:50]} ({len(text)} chars)")
         except Exception as e:
             log.log('failed', thinker_name, platform, title, url, str(e))
-            if _is_ip_block(e):
+            if is_ip_block(e):
                 # The whole channel is blocked from this IP — don't hammer every
                 # video (each would sleep + fail identically). Stop here.
                 print(f"    ⛔  YouTube is IP-blocking transcript requests (cloud IP). "

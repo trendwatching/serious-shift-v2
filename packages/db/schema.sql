@@ -498,7 +498,7 @@ CREATE TABLE public.source_state (
     last_item_date date,
     last_run_status text,
     items_last_run integer DEFAULT 0,
-    CONSTRAINT source_state_last_run_status_check CHECK ((last_run_status = ANY (ARRAY['ok'::text, 'partial'::text, 'failed'::text])))
+    CONSTRAINT source_state_last_run_status_check CHECK ((last_run_status = ANY (ARRAY['ok'::text, 'partial'::text, 'failed'::text, 'blocked'::text])))
 );
 
 
@@ -1190,4 +1190,5 @@ ALTER TABLE ONLY public.sources
 
 INSERT INTO public.schema_migrations (version) VALUES
     ('20250101000000'),
-    ('20260801175040');
+    ('20260801175040'),
+    ('20260801182059');
