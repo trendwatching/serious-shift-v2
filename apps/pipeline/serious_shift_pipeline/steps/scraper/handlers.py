@@ -623,7 +623,7 @@ def ingest_papers(papers, since, until, platform, log, error_log=None,
 
 def scrape_arxiv_category(thinker_name, cfg, since, until, log, error_log=None):
     """arXiv API by category (title + abstract). Returns (watermark, count)."""
-    from ..core import sources_api
+    from ...core import sources_api
     params = cfg.get('params') or {}
     categories = params.get('categories') or ['cs.AI']
     max_results = int(params.get('max_results', 60))
@@ -634,7 +634,7 @@ def scrape_arxiv_category(thinker_name, cfg, since, until, log, error_log=None):
 
 
 def scrape_arxiv_author(thinker_name, cfg, since, until, log, error_log=None):
-    from ..core import sources_api
+    from ...core import sources_api
     params = cfg.get('params') or {}
     author = params.get('author') or cfg.get('handle') or thinker_name
     max_results = int(params.get('max_results', 30))
@@ -645,7 +645,7 @@ def scrape_arxiv_author(thinker_name, cfg, since, until, log, error_log=None):
 
 def scrape_openalex(thinker_name, cfg, since, until, log, error_log=None):
     """OpenAlex works search, citation-gated. Returns (watermark, count)."""
-    from ..core import sources_api
+    from ...core import sources_api
     params = cfg.get('params') or {}
     search = params.get('search') or 'artificial intelligence'
     min_citations = int(params.get('min_citations', 0))
