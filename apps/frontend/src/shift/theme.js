@@ -18,6 +18,20 @@ export const themeFor = (id) => DOMAIN_THEME[id] || DOMAIN_THEME.society
 
 export const pad2 = (n) => String(n).padStart(2, '0')
 
+/**
+ * Shift and sub-shift names are always shown in caps inside double quotation
+ * marks — a naming rule from the content spec, not decoration.
+ *
+ * The casing is CSS (`.t-title`); the quotes have to be characters. Sources
+ * disagree about whether they are already there — the pipeline stores plain
+ * names, the authored design content includes curly quotes — so strip whatever
+ * is present and apply one consistent pair.
+ */
+export const quoteTitle = (s) => {
+  const t = String(s ?? '').trim().replace(/^[“”"'\s]+|[“”"'\s]+$/g, '').trim()
+  return t ? `“${t}”` : ''
+}
+
 /** URL-safe slug — must match the backend's slugify so deep links resolve. */
 export const slugify = (s) =>
   String(s || '')

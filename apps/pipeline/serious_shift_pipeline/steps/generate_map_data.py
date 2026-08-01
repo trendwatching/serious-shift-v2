@@ -65,20 +65,32 @@ from ..prompts import (
     prompt_synthesis_insights,
 )
 
-def _load_module_order() -> dict:
-    """Canonical module order per scope, from packages/contracts/shift_modules.json.
+#: Copy shipped inside the wheel/image — the container never sees packages/.
+_VENDORED_CONTRACT = Path(__file__).resolve().parent.parent / 'contracts' / 'shift_modules.json'
 
-    Falls back to an empty mapping (export then preserves whatever order the
-    modules were written in) so a missing contract file can never break a run.
-    """
+
+def _contract_path() -> Path | None:
+    """The module contract: canonical copy on a source checkout, else the
+    vendored one. Mirrors prompts/_loader.py and core/migrate.py — without the
+    vendored fallback the deployed cron silently loses the reading order, because
+    packages/ is not in the image."""
     for parent in Path(__file__).resolve().parents:
         candidate = parent / 'packages' / 'contracts' / 'shift_modules.json'
         if candidate.is_file():
-            try:
-                return json.loads(candidate.read_text()).get('order') or {}
-            except (ValueError, OSError):
-                return {}
-    return {}
+            return candidate
+    return _VENDORED_CONTRACT if _VENDORED_CONTRACT.is_file() else None
+
+
+def _load_module_order() -> dict:
+    """Canonical module order per scope. Empty mapping if unreadable, in which
+    case the export preserves whatever order the modules were written in."""
+    path = _contract_path()
+    if path is None:
+        return {}
+    try:
+        return json.loads(path.read_text()).get('order') or {}
+    except (ValueError, OSError):
+        return {}
 
 
 MODULE_ORDER = _load_module_order()

@@ -1,0 +1,309 @@
+{
+  "$comment": [
+    "Canonical module types for the shift / sub-shift reading views.",
+    "A shift page is an ordered list of {type, data} modules; this file is the",
+    "contract between the pipeline (which emits them) and the front end (which",
+    "renders them). Adding a type means: add it here, emit it from the pipeline's",
+    "MODULE_TEMPLATE, and register a component in",
+    "apps/frontend/src/shift/modules.jsx. The front end skips unknown types, so a",
+    "new type can ship backend-first without breaking the page.",
+    "Guarded by apps/pipeline/tests/test_shift_modules_contract.py."
+  ],
+  "version": 2,
+  "$order_comment": [
+    "Canonical reading order, from the Miro content mockup (SERIOUS SHIFT 2026 →",
+    "Content Mockup- July'26). The export sorts every module list by this, so",
+    "changing the order here re-composes each page on the next --export-only with",
+    "no regeneration. Types absent from a page are simply skipped.",
+    "Note the sub-shift carousel sits at the BOTTOM of a shift page."
+  ],
+  "order": {
+    "key_trend": [
+      "dek",
+      "from_to",
+      "pull_quote",
+      "stat_band",
+      "peel_tabs",
+      "human_needs",
+      "tension_band",
+      "timeline",
+      "industries",
+      "territories",
+      "voices",
+      "sub_shift_list",
+      "related_shifts",
+      "rich_text"
+    ],
+    "sub_trend": [
+      "lede",
+      "from_to_solid",
+      "tension_band",
+      "stat_band",
+      "peel_tabs",
+      "human_needs",
+      "signals",
+      "counter_signals",
+      "evidence",
+      "timeline",
+      "territories",
+      "innovations",
+      "rich_text"
+    ]
+  },
+  "types": {
+    "dek": {
+      "summary": "Standfirst under the shift hero.",
+      "data": {
+        "text": "string"
+      },
+      "required": [
+        "text"
+      ]
+    },
+    "lede": {
+      "summary": "Opening line of a sub-shift page.",
+      "data": {
+        "text": "string"
+      },
+      "required": [
+        "text"
+      ]
+    },
+    "from_to": {
+      "summary": "The shift's spine as two cards whose gradient fills cross-fade.",
+      "data": {
+        "from": "string",
+        "to": "string"
+      },
+      "required": [
+        "from",
+        "to"
+      ]
+    },
+    "from_to_solid": {
+      "summary": "From/To pair with solid green/pink fills (sub-shift variant).",
+      "data": {
+        "from": "string",
+        "to": "string"
+      },
+      "required": [
+        "from",
+        "to"
+      ]
+    },
+    "stat_band": {
+      "summary": "Full-bleed band: oversized numeral, prose, source.",
+      "data": {
+        "value": "string",
+        "text": "string",
+        "source": "string"
+      },
+      "required": [
+        "value"
+      ]
+    },
+    "peel_tabs": {
+      "summary": "Two stacked cards the reader toggles: what's changing / why now.",
+      "data": {
+        "whats_changing": "string",
+        "why_now": "string"
+      },
+      "required": []
+    },
+    "sub_shift_list": {
+      "summary": "Cards linking to this shift's sub-shifts. Resolved from context, not data.",
+      "data": {},
+      "required": []
+    },
+    "human_needs": {
+      "summary": "Two expanding cards: the need unlocked and the need threatened.",
+      "data": {
+        "unlocked": "string",
+        "threatened": "string"
+      },
+      "required": []
+    },
+    "tension_band": {
+      "summary": "Dark full-bleed band carrying the consumer tension, in the consumer's own voice.",
+      "data": {
+        "quote": "string",
+        "label": "string?"
+      },
+      "required": [
+        "quote"
+      ]
+    },
+    "pull_quote": {
+      "summary": "The editorial line that lands the shift, set immediately after From/To. Distinct from tension_band: this is the analyst's verdict, not the consumer's voice.",
+      "data": {
+        "quote": "string"
+      },
+      "required": [
+        "quote"
+      ]
+    },
+    "innovations": {
+      "summary": "\"Innovations in the wild\" — real branded examples of the shift, from the innovations table.",
+      "data": {
+        "items": [
+          {
+            "title": "string",
+            "brand": "string?",
+            "description": "string?",
+            "url": "string?",
+            "image": "string?"
+          }
+        ]
+      },
+      "required": [
+        "items"
+      ]
+    },
+    "timeline": {
+      "summary": "Now / next / beyond, as a vertical timeline.",
+      "data": {
+        "steps": [
+          {
+            "label": "string",
+            "text": "string"
+          }
+        ]
+      },
+      "required": [
+        "steps"
+      ]
+    },
+    "industries": {
+      "summary": "Sector chips plus a detail card that swaps on selection.",
+      "data": {
+        "items": [
+          {
+            "name": "string",
+            "text": "string"
+          }
+        ]
+      },
+      "required": [
+        "items"
+      ]
+    },
+    "territories": {
+      "summary": "Opportunity-territory cards plus a work-with-us card.",
+      "data": {
+        "items": [
+          {
+            "name": "string",
+            "text": "string"
+          }
+        ]
+      },
+      "required": [
+        "items"
+      ]
+    },
+    "signals": {
+      "summary": "Numbered evidence that the shift is real (sub-shift).",
+      "data": {
+        "items": [
+          "string"
+        ]
+      },
+      "required": [
+        "items"
+      ]
+    },
+    "counter_signals": {
+      "summary": "The honest case against (sub-shift).",
+      "data": {
+        "items": [
+          "string"
+        ]
+      },
+      "required": [
+        "items"
+      ]
+    },
+    "voices": {
+      "summary": "Who backs this shift and who disputes it, with their own words. Built at export from the thinker-attribution phase — no extra model spend.",
+      "data": {
+        "proponents": [
+          {
+            "name": "string",
+            "quote": "string"
+          }
+        ],
+        "skeptics": [
+          {
+            "name": "string",
+            "quote": "string"
+          }
+        ]
+      },
+      "required": []
+    },
+    "evidence": {
+      "summary": "The sourced claims behind a sub-shift: what was said, by whom, where, and when. Distinct from `signals`, which is written prose.",
+      "data": {
+        "items": [
+          {
+            "text": "string",
+            "thinker": "string",
+            "source": "string?",
+            "date": "string?",
+            "strength": "string?",
+            "implication": "string?"
+          }
+        ]
+      },
+      "required": [
+        "items"
+      ]
+    },
+    "related_shifts": {
+      "summary": "Typed links to other shifts (reinforces, accelerated_by, …) from the interrelatedness phase.",
+      "data": {
+        "items": [
+          {
+            "title": "string",
+            "href": "string",
+            "relationship": "string",
+            "reasoning": "string?",
+            "domain": "string?"
+          }
+        ]
+      },
+      "required": [
+        "items"
+      ]
+    },
+    "rich_text": {
+      "summary": "Escape hatch for editor-authored prose. Never generated.",
+      "data": {
+        "heading": "string?",
+        "body": "string"
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  "industry_sectors": [
+    "Beauty & Personal Care",
+    "Consumer Tech",
+    "Digital Tech",
+    "Entertainment",
+    "Fashion & Accessories",
+    "Financial Services",
+    "Food & Beverage",
+    "Government & Public Sector",
+    "Health & Wellbeing",
+    "Home & Living",
+    "Media & Publishing",
+    "Mobility & Transport",
+    "Nonprofit & Social Cause",
+    "Retail & Commerce",
+    "Travel & Hospitality",
+    "Work & Education"
+  ],
+  "$sectors_comment": "The 16 TrendWatching sectors. The industries module asks for one entry per sector, in this order; kt_editorial.txt must match this list."
+}

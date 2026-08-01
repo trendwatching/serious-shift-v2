@@ -9,6 +9,7 @@
  */
 import { useLayoutEffect, useRef, useState } from 'react'
 import { CONTACT_URL } from './content'
+import { quoteTitle } from './theme'
 
 const PAD = 22
 const WHEN = ['0–12 months', '1–3 years', '3–10 years']
@@ -72,7 +73,7 @@ export function GradientHero({ grad, onBack, eyebrow, eyebrowColor, title, sub, 
               {title}
             </h1>
           ) : (
-            <h1 className="t-title mt-2.5 text-[32px] leading-[1.1] lg:text-[44px]">{title}</h1>
+            <h1 className="t-title mt-2.5 text-[32px] leading-[1.1] lg:text-[44px]">{quoteTitle(title)}</h1>
           ))}
           {sub && <div className="mt-2.5 text-[13.5px] opacity-90">{sub}</div>}
           {blurb && <p className="mt-3.5 max-w-[290px] text-[15px] leading-[1.5] opacity-95 lg:max-w-[520px] lg:text-[17px]">{blurb}</p>}
@@ -256,7 +257,7 @@ export function SubShiftList({ subs, onOpen }) {
                 style={{ background: 'var(--color-pink-wash)', color: 'var(--color-pink-ink)' }}
               >↗</span>
             </span>
-            <span className="t-title text-[15px] leading-[1.24]">{b.title}</span>
+            <span className="t-title text-[15px] leading-[1.24]">{quoteTitle(b.title)}</span>
             <span className="text-[13.5px] leading-[1.5] text-pretty" style={{ color: '#5C5768' }}>{b.dek}</span>
           </button>
         ))}
@@ -609,7 +610,7 @@ export function RelatedShifts({ items, onOpen }) {
           >
             <span className="flex flex-1 flex-col gap-1.5">
               <span className="t-eyebrow" style={{ color: 'var(--color-pink-ink)', fontSize: 10, letterSpacing: '0.14em' }}>{r.relationship}</span>
-              <span className="t-title text-[16px] leading-[1.2] lg:text-[18px]">{r.title}</span>
+              <span className="t-title text-[16px] leading-[1.2] lg:text-[18px]">{quoteTitle(r.title)}</span>
               {r.reasoning && (
                 <span className="text-[13px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{r.reasoning}</span>
               )}

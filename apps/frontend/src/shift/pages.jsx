@@ -18,6 +18,7 @@ import { useResolved } from './useDomains'
 import { ShiftFooter } from './chrome'
 import { Modules } from './modules'
 import { GradientHero, Eyebrow } from './sections'
+import { quoteTitle } from './theme'
 
 /** Reading column: full-bleed on mobile, centred measure on desktop. */
 const Column = ({ children }) => (
@@ -76,7 +77,7 @@ export function DomainSheet() {
             >
               <div className="pt-1 font-mono text-xs" style={{ color: 'var(--color-ink-faint)' }}>{s.num}</div>
               <div className="flex flex-1 flex-col gap-1.5">
-                <div className="t-title text-[19px] leading-[1.2] lg:text-[22px]" style={{ color: 'var(--color-ink)' }}>{s.title}</div>
+                <div className="t-title text-[19px] leading-[1.2] lg:text-[22px]" style={{ color: 'var(--color-ink)' }}>{quoteTitle(s.title)}</div>
                 <div className="text-[13.5px] leading-[1.5]" style={{ color: 'var(--color-ink-mid)' }}>{s.dek}</div>
                 <div className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   Key shift{s.velocity ? ` · ${s.velocity}` : ''} · {s.read}

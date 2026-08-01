@@ -184,9 +184,13 @@ fn doc_response(body: Arc<str>) -> Response {
                 header::CONTENT_TYPE,
                 HeaderValue::from_static("application/json"),
             ),
+            // Short window on purpose. These documents are rewritten whenever the
+            // pipeline runs, and a long stale-while-revalidate meant a browser
+            // served yesterday's copy for up to a day after a regeneration —
+            // the content looked "missing" even though the API was correct.
             (
                 header::CACHE_CONTROL,
-                HeaderValue::from_static("public, max-age=300, stale-while-revalidate=86400"),
+                HeaderValue::from_static("public, max-age=60, stale-while-revalidate=300"),
             ),
         ],
         body.as_ref().to_owned(),

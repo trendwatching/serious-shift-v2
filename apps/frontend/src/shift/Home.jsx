@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDomains } from './useDomains'
-import { DOMAIN_ORDER, DOMAIN_THEME } from './theme'
+import { DOMAIN_ORDER, DOMAIN_THEME, quoteTitle } from './theme'
 
 const THRESHOLD = 56      // px of travel that commits a swipe (from the design)
 const FLICK = 0.45        // px/ms that commits regardless of distance
@@ -290,7 +290,7 @@ function DomainPanel({ domain, width, active, onOpen, onOpenShift }) {
                   className="group flex w-full items-start gap-3.5 py-3.5 text-left opacity-90 transition-opacity hover:opacity-100"
                 >
                   <span className="mt-0.5 font-mono text-[11px] opacity-70">{s.num}</span>
-                  <span className="t-title flex-1 text-[15px] leading-[1.22]">{s.title}</span>
+                  <span className="t-title flex-1 text-[15px] leading-[1.22]">{quoteTitle(s.title)}</span>
                   <span className="mt-0.5 text-[15px] opacity-0 transition-opacity group-hover:opacity-100">›</span>
                 </button>
               </li>

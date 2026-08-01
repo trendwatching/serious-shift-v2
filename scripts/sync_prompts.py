@@ -27,6 +27,10 @@ ROOT = Path(__file__).resolve().parent.parent
 CANONICAL = ROOT / "packages" / "prompts"
 
 PIPELINE_DEST = ROOT / "apps" / "pipeline" / "serious_shift_pipeline" / "prompts" / "templates"
+# The shift-module contract ships in the image too — the pipeline reads the
+# reading order from it at export time and packages/ is not in the container.
+CONTRACTS_SRC = ROOT / "packages" / "contracts"
+CONTRACTS_DEST = ROOT / "apps" / "pipeline" / "serious_shift_pipeline" / "contracts"
 BACKEND_DEST = ROOT / "apps" / "backend" / "src" / "prompts"
 
 # Files the Rust backend embeds via include_str! (relative to packages/prompts).
@@ -40,6 +44,8 @@ def _all_templates() -> list[Path]:
 def _plan() -> list[tuple[Path, Path]]:
     """Return (src, dest) pairs for every file to vendor."""
     pairs: list[tuple[Path, Path]] = []
+    for src in sorted(CONTRACTS_SRC.glob("*.json")) if CONTRACTS_SRC.is_dir() else []:
+        pairs.append((src, CONTRACTS_DEST / src.name))
     for src in _all_templates():
         pairs.append((src, PIPELINE_DEST / src.relative_to(CANONICAL)))
     for rel in BACKEND_FILES:
