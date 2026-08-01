@@ -9,6 +9,9 @@ import argparse
 import os
 import sys
 
+from ..core import observability
+from ..core.observability import RunLog
+from . import llm as mapgen_llm
 from .config import CLAIMS_PER_DOM, DOMAINS
 from .dbutil import get_conn, reset_v2_tables
 from .export import (
@@ -24,6 +27,31 @@ from .phases.routing import phase2_claim_routing
 from .phases.sub_trends import phase4_sub_trends
 from .phases.synthesis import phase7_synthesis
 from .routing import route_claims_for_domain
+
+def _record_spend(out: dict) -> None:
+    """Attach this rebuild's Anthropic spend to the pipeline run.
+
+    The orchestrator exports SS_RUN_ID and closes the row itself; run standalone,
+    this opens and closes its own so a manual rebuild is still costed.
+    """
+    orchestrated = bool(os.environ.get('SS_RUN_ID'))
+    run_id = os.environ.get('SS_RUN_ID') or observability.new_run_id('synthesize')
+    run = RunLog(run_id, 'synthesize')
+    if not orchestrated:
+        run.start()
+    run.add_usage(
+        cost=mapgen_llm.COST,
+        detail={'mapgen': {
+            'domains': len(out.get('domains', [])),
+            'key_trends': len(out.get('key_trends', [])),
+            'sub_trends': len(out.get('sub_trends', [])),
+            'synthesis_insights': len(out.get('synthesis_insights', [])),
+            'links': len(out.get('links', [])),
+        }},
+    )
+    if not orchestrated:
+        run.finish(status='ok')
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -71,9 +99,11 @@ def main():
         out = build_map_json_v2(conn)
         _write_map_document(conn, out)
         n_mod = sum(len(kt.get('modules') or []) for kt in out['key_trends'])
+        _record_spend(out)
         print("✓  map written → documents['map']")
         print(f'   {len(out["key_trends"])} KTs carrying {n_mod} modules · '
               f'{len(out["sub_trends"])} sub-trends')
+        mapgen_llm.COST.report()
         conn.close(); return
 
     # ── Export-only ──────────────────────────────────────────────────────────
@@ -142,11 +172,18 @@ def main():
     _write_map_document(conn, out)
     conn.close()
 
+    # Report spend to the run row. mapgen already accumulates it in
+    # `llm.COST`, but nothing forwarded it — so a 17-minute rebuild that made
+    # hundreds of Sonnet calls recorded $0.00, which makes the run history
+    # useless for the more expensive of the two stages.
+    _record_spend(out)
+
     print("\n✓  map → documents['map']")
     print(f'   {len(out["domains"])} domains · {len(out["key_trends"])} KTs · '
           f'{len(out["sub_trends"])} sub-trends')
     print(f'   {len(out["claims"])} claims · {len(out["synthesis_insights"])} insights · '
           f'{len(out["links"])} links')
+    mapgen_llm.COST.report()
     print('\nDone.')
 
 
