@@ -35,7 +35,7 @@ import os
 import subprocess
 import sys
 import urllib.request
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 
 from .core import db, observability
@@ -73,7 +73,6 @@ class Step:
     #: Only runs when new claims landed, unless --force. The map is a pure
     #: function of the claims: regenerating on unchanged input is pure spend.
     gated: bool = False
-    env: dict[str, str] = field(default_factory=dict)
 
     def command(self) -> list[str]:
         return [PYTHON, '-m', f'{MOD}.{self.args[0]}', *self.args[1:]]
@@ -278,14 +277,14 @@ def run_step(step: Step, *, dry_run: bool, env: dict | None) -> int:
     if dry_run:
         print(f"  [dry-run] would run: {' '.join(cmd)}")
         return 0
-    rc = subprocess.run(cmd, env={**(env or os.environ), **step.env}).returncode
+    rc = subprocess.run(cmd, env=env or os.environ).returncode
     if rc != 0:
         print(f"  ⚠  exited with code {rc}")
     return rc
 
 
 def run_stage(
-    stage: str, *, args, run: RunLog, error_log: ErrorLog, subprocess_env: dict | None,
+    stage: str, *, args, error_log: ErrorLog, subprocess_env: dict | None,
 ) -> dict[str, str]:
     """Run every step of one stage. Returns {step_name: outcome}."""
     outcomes: dict[str, str] = {}
@@ -414,8 +413,7 @@ def main() -> int:
     try:
         for stage in stages:
             outcomes |= run_stage(
-                stage, args=args, run=run, error_log=error_log,
-                subprocess_env=subprocess_env,
+                stage, args=args, error_log=error_log, subprocess_env=subprocess_env,
             )
     except KeyboardInterrupt:
         run.finish(status='aborted', detail={'steps': outcomes})
