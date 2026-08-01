@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic'
 
-// Client-only: the app uses HashRouter + framer-motion and is purely
-// interactive, so we skip SSR and render it in the browser.
+// Client-only: the app is a purely interactive react-router SPA, so there is
+// nothing to server-render. `next build` emits it as a static bundle.
 const Spa = dynamic(() => import('../src/Spa'), { ssr: false })
 
 export default function Page() {

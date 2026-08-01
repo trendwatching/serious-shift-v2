@@ -14,13 +14,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDomains } from './useDomains'
-import { DOMAIN_ORDER, DOMAIN_THEME, quoteTitle } from './theme'
+import { DOMAIN_ORDER, DOMAIN_THEME, pad2, quoteTitle } from './theme'
 
 const THRESHOLD = 56      // px of travel that commits a swipe (from the design)
 const FLICK = 0.45        // px/ms that commits regardless of distance
 
+/** Small counts read better as words in body copy; anything larger stays numeric. */
+const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
+               'eight', 'nine', 'ten']
+const spell = (n) => (n >= 0 && n < WORDS.length ? WORDS[n] : n.toLocaleString())
+
 export default function Home() {
-  const { domains } = useDomains()
+  const { domains, meta } = useDomains()
   const navigate = useNavigate()
   const [index, setIndex] = useState(0)
   const trackRef = useRef(null)
@@ -112,13 +117,14 @@ export default function Home() {
           transition: 'transform 0.55s cubic-bezier(0.22,1,0.28,1)',
         }}
       >
-        <Intro width={`${step}%`} />
+        <Intro width={`${step}%`} meta={meta} />
         {domains.map((d, i) => (
           <DomainPanel
             key={d.id}
             domain={d}
             width={`${step}%`}
             active={index === i + 1}
+            total={domains.length}
             onOpen={() => navigate(`/map/${d.slug}`)}
             onOpenShift={(s) => navigate(`/map/${d.slug}/${s.slug}`)}
           />
@@ -186,7 +192,24 @@ function Arrow({ side, show, onClick, dark }) {
 
 /* ── Panel 0 — the editorial intro ───────────────────────────────────── */
 
-function Intro({ width }) {
+function Intro({ width, meta }) {
+  // Both lines are counted from the map document. Until it loads there is
+  // nothing truthful to say, so the eyebrow renders the domain list alone and
+  // the standfirst drops the counts rather than guessing at them.
+  const eyebrow = [
+    meta?.week ? `Week ${meta.week}` : null,
+    meta?.domainCount ? `${spell(meta.domainCount)} domains` : null,
+  ].filter(Boolean).join(' · ')
+
+  // `spell` returns lower-case words for use mid-sentence; this is the one place
+  // a count opens a sentence, so capitalise here rather than carrying two lists.
+  const domainsWord = spell(meta?.domainCount ?? 0)
+  const standfirst = meta?.shiftCount
+    ? `${domainsWord[0].toUpperCase()}${domainsWord.slice(1)} domains, `
+      + `${meta.shiftCount.toLocaleString()} shifts this week, told as stories. `
+      + 'Swipe and they come to you.'
+    : 'Everything that is about to change, told as stories. Swipe and they come to you.'
+
   return (
     <div
       className="relative box-border flex h-full shrink-0 flex-col overflow-hidden bg-white px-6 pb-[104px] pt-[30px] lg:justify-center lg:px-24"
@@ -206,7 +229,7 @@ function Intro({ width }) {
       <div className="relative mx-auto w-full lg:max-w-[1060px]">
         <div className="flex items-center gap-2.5 a-fade" style={{ animationDelay: '0.15s', animationDuration: '0.7s' }}>
           <span className="h-[7px] w-[7px] rounded-full" style={{ background: 'var(--color-yellow)', border: '1px solid var(--color-ink)' }} />
-          <span className="t-eyebrow">Week 31 · four domains</span>
+          <span className="t-eyebrow">{eyebrow}</span>
         </div>
 
         <h1
@@ -223,7 +246,7 @@ function Intro({ width }) {
           className="mt-6 max-w-[320px] text-[18.5px] leading-[1.45] a-rise lg:max-w-[560px] lg:text-[22px]"
           style={{ color: 'var(--color-ink-soft)', animationDelay: '0.4s' }}
         >
-          Four domains, eight shifts this week, told as stories. Swipe and they come to you.
+          {standfirst}
         </p>
 
         {/* Desktop: name the four domains up front, so a wide screen shows the
@@ -245,7 +268,7 @@ function Intro({ width }) {
 
 /* ── Panels 1..N — one per domain ────────────────────────────────────── */
 
-function DomainPanel({ domain, width, active, onOpen, onOpenShift }) {
+function DomainPanel({ domain, width, active, total, onOpen, onOpenShift }) {
   return (
     <div
       className="box-border flex h-full shrink-0 flex-col px-6 pb-[74px] pt-[30px] text-white lg:justify-center lg:px-24"
@@ -255,7 +278,7 @@ function DomainPanel({ domain, width, active, onOpen, onOpenShift }) {
         {/* Left — the headline block. This is the entire panel on mobile. */}
         <div className="flex flex-1 flex-col lg:min-w-0">
           <div className="flex items-center justify-between font-mono text-[11px] opacity-90 lg:justify-start lg:gap-6" style={{ letterSpacing: '0.08em' }}>
-            <span>{domain.num} / 04</span>
+            <span>{domain.num} / {pad2(total)}</span>
             <span>horizon {domain.horizon}</span>
           </div>
 

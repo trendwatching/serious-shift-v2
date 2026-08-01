@@ -28,7 +28,7 @@ jobs:
     env:
       DATABASE_URL: postgres://serious:serious@localhost:5432/serious_shift?sslmode=disable
       DBMATE_MIGRATIONS_DIR: ./migrations
-      DBMATE_NO_DUMP_SCHEMA: "true"
+      DBMATE_SCHEMA_FILE: ./schema.sql
     defaults:
       run:
         working-directory: packages/db
@@ -45,20 +45,60 @@ jobs:
       - name: Apply migrations
         run: dbmate up
 
-      - name: Assert schema (expect 22 tables)
+      - name: Assert schema shape
+        # Semantic rather than a table count: a bare count is brittle (it drifts
+        # on every added table) and says nothing about *which* tables. These are
+        # the invariants that actually matter.
         run: |
-          n=$(psql "$DATABASE_URL" -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name <> 'schema_migrations';")
-          echo "public tables: $n"
-          test "$n" -eq 22
+          missing=$(psql "$DATABASE_URL" -tAc "
+            SELECT string_agg(t, ',') FROM unnest(ARRAY[
+              'claims','thinkers','sources','predictions','documents',
+              'domains_v2','domain_key_trends','domain_sub_trends','scrape_sources'
+            ]) AS t
+            WHERE to_regclass('public.'||t) IS NULL;")
+          test -z "$missing" || { echo "missing tables: $missing"; exit 1; }
+
+          resurrected=$(psql "$DATABASE_URL" -tAc "
+            SELECT string_agg(t, ',') FROM unnest(ARRAY[
+              'concepts','tensions','claim_concepts','concept_thinkers','thinker_disagreements'
+            ]) AS t
+            WHERE to_regclass('public.'||t) IS NOT NULL;")
+          test -z "$resurrected" || { echo "dropped tables came back: $resurrected"; exit 1; }
 
       - name: Rollback + re-apply (down/up reversibility)
         run: |
           dbmate rollback
           dbmate up
 
+      - name: schema.sql matches the migrations
+        # The committed dump is documentation and a fast rebuild path. It went
+        # six migrations stale once; this makes that impossible.
+        run: |
+          dbmate dump
+          git diff --exit-code -- schema.sql \
+            || { echo "schema.sql is out of date — run 'dbmate dump' and commit"; exit 1; }
+
+      - name: Scrape manifest survives the legacy import
+        # This used to live only in etl-parity, which is workflow_dispatch-only
+        # because it needs the 37 MB serious-shift.db. That is exactly why the
+        # CASCADE that silently deleted all 120 scrape sources went unnoticed.
+        # The regression test builds its own throwaway SQLite, so it runs here,
+        # on every change to packages/db, with no large fixture.
+        working-directory: apps/pipeline
+        env:
+          SS_ALLOW_DESTRUCTIVE_TESTS: "1"
+          SS_PACKAGES_DIR: ${{ github.workspace }}/packages
+        run: |
+          pip install -e ".[dev]"
+          pytest tests/test_etl_manifest.py -q
+
   etl-parity:
-    # Heavier: imports the committed legacy SQLite DB and proves losslessness.
-    # Runs on demand (and on changes to the ETL itself) rather than every PR.
+    # Heavier: imports the legacy SQLite DB, proves losslessness, and checks the
+    # exported map document against its golden digest.
+    #
+    # NOTE: serious-shift.db is gitignored (35 MB), so this job only works where
+    # that file is provided — a self-hosted runner, or an artifact/LFS fetch added
+    # to the checkout step. It is workflow_dispatch-only for that reason.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     services:
@@ -93,3 +133,12 @@ jobs:
           dbmate up
           python etl/sqlite_to_postgres.py --sqlite ../../serious-shift.db --truncate
           python etl/verify_parity.py     --sqlite ../../serious-shift.db
+
+      - name: Map export golden
+        # Re-exports the map from the imported rows (no API calls) and compares it
+        # to the recorded digest — the regression net for mapgen/export.py.
+        working-directory: apps/pipeline
+        run: |
+          pip install -e ".[dev]"
+          python -m serious_shift_pipeline.mapgen.cli --export-only
+          pytest tests/test_map_export_golden.py -q

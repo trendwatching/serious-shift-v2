@@ -6,6 +6,12 @@ Checks, per table:
   1. row count matches
   2. a content checksum over the id column matches (catches dropped/extra rows)
 
+`thinkers` is checked as a superset rather than an exact match: the import
+recreates any thinker named by the seeded scrape manifest that SQLite does not
+carry, so the manifest's foreign keys resolve (see `restore_manifest`). Every
+SQLite thinker must still be present — the check that matters is that none were
+lost — but Postgres legitimately holds more.
+
 Exits non-zero if any table diverges, so it can gate CI / promotion.
 
 Usage:
@@ -20,6 +26,20 @@ import sys
 import psycopg
 
 from sqlite_to_postgres import LOAD_ORDER
+
+# Tables the import may legitimately end up with MORE rows in than SQLite.
+# Only `thinkers`, and only because the scrape manifest's FK targets are
+# recreated when the legacy dump does not carry them.
+SUPERSET_TABLES = {"thinkers"}
+
+
+def missing_ids(scur, pcur, table):
+    """SQLite ids absent from Postgres. Empty means nothing was lost."""
+    scur.execute(f"SELECT id FROM {table}")
+    src = {r[0] for r in scur.fetchall()}
+    pcur.execute(f"SELECT id FROM {table}")
+    dst = {r[0] for r in pcur.fetchall()}
+    return src - dst
 
 
 def sqlite_count(scur, table):
@@ -71,15 +91,24 @@ def main():
         for table in LOAD_ORDER:
             sc = sqlite_count(scur, table)
             pc = pg_count(pcur, table)
-            ok = sc == pc
             detail = ""
-            if ok and has_int_id(scur, table):
-                # Identity-sum check catches reshuffled/dropped ids that a bare
-                # count would miss.
-                if sqlite_id_sum(scur, table) != pg_id_sum(pcur, table):
-                    ok = False
-                    detail = " (id-sum mismatch)"
-            status = "ok" if ok else f"MISMATCH{detail}"
+
+            if table in SUPERSET_TABLES:
+                # Every SQLite row must have survived; extras are the manifest
+                # thinkers the import recreated, and are expected.
+                ok = pc >= sc and not missing_ids(scur, pcur, table)
+                if ok and pc > sc:
+                    detail = f" (+{pc - sc} for the scrape manifest)"
+            else:
+                ok = sc == pc
+                if ok and has_int_id(scur, table):
+                    # Identity-sum check catches reshuffled/dropped ids that a
+                    # bare count would miss.
+                    if sqlite_id_sum(scur, table) != pg_id_sum(pcur, table):
+                        ok = False
+                        detail = " (id-sum mismatch)"
+
+            status = f"ok{detail}" if ok else f"MISMATCH{detail}"
             if not ok:
                 failures.append(table)
             print(f"{table:<34} {sc:>9} {pc:>9}  {status}")

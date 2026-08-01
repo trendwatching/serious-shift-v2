@@ -20,7 +20,11 @@ Extract the following as compact JSON (no markdown, no commentary):
 
 RULES:
 - Extract only distinct, substantive claims that carry real signal — typically 6-15. One idea per claim. Skip restatements, hedging, filler, and background chatter. If a reader would learn nothing from a claim, leave it out. Quality over quantity.
-- Every claim is either strong_signal (a clear, specific claim worth surfacing on its own) or signal (meaningful, but not the loudest). Omit anything that would only be background or noise.
+- signal_strength ranks claims against each other, so it must discriminate. Grade on this scale, and expect a spread — if most claims in a piece come out strong_signal, you are not grading, you are agreeing:
+    strong_signal — would change a reader's mind or their plans. Specific, attributable, and new: a dated number, a named commitment, a reversal, a first-hand disclosure. Typically 1-3 per source, often zero.
+    signal        — substantive and worth keeping, but expected, directional, or already widely argued. This is the normal grade; most claims belong here.
+    background    — true and relevant context that supports another claim rather than standing on its own.
+  Do not use "noise" — anything that weak should not be extracted at all.
 - US English spelling throughout (behavior, organization, analyze — not behaviour/organisation/analyse).
 - has_statistic: true ONLY when the claim contains a specific, dated, attributable number. When true, put that number and its attribution in "statistic", e.g. "34% of US consumers used an AI tool to shortlist a purchase, Q1 2025 (Webb)". Otherwise has_statistic=false and statistic="".
 - consumer_implication must answer specifically: how does this affect how people buy, live, work, or expect things? A vague answer fails.

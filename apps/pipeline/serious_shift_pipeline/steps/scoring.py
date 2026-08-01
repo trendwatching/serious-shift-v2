@@ -96,29 +96,22 @@ def score_claims(conn, depth_map: dict, today: date, dry_run: bool) -> int:
         (r["thinker_id"], r["domain"])
         for r in db.query(conn, "SELECT thinker_id, domain FROM predictions WHERE status IN ('true','partially_true')")
     }
-    claim_concepts = defaultdict(set)
-    for r in db.query(conn, "SELECT claim_id, concept_id FROM claim_concepts"):
-        claim_concepts[r["claim_id"]].add(r["concept_id"])
-
     # base recency, then validated boost
     freshness = {c["id"]: base_freshness(c["date_published"], today) for c in claims}
     for c in claims:
         if (c["thinker_id"], c["domain"] or "technology_capability") in validated:
             freshness[c["id"]] = 1.0
 
-    # superseded penalty: in each thinker+domain+concept group, every claim
-    # older than the newest is halved (compounding across groups).
+    # Superseded penalty: in each thinker+domain group, every claim older than
+    # the newest is halved. This used to sub-group by concept as well, but
+    # migration 0008 dropped the concepts tables — the query for them made this
+    # step crash outright, so the concept dimension is gone rather than faked.
     groups = defaultdict(list)
     claim_dates = {}
     for c in claims:
         dom = c["domain"] or "technology_capability"
         claim_dates[c["id"]] = str(c["date_published"] or "2024-01-01")[:10]
-        concepts = claim_concepts.get(c["id"])
-        if concepts:
-            for con in concepts:
-                groups[(c["thinker_id"], dom, con)].append(c["id"])
-        else:
-            groups[(c["thinker_id"], dom, None)].append(c["id"])
+        groups[(c["thinker_id"], dom)].append(c["id"])
     for ids in groups.values():
         if len(ids) < 2:
             continue

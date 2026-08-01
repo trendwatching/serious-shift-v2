@@ -27,11 +27,17 @@ class _Capture:
         # Provide the keys the query functions read off single-row results.
         return {"id": 1, "n": 0, "name": "x"}
 
+    def scalar(self, conn, sql, params=None):
+        # Aggregates go through db.scalar; its SQL must be validated too.
+        self.sqls.append(sql)
+        return 0
+
 
 def _drive_all(monkeypatch):
     cap = _Capture()
     monkeypatch.setattr(db, "query", cap.query)
     monkeypatch.setattr(db, "query_one", cap.query_one)
+    monkeypatch.setattr(db, "scalar", cap.scalar)
 
     conn = object()  # never touched — db.* is faked
     queries.get_thinker_profile(conn, "altman")
@@ -41,8 +47,6 @@ def _drive_all(monkeypatch):
     queries.get_contrarian_signals(conn)
     queries.get_consensus_claims(conn)
     queries.get_thinker_evolution(conn, "hassabis")
-    queries.get_concept_deep_dive(conn, "abundance")
-    queries.get_tension_breakdown(conn, "inequality")
     queries.get_keynote_material(conn, domain="economy")
     queries.get_keynote_material(conn, domain=None)
     queries.get_claims_since(conn, "2026-01-01")

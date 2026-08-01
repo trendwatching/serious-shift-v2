@@ -5,11 +5,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["serious_shift_pipeline*"]
 
-[tool.setuptools.package-data]
-# Vendored DB migrations (core/migrate.py) + prompt templates (prompts/_loader.py),
-# both bundled so the container — which never sees packages/ — has them at runtime.
-serious_shift_pipeline = ["migrations/*.sql", "prompts/templates/*.txt", "prompts/templates/*/*.txt", "contracts/*.json"]
-
 [project]
 name = "serious-shift-pipeline"
 version = "0.1.0"

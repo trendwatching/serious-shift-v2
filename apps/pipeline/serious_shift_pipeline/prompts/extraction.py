@@ -3,7 +3,7 @@ Prompt builder for raw-content extraction (steps/process_raw).
 
 Extracts structured intelligence (source, claims, predictions, position changes)
 from a primary source, with the thinker's known positions as context. Runs on the
-default EXTRACTION_MODEL (Haiku 4.5) — the step calls llm.call_claude() without an
+default EXTRACTION_MODEL (Haiku 4.5) — the step calls llm.call()/llm.call_batch() without an
 override, so the model lives in core/config.py, not here.
 """
 from ._loader import load_and_render

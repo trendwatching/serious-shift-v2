@@ -15,7 +15,6 @@ def test_all_modules_import():
     import serious_shift_pipeline.prompts  # noqa: F401
     import serious_shift_pipeline.prompts.voice  # noqa: F401
     import serious_shift_pipeline.prompts.map_data  # noqa: F401
-    import serious_shift_pipeline.prompts.keynote  # noqa: F401
     import serious_shift_pipeline.prompts.extraction  # noqa: F401
     import serious_shift_pipeline.prompts.dedup  # noqa: F401
     import serious_shift_pipeline.prompts.ingest  # noqa: F401
@@ -23,8 +22,21 @@ def test_all_modules_import():
     import serious_shift_pipeline.steps.scraper  # noqa: F401
     import serious_shift_pipeline.steps.process_raw  # noqa: F401
     import serious_shift_pipeline.steps.scoring  # noqa: F401
-    import serious_shift_pipeline.steps.generate_map_data  # noqa: F401
-    import serious_shift_pipeline.steps.generate_keynote  # noqa: F401
+    import serious_shift_pipeline.mapgen  # noqa: F401
+    import serious_shift_pipeline.mapgen.cli  # noqa: F401
+    import serious_shift_pipeline.mapgen.export  # noqa: F401
+    import serious_shift_pipeline.mapgen.modules  # noqa: F401
+    import serious_shift_pipeline.mapgen.parsers  # noqa: F401
+    import serious_shift_pipeline.mapgen.routing  # noqa: F401
+    import serious_shift_pipeline.mapgen.phases.attribution  # noqa: F401
+    import serious_shift_pipeline.mapgen.phases.domains  # noqa: F401
+    import serious_shift_pipeline.mapgen.phases.editorial  # noqa: F401
+    import serious_shift_pipeline.mapgen.phases.hero_stats  # noqa: F401
+    import serious_shift_pipeline.mapgen.phases.interrelatedness  # noqa: F401
+    import serious_shift_pipeline.mapgen.phases.key_trends  # noqa: F401
+    import serious_shift_pipeline.mapgen.phases.routing  # noqa: F401
+    import serious_shift_pipeline.mapgen.phases.sub_trends  # noqa: F401
+    import serious_shift_pipeline.mapgen.phases.synthesis  # noqa: F401
     import serious_shift_pipeline.steps.evaluate  # noqa: F401
     import serious_shift_pipeline.steps.deduplicate  # noqa: F401
     # tools
@@ -32,4 +44,4 @@ def test_all_modules_import():
     import serious_shift_pipeline.tools.status  # noqa: F401
     import serious_shift_pipeline.tools.queries  # noqa: F401
     # orchestrator
-    import serious_shift_pipeline.run_weekly  # noqa: F401
+    import serious_shift_pipeline.run  # noqa: F401

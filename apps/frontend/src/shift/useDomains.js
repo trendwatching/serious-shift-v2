@@ -8,16 +8,36 @@
  *   1. the live list from the map document, when the pipeline has written one;
  *   2. otherwise a minimal list projected from the fields the document always
  *      has (dek, hero stat, sub-shift list), so a database that has not run the
- *      editorial phase yet still renders a real page rather than a blank one;
- *   3. and if there is no live document at all, the authored design content.
+ *      editorial phase yet still renders a real page rather than a blank one.
+ *
+ * There is deliberately no third tier of authored fallback prose. Serving
+ * months-old editorial as if it were this week's is worse than saying the map
+ * is unavailable, so callers get `unavailable` and render an honest empty state.
  */
 import { useMemo } from 'react'
 import { useData } from '../hooks/useData'
-import { DECK, SHIFTS } from './content'
+import { DECK } from './site'
 import { DOMAIN_ORDER, themeFor, pad2, slugify, readTimeOf } from './theme'
 
 const first = (...v) => v.find((x) => x !== undefined && x !== null && x !== '')
 const nonEmpty = (v) => (Array.isArray(v) && v.length ? v : null)
+
+/**
+ * ISO-8601 week number for a `YYYY-MM-DD` string, or null.
+ *
+ * ISO rather than a naive day-of-year / 7: weeks start Monday and week 1 is the
+ * one containing the first Thursday, which is the convention a reader checking
+ * against a calendar will assume.
+ */
+function isoWeek(dateStr) {
+  if (!dateStr) return null
+  const d = new Date(`${dateStr}T00:00:00Z`)
+  if (Number.isNaN(d.getTime())) return null
+  // Shift to the Thursday of this week; its year is the ISO week-numbering year.
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
+  const jan1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  return Math.ceil(((d - jan1) / 86400000 + 1) / 7)
+}
 
 /**
  * Minimal composition for a live shift whose editorial modules haven't been
@@ -45,55 +65,46 @@ function projectStModules(row) {
 }
 
 /** One sub-shift: identity for routing plus its module list. */
-function toSubShift(live, fallback, i) {
-  const src = live || {}
-  const fb = fallback || {}
-  const title = first(src.name, fb.title) || ''
+function toSubShift(src, i) {
+  const title = src.name || ''
   return {
     id: first(src.id, `sub-${i}`),
     num: pad2(i + 1),
     slug: slugify(title),
     title,
-    context: first(src.context, fb.context),
-    dek: first(src.description, fb.dek) || '',
-    modules: nonEmpty(src.modules) || (live ? projectStModules(src) : fb.modules) || [],
+    context: src.context,
+    dek: src.description || '',
+    modules: nonEmpty(src.modules) || projectStModules(src),
   }
 }
 
 /** One key shift: identity, the bits the domain sheet shows, and its modules. */
-function toShift(live, fallback, i, domain) {
-  const src = live || {}
-  const fb = fallback || {}
-  const title = first(src.name, fb.title) || ''
-  const dek = first(src.subtitle, src.description, fb.dek) || ''
-
-  const liveSubs = Array.isArray(src.sub_trends) ? src.sub_trends : []
-  const fbSubs = fb.subshifts || []
-  const subshifts = liveSubs.length
-    ? liveSubs.map((s, k) => toSubShift(s, null, k))
-    : fbSubs.map((s, k) => toSubShift(null, s, k))
+function toShift(src, i, domain) {
+  const title = src.name || ''
+  const dek = first(src.subtitle, src.description) || ''
+  const subs = Array.isArray(src.sub_trends) ? src.sub_trends : []
 
   return {
-    id: first(src.id, fb.id, `kt-${i}`),
+    id: first(src.id, `kt-${i}`),
     num: pad2(i + 1),
     slug: first(src.slug, slugify(title)),
     domain,
-    kicker: first(src.kicker, fb.kicker, `Shift ${pad2(i + 1)}`),
+    kicker: first(src.kicker, `Shift ${pad2(i + 1)}`),
     title,
     dek,
     // Generated every run by the taxonomy phase; shown on the domain sheet row.
-    velocity: first(src.velocity, fb.velocity),
-    read: first(src.read_time, fb.read, readTimeOf(dek)),
-    modules: nonEmpty(src.modules) || (live ? projectKtModules(src) : fb.modules) || [],
-    subshifts,
+    velocity: src.velocity,
+    read: first(src.read_time, readTimeOf(dek)),
+    modules: nonEmpty(src.modules) || projectKtModules(src),
+    subshifts: subs.map((s, k) => toSubShift(s, k)),
   }
 }
 
 export function useDomains() {
   // `loading` comes from the fetch, not from `!data`: a failed request settles
-  // with no data, and the page must then fall through to the authored content
-  // rather than spinning forever.
-  const { data, loading } = useData('map.json')
+  // with no data, and the page must then show the unavailable state rather than
+  // spinning forever.
+  const { data, error, loading } = useData('map.json')
 
   const domains = useMemo(() => {
     const liveDomains = new Map((data?.domains || []).map((d) => [d.id, d]))
@@ -118,15 +129,7 @@ export function useDomains() {
       const t = themeFor(id)
       const domainRef = { id, name: first(live?.name, deck.name), grad: t.grad, dot: t.dot }
 
-      // Either the live document supplies this domain's shifts or the authored
-      // content does — never a positional blend, which would splice one shift's
-      // prose onto a different shift.
-      const keyShifts = liveKts.length
-        ? liveKts.map((row, i) => toShift(row, null, i, domainRef))
-        : (deck.shifts || [])
-            .map((sid) => SHIFTS.find((s) => s.id === sid))
-            .filter(Boolean)
-            .map((row, i) => toShift(null, row, i, domainRef))
+      const keyShifts = liveKts.map((row, i) => toShift(row, i, domainRef))
 
       return {
         id,
@@ -137,11 +140,8 @@ export function useDomains() {
         dot: t.dot,
         horizon: first(live?.horizon, deck.horizon) || '',
         blurb: first(live?.short_description, deck.blurb) || '',
-        readers: deck.readers,
         // How many shifts the domain tracks, which can exceed the number listed.
-        count: liveKts.length
-          ? first(live?.key_trend_ids?.length, liveKts.length)
-          : first(deck.count, keyShifts.length),
+        count: first(live?.key_trend_ids?.length, liveKts.length),
         keyShifts,
         // Per-domain closing insights from the synthesis phase. Generated every
         // run and previously unrendered; the domain sheet now closes on them.
@@ -152,14 +152,33 @@ export function useDomains() {
     })
   }, [data])
 
-  return { domains, loading }
+  // Headline figures, counted from the document rather than written into the
+  // copy. The homepage used to state "Week 31 · four domains" and "eight shifts
+  // this week" as literals; the database held 60 shifts, and the week number
+  // was going to drift every Monday. On a product whose whole claim is sourced
+  // evidence, the numbers on the front page have to come from the evidence.
+  const meta = useMemo(() => {
+    const updated = data?.updated || null
+    return {
+      updated,
+      week: isoWeek(updated),
+      domainCount: domains.length,
+      shiftCount: domains.reduce((n, d) => n + d.keyShifts.length, 0),
+    }
+  }, [data, domains])
+
+  // No document (network failure, or the pipeline has never written one) means
+  // there is nothing to read — distinct from "loaded, but this domain is empty".
+  const unavailable = !loading && (!!error || !data)
+
+  return { domains, meta, loading, unavailable }
 }
 
 /** Resolve a domain (and optionally a shift / sub-shift) from URL params. */
 export function useResolved({ domainSlug, ktSlug, subSlug } = {}) {
-  const { domains, loading } = useDomains()
+  const { domains, loading, unavailable } = useDomains()
   const domain = domains.find((d) => d.slug === domainSlug || d.id === domainSlug)
   const shift = ktSlug ? domain?.keyShifts.find((s) => s.slug === ktSlug) : undefined
   const sub = subSlug ? shift?.subshifts.find((s) => s.slug === subSlug) : undefined
-  return { domains, domain, shift, sub, loading }
+  return { domains, domain, shift, sub, loading, unavailable }
 }

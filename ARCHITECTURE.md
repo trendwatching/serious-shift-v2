@@ -9,8 +9,9 @@ doc is the overview.
 ## 1. The mental model
 
 ```
-   apps/pipeline ──writes──►  Postgres  ◄──reads── apps/backend ──HTTP/JSON──► apps/frontend
-   (Python, batch)           (packages/db)         (Rust read API)             (Next.js)
+   apps/pipeline ──writes──►  Postgres  ◄──reads── apps/backend ──serves──► browser
+   (Python, weekly cron)     (packages/db)      (Rust: /api/* + the SPA built
+                                                 from apps/frontend)
                           SOURCE OF TRUTH
 ```
 
@@ -28,16 +29,16 @@ doc is the overview.
 
 ### `apps/pipeline` — Python, batch (the writer)
 Scrapes sources → extracts claims via Claude → scores them → generates the map &
-keynote. Orchestrated by `run_weekly` (scrape → process → score → map → keynote;
+the trend map. Orchestrated by `run_weekly` (scrape → process → score → map;
 the expensive LLM steps are gated on new claims). Each step is also a standalone
 module (`python -m serious_shift_pipeline.<step>`).
 - **Key files:** `scraper.py`, `process_raw.py` (LLM extraction), `scoring.py`,
-  `generate_map_data.py`, `generate_keynote.py`, `evaluate.py`, plus shared
+  `mapgen/` (map generation, one module per phase), `evaluate.py`, plus shared
   `db.py` / `llm.py` / `observability.py`.
 - **Why:** kept in Python because the scraping + LLM ecosystem (beautifulsoup,
   feedparser, yt-dlp, Anthropic SDK) is strongest there; it's a scheduled batch
   job, not a live service, so it deploys/scales separately from the API.
-- **Change here → visible:** new/changed claims and map/keynote content in the DB,
+- **Change here → visible:** new/changed claims and map content in the DB,
   then in the app after the next pipeline run.
 
 ### `apps/backend` — Rust (axum + sqlx), the reader/API
@@ -49,11 +50,13 @@ each. Also hosts `POST /api/personalize` (Claude rewrite, key server-side).
   per-table structs). Replaces the old ~53 MB of static JSON the browser used to download.
 - **Change here → visible:** the `/api/*` responses the frontend consumes.
 
-### `apps/frontend` — Next.js + Tailwind, the UI
-The trend map, thinker profiles, daily briefing, keynote. The existing React app
-(react-router `HashRouter`) is mounted inside a Next page (`ssr: false`); data is
-fetched from the backend via `useData` → `${NEXT_PUBLIC_API_BASE}/api/<name>`.
-- **Why Next:** target framework + free Vercel hosting. The SPA is mounted
+### `apps/frontend` — React + Tailwind, the UI
+The trend map. A react-router SPA, built to a **static export** (`next build` with
+`output: 'export'` — Next is a build tool here, not a server) and served by the
+Rust binary. Same origin as the API, so no CORS and no proxy hop; data is
+fetched from the backend via `useData` → `/api/<name>` (same origin).
+- **Why a static export:** the app is client-rendered anyway, so an always-on
+  Node server bought nothing. The SPA is mounted
   as-is to keep the migration small (the only real change vs. the old app is the
   data source: API instead of bundled JSON).
 - **Change here → visible:** the rendered UI at the relevant route.
@@ -63,7 +66,7 @@ Owns the schema. Migrations use **dbmate** (a language-neutral binary), so Pytho
 and Rust agree on the schema without either's ORM winning. Also holds the one-off
 SQLite→Postgres import.
 - **Why:** the DB is the seam between the writer and the reader; neither app should
-  own it. Forward-only numbered migrations are the only way schema changes.
+  own it. Timestamped dbmate migrations are the only way the schema changes.
 - **Tables:** documented in [`packages/db/README.md`](packages/db/README.md#tables).
 
 ---
@@ -84,12 +87,11 @@ Everything else is internal to one block.
 | I want to… | Edit | It shows up… |
 |---|---|---|
 | Add a thinker or a source to scrape | DB `scrape_sources` table (+ `thinkers` row) | after the next `scraper` + `process_raw` run |
-| Change a thinker's photo or bio | DB `thinkers.image_url` / `bio`, then `generate_map_data --export-only` | `/api/thinkers` + the map's thinker avatars/bios |
+| Change a thinker's photo or bio | DB `thinkers.image_url` / `bio`, then `mapgen.cli --export-only` | `/api/thinkers` + the map's thinker avatars/bios |
 | Tune the extraction (what claims get pulled) | `process_raw.py` prompt | newly-processed sources' claims |
-| Change claim ranking | `scoring.py` (depth/freshness/weight formula) | ordering across map, keynote, claim lists |
-| Edit keynote structure/voice | `generate_keynote.py` (`SECTION_CONFIG` + prompt) | `documents['keynote']` → `/api/keynote` → keynote view |
+| Change claim ranking | `scoring.py` (depth/freshness/weight formula) | ordering across the map and claim lists |
 | Add/modify an API endpoint | `apps/backend/src/sql.rs` + `src/main.rs` | new `/api/*` route |
-| Change the database schema | new `packages/db/migrations/000N_*.sql` (+ writer/reader) | everywhere downstream |
+| Change the database schema | `dbmate new <name>` in `packages/db/migrations` (+ writer/reader) | everywhere downstream |
 | Change UI / layout / styling | `apps/frontend/src/` (views, components, Tailwind) | the rendered page |
 | Change what env/secrets are used | per-block README "Configuration" + the platform's secret store | runtime behaviour |
 
@@ -102,17 +104,18 @@ Everything else is internal to one block.
   SQLite file + static JSON was the core of this refactor.)
 - **Monorepo, independently deployable blocks.** Each block has its own README, CI
   workflow, and host — owned and shipped separately, but versioned together.
-- **Pipeline stays Python; backend is Rust; frontend is Next.** Use each ecosystem
+- **Pipeline stays Python; backend is Rust; the UI is a static React bundle.** Use each ecosystem
   where it's strongest; the batch pipeline and the live API have different runtimes
   and scaling needs, so they're separate services.
 - **Backend lets Postgres build the JSON (`json_agg`).** Minimal, reviewable, and
   reproduces the old static-file shapes exactly.
 - **dbmate migrations.** Language-neutral, so the schema isn't tied to a Python or
   Rust migration tool.
-- **`documents` blob table for map/keynote/daily.** These aren't simple table
-  dumps (keynote is editorial, map is assembled), so they're stored as whole JSON
+- **`documents` blob table for the map.** It isn't a simple table dump (it is
+  assembled across phases), so it's stored as a whole JSON
   the backend serves verbatim.
-- **Frontend mounts the existing SPA in Next (`ssr:false`).** Smallest faithful
+- **The SPA is served by the backend.** One always-on service instead of two,
+  same origin, no proxy hop. Smallest faithful
   migration — behaviour unchanged, only the data source moved to the API.
 
 ---

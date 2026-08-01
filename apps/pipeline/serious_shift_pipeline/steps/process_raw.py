@@ -7,7 +7,7 @@ Converted from the legacy process_raw.py:
   * last_insert_rowid()     → INSERT ... RETURNING id
   * `name LIKE ?`           → `name ILIKE %s`
   * INSERT + IntegrityError → INSERT ... ON CONFLICT DO NOTHING
-  * urllib + CERT_NONE      → Anthropic SDK (llm.call_claude)
+  * urllib + CERT_NONE      → Anthropic SDK (llm.call_batch)
   * Obsidian markdown notes → dropped (the DB is the source of truth)
 
 Usage:
@@ -23,33 +23,11 @@ import re
 import sys
 from datetime import datetime
 
-from ..core import db, llm, parallel
-from ..core.observability import CostTracker, ErrorLog, TokenLog
+from ..core import db, llm, observability, parallel
+from ..core.observability import CostTracker, ErrorLog, RunLog
 from ..prompts import extraction_prompt
 
 RAW_DIR = os.environ.get("RAW_CONTENT_DIR", os.path.join(os.getcwd(), "raw_content"))
-
-CONCEPT_KEYWORDS = {
-    "AGI as Gradual Arrival": ["agi", "gradual", "whoosh", "already here", "singularity", "timeline", "superintelligen", "human-level"],
-    "AI Agents as Senior Employees": ["agent", "autonomous", "multi-week", "senior employee", "c-suite", "automat", "copilot", "delegate", "orchestrat", "agentic"],
-    "The Consumer Trust Shift": ["trust", "trusted", "loyalty", "emotional bond", "most trusted", "consumer trust"],
-    "Industrial Policy for the Intelligence Age": ["policy", "robot tax", "wealth fund", "four-day", "new deal", "ubi", "regulation", "governance"],
-    "AGI as Science Accelerant": ["science", "discovery", "drug", "protein", "alphafold", "cure", "research", "nobel", "pharma"],
-    "Vibe Coding and Software 3.0": ["vibe cod", "software 3", "agentic engineer", "coding", "developer", "code gen"],
-    "White-Collar Displacement Inversion": ["white-collar", "job loss", "displace", "automat", "employ", "hiring", "workforce", "entry-level", "junior job"],
-    "The Jagged Frontier": ["jagged", "frontier", "bottleneck", "salient", "uneven", "unpredictable"],
-    "Centaur and Cyborg Collaboration": ["centaur", "cyborg", "human-ai", "collaboration", "teammate", "augment"],
-    "Mass Intelligence and Institutional Redesign": ["mass intelligence", "institutional", "scarce intelligence", "abundant intelligence"],
-    "AI Companionship and Emotional Labor": ["companion", "emotional", "relationship", "bonding", "loneliness", "psychosis", "scai", "conscious"],
-    "The Containment Problem": ["containment", "contain", "coming wave", "control", "humanist superintelligence"],
-    "Open Source vs Closed AI": ["open source", "open-source", "llama", "closed", "proprietary", "regulatory capture"],
-    "Existential Risk and Consumer Awareness": ["existential", "extinction", "x-risk", "catastroph", "doom"],
-    "The Exponential Gap": ["exponential gap", "exponential age", "linear adaptation", "exponential", "accelerat"],
-    "Enterprise AI vs Consumer AI Divergence": ["enterprise", "copilot", "consumer ai", "distribution", "good enough", "market share"],
-    "AI and the Collapse of the Attention Economy": ["attention economy", "ad-supported", "crawl-to-referral", "free internet", "traffic", "publisher"],
-    "The Knowledge Compilation Paradigm": ["knowledge base", "wiki", "obsidian", "second brain", "rag", "knowledge manage"],
-    "AI-Generated Entertainment": ["gaming", "entertainment", "creative", "generative game", "content creation", "media"],
-}
 
 DOMAIN_VALID = {"agi_timeline", "labor", "consumer_behavior", "technology_capability", "economy",
                 "regulation", "existential_risk", "enterprise", "education", "geopolitics"}
@@ -99,16 +77,6 @@ def get_next_prediction_id(conn):
     return 70
 
 
-def link_claims_to_concepts(conn, claim_ids, full_text):
-    text_lower = full_text.lower()
-    for concept_name, keywords in CONCEPT_KEYWORDS.items():
-        if any(kw in text_lower for kw in keywords):
-            r = db.query_one(conn, "SELECT id FROM concepts WHERE name = %s", (concept_name,))
-            if r:
-                for cid in claim_ids:
-                    db.execute(conn, """INSERT INTO claim_concepts (claim_id, concept_id)
-                        VALUES (%s, %s) ON CONFLICT DO NOTHING""", (cid, r["id"]))
-
 # ── raw file parsing / processed markers ───────────────────────────────────────
 
 def parse_raw_file(filepath):
@@ -136,11 +104,50 @@ def mark_processed(filepath):
 
 # ── extraction ──────────────────────────────────────────────────────────────
 
-def extract_with_claude(raw_text, meta, thinker, context_claims, context_preds, cost_tracker):
-    prompt = extraction_prompt(thinker, meta, raw_text, context_claims, context_preds)
-    text, usage = llm.call_claude(prompt)
-    cost_tracker.add(usage, thinker_name=thinker["name"])
-    return llm.parse_model_json(text)
+# Extraction is the highest-volume call in the system — one per raw source file,
+# hundreds per run — and the weekly cron has no latency requirement, so it goes
+# through the Batch API at half price. SS_DISABLE_BATCH=1 forces the synchronous
+# path for local iteration.
+_USE_BATCH = os.environ.get("SS_DISABLE_BATCH", "") not in ("1", "true", "yes")
+
+
+def _extraction_req(prep, custom_id: str) -> llm.Req:
+    return llm.Req(
+        user=extraction_prompt(prep["thinker"], prep["meta"], prep["body"],
+                               prep["context_claims"], prep["context_preds"]),
+        max_tokens=8192,
+        custom_id=custom_id,
+    )
+
+
+def extract_batch(preps, cost_tracker):
+    """Extract every prep in one batch. Returns a list aligned with `preps`,
+    each entry either the parsed JSON or an Exception (never raises, so one bad
+    file cannot sink the chunk)."""
+    reqs = [_extraction_req(p, f"f{i}") for i, p in enumerate(preps)]
+    if _USE_BATCH:
+        results = llm.call_batch(reqs)
+    else:
+        def one(r):
+            try:
+                return llm.call(r)
+            except Exception as exc:  # noqa: BLE001 — surfaced per-file below
+                return (None, {"error": repr(exc)})
+        results = {r.custom_id: pair for r, pair in zip(reqs, parallel.pmap(one, reqs))}
+
+    out = []
+    for i, prep in enumerate(preps):
+        text, usage = results.get(f"f{i}", (None, {"error": "no result"}))
+        if usage and not usage.get("error"):
+            cost_tracker.add(usage, thinker_name=prep["thinker"]["name"])
+        if text is None:
+            out.append(RuntimeError(f"extraction failed: {usage.get('error')}"))
+            continue
+        try:
+            out.append(llm.parse_model_json(text))
+        except ValueError as exc:
+            out.append(exc)
+    return out
 
 # ── DB writer ─────────────────────────────────────────────────────────────────
 
@@ -241,8 +248,6 @@ def write_to_database(conn, thinker, meta, raw_text, extracted):
              has_stat, (cl.get("statistic") or "")[:500] if has_stat else None))
         claim_ids.append(cid)
 
-    full_text = " ".join(cl["claim_text"] for cl in extracted.get("claims", []))
-    link_claims_to_concepts(conn, claim_ids, full_text)
 
     pred_count = 0
     next_id = get_next_prediction_id(conn)
@@ -281,7 +286,7 @@ def prepare_file(filepath, conn, error_log=None):
     if file_size < 1500:
         thinker_dir = os.path.basename(os.path.dirname(filepath)).replace("_", " ")
         if error_log is not None:
-            error_log.record(stage="size_filter", thinker=thinker_dir,
+            error_log.record(step="size_filter", thinker=thinker_dir,
                              exc=ValueError("file_too_small"), retry_attempted=False,
                              outcome="skipped", reason="file_too_small", file_bytes=str(file_size))
         return None
@@ -380,19 +385,26 @@ def main():
         print("Nothing to process.")
         return 0
 
-    run_id = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-    run_at = datetime.now().isoformat()
+    # The orchestrator exports SS_RUN_ID so every step of one invocation files
+    # its errors under the same run. Standalone runs mint their own.
+    # The orchestrator exports SS_RUN_ID so every step of one invocation files
+    # its errors and spend under the same run, and closes the row itself.
+    # Run standalone, this step owns the row start to finish.
+    orchestrated = bool(os.environ.get("SS_RUN_ID"))
+    run_id = os.environ.get("SS_RUN_ID") or observability.new_run_id("ingest")
+    run = RunLog(run_id, "ingest")
+    if not orchestrated:
+        run.start()
     error_log = ErrorLog(run_id)
-    token_log = TokenLog()
     cost_tracker = CostTracker()
     total_claims = total_preds = processed_count = skipped_count = 0
     cost_cap_hit = False
 
-    # Process in chunks: read+extract a chunk in parallel, write it serially, then
-    # check the cost cap. Chunking bounds how far we can overshoot the cap (at most
-    # one chunk of in-flight calls) while still parallelising the slow Claude calls.
-    _MARK_FAILED = object()
-    chunk_size = parallel.max_workers() * 3
+    # Process in chunks: read a chunk, extract it in one batch, write it serially,
+    # then check the cost cap. Chunking bounds how far the cap can be overshot (at
+    # most one chunk of in-flight calls). Batches amortise their overhead across
+    # the whole submission, so chunks are much larger on that path.
+    chunk_size = 200 if _USE_BATCH else parallel.max_workers() * 3
     done = 0
 
     with db.connect() as conn:
@@ -402,24 +414,17 @@ def main():
             # 1. Serial reads → work items (skips return None and drop out).
             preps = [p for p in (prepare_file(f, conn, error_log) for f in chunk) if p]
 
-            # 2. Parallel Claude extraction (the slow part). Errors become a sentinel
-            #    so one bad file doesn't sink the chunk.
-            def extract(prep):
-                try:
-                    return extract_with_claude(prep["body"], prep["meta"], prep["thinker"],
-                                               prep["context_claims"], prep["context_preds"], cost_tracker)
-                except Exception as exc:  # noqa: BLE001 — recorded below; run continues
-                    return (_MARK_FAILED, exc)
-
-            extracted_list = parallel.pmap(extract, preps)
+            # 2. Claude extraction (the slow part), batched. Failures come back
+            #    as Exceptions so one bad file doesn't sink the chunk.
+            extracted_list = extract_batch(preps, cost_tracker) if preps else []
 
             # 3. Serial writes.
             for prep, extracted in zip(preps, extracted_list):
-                if isinstance(extracted, tuple) and extracted and extracted[0] is _MARK_FAILED:
-                    exc = extracted[1]
+                if isinstance(extracted, Exception):
+                    exc = extracted
                     print(f"  ✗  {os.path.basename(prep['filepath'])} failed: "
                           f"{type(exc).__name__}: {str(exc)[:100]}")
-                    error_log.record(stage="extract", thinker=prep["thinker_name"], exc=exc,
+                    error_log.record(step="extract", thinker=prep["thinker_name"], exc=exc,
                                      retry_attempted=False, outcome="skipped", source_file=prep["filepath"])
                     skipped_count += 1
                     continue
@@ -429,7 +434,7 @@ def main():
                 except Exception as exc:  # noqa: BLE001 — logged; run continues
                     conn.rollback()
                     print(f"  ✗  {os.path.basename(prep['filepath'])} write failed: {str(exc)[:100]}")
-                    error_log.record(stage="write", thinker=prep["thinker_name"], exc=exc,
+                    error_log.record(step="write", thinker=prep["thinker_name"], exc=exc,
                                      retry_attempted=False, outcome="skipped", source_file=prep["filepath"])
                     skipped_count += 1
                     continue
@@ -445,20 +450,29 @@ def main():
             if cost_tracker.cost >= args.cost_cap:
                 msg = f"COST CAP REACHED: ${cost_tracker.cost:.4f} >= ${args.cost_cap:.2f}."
                 print(f"\n  ⛔  {msg} Halting after {done} files.")
-                error_log.record(stage="cost_cap_halt", thinker="PIPELINE", exc=RuntimeError(msg),
+                error_log.record(step="cost_cap_halt", thinker="PIPELINE", exc=RuntimeError(msg),
                                  retry_attempted=False, outcome="halted",
                                  files_attempted=str(done), cost_usd=str(round(cost_tracker.cost, 4)))
                 cost_cap_hit = True
                 break
 
-    token_log.append(
-        run_id=run_id, run_at=run_at, total_files_processed=processed_count,
-        total_input_tokens=cost_tracker.input_tokens, total_output_tokens=cost_tracker.output_tokens,
-        total_cost_usd=round(cost_tracker.cost, 6),
-        by_thinker=cost_tracker.by_thinker_serializable(),
-        by_stage={"extract": {"input_tokens": cost_tracker.input_tokens,
-                              "output_tokens": cost_tracker.output_tokens,
-                              "cost_usd": round(cost_tracker.cost, 6)}})
+    # Cost and file counts accumulate onto the run row. When the orchestrator
+    # supplied SS_RUN_ID this is the row it opened and will close; standalone,
+    # the finish below closes the one opened above. Either way the numbers
+    # outlive the container.
+    run.add_usage(
+        files_processed=processed_count,
+        cost=cost_tracker,
+        detail={"extract": {
+            "claims": total_claims,
+            "predictions": total_preds,
+            "skipped": skipped_count,
+            "cost_cap_hit": cost_cap_hit,
+            "by_thinker": cost_tracker.by_thinker_serializable(),
+        }},
+    )
+    if not orchestrated:
+        run.finish(status="ok")
 
     print(f"\n{'='*60}\nPROCESSING COMPLETE\n{'='*60}")
     print(f"  Files processed:  {processed_count}/{len(unprocessed)}")
@@ -466,7 +480,7 @@ def main():
     print(f"  Claims extracted: {total_claims}")
     print(f"  Predictions:      {total_preds}")
     cost_tracker.report()
-    print(f"\n  Errors: {error_log.count}" + ("" if not error_log.count else f" — see {error_log.path}"))
+    print(f"\n  Errors: {error_log.count} (run {run_id})")
     if cost_cap_hit:
         print(f"  Run halted at cost cap (${args.cost_cap:.2f}). Re-run to continue.")
     return total_claims

@@ -19,7 +19,10 @@ from pathlib import Path
 
 import pytest
 
-from serious_shift_pipeline.steps import generate_map_data as gm
+# The module builders live in mapgen.modules; import them from their real home
+# rather than through the steps/ compatibility shim, whose surface is public API.
+from serious_shift_pipeline.mapgen import modules as gm
+from serious_shift_pipeline.mapgen.config import MODULE_ORDER
 
 
 def _repo_file(*parts: str) -> Path | None:
@@ -154,30 +157,9 @@ def test_stat_band_needs_a_value_not_just_prose():
     assert "stat_band" not in {m["type"] for m in kt}
 
 
-def test_vendored_contract_matches_canonical():
-    """The container never sees packages/, so the contract is vendored into the
-    package — exactly like the DB migrations and prompt templates.
-
-    This test exists because the vendoring was missed once: the deployed cron
-    loaded no order at all and silently shipped modules in generator order, which
-    put the sub-shift carousel mid-page instead of at the bottom. A drifted or
-    absent copy is invisible at runtime, so it has to fail here.
-    """
-    canonical = _repo_file("packages", "contracts", "shift_modules.json")
-    if canonical is None:
-        pytest.skip("canonical packages/contracts not present (installed/sdist build)")
-    vendored = _repo_file(
-        "apps", "pipeline", "serious_shift_pipeline", "contracts", "shift_modules.json"
-    )
-    assert vendored is not None, "vendored contract missing — run scripts/sync_prompts.py"
-    assert vendored.read_text() == canonical.read_text(), (
-        "vendored contract differs from packages/contracts — run scripts/sync_prompts.py"
-    )
-
-
 def test_module_order_is_actually_loaded():
     """Guards the failure mode directly: if the contract can't be found, the
     export silently stops ordering and the page composition regresses."""
-    assert gm.MODULE_ORDER.get("key_trend"), "module order failed to load"
-    order = gm.MODULE_ORDER["key_trend"]
+    assert MODULE_ORDER.get("key_trend"), "module order failed to load"
+    order = MODULE_ORDER["key_trend"]
     assert order.index("sub_shift_list") > order.index("industries")

@@ -20,8 +20,15 @@ serious_shift_pipeline/
     scraper.py          fetch sources → raw_content/*.txt (per-source watermark)
     process_raw.py      Claude extraction → claims/sources/predictions  (prompt lives here)
     scoring.py          source_depth · freshness · claim_weight (free, no API)
-    generate_map_data.py  → documents['map']      (Claude; served at /api/map)
-    generate_keynote.py   → documents['keynote']  (Claude; served at /api/keynote)
+    mapgen/               → documents['map']      (Claude; served at /api/map)
+      config.py             domain table, tuning constants, module-order contract
+      routing.py            which claims each domain's generation sees
+      llm.py                batched Claude calls + per-run cost accounting
+      parsers.py            model responses → the shapes phases write
+      modules.py            {type,data} module lists (see packages/contracts)
+      export.py             assembles the document the frontend reads
+      phases/               one module per generation phase
+      cli.py                `python -m serious_shift_pipeline.mapgen.cli`
     evaluate.py         prediction status + credibility scores
     deduplicate.py      mark duplicate claims
   tools/          run on demand, not part of run_weekly
@@ -30,7 +37,7 @@ serious_shift_pipeline/
     queries.py    read queries (also the backend's functional spec)
 ```
 
-`run_weekly` runs `scraper → process_raw → scoring → (generate_map_data, generate_keynote)`;
+`run_weekly` runs `scraper → process_raw → scoring → dedup → evaluate → mapgen` (gated);
 the two LLM generators are gated on new claims. **To change behaviour, edit the
 relevant `steps/` file; shared plumbing lives in `core/`.**
 

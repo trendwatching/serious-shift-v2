@@ -7,7 +7,7 @@
  */
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LOGOS, SOCIALS, SUBSCRIBE_URL, FOOTER_LINKS, MENU_LINKS } from './content'
+import { LOGOS, SOCIALS, SUBSCRIBE_URL, FOOTER_LINKS, MENU_LINKS } from './site'
 import { useDomains } from './useDomains'
 
 const LOGO = '/shift/serious-shift-logo-white.png'

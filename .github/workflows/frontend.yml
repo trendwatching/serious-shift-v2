@@ -1,11 +1,11 @@
 name: frontend
 
-# Builds the Next.js app (compile + lint + production build).
+# Builds the SPA's static export (what the backend image bundles and serves).
 on:
   push:
-    paths: ["apps/frontend/**", ".github/workflows/frontend.yml"]
+    paths: ["apps/frontend/**", "packages/contracts/**", ".github/workflows/frontend.yml"]
   pull_request:
-    paths: ["apps/frontend/**", ".github/workflows/frontend.yml"]
+    paths: ["apps/frontend/**", "packages/contracts/**", ".github/workflows/frontend.yml"]
   workflow_dispatch: {}
 
 jobs:
@@ -22,4 +22,12 @@ jobs:
           cache: npm
           cache-dependency-path: apps/frontend/package-lock.json
       - run: npm ci
+      - name: Slug parity with the pipeline
+        # These two implementations must agree byte-for-byte or every shift with
+        # punctuation in its title deep-links to a 404.
+        run: npm run check:slugs
       - run: npm run build
+      - name: Assert a static export was produced
+        # `output: 'export'` silently degrades to a server build if the app grows
+        # a server-only feature; the backend image would then ship nothing.
+        run: test -f out/index.html && test -d out/_next

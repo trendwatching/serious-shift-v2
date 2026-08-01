@@ -2,38 +2,18 @@
 """
 status.py — back-of-house dashboard for the pipeline (Postgres).
 
-Read-only snapshot: last run, DB stats, source status, logs, cost, migrations.
-Converted from the legacy status.py: sqlite3 → db.py; the local `.db` file size
-and the migrate.py-based migration check are replaced with a query of dbmate's
-`schema_migrations` table.
+Read-only snapshot: recent runs, DB stats, source status, errors, cost,
+migrations. Everything comes from Postgres — run history moved off the
+container filesystem, where it did not survive the job that wrote it.
 
 Usage:  DATABASE_URL=... python -m serious_shift_pipeline.tools.status
 """
-import json
 import os
 from datetime import datetime, timezone
 
-from ..core import db
+from ..core import db, observability
 
-LOGS_DIR    = os.environ.get("SS_LOGS_DIR", os.path.join(os.getcwd(), "logs"))
-ERROR_LOG   = os.path.join(LOGS_DIR, "error_log.jsonl")
-TOKEN_LOG   = os.path.join(LOGS_DIR, "token_log.jsonl")
 RAW_CONTENT = os.environ.get("RAW_CONTENT_DIR", os.path.join(os.getcwd(), "raw_content"))
-
-
-def _read_jsonl(path: str) -> list[dict]:
-    if not os.path.exists(path):
-        return []
-    entries = []
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                try:
-                    entries.append(json.loads(line))
-                except json.JSONDecodeError:
-                    pass
-    return entries
 
 
 def _age_str(ts_iso: str | None) -> str:
@@ -57,29 +37,14 @@ def _age_str(ts_iso: str | None) -> str:
         return ts_iso
 
 
-def _file_kb(path: str) -> str:
-    return f"{os.path.getsize(path) / 1024:.1f} KB" if os.path.exists(path) else "not found"
-
-
 def _masked_dsn() -> str:
     dsn = os.environ.get("DATABASE_URL", "")
     return dsn.split("@")[-1] if "@" in dsn else (dsn or "DATABASE_URL not set")
 
 
-def collect_status(logs_dir: str = LOGS_DIR, raw_content: str = RAW_CONTENT) -> dict:
-    error_log = os.path.join(logs_dir, "error_log.jsonl")
-    token_log = os.path.join(logs_dir, "token_log.jsonl")
-    data = {}
-
-    # ── Last run ─────────────────────────────────────────────────
-    token_entries = _read_jsonl(token_log)
-    last_token = token_entries[-1] if token_entries else None
-    last_run_at = last_token.get("run_at") if last_token else None
-    error_entries = _read_jsonl(error_log)
-    last_error_ts = error_entries[-1].get("timestamp") if error_entries else None
-    if last_error_ts and (not last_run_at or last_error_ts > last_run_at):
-        last_run_at = last_error_ts
-    data["last_run"] = {"timestamp": last_run_at, "age": _age_str(last_run_at)}
+def collect_status(raw_content: str = RAW_CONTENT) -> dict:
+    data: dict = {"runs": [], "last_run": {"timestamp": None, "age": "no runs yet"},
+                  "errors": {"total_7d": 0, "by_step": []}}
 
     # ── DB stats / sources / migrations (single connection) ──────
     db_stats = {"total_claims": 0, "signal_claims": 0, "total_sources": 0,
@@ -89,11 +54,11 @@ def collect_status(logs_dir: str = LOGS_DIR, raw_content: str = RAW_CONTENT) -> 
     migrations = {"applied": 0, "total": 0, "pending": [], "version": None}
     try:
         with db.connect() as conn:
-            db_stats["total_claims"] = db.query_one(conn, "SELECT COUNT(*) AS n FROM claims")["n"]
-            db_stats["signal_claims"] = db.query_one(conn,
-                "SELECT COUNT(*) AS n FROM claims WHERE signal_strength IN ('signal','strong_signal') AND duplicate_of IS NULL")["n"]
-            db_stats["total_sources"] = db.query_one(conn, "SELECT COUNT(*) AS n FROM sources")["n"]
-            db_stats["total_thinkers"] = db.query_one(conn, "SELECT COUNT(*) AS n FROM thinkers")["n"]
+            db_stats["total_claims"] = db.scalar(conn, "SELECT COUNT(*) FROM claims")
+            db_stats["signal_claims"] = db.scalar(conn,
+                "SELECT COUNT(*) FROM claims WHERE signal_strength IN ('signal','strong_signal') AND duplicate_of IS NULL")
+            db_stats["total_sources"] = db.scalar(conn, "SELECT COUNT(*) FROM sources")
+            db_stats["total_thinkers"] = db.scalar(conn, "SELECT COUNT(*) FROM thinkers")
 
             for r in db.query(conn, "SELECT last_run_status AS s, COUNT(*) AS n FROM source_state GROUP BY last_run_status"):
                 if r["s"] in source_status:
@@ -116,6 +81,27 @@ def collect_status(logs_dir: str = LOGS_DIR, raw_content: str = RAW_CONTENT) -> 
                               "version": vers[-1] if vers else None}
             except Exception:
                 migrations = {"error": "schema_migrations not found"}
+
+            # ── Run history ──────────────────────────────────────
+            data["runs"] = [
+                {**r, "age": _age_str(r["started_at"].isoformat())}
+                for r in observability.recent_runs(conn, limit=5)
+            ]
+            if data["runs"]:
+                latest = data["runs"][0]
+                data["last_run"] = {
+                    "timestamp": latest["started_at"].isoformat(),
+                    "age": latest["age"],
+                }
+            data["errors"] = {
+                "total_7d": db.scalar(conn,
+                    "SELECT COUNT(*) FROM pipeline_errors "
+                    "WHERE occurred_at > now() - interval '7 days'"),
+                "by_step": db.query(conn,
+                    "SELECT step, COUNT(*) AS n FROM pipeline_errors "
+                    "WHERE occurred_at > now() - interval '7 days' "
+                    "GROUP BY step ORDER BY n DESC LIMIT 8"),
+            }
     except Exception as exc:
         db_stats["error"] = str(exc)
     data["db"] = db_stats
@@ -129,39 +115,6 @@ def collect_status(logs_dir: str = LOGS_DIR, raw_content: str = RAW_CONTENT) -> 
         for _root, _dirs, files in os.walk(raw_content):
             raw_txt_count += sum(1 for f in files if f.endswith(".txt"))
     data["raw_files"] = {"count": raw_txt_count, "path": raw_content}
-
-    # ── Log stats ────────────────────────────────────────────────
-    now_ts = datetime.now(timezone.utc).timestamp()
-    errors_7d = 0
-    for e in error_entries:
-        try:
-            t = datetime.fromisoformat(e.get("timestamp", ""))
-            if t.tzinfo is None:
-                t = t.replace(tzinfo=timezone.utc)
-            if (now_ts - t.timestamp()) <= 7 * 86400:
-                errors_7d += 1
-        except Exception:
-            pass
-    data["logs"] = {
-        "error_log_size": _file_kb(error_log), "token_log_size": _file_kb(token_log),
-        "total_errors": len(error_entries), "errors_7d": errors_7d,
-    }
-
-    # ── Last run cost ────────────────────────────────────────────
-    if last_token:
-        cost_rows = sorted(
-            [(name, d.get("cost_usd", 0.0), d.get("calls", 0))
-             for name, d in last_token.get("by_thinker", {}).items()],
-            key=lambda x: -x[1])
-        data["last_cost"] = {
-            "total_usd": last_token.get("total_cost_usd", 0.0),
-            "input_tokens": last_token.get("total_input_tokens", 0),
-            "output_tokens": last_token.get("total_output_tokens", 0),
-            "files_processed": last_token.get("total_files_processed", 0),
-            "run_at": last_token.get("run_at", "?"), "by_thinker": cost_rows,
-        }
-    else:
-        data["last_cost"] = None
 
     return data
 
@@ -186,10 +139,21 @@ def format_status(data: dict) -> str:
     lines.extend([_THICK, "  SERIOUS SHIFT — PIPELINE STATUS",
                   f'  {datetime.now().strftime("%Y-%m-%d %H:%M")}', _THICK])
 
-    h("LAST RUN")
-    lr = data.get("last_run", {})
-    row("Timestamp:", lr.get("timestamp") or "no runs yet")
-    row("Age:", lr.get("age", "—"))
+    h("RECENT RUNS")
+    runs = data.get("runs", [])
+    if not runs:
+        lines.append("  No runs recorded yet.")
+    else:
+        lines.append(f"  {'started':<14}{'stage':<12}{'status':<9}"
+                     f"{'files':>6}{'claims':>9}{'cost':>9}")
+        for r in runs:
+            before, after = r["claims_before"], r["claims_after"]
+            claims = f"{after - before:+,}" if before is not None and after is not None else "—"
+            cost = f"${float(r['cost_usd']):.2f}"
+            lines.append(
+                f"  {r['age']:<14}{r['stage']:<12}{r['status']:<9}"
+                f"{r['files_processed']:>6}{claims:>9}{cost:>9}"
+            )
 
     h("DATABASE")
     dbd = data.get("db", {})
@@ -223,25 +187,13 @@ def format_status(data: dict) -> str:
     row("Scraped .txt files:", str(rf.get("count", 0)))
     row("Directory:", rf.get("path", "?"))
 
-    h("LOGS")
-    lg = data.get("logs", {})
-    row("error_log.jsonl:", lg.get("error_log_size", "?") + f"  ({lg.get('total_errors', 0)} total entries)")
-    row("token_log.jsonl:", lg.get("token_log_size", "?"))
-    row("Errors last 7d:", str(lg.get("errors_7d", 0)))
-
-    h("LAST RUN COST")
-    lc = data.get("last_cost")
-    if not lc:
-        lines.append("  No token log entries found.")
-    else:
-        row("Run at:", lc.get("run_at", "?"))
-        row("Files processed:", str(lc.get("files_processed", 0)))
-        row("Total cost:", f"${lc.get('total_usd', 0):.4f}")
-        row("Tokens:", f"{lc.get('input_tokens', 0):,} in / {lc.get('output_tokens', 0):,} out")
-        if lc.get("by_thinker"):
-            lines.append("\n  By thinker:")
-            for name, cost, calls in lc["by_thinker"]:
-                lines.append(f"    {name:<22}  ${cost:.4f}  ({calls} call{'s' if calls != 1 else ''})")
+    h("ERRORS (LAST 7 DAYS)")
+    errs = data.get("errors", {})
+    row("Total:", str(errs.get("total_7d", 0)))
+    for e in errs.get("by_step", []):
+        row(f"  {e['step']}:", str(e["n"]))
+    if errs.get("total_7d"):
+        lines.append("\n  Detail: SELECT * FROM pipeline_errors ORDER BY occurred_at DESC;")
 
     h("MIGRATIONS")
     mg = data.get("migrations", {})

@@ -5,7 +5,7 @@ key is set, else heuristics), and writes to the DB. Complements the batch
 scraper/process_raw path for one-off additions.
 
 Converted from ingest_pipeline.py: sqlite3+`?`→db.connect()+`%s`;
-last_insert_rowid()→RETURNING id; Anthropic urllib call→llm.call_claude;
+last_insert_rowid()→RETURNING id; Anthropic urllib call→llm.call;
 `LIKE`→`ILIKE`. The web fetch still uses urllib (that's scraping, not the API).
 
 Usage:
@@ -54,7 +54,7 @@ def get_thinker_context(conn, thinker_id):
 
 def extract_with_api(content, thinker_name, context):
     prompt = ingest_prompt(thinker_name, content, context)
-    text, _ = llm.call_claude(prompt, model=INGEST_MODEL, max_tokens=4096)
+    text, _ = llm.call(llm.Req(user=prompt, model=INGEST_MODEL, max_tokens=4096))
     return llm.parse_model_json(text)
 
 

@@ -1,5 +1,0 @@
-For each pair of claims below, respond with ONLY the pair number and DUPLICATE or UNIQUE. Mark DUPLICATE only if a reader would learn nothing new from reading both — they make the same core argument even if worded differently.
-
-{{pairs}}
-
-Respond as: 1: DUPLICATE or 1: UNIQUE (one per line, nothing else).

@@ -1,14 +1,10 @@
 """
 Apply pending database migrations at pipeline startup.
 
-The schema is owned by `packages/db` (dbmate). A copy of the migrations is
-vendored into this package (`serious_shift_pipeline/migrations/*.sql`) so they
-ship inside the image without needing a repo-root Docker build context; a test
-(`tests/test_migrate.py`) asserts the vendored copy stays byte-identical to
-`packages/db/migrations`. This applier is **dbmate compatible** — it uses the
-same `schema_migrations` table and the same version scheme (the leading digits
-of the filename) — so a manual `dbmate up` and this runner can be used
-interchangeably and idempotently against the same database.
+The schema is owned by `packages/db` (dbmate), located via `paths.migrations_dir()`.
+This applier is **dbmate compatible** — same `schema_migrations` table, same
+version scheme (the leading digits of the filename) — so a manual `dbmate up`
+and this runner can be used interchangeably and idempotently.
 
 Why the pipeline applies migrations: the weekly cron is the system's primary
 writer and runs unattended. Without this, a database that never had `dbmate up`
@@ -23,40 +19,15 @@ from pathlib import Path
 
 import psycopg
 
+from ..paths import migrations_dir
 from . import db
 
-# The copy vendored into this package (always present; ships in the image).
-_PKG_MIGRATIONS = Path(__file__).resolve().parent.parent / "migrations"
-
-
-def _repo_migrations() -> Path | None:
-    """Canonical packages/db/migrations, when run from a source checkout.
-
-    Walk up from this file looking for `packages/db/migrations` rather than
-    indexing a fixed parent depth — in the installed/container layout there are
-    fewer parent directories, and a hard index raises IndexError."""
-    for parent in Path(__file__).resolve().parents:
-        candidate = parent / "packages" / "db" / "migrations"
-        if candidate.is_dir():
-            return candidate
-    return None
-
-
-# Migration directory lookup, in priority order. SS_MIGRATIONS_DIR wins; then the
-# vendored package copy (ships in the image); then the canonical repo copy.
-_REPO_MIGRATIONS = _repo_migrations()
-_CANDIDATES = (
-    os.environ.get("SS_MIGRATIONS_DIR"),
-    str(_PKG_MIGRATIONS),
-    str(_REPO_MIGRATIONS) if _REPO_MIGRATIONS else None,
-)
-
-
-def _migrations_dir() -> str | None:
-    for c in _CANDIDATES:
-        if c and os.path.isdir(c):
-            return c
-    return None
+# Versions recorded by the pre-squash sequential migrations (0001-0008). A
+# database still carrying them has not been reconciled with the squashed
+# baseline, and applying the baseline on top would try to CREATE existing
+# tables. Fail loudly with the fix instead. Remove after one release cycle.
+_LEGACY_VERSIONS = {f"{n:04d}" for n in range(1, 9)}
+_BASELINE_VERSION = "20250101000000"
 
 
 def _version(filename: str) -> str:
@@ -74,14 +45,9 @@ def _up_sql(text: str) -> str:
 
 def apply_pending(verbose: bool = True) -> int:
     """Apply every migration not yet recorded in schema_migrations. Returns the
-    number applied. No-op (with a note) if no migrations directory is found."""
-    mdir = _migrations_dir()
-    if not mdir:
-        if verbose:
-            print("  migrate: no migrations directory found — assuming the schema "
-                  "is managed externally; skipping.")
-        return 0
-
+    number applied. Raises if the migrations tree cannot be found — a silent
+    skip would run the pipeline against an unmigrated schema."""
+    mdir = migrations_dir()
     files = sorted(f for f in os.listdir(mdir) if f.endswith(".sql"))
     applied = 0
     # autocommit so the bookkeeping DDL/SELECT run outside a transaction and each
@@ -92,6 +58,13 @@ def apply_pending(verbose: bool = True) -> int:
             "(version varchar(255) NOT NULL, PRIMARY KEY (version))"
         )
         done = {r[0] for r in conn.execute("SELECT version FROM schema_migrations").fetchall()}
+
+        if done & _LEGACY_VERSIONS and _BASELINE_VERSION not in done:
+            raise RuntimeError(
+                "Database still has pre-squash migration rows "
+                f"({sorted(done & _LEGACY_VERSIONS)}). Run the reconciliation in "
+                "packages/db/README.md#baseline-squash before deploying this build."
+            )
 
         for f in files:
             version = _version(f)

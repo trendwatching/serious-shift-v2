@@ -32,11 +32,22 @@ export const quoteTitle = (s) => {
   return t ? `“${t}”` : ''
 }
 
-/** URL-safe slug — must match the backend's slugify so deep links resolve. */
+/**
+ * URL-safe slug. Must stay byte-identical to the pipeline's `url_slug`
+ * (apps/pipeline/serious_shift_pipeline/core/text.py) or deep links 404 —
+ * packages/contracts/slug_fixtures.json pins both sides.
+ *
+ * Punctuation is dropped, not turned into a separator, so "can't" closes up to
+ * "cant" rather than splitting into "can-t". The previous [^a-z0-9] rule split
+ * on apostrophes and stripped non-ASCII letters, disagreeing with the backend on
+ * every title containing one.
+ */
 export const slugify = (s) =>
   String(s || '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^\p{L}\p{N}_\s-]/gu, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '')
 
 /** "6 min read" from prose, when the source didn't author a read time. */

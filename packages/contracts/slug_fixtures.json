@@ -1,0 +1,17 @@
+{
+  "$comment": "Shared slug cases. Asserted by apps/pipeline (core.text.url_slug) and apps/frontend (shift/theme.js slugify). They must agree or deep links 404 — these cases are the real divergences found in the live map document.",
+  "url_slug": [
+    ["Lobbying Kills AI Rules Before They're Written", "lobbying-kills-ai-rules-before-theyre-written"],
+    ["AI Matches Professional Expertise, Institutions Can't", "ai-matches-professional-expertise-institutions-cant"],
+    ["Geopolitical Rivals Race to Own AI's Rules", "geopolitical-rivals-race-to-own-ais-rules"],
+    ["China's Cost Shock Rewires AI's Price Politics", "chinas-cost-shock-rewires-ais-price-politics"],
+    ["PhD-in-a-Box Within Arm's Reach", "phd-in-a-box-within-arms-reach"],
+    ["Capability Arrives, Deployment Doesn't", "capability-arrives-deployment-doesnt"],
+    ["White-Collar Work Faces Structural Elimination", "white-collar-work-faces-structural-elimination"],
+    ["  Leading and trailing  ", "leading-and-trailing"],
+    ["Multiple   spaces_and_underscores", "multiple-spaces-and-underscores"],
+    ["Already-Hyphenated -- Title", "already-hyphenated-title"],
+    ["Symbols: (parens) & ampersand / slash", "symbols-parens-ampersand-slash"],
+    ["", ""]
+  ]
+}

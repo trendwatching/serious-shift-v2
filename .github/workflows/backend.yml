@@ -6,9 +6,9 @@ name: backend
 
 on:
   push:
-    paths: ["apps/backend/**", "packages/db/**", ".github/workflows/backend.yml"]
+    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", ".github/workflows/backend.yml"]
   pull_request:
-    paths: ["apps/backend/**", "packages/db/**", ".github/workflows/backend.yml"]
+    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", ".github/workflows/backend.yml"]
   workflow_dispatch: {}
 
 jobs:
@@ -47,6 +47,14 @@ jobs:
           cargo clippy -- -D warnings
         working-directory: apps/backend
 
+      - name: Dependency audit
+        # Advisory, like pip-audit on the pipeline: an unfixable upstream
+        # advisory should be visible without blocking an unrelated deploy.
+        run: |
+          cargo install cargo-audit --locked || true
+          cargo audit || echo "::warning::cargo-audit reported findings"
+        working-directory: apps/backend
+
       - name: Build
         run: cargo build --release
         working-directory: apps/backend
@@ -59,6 +67,9 @@ jobs:
           # runners "localhost" resolves to ::1/127.0.0.1 in an order that races the
           # dual-stack socket. Forcing IPv4 is unambiguous against a v6only=0 bind.
           BASE="http://127.0.0.1:8080"
+          # Required in release builds — the server refuses to start without an
+          # explicit CORS allowlist rather than defaulting to "any origin".
+          export FRONTEND_ORIGIN="http://127.0.0.1:8080"
           ./target/release/serious-shift-backend &
           SERVER=$!
 
@@ -105,6 +116,19 @@ jobs:
           # serde's compact form.
           check /api/map '"ok": *true'
           check /api/claims '\[\]'
+
+          # Unknown /api paths must 404 as JSON. The SPA fallback sits behind the
+          # API routes, so without an explicit catch-all a mistyped endpoint would
+          # answer 200 text/html and an API client would try to parse it.
+          expect_code() {  # expect_code <method> <path> <code>
+            local code
+            code=$(curl -sS -o /dev/null -X "$1" --max-time 5 -w '%{http_code}' "$BASE$2")
+            echo "== $1 $2 -> HTTP $code (expected $3) =="
+            [ "$code" = "$3" ] || { echo "::error::$2 returned $code, expected $3"; fail=1; }
+          }
+          expect_code GET  /api/nonexistent          404
+          # Write endpoint stays disabled while INGEST_TOKEN is unset.
+          expect_code POST /api/innovations/ingest   404
 
           kill "$SERVER" 2>/dev/null || true
           exit "$fail"

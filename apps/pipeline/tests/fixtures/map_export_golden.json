@@ -1,0 +1,56 @@
+{
+  "digest": "d0e3c76af752ebc3d95c7ec6c4ea36f914a8a757e76f573f39048c679338a84f",
+  "summary": {
+    "domains": 4,
+    "key_trends": 64,
+    "kt_fields": [
+      "db_id",
+      "description",
+      "domain_id",
+      "hero_stat",
+      "id",
+      "modules",
+      "name",
+      "proponents",
+      "proponents_detail",
+      "read_time",
+      "skeptics",
+      "skeptics_detail",
+      "slug",
+      "sub_trend_ids",
+      "subtitle",
+      "velocity"
+    ],
+    "kt_modules": 64,
+    "links": 298,
+    "st_fields": [
+      "claim_ids",
+      "db_id",
+      "description",
+      "domain_id",
+      "id",
+      "key_trend_id",
+      "modules",
+      "name",
+      "slug",
+      "subtitle"
+    ],
+    "st_modules": 320,
+    "sub_trends": 320,
+    "synthesis_insights": 16,
+    "top_level_keys": [
+      "architecture",
+      "by_thinker",
+      "by_velocity",
+      "claims",
+      "domain_flows",
+      "domains",
+      "key_trends",
+      "links",
+      "sub_trends",
+      "synthesis_insights",
+      "thinkers",
+      "updated"
+    ]
+  }
+}

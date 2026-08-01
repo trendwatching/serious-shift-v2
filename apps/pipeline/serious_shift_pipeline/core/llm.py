@@ -1,16 +1,33 @@
 """
 Anthropic client + robust JSON parsing, shared by the extraction/generation steps.
 
-Replaces the legacy hand-rolled `urllib` calls (which disabled TLS verification)
-with the official SDK, which handles auth (ANTHROPIC_API_KEY), retries on
-transient errors, and TLS correctly.
+Two ways to call Claude:
+
+  call(req)         one request, synchronously.
+  call_batch(reqs)  many requests through the Batch API — **half price**, at the
+                    cost of latency (minutes to hours). The weekly cron is
+                    entirely latency-insensitive, so every bulk phase uses it.
+
+Requests are values (`Req`) rather than positional arguments, so the same object
+can go down either path unchanged.
+
+Retries are left to the SDK, which already retries 429/5xx with exponential
+backoff. The hand-rolled loop this replaced ran *on top* of that (4-6 attempts,
+flat 5s sleep, no jitter) over a bare `except Exception` — so a malformed prompt
+was billed several times before failing.
 """
 from __future__ import annotations
 
 import json
 import time
+from dataclasses import dataclass, field
 
 from .config import EXTRACTION_MODEL
+
+# Above this the SDK refuses a non-streaming request that could outlive its
+# 10-minute ceiling. Below it, skip streaming: a plain create() is what the
+# Batch API accepts, and it is one less moving part.
+_STREAM_ABOVE_MAX_TOKENS = 16_000
 
 _client = None
 
@@ -25,32 +42,111 @@ def client():
     return _client
 
 
-def call_claude(prompt: str, *, model: str | None = None, max_tokens: int = 8192,
-                retries: int = 2) -> tuple[str, dict]:
-    """Return (text, usage). usage = {input_tokens, output_tokens}.
+@dataclass
+class Req:
+    """One Claude request. `custom_id` is required on the batch path, where it is
+    how results are matched back to inputs."""
+    user: str
+    system: list[dict] | None = None
+    model: str | None = None
+    max_tokens: int = 4096
+    custom_id: str | None = None
+    metadata: dict = field(default_factory=dict)  # caller's own bookkeeping
 
-    Always streams: with large max_tokens (the map/keynote generators use up to
-    32k) the SDK refuses a non-streaming request that could exceed its 10-minute
-    ceiling. Streaming removes that limit and yields the same final message.
+    def params(self) -> dict:
+        p = {
+            "model": self.model or EXTRACTION_MODEL,
+            "max_tokens": self.max_tokens,
+            "messages": [{"role": "user", "content": self.user}],
+        }
+        if self.system:
+            p["system"] = self.system
+        return p
+
+
+def _text(msg) -> str:
+    return "".join(b.text for b in msg.content if b.type == "text")
+
+
+def _usage(msg, *, batch: bool = False) -> dict:
+    """Normalised usage. Carries the model so cost is priced correctly, and the
+    cache counters so a cache that silently isn't working shows up."""
+    u = msg.usage
+    return {
+        "model": msg.model,
+        "input_tokens": u.input_tokens,
+        "output_tokens": u.output_tokens,
+        "cache_read_input_tokens": getattr(u, "cache_read_input_tokens", 0) or 0,
+        "cache_creation_input_tokens": getattr(u, "cache_creation_input_tokens", 0) or 0,
+        "batch": batch,
+    }
+
+
+def call(req: Req) -> tuple[str, dict]:
+    """Send one request now. Returns (text, usage)."""
+    p = req.params()
+    if req.max_tokens > _STREAM_ABOVE_MAX_TOKENS:
+        with client().messages.stream(**p) as stream:
+            msg = stream.get_final_message()
+    else:
+        msg = client().messages.create(**p)
+    return _text(msg), _usage(msg)
+
+
+def call_batch(
+    reqs: list[Req],
+    *,
+    poll_seconds: int = 30,
+    timeout_seconds: int = 20 * 3600,
+) -> dict[str, tuple[str | None, dict]]:
+    """Send many requests through the Batch API at half price.
+
+    Returns {custom_id: (text, usage)}. A failed request has text None and an
+    "error" key in its usage dict, so callers filter rather than crash — one bad
+    input must not lose the whole batch.
     """
-    last: Exception | None = None
-    for attempt in range(retries):
-        try:
-            with client().messages.stream(
-                model=model or EXTRACTION_MODEL,
-                max_tokens=max_tokens,
-                messages=[{"role": "user", "content": prompt}],
-            ) as stream:
-                parts = [chunk for chunk in stream.text_stream]
-                final = stream.get_final_message()
-            usage = {"input_tokens": final.usage.input_tokens,
-                     "output_tokens": final.usage.output_tokens}
-            return "".join(parts), usage
-        except Exception as e:  # noqa: BLE001 — transient API errors, retried below
-            last = e
-            if attempt < retries - 1:
-                time.sleep(5)
-    raise last  # type: ignore[misc]
+    if not reqs:
+        return {}
+    missing = [i for i, r in enumerate(reqs) if not r.custom_id]
+    if missing:
+        raise ValueError(f"call_batch needs custom_id on every Req (missing at {missing[:5]})")
+    dupes = len(reqs) - len({r.custom_id for r in reqs})
+    if dupes:
+        raise ValueError(f"call_batch needs unique custom_ids ({dupes} duplicate(s))")
+
+    from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
+    from anthropic.types.messages.batch_create_params import Request
+
+    batch = client().messages.batches.create(
+        requests=[
+            # custom_id is validated non-None just above; str() narrows for
+            # the type checker without changing behaviour.
+            Request(custom_id=str(r.custom_id),
+                    params=MessageCreateParamsNonStreaming(**r.params()))  # type: ignore[typeddict-item]
+            for r in reqs
+        ]
+    )
+    print(f"    batch {batch.id}: {len(reqs)} requests submitted", flush=True)
+
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        status = client().messages.batches.retrieve(batch.id)
+        if status.processing_status == "ended":
+            break
+        if time.monotonic() > deadline:
+            raise TimeoutError(
+                f"batch {batch.id} still {status.processing_status} after "
+                f"{timeout_seconds}s ({len(reqs)} requests)")
+        time.sleep(poll_seconds)
+
+    out: dict[str, tuple[str | None, dict]] = {}
+    for res in client().messages.batches.results(batch.id):
+        if res.result.type == "succeeded":
+            msg = res.result.message
+            out[res.custom_id] = (_text(msg), _usage(msg, batch=True))
+        else:
+            out[res.custom_id] = (None, {"error": res.result.type, "batch": True})
+    return out
 
 
 def _extract_json_block(text: str):

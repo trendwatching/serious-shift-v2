@@ -18,7 +18,7 @@ import argparse
 from datetime import date, datetime, timedelta
 
 from ..core import sources_api
-from .scraper import Log, _ingest_papers
+from .scraper import Log, ingest_papers
 
 # Domain-tuned OpenAlex search strings (topical relevance) + arXiv categories.
 DOMAIN_QUERIES = {
@@ -43,7 +43,7 @@ def run(*, since: str | None = None, min_citations: int = 5,
     try:
         papers = sources_api.arxiv_search(ARXIV_CATEGORIES, since=since, max_results=arxiv_max)
         # arXiv is a curated venue tier; gate mainly stamps authority here.
-        _, n = _ingest_papers(papers, since, until, "paper", log,
+        _, n = ingest_papers(papers, since, until, "paper", log,
                               apply_gate=True, gate_params={"min_citations": 0,
                                                             "min_authority": min_authority})
         total += n
@@ -56,7 +56,7 @@ def run(*, since: str | None = None, min_citations: int = 5,
         try:
             works = sources_api.openalex_search(
                 q, since=since, min_citations=min_citations, per_page=per_page)
-            _, n = _ingest_papers(works, since, until, "paper", log,
+            _, n = ingest_papers(works, since, until, "paper", log,
                                   apply_gate=True, gate_params=gate_params)
             total += n
             print(f"  {domain} ingested: {n}")

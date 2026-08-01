@@ -1,41 +1,43 @@
 # Deploying Serious Shift on Railway
 
-One Railway **project** holds everything: a Postgres database plus three services
-(backend, frontend, pipeline). Railway auto-deploys each service from this repo on
-push; each service has its own **Root Directory** so the monorepo just works.
+One Railway **project** holds everything: a Postgres database plus **two** services.
+The web app is served by the backend binary, so there is no separate Node service.
 
 ```
 Railway project "serious-shift"
-├── Postgres        (Railway plugin)            → DATABASE_URL
-├── backend         (root: apps/backend, Docker) → public URL  e.g. backend.up.railway.app
-├── frontend        (root: apps/frontend, Next)  → public URL  e.g. app.up.railway.app
-└── pipeline        (root: apps/pipeline, cron)   → no public URL, runs on a schedule
+├── Postgres   (Railway plugin)          → DATABASE_URL
+├── web        (Docker, apps/backend)    → public URL — serves the SPA *and* /api/*
+└── pipeline   (Docker, apps/pipeline)   → no public URL, weekly cron
 ```
 
 ## How GitHub deploy works here
-Railway's "Deploy from GitHub repo" auto-builds and redeploys on every push. This
-is a **monorepo**, so create **one service per app from the same repo**.
 
-> **REQUIRED — set each service's Root Directory.** This is the #1 gotcha: if it's
-> left at the repo root, the builder scans `./` (no single app there) and fails
-> with *"could not determine how to build the app."* In each service →
-> **Settings → Root Directory**, set:
-> `apps/backend` · `apps/frontend` · `apps/pipeline`.
+Railway auto-builds and redeploys on every push. Both services build from **this
+repo with the repo root as the build context** — the images copy `packages/` in,
+which is the single source of truth for migrations, prompts and contracts.
 
-Once Root Directory is set, Railway reads that folder:
-- `apps/backend`, `apps/pipeline` → their `railway.json` pins the **Dockerfile**
-  builder (backend also sets healthcheck `/health`; pipeline sets the weekly
-  **cron** `0 22 * * 0`, so you don't configure those by hand).
-- `apps/frontend` → no Dockerfile → Railway auto-detects Next.js (`npm` build/start).
+> **REQUIRED — leave Root Directory empty (the repo root).** Each service instead
+> points at its own config file via **Settings → Config-as-code**:
+>
+> | Service  | Config path              | Dockerfile                |
+> |----------|--------------------------|---------------------------|
+> | web      | `railway.backend.json`   | `apps/backend/Dockerfile` |
+> | pipeline | `railway.pipeline.json`  | `apps/pipeline/Dockerfile`|
+>
+> Setting Root Directory to `apps/backend` (as an earlier revision did) breaks the
+> build: the Dockerfile copies `packages/`, which is outside that directory.
 
-Also set each service's **Watch Paths** (e.g. `apps/backend/**`) so one app's change
-doesn't rebuild the others. **Postgres is added separately** (a Railway database,
-not from GitHub) and referenced as `${{Postgres.DATABASE_URL}}`.
+Set **Watch Paths** so one app's change doesn't rebuild the other:
+- web → `apps/backend/**`, `apps/frontend/**`, `packages/prompts/**`
+- pipeline → `apps/pipeline/**`, `packages/**`
 
-> The **pipeline cron applies the database migrations automatically** on each run
-> (idempotent, dbmate-compatible), so a fresh database is bootstrapped on the first
-> run. Step 2 below is still the fastest way to stand the DB up immediately and to
-> load the one-time historical data; the backend needs the schema present to serve.
+**Postgres is added separately** (a Railway database, not from GitHub) and
+referenced as `${{Postgres.DATABASE_URL}}`.
+
+> The **pipeline cron applies database migrations automatically** on each run
+> (idempotent, dbmate-compatible), so a fresh database bootstraps itself. Step 2
+> is still the fastest way to stand the DB up immediately — the backend needs the
+> schema present to serve.
 
 ## 0. Prerequisites
 - A Railway account + the repo pushed to GitHub.
@@ -47,72 +49,77 @@ New Project → **Add Postgres**. Railway creates it and exposes `DATABASE_URL`
 
 ## 2. Schema + seed (one-time, from your machine — optional)
 The pipeline cron applies migrations automatically, so this is only needed if you
-want the schema up *before* the first cron run (e.g. so the backend serves data).
-Grab the Postgres **public** connection string from the Postgres service → Connect.
+want the schema up *before* the first cron run. Grab the Postgres **public**
+connection string from the Postgres service → Connect.
 ```bash
 export DATABASE_URL='postgres://…railway public url…'   # includes sslmode=require
 cd packages/db
 DBMATE_MIGRATIONS_DIR=./migrations dbmate up
-# → 0001 creates the schema, 0002 seeds the thinker roster + scrape source manifest.
+# → one baseline migration: full schema + thinker roster + scrape source manifest.
 ```
 That's the whole bootstrap — no data import required. The pipeline then scrapes →
-extracts claims → builds the map/keynote on its first run.
+extracts claims → builds the map on its first run.
+
+> **Upgrading a database that predates the migration squash?** It still has rows
+> `0001`–`0008` in `schema_migrations` and must be reconciled once before you
+> deploy. The pipeline refuses to run against an un-reconciled database rather
+> than half-applying. See `packages/db/README.md#baseline-squash`.
 
 **Optional — import legacy SQLite data** (historical claims/predictions) instead of
 scraping from scratch:
 ```bash
 python etl/sqlite_to_postgres.py --sqlite ../../serious-shift.db --truncate
-# (copies only tables/columns that still exist in the current schema)
-cd ../.. && python -m serious_shift_pipeline.steps.generate_map_data --export-only
+# (copies only tables/columns that still exist in the current schema; the
+#  seeded scrape manifest is preserved across the truncate and re-keyed)
+python etl/verify_parity.py --sqlite ../../serious-shift.db
+cd ../.. && python -m serious_shift_pipeline.mapgen.cli --export-only
 ```
 
-## 3. Backend service
+## 3. Web service (API + SPA)
 New service → **Deploy from repo**.
-- **Root Directory:** `apps/backend` (Railway uses the bundled `Dockerfile`).
+- **Config-as-code path:** `railway.backend.json`. Root Directory stays empty.
+- The image builds the frontend (`next build` → static export) and the Rust
+  binary, then serves the export from the same process as `/api/*`. Same origin,
+  so no CORS on the hot path and no proxy hop.
 - **Variables:**
   - `DATABASE_URL = ${{Postgres.DATABASE_URL}}`
-  - `ANTHROPIC_API_KEY = sk-ant-…` (for `/api/personalize`)
-  - `PORT = 8080` — pin it so the frontend can reach the backend over private
-    networking at a known port (Railway otherwise assigns one).
-- **Networking:** No public domain needed — the frontend proxies to it over the
-  **private network** (`<service>.railway.internal`). Enable private networking
-  (on by default within a project). `FRONTEND_ORIGIN`/CORS is no longer required
-  because the browser never calls the backend directly (see step 4).
+  - `FRONTEND_ORIGIN = https://<your-domain>` — **required.** A release build
+    refuses to start without it rather than allowing every origin.
+  - `ANTHROPIC_API_KEY = sk-ant-…` (only for `/api/personalize`)
+  - `INGEST_TOKEN = <random secret>` — required to enable
+    `POST /api/innovations/ingest`; the route returns 404 while unset.
+  - `PERSONALIZE_DAILY_CALL_CAP` (optional, default 500) — hard daily ceiling on
+    Anthropic calls from `/api/personalize`.
+  - `PORT = 8080` (optional; the image defaults to it)
+- **Networking:** Generate Domain. This is the only public domain users hit.
 
-## 4. Frontend service
+## 4. Pipeline (scheduled refresh)
 New service → **Deploy from repo**.
-- **Root Directory:** `apps/frontend` (Nixpacks detects Next.js: `npm ci` → `npm run build` → `npm run start`).
-- **How it talks to the backend:** the browser only ever calls the frontend's own
-  origin (`/api/*`); Next.js proxies that to the backend server-side
-  (`next.config.mjs` → `rewrites`). **No CORS, no public backend URL in the client.**
-- **Variables:** `BACKEND_ORIGIN = http://backend.railway.internal:8080`
-  (the backend service's private address + its `PORT`). Use the backend's public
-  URL instead only if you don't want private networking.
-  > `BACKEND_ORIGIN` is read by the Next **server**, not the browser — it is not a
-  > `NEXT_PUBLIC_*` var and isn't inlined into the client bundle.
-- **Networking:** Generate Domain (this is the only public domain users hit; point
-  `www.yourdomain.com` here).
-
-## 5. Pipeline (scheduled refresh)
-New service → **Deploy from repo**.
-- **Root Directory:** `apps/pipeline` (Railway uses the bundled `Dockerfile`).
-- **Cron Schedule:** comes from `railway.json` (`0 22 * * 0`, Sundays 22:00 UTC).
+- **Config-as-code path:** `railway.pipeline.json`. Root Directory stays empty.
+- **Cron Schedule:** comes from that file (`0 22 * * 0`, Sundays 22:00 UTC).
   Railway runs the container on schedule, then the service sleeps.
-- **Watch Paths:** `apps/pipeline/**` (a migration change is vendored into the
-  package, so it lives under this path too).
 - **Variables:** `DATABASE_URL = ${{Postgres.DATABASE_URL}}`, `ANTHROPIC_API_KEY`.
-- On startup the run **applies any pending migrations** to `DATABASE_URL` (the
-  migrations are bundled in the image), then scrapes → processes → (gated)
-  regenerates. Pass `--skip-migrate` only if you manage the schema externally.
-  A full refresh spends ~$60–100 of Anthropic credits; the run is cost-guarded
-  and gates the expensive map/keynote steps on new claims.
+  - `SS_ALERT_WEBHOOK` — **set this.** Cost and failure alerts POST here
+    (Slack/Discord/ntfy all accept the payload). Without it alerts only reach
+    stdout, and the previous macOS-only implementation reached nothing at all.
+  - `SS_BUDGET_TOTAL_USD` (default 35) — hard ceiling; the run *aborts* past it.
+  - `SS_COST_ALERT_USD` (default 25) — notify threshold.
+  - `SS_DISABLE_BATCH=1` — opt out of the Batch API (2x the cost; only for
+    debugging, since batches take minutes to hours to return).
+- On startup the run **applies any pending migrations**, then scrapes → processes
+  → (gated) regenerates the map. Pass `--skip-migrate` if you manage the schema
+  externally. A full refresh spends roughly **$8–9** of Anthropic credits with
+  batching enabled; the run is budget-guarded and gates the expensive map regen
+  on new claims having landed.
 
-## 6. Verify
-- `https://<backend-domain>/health` → `ok`; `/api/stats` → JSON counts.
-- `https://<frontend-domain>` → map/thinkers/keynote render (data from the API).
+## 5. Verify
+- `https://<domain>/health` → `ok` (it queries Postgres, so it goes red if the DB does).
+- `https://<domain>/api/map` → the trend-map JSON; `/api/stats` → counts.
+- `https://<domain>/` → the app renders; a deep link like `/map/society` loads directly.
+- `https://<domain>/api/nonsense` → `404 {"error":"no such endpoint"}` (not HTML).
 - Trigger the pipeline once from the dashboard ("Run now") and watch logs.
 
-## 7. Shift modules (the editorial page content)
+## 6. Shift modules (the editorial page content)
 
 A shift page is an ordered list of **modules** (`{type, data}`) rather than a fixed
 set of sections, so its composition is data. Generated modules live in
@@ -132,7 +139,7 @@ railway run --service pipeline python -m serious_shift_pipeline.core.migrate
 # 2. Generate the modules for the shifts already in the database.
 #    Two Claude calls per shift (~$5–15 total). Does NOT re-scrape or re-cluster,
 #    and does not reset the shift tables, so slugs — and any overrides — still match.
-railway run --service pipeline python -m serious_shift_pipeline.steps.generate_map_data --editorial-only
+railway run --service pipeline python -m serious_shift_pipeline.mapgen.cli --editorial-only
 
 # 3. Check the served document actually carries modules.
 railway run --service pipeline python -c "
@@ -175,7 +182,7 @@ UPDATE shift_module_overrides SET modules = modules || jsonb_build_object(
 DELETE FROM shift_module_overrides WHERE scope='key_trend' AND slug='cognitive-erosion';
 ```
 Republish with `railway run --service pipeline python -m
-serious_shift_pipeline.steps.generate_map_data --export-only` (free, no API calls).
+serious_shift_pipeline.mapgen.cli --export-only` (free, no API calls).
 The export prints a warning for any override that matched no shift — normally that
 means the shift was renamed, so the slug moved.
 
@@ -186,7 +193,7 @@ model spend, so `--export-only` alone refreshes them after a schema or data chan
 
 Module types and their `data` shapes: [packages/contracts/shift_modules.json](packages/contracts/shift_modules.json). Adding a
 new type means declaring it there, emitting it from `kt_modules`/`st_modules` in
-`generate_map_data.py`, and registering a component in
+`mapgen/modules.py`, and registering a component in
 `apps/frontend/src/shift/modules.jsx` — the front end skips types it doesn't know,
 so the backend can ship one first. `test_shift_modules_contract.py` fails if the
 three drift apart.

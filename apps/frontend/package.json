@@ -2,11 +2,14 @@
   "name": "serious-shift-frontend",
   "version": "1.0.0",
   "private": true,
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "check:slugs": "node scripts/check-slug-fixture.mjs"
   },
   "dependencies": {
     "next": "^15.1.0",
@@ -17,5 +20,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "tailwindcss": "^4.0.0"
-  }
+  },
+  "type": "module"
 }

@@ -32,14 +32,14 @@ def get_thinker_profile(conn, name: str) -> dict | None:
     t = db.query_one(conn, "SELECT * FROM thinkers WHERE name ILIKE %s", (f"%{name}%",))
     if not t:
         return None
-    active = db.query_one(
+    active = db.scalar(
         conn,
-        f"SELECT COUNT(*) AS n FROM claims c WHERE c.thinker_id = %s AND {ACTIVE_CLAIMS}",
+        f"SELECT COUNT(*) FROM claims c WHERE c.thinker_id = %s AND {ACTIVE_CLAIMS}",
         (t["id"],),
-    )["n"]
-    total = db.query_one(
-        conn, "SELECT COUNT(*) AS n FROM claims WHERE thinker_id = %s", (t["id"],)
-    )["n"]
+    )
+    total = db.scalar(
+        conn, "SELECT COUNT(*) FROM claims WHERE thinker_id = %s", (t["id"],)
+    )
     predictions = db.query(
         conn,
         """SELECT prediction_id, claim_text, status, consensus_alignment, evaluation_date
@@ -139,33 +139,6 @@ def get_thinker_evolution(conn, name: str) -> list[dict]:
     )
 
 
-# 8. CONCEPT DEEP DIVE
-def get_concept_deep_dive(conn, concept_name: str) -> dict | None:
-    c = db.query_one(conn, "SELECT * FROM concepts WHERE name ILIKE %s", (f"%{concept_name}%",))
-    if not c:
-        return None
-    linked = db.query_one(
-        conn,
-        f"""SELECT COUNT(DISTINCT cc.claim_id) AS n FROM claim_concepts cc
-            JOIN claims c ON cc.claim_id = c.id WHERE cc.concept_id = %s AND {ACTIVE_CLAIMS}""",
-        (c["id"],),
-    )["n"]
-    thinkers = db.query(
-        conn,
-        """SELECT t.name, ct.stance FROM concept_thinkers ct
-           JOIN thinkers t ON ct.thinker_id = t.id WHERE ct.concept_id = %s""",
-        (c["id"],),
-    )
-    return {"concept": c, "linked_claims": linked, "thinkers": thinkers}
-
-
-# 9. TENSION BREAKDOWN
-def get_tension_breakdown(conn, tension_name: str) -> dict | None:
-    return db.query_one(
-        conn, "SELECT * FROM tensions WHERE name ILIKE %s", (f"%{tension_name}%",)
-    )
-
-
 # 10. KEYNOTE MATERIAL
 def get_keynote_material(conn, domain: str | None = None, min_signal: str = "signal",
                          max_results: int = 20) -> list[dict]:
@@ -249,12 +222,10 @@ def get_industry_relevant_claims(conn, industry: str) -> list[dict]:
 
 # DATABASE STATS
 def get_db_stats(conn) -> dict:
-    total = db.query_one(conn, "SELECT COUNT(*) AS n FROM claims")["n"]
-    active = db.query_one(
-        conn, f"SELECT COUNT(*) AS n FROM claims c WHERE {ACTIVE_CLAIMS}"
-    )["n"]
+    total = db.scalar(conn, "SELECT COUNT(*) FROM claims")
+    active = db.scalar(conn, f"SELECT COUNT(*) FROM claims c WHERE {ACTIVE_CLAIMS}")
     counts = {}
-    for tbl in ["thinkers", "sources", "predictions", "concepts", "tensions", "claim_concepts"]:
-        counts[tbl] = db.query_one(conn, f"SELECT COUNT(*) AS n FROM {tbl}")["n"]
+    for tbl in ["thinkers", "sources", "predictions"]:
+        counts[tbl] = db.scalar(conn, f"SELECT COUNT(*) FROM {tbl}")
     return {"claims_total": total, "claims_active": active,
             "claims_duplicate": total - active, **counts}

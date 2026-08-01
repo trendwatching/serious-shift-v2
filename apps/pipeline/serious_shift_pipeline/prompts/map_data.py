@@ -1,10 +1,12 @@
 """
-Prompt builders for the domain-first trend-map generator (steps/generate_map_data).
+Prompt builders for the domain-first trend-map generator (see mapgen/).
 
 Each function loads a shared template from packages/prompts/map/ and renders it
 with values computed in code. Response parsing (parse_thinker_attribution, …)
 stays in the step — these functions only build requests.
 """
+import os
+
 from ._loader import load_and_render
 from .voice import VOICE
 
@@ -12,13 +14,13 @@ from .voice import VOICE
 # Editorial synthesis (Key Trends, sub-trends, attribution) runs on Sonnet 4.6.
 SYNTHESIS_MODEL = 'claude-sonnet-4-6'
 # Synthesis insights — the most editorially demanding, lowest-volume phase — runs on Opus 4.7.
-INSIGHTS_MODEL = 'claude-opus-4-7'
+INSIGHTS_MODEL = os.environ.get('INSIGHTS_MODEL', 'claude-sonnet-4-6')
 
 # Default number of Key Trends to ask for per domain (the step may override).
 MIN_KTS_PER_DOM = 8
 
 
-def fmt_claims_block(claims: list, max_per: int = None) -> str:
+def fmt_claims_block(claims: list, max_per: int | None = None) -> str:
     if max_per:
         claims = claims[:max_per]
     lines = []

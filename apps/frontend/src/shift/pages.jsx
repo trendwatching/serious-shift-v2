@@ -39,6 +39,22 @@ function Missing({ what }) {
   )
 }
 
+/** The map document could not be loaded. Distinct from "not found": nothing is
+ *  readable right now, and saying so is better than rendering stale prose. */
+export function Unavailable() {
+  return (
+    <div className="grid min-h-[60vh] place-items-center px-6 text-center">
+      <div className="flex flex-col items-center gap-4">
+        <Eyebrow color="var(--color-ink-dim)">Unavailable</Eyebrow>
+        <p className="t-display text-2xl">This week’s map is being rebuilt.</p>
+        <p className="max-w-[380px]" style={{ color: 'var(--color-ink-soft)' }}>
+          The shifts are regenerated every week. Check back shortly.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 const Loading = () => <div className="min-h-[60vh]" aria-busy="true" />
 
 /* ── Domain sheet ────────────────────────────────────────────────────────── */
@@ -46,9 +62,10 @@ const Loading = () => <div className="min-h-[60vh]" aria-busy="true" />
 export function DomainSheet() {
   const { domainSlug } = useParams()
   const navigate = useNavigate()
-  const { domain, loading } = useResolved({ domainSlug })
+  const { domain, loading, unavailable } = useResolved({ domainSlug })
 
   if (loading && !domain) return <Loading />
+  if (unavailable) return <Unavailable />
   if (!domain) return <Missing what="domain" />
 
   return (
@@ -114,9 +131,10 @@ export function DomainSheet() {
 export function ShiftDetail() {
   const { domainSlug, ktSlug } = useParams()
   const navigate = useNavigate()
-  const { domain, shift, loading } = useResolved({ domainSlug, ktSlug })
+  const { domain, shift, loading, unavailable } = useResolved({ domainSlug, ktSlug })
 
   if (loading && !shift) return <Loading />
+  if (unavailable) return <Unavailable />
   if (!domain || !shift) return <Missing what="shift" />
 
   return (
@@ -152,12 +170,13 @@ export function ShiftDetail() {
 export function SubShiftDetail() {
   const { domainSlug, ktSlug, subSlug } = useParams()
   const navigate = useNavigate()
-  const { domain, shift, sub, loading } = useResolved({ domainSlug, ktSlug, subSlug })
+  const { domain, shift, sub, loading, unavailable } = useResolved({ domainSlug, ktSlug, subSlug })
 
   // A sub-shift is a fresh reading context — always open at the top.
   useEffect(() => { window.scrollTo(0, 0) }, [subSlug])
 
   if (loading && !sub) return <Loading />
+  if (unavailable) return <Unavailable />
   if (!domain || !shift || !sub) return <Missing what="sub-shift" />
 
   return (

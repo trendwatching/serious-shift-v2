@@ -31,3 +31,6 @@ raw_content/
 *.egg-info/
 build/
 dist/
+
+# scraper run artifact (written to cwd)
+scrape_log.json

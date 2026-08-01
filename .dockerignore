@@ -1,0 +1,22 @@
+# Build context is the repo root for both images — keep it small and keep host
+# build artifacts out of the layers.
+.git
+**/node_modules
+**/target
+**/.next
+**/out
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.egg-info
+**/build
+**/dist
+logs/
+raw_content/
+serious-shift.db
+docs/
+**/.DS_Store
+**/.env
+**/.env.local

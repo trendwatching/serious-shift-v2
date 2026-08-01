@@ -1,7 +1,12 @@
 """
-Live integration test against Postgres. Skipped unless DATABASE_URL is set
-(CI sets it after applying packages/db migrations; locally, run Docker Postgres
-from packages/db). Seeds a minimal graph and exercises representative queries.
+Live integration test against Postgres. Seeds a minimal graph and exercises
+representative queries.
+
+**This test TRUNCATEs core tables**, so it is gated twice: DATABASE_URL must be
+set *and* SS_ALLOW_DESTRUCTIVE_TESTS must opt in. It used to run on DATABASE_URL
+alone, which meant pointing a normal `pytest` run at a populated database — a
+dev box, a staging environment — silently destroyed its data. CI sets both vars
+against a throwaway service container.
 """
 import os
 
@@ -10,9 +15,15 @@ import pytest
 from serious_shift_pipeline.core import db
 from serious_shift_pipeline.tools import queries
 
-pytestmark = pytest.mark.skipif(
-    not os.environ.get("DATABASE_URL"), reason="DATABASE_URL not set"
-)
+pytestmark = [
+    pytest.mark.skipif(
+        not os.environ.get("DATABASE_URL"), reason="DATABASE_URL not set"
+    ),
+    pytest.mark.skipif(
+        os.environ.get("SS_ALLOW_DESTRUCTIVE_TESTS", "") not in ("1", "true", "yes"),
+        reason="truncates core tables; set SS_ALLOW_DESTRUCTIVE_TESTS=1 on a disposable database",
+    ),
+]
 
 
 @pytest.fixture

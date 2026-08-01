@@ -142,6 +142,23 @@ def query_one(conn, sql: str, params: tuple | list | None = None) -> dict | None
         return cur.fetchone()
 
 
+def scalar(conn, sql: str, params: tuple | list | None = None):
+    """First column of the single row a query is expected to return.
+
+    For aggregates (`SELECT COUNT(*) …`), which always produce exactly one row.
+    `query_one` types as `dict | None`, so every such call site had to either
+    index into an Optional — which the type checker rightly rejects — or guard
+    against a case that cannot happen. Raising here is correct: no row back from
+    an aggregate means the query was not the aggregate the caller thought it was.
+    """
+    with conn.cursor() as cur:
+        cur.execute(sql, params or ())
+        row = cur.fetchone()
+        if row is None:
+            raise RuntimeError(f"query returned no rows: {sql.strip()[:80]}")
+        return next(iter(row.values()))
+
+
 def execute(conn, sql: str, params: tuple | list | None = None) -> None:
     with conn.cursor() as cur:
         cur.execute(sql, params or ())

@@ -6,7 +6,7 @@ deleting; keeps the highest-quality claim as primary.
 Converted from deduplicate_claims.py:
   * sqlite3 + `?`        → db.connect() + `%s`
   * PRAGMA / ALTER TABLE → dropped (duplicate_of exists in the migrations)
-  * urllib + CERT_NONE   → Anthropic SDK (llm.call_claude)
+  * urllib + CERT_NONE   → Anthropic SDK (llm.call)
 The word-overlap heuristic, union-find grouping, and primary selection are unchanged.
 
 Usage:
@@ -67,7 +67,7 @@ def api_check_duplicates(pairs):
         batch = pairs[i:i + 20]
         prompt = dedup_prompt(batch)
         try:
-            text, _ = llm.call_claude(prompt, model=DEDUP_MODEL, max_tokens=1024)
+            text, _ = llm.call(llm.Req(user=prompt, model=DEDUP_MODEL, max_tokens=1024))
             for line in text.strip().split("\n"):
                 m = re.match(r"(\d+)\s*:\s*(DUPLICATE|UNIQUE)", line.strip(), re.IGNORECASE)
                 if m and m.group(2).upper() == "DUPLICATE":

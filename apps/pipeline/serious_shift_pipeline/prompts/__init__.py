@@ -5,7 +5,6 @@ that request runs on; response parsing and orchestration live in the steps.
 
   voice       — VOICE tone-of-voice block, embedded by every content prompt
   map_data    — trend-map generation (key trends, sub-trends, attribution, links, insights)
-  keynote     — one narrative section per Key Trend
   extraction  — structured extraction from raw sources (process_raw)
   dedup       — DUPLICATE/UNIQUE judgement for claim pairs
   ingest      — ad-hoc single-URL extraction
@@ -27,7 +26,6 @@ from .map_data import (
     prompt_interrelatedness_batch,
     prompt_synthesis_insights,
 )
-from .keynote import KEYNOTE_MODEL, keynote_section_prompt
 from .extraction import extraction_prompt
 from .dedup import DEDUP_MODEL, dedup_prompt
 from .ingest import INGEST_MODEL, ingest_prompt
@@ -45,8 +43,6 @@ __all__ = [
     "prompt_thinker_attribution",
     "prompt_interrelatedness_batch",
     "prompt_synthesis_insights",
-    "KEYNOTE_MODEL",
-    "keynote_section_prompt",
     "extraction_prompt",
     "DEDUP_MODEL",
     "dedup_prompt",

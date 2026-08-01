@@ -6,9 +6,9 @@ name: pipeline
 
 on:
   push:
-    paths: ["apps/pipeline/**", "packages/db/**", ".github/workflows/pipeline.yml"]
+    paths: ["apps/pipeline/**", "packages/**", ".github/workflows/pipeline.yml"]
   pull_request:
-    paths: ["apps/pipeline/**", "packages/db/**", ".github/workflows/pipeline.yml"]
+    paths: ["apps/pipeline/**", "packages/**", ".github/workflows/pipeline.yml"]
   workflow_dispatch: {}
 
 jobs:
@@ -27,6 +27,10 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgres://serious:serious@localhost:5432/serious_shift?sslmode=disable
+      # The Postgres above is a throwaway service container, so the tests that
+      # TRUNCATE core tables are safe to run here. Never set this against a
+      # database whose contents matter.
+      SS_ALLOW_DESTRUCTIVE_TESTS: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -45,11 +49,26 @@ jobs:
         working-directory: apps/pipeline
 
       - name: Lint
+        # mypy is no longer advisory. It was `|| true` while the tree had 32
+        # errors; those are fixed, so a regression should fail the build rather
+        # than scroll past in a green log.
         run: |
           ruff check serious_shift_pipeline tests
-          mypy serious_shift_pipeline || true   # advisory until fully typed
+          mypy serious_shift_pipeline
+        working-directory: apps/pipeline
+
+      - name: Dependency audit
+        # The scraper fetches and parses arbitrary third-party HTML, so
+        # feedparser/yt-dlp/requests are real supply-chain surface. Advisory:
+        # an upstream CVE with no fix available should be visible, not a wall.
+        run: |
+          pip install pip-audit
+          pip-audit --desc || echo "::warning::pip-audit reported findings"
         working-directory: apps/pipeline
 
       - name: Test (SQL validation + live integration)
         run: pytest -q
         working-directory: apps/pipeline
+        env:
+          # The ETL manifest regression test imports packages/db/etl by path.
+          SS_PACKAGES_DIR: ${{ github.workspace }}/packages

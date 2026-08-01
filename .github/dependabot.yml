@@ -1,0 +1,23 @@
+# Dependency updates. The scraper parses arbitrary third-party HTML and the
+# backend is internet-facing, so the two ecosystems that carry real risk get
+# weekly checks; Actions is monthly because it moves slowly and noisily.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /apps/backend
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: pip
+    directory: /apps/pipeline
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /apps/frontend
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

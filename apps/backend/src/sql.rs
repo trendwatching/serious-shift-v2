@@ -39,10 +39,6 @@ FROM (
   LEFT JOIN sources s ON p.source_id = s.id
 ) q"#;
 
-
-
-
-
 pub const STATS: &str = r#"
 SELECT json_build_object(
   'thinkers',              (SELECT count(*) FROM thinkers),
