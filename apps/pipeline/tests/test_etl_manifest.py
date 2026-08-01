@@ -20,6 +20,7 @@ import os
 import sqlite3
 
 import pytest
+from psycopg.types.json import Json
 
 from serious_shift_pipeline.core import db
 from serious_shift_pipeline.paths import packages_dir
@@ -94,14 +95,58 @@ def _manifest(conn):
     }
 
 
-def test_import_preserves_the_scrape_manifest(legacy_sqlite):
+@pytest.fixture
+def manifest_present():
+    """Guarantee at least one manifest row, whoever ran before us.
+
+    The invariant under test is "whatever manifest exists before the import
+    exists after it" — that must not depend on the migration seed still being
+    there. `test_queries_integration` truncates core tables, and `thinkers`
+    cascades into `scrape_sources`, so relying on the seed made this test pass
+    or fail on collection order.
+
+    The two rows share (thinker, platform, url) and differ only in `params`,
+    which is the arXiv shape that a too-coarse dedupe key silently collapsed.
+    """
+    name = "Manifest Fixture Feed"
+    with db.connect() as conn:
+        # Clean first: a previous run that failed mid-test can leave this behind,
+        # and thinkers.name is unique.
+        _drop_fixture(conn, name)
+        tid = db.insert_returning_id(
+            conn, "INSERT INTO thinkers (name) VALUES (%s) RETURNING id", (name,))
+        for categories in (["cs.AI", "cs.LG"], ["econ.GN"]):
+            db.execute(
+                conn,
+                """INSERT INTO scrape_sources (thinker_id, platform, method, url, params)
+                   VALUES (%s, 'paper', 'arxiv_category', %s, %s)""",
+                (tid, "http://export.arxiv.org/api/query",
+                 Json({"categories": categories, "max_results": 40})),
+            )
+        conn.commit()
+        yield
+        # By NAME, not by the id captured above: re-keying the thinker is exactly
+        # what the import does, so that id is stale by the time we tear down.
+        _drop_fixture(conn, name)
+        conn.commit()
+
+
+def _drop_fixture(conn, name: str) -> None:
+    db.execute(
+        conn,
+        """DELETE FROM scrape_sources
+           WHERE thinker_id IN (SELECT id FROM thinkers WHERE name = %s)""",
+        (name,),
+    )
+    db.execute(conn, "DELETE FROM thinkers WHERE name = %s", (name,))
+
+
+def test_import_preserves_the_scrape_manifest(legacy_sqlite, manifest_present):
     etl = _load_etl()
 
     with db.connect() as conn:
         before = _manifest(conn)
-    assert before, (
-        "no seeded scrape_sources to protect — apply packages/db migrations first"
-    )
+    assert before, "the manifest_present fixture should have guaranteed rows"
 
     etl.main_with_args(
         sqlite=str(legacy_sqlite),
@@ -125,7 +170,7 @@ def test_import_preserves_the_scrape_manifest(legacy_sqlite):
     assert dangling == 0, f"{dangling} manifest rows point at a thinker that no longer exists"
 
 
-def test_import_is_idempotent(legacy_sqlite):
+def test_import_is_idempotent(legacy_sqlite, manifest_present):
     """A second import must not duplicate the manifest it just restored."""
     etl = _load_etl()
     for _ in range(2):
