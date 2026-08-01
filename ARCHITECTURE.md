@@ -28,10 +28,11 @@ doc is the overview.
 ## 2. The modules
 
 ### `apps/pipeline` — Python, batch (the writer)
-Scrapes sources → extracts claims via Claude → scores them → generates the map &
-the trend map. Orchestrated by `run_weekly` (scrape → process → score → map;
-the expensive LLM steps are gated on new claims). Each step is also a standalone
-module (`python -m serious_shift_pipeline.<step>`).
+Scrapes sources → extracts claims via Claude → scores them → generates the trend
+map. Two independently triggerable stages (`python -m serious_shift_pipeline.run
+ingest` / `synthesize`): ingest is Haiku spend proportional to what landed,
+synthesis is a flat ~$5 of Sonnet and is gated on new claims. Each step is also
+a standalone module (`python -m serious_shift_pipeline.<step>`).
 - **Key files:** `scraper.py`, `process_raw.py` (LLM extraction), `scoring.py`,
   `mapgen/` (map generation, one module per phase), `evaluate.py`, plus shared
   `db.py` / `llm.py` / `observability.py`.
@@ -137,12 +138,14 @@ Everything else is internal to one block.
 - **`documents['daily']`** has no generator (it was a static seed); it lives in the
   DB but a fresh DB won't have it until a daily-briefing generator is added or a
   backup is restored.
-- **Backend hardening before public traffic:** CORS is permissive; `/api/personalize`
-  has no rate limit or cache (it spends Anthropic credits per call).
+- **`/api/personalize` has no caller.** It is rate-limited, cached and
+  budget-capped, but nothing in the frontend calls it. Keep it or delete it —
+  it should not stay in the middle.
 - **`serious-shift.db`** (legacy SQLite) is the local import source only — archive
   it to object storage once a managed Postgres is authoritative.
-- **No automated weekly schedule yet** — `run_weekly` is ready; wire a cron
-  (GitHub Actions or a Fly/Render scheduled job) when you want auto-refresh.
+- **YouTube needs a proxy credential on any cloud host.** All 11 blocked
+  sources are YouTube; it refuses datacenter IPs. Set `YOUTUBE_PROXY_URL` or
+  `WEBSHARE_PROXY_USERNAME`/`WEBSHARE_PROXY_PASSWORD`.
 - **Planned seams not yet built:** `packages/contracts` (a formal OpenAPI spec +
   generated client) and `packages/design-tokens` (Figma → Tailwind). Until then the
   contracts are the DB schema and the backend's JSON shapes.

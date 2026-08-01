@@ -1,14 +1,21 @@
 # Deploying Serious Shift on Railway
 
-One Railway **project** holds everything: a Postgres database plus **two** services.
-The web app is served by the backend binary, so there is no separate Node service.
+One Railway **project** holds everything: a Postgres database plus **three**
+services. The web app is served by the backend binary, so there is no separate
+Node service.
 
 ```
 Railway project "serious-shift"
-├── Postgres   (Railway plugin)          → DATABASE_URL
-├── web        (Docker, apps/backend)    → public URL — serves the SPA *and* /api/*
-└── pipeline   (Docker, apps/pipeline)   → no public URL, weekly cron
+├── Postgres     (Railway plugin)          → DATABASE_URL
+├── backend      (Docker, apps/backend)    → public URL — serves the SPA *and* /api/*
+├── pipeline     (Docker, apps/pipeline)   → cron: `run ingest`     (Sun 22:00 UTC)
+└── synthesize   (Docker, apps/pipeline)   → cron: `run synthesize` (Mon 02:00 UTC)
 ```
+
+Ingest and synthesis are separate services from one image because they fail,
+cost and schedule differently: a broken scrape should not block a map rebuild,
+and re-running synthesis for a prompt change should not re-scrape 120 sources.
+Either can be triggered on its own.
 
 ## How GitHub deploy works here
 
@@ -19,17 +26,22 @@ which is the single source of truth for migrations, prompts and contracts.
 > **REQUIRED — leave Root Directory empty (the repo root).** Each service instead
 > points at its own config file via **Settings → Config-as-code**:
 >
-> | Service  | Config path              | Dockerfile                |
-> |----------|--------------------------|---------------------------|
-> | web      | `railway.backend.json`   | `apps/backend/Dockerfile` |
-> | pipeline | `railway.pipeline.json`  | `apps/pipeline/Dockerfile`|
+>
+> | Service      | Config path                 | Dockerfile                 |
+> |--------------|-----------------------------|----------------------------|
+> | backend      | `railway.backend.json`      | `apps/backend/Dockerfile`  |
+> | pipeline     | `railway.ingest.json`       | `apps/pipeline/Dockerfile` |
+> | synthesize   | `railway.synthesize.json`   | `apps/pipeline/Dockerfile` |
+>
+> There is deliberately **no frontend service**: the backend image builds the
+> static export and serves it from the same process as `/api/*`.
 >
 > Setting Root Directory to `apps/backend` (as an earlier revision did) breaks the
 > build: the Dockerfile copies `packages/`, which is outside that directory.
 
 Set **Watch Paths** so one app's change doesn't rebuild the other:
-- web → `apps/backend/**`, `apps/frontend/**`, `packages/prompts/**`
-- pipeline → `apps/pipeline/**`, `packages/**`
+- backend → `apps/backend/**`, `apps/frontend/**`, `packages/prompts/**`
+- pipeline / synthesize → `apps/pipeline/**`, `packages/**`
 
 **Postgres is added separately** (a Railway database, not from GitHub) and
 referenced as `${{Postgres.DATABASE_URL}}`.
@@ -95,7 +107,7 @@ New service → **Deploy from repo**.
 
 ## 4. Pipeline (scheduled refresh)
 New service → **Deploy from repo**.
-- **Config-as-code path:** `railway.pipeline.json`. Root Directory stays empty.
+- **Config-as-code path:** `railway.ingest.json`. Root Directory stays empty.
 - **Cron Schedule:** comes from that file (`0 22 * * 0`, Sundays 22:00 UTC).
   Railway runs the container on schedule, then the service sleeps.
 - **Variables:** `DATABASE_URL = ${{Postgres.DATABASE_URL}}`, `ANTHROPIC_API_KEY`.
@@ -117,7 +129,11 @@ New service → **Deploy from repo**.
 - `https://<domain>/api/map` → the trend-map JSON; `/api/stats` → counts.
 - `https://<domain>/` → the app renders; a deep link like `/map/society` loads directly.
 - `https://<domain>/api/nonsense` → `404 {"error":"no such endpoint"}` (not HTML).
-- Trigger the pipeline once from the dashboard ("Run now") and watch logs.
+- Trigger each stage once from the dashboard ("Run now") and watch logs.
+- `SELECT * FROM pipeline_runs ORDER BY started_at DESC LIMIT 5;` — every run
+  records status, claim delta and spend here, so a failed cron is diagnosable
+  after its container is gone. A row still `running` with a NULL `finished_at`
+  means the container died mid-flight.
 
 ## 6. Shift modules (the editorial page content)
 

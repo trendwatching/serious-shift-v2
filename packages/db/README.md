@@ -14,6 +14,7 @@ schema.sql    generated dump of the current schema — CI keeps it in step
 etl/
   sqlite_to_postgres.py   OPTIONAL one-off import from legacy serious-shift.db
   verify_parity.py        proves the import was lossless
+  reconcile_baseline.sql  one-time fix for databases predating the squash
 docker-compose.yml        local Postgres 16
 ```
 
@@ -46,9 +47,9 @@ dbmate up        # baseline: schema + seed (thinker roster + scrape manifest)
 ```
 
 That fully bootstraps a usable database — no data import needed. The pipeline
-then produces everything else (claims, predictions, and the `documents`
-map/keynote/synthesis/daily blobs); there are **no JSON files**, everything lives
-in the database.
+then produces everything else (claims, predictions, and the `documents['map']`
+blob the frontend reads); there are **no JSON files**, everything lives in the
+database.
 
 ### Optional — import legacy SQLite data
 ```bash
@@ -80,15 +81,8 @@ bookkeeping table and isn't listed.)
 | `sources` | articles/talks/podcasts/papers ⋈ thinker; title, date, url, full_text, signal/novelty/depth |
 | `claims` | atomic extracted claims ⋈ source+thinker; domain, signal_strength, specificity, `claim_weight`, `freshness_score`, `duplicate_of` |
 | `predictions` | falsifiable predictions ⋈ claim+thinker+source; status, consensus_alignment, evaluation_date |
-| `concepts` | cross-thinker concepts (keynote relevance) |
-| `tensions` | mapped disagreements (side_a vs side_b, consumer implications) |
-
-### Relationships (junctions)
-| Table | Links |
-|---|---|
-| `claim_concepts` | claims ↔ concepts |
-| `concept_thinkers` | concepts ↔ thinkers (stance) |
-| `thinker_disagreements` | thinker ↔ thinker (topic) |
+| `pipeline_runs` | one row per stage invocation: status, claim deltas, spend |
+| `pipeline_errors` | structured per-step failures, keyed by `run_id` |
 
 ### Trend map — domain-first v2 (canonical)
 | Table | Purpose |
@@ -111,7 +105,9 @@ bookkeeping table and isn't listed.)
 ### Documents
 | Table | Purpose |
 |---|---|
-| `documents` | whole-JSON blobs. `map` is served by the backend at `/api/map`; `synthesis` is written alongside it. Produced by `generate_map_data`. |
+| `documents` | whole-JSON blobs. Only `map` exists and only `map` has a reader — the backend serves it at `/api/map`. Written by the synthesize stage. |
+| `shift_module_overrides` | editor-authored module lists, keyed by slug; survives the weekly truncate |
+| `innovations` | rows pushed by `POST /api/innovations/ingest` |
 
 ## Deploy a free Postgres — Neon
 
@@ -123,9 +119,10 @@ bookkeeping table and isn't listed.)
    python etl/sqlite_to_postgres.py --sqlite ../../serious-shift.db --truncate
    python etl/verify_parity.py     --sqlite ../../serious-shift.db
    ```
-3. Populate `documents` by running the pipeline generators
-   (`python -m serious_shift_pipeline.mapgen.cli --export-only` rebuilds
-   rebuilds the keynote). Use the same `DATABASE_URL` for the backend and pipeline.
+3. Populate `documents` by running synthesis
+   (`python -m serious_shift_pipeline.run synthesize`, or
+   `python -m serious_shift_pipeline.mapgen.cli --export-only` to re-export
+   without any API calls). Use the same `DATABASE_URL` for backend and pipeline.
 
 Use a separate Neon branch/project per environment; supply `DATABASE_URL` via the
 platform secret store. The local `serious-shift.db` is the import source only —
@@ -145,21 +142,14 @@ unknown version and tries to re-create tables that already exist.
 `core/migrate.py` refuses to run against an un-reconciled database and points
 here, so the failure is loud rather than destructive.
 
-```sql
-BEGIN;
--- Confirm the expected pre-squash state; abort if this is not {0001..0008}.
-SELECT array_agg(version ORDER BY version) FROM schema_migrations;
-
-INSERT INTO schema_migrations (version) VALUES ('20250101000000')
-  ON CONFLICT DO NOTHING;
-DELETE FROM schema_migrations
-  WHERE version IN ('0001','0002','0003','0004','0005','0006','0007','0008');
-COMMIT;
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f etl/reconcile_baseline.sql
 ```
 
-Pure bookkeeping — no DDL, no data touched, reversible by inverting the two
-statements. Afterwards `SELECT version FROM schema_migrations` must return
-exactly `20250101000000`.
+Pure bookkeeping — no DDL, no data touched. The script refuses to run unless
+the recorded versions are exactly the pre-squash set, and is a no-op against an
+already-reconciled database. Afterwards `SELECT version FROM schema_migrations`
+returns `20250101000000` plus whatever has been added since.
 
 Fresh databases need none of this: `dbmate up` applies the baseline and records
 the single row.
