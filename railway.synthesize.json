@@ -1,9 +1,12 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
-  "build": { "builder": "DOCKERFILE", "dockerfilePath": "apps/pipeline/Dockerfile" },
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "apps/pipeline/Dockerfile"
+  },
   "deploy": {
     "startCommand": "python -m serious_shift_pipeline.run synthesize",
-    "cronSchedule": "0 2 * * 1",
+    "cronSchedule": "10 20 * * *",
     "restartPolicyType": "NEVER"
   }
 }
