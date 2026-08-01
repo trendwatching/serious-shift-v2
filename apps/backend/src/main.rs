@@ -26,9 +26,11 @@ use serde_json::{json, Value};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::types::Json as SqlxJson;
 use sqlx::PgPool;
+use tower::ServiceBuilder;
 use tower_http::compression::CompressionLayer;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
+use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::set_status::SetStatus;
 
 const MAX_SECTIONS: usize = 20; // /api/personalize abuse guard
@@ -65,11 +67,20 @@ fn cors_layer() -> CorsLayer {
     }
 }
 
-/// Serve the exported SPA from STATIC_DIR (default ./static), falling back to
-/// index.html so client-side routes deep-link. Hashed assets under /_next are
-/// immutable; index.html must not be cached or a deploy would not be picked up.
+/// Where the exported SPA lives (default ./static).
+fn static_dir() -> String {
+    env::var("STATIC_DIR").unwrap_or_else(|_| "static".into())
+}
+
+/// Serve the exported SPA, falling back to index.html so client-side routes
+/// deep-link.
+///
+/// index.html is deliberately NOT cached here: it names the current hashed
+/// bundles, so caching it is what makes a deploy invisible to a returning
+/// browser. The immutable assets are handled separately — see
+/// `immutable_assets`.
 fn static_service() -> ServeDir<SetStatus<ServeFile>> {
-    let dir = env::var("STATIC_DIR").unwrap_or_else(|_| "static".into());
+    let dir = static_dir();
     let index = Path::new(&dir).join("index.html");
     if !index.is_file() {
         tracing::warn!("no SPA build at {} — serving API only", index.display());
@@ -77,6 +88,14 @@ fn static_service() -> ServeDir<SetStatus<ServeFile>> {
     // 200, not 404: the path is a client-side route, not a missing file.
     ServeDir::new(&dir).fallback(SetStatus::new(ServeFile::new(index), StatusCode::OK))
 }
+
+/// `Cache-Control` for the content-addressed bundles under /_next/static.
+///
+/// Next puts a content hash in every filename there, so a changed file is a
+/// changed URL and a stale entry is impossible. Without this header the browser
+/// revalidated every chunk on every navigation — a round trip per asset to be
+/// told nothing had changed.
+const IMMUTABLE: &str = "public, max-age=31536000, immutable";
 
 /// Per-IP request timestamps for the /api/personalize rate limiter.
 type RateMap = Arc<Mutex<HashMap<String, Vec<Instant>>>>;
@@ -182,6 +201,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(CompressionLayer::new().gzip(true))
         .layer(cors_layer())
         .with_state(state)
+        // Hashed bundles, cached for a year. Registered before the fallback so
+        // these paths never reach the un-cached index.html handler.
+        .nest_service(
+            "/_next/static",
+            ServiceBuilder::new()
+                .layer(SetResponseHeaderLayer::overriding(
+                    header::CACHE_CONTROL,
+                    HeaderValue::from_static(IMMUTABLE),
+                ))
+                .service(ServeDir::new(Path::new(&static_dir()).join("_next/static"))),
+        )
         // Static SPA, served from the same origin as the API — so the browser
         // makes no cross-origin request and there is no proxy hop. Registered
         // last so every /api route above wins. Unmatched paths fall back to
