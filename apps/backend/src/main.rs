@@ -4,13 +4,11 @@
 //! Env: DATABASE_URL (required), ANTHROPIC_API_KEY (for /api/personalize),
 //!      PORT (default 8080), FRONTEND_ORIGIN (CORS allowlist, comma-separated).
 
-mod prompts;
 mod seo;
 mod sql;
 
 use std::collections::HashMap;
 use std::env;
-use std::hash::{Hash, Hasher};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -33,9 +31,6 @@ use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::set_status::SetStatus;
-
-const MAX_SECTIONS: usize = 20; // /api/personalize abuse guard
-const MAX_INDUSTRY_LEN: usize = 100;
 
 /// CORS from FRONTEND_ORIGIN (comma-separated allowlist).
 ///
@@ -131,30 +126,16 @@ fn public_origin() -> String {
 /// told nothing had changed.
 const IMMUTABLE: &str = "public, max-age=31536000, immutable";
 
-/// Per-IP request timestamps for the /api/personalize rate limiter.
-type RateMap = Arc<Mutex<HashMap<String, Vec<Instant>>>>;
-/// TTL-cached /api/personalize responses, keyed by request signature.
-type ResultCache = Arc<Mutex<HashMap<String, (Instant, Value)>>>;
 /// TTL-cached raw JSON for the map document (the only one served).
 type DocCache = Arc<Mutex<Option<(Instant, Arc<str>)>>>;
 /// Route → page metadata, rebuilt whenever the document cache refreshes.
 type MetaCache = Arc<Mutex<Option<(Instant, Arc<seo::SiteIndex>)>>>;
-/// (UTC day number, Anthropic calls made that day) for the global spend cap.
-type BudgetGuard = Arc<Mutex<(u64, usize)>>;
 
 #[derive(Clone)]
 struct AppState {
     pool: PgPool,
-    anthropic_key: Option<String>,
     /// Shared secret for POST /api/innovations/ingest. None disables the route.
     ingest_token: Option<String>,
-    /// Global daily ceiling on /api/personalize Anthropic calls.
-    budget: BudgetGuard,
-    // In-memory per-IP rate limiter and result cache for /api/personalize.
-    // Single-instance scope (fine for the current deploy); move to a shared
-    // KV store if the backend is scaled horizontally.
-    rate: RateMap,
-    cache: ResultCache,
     // Cached map document JSON. It is large (~1 MB) and changes ~weekly, so we
     // serve the raw JSON text from memory — skipping the Postgres read + serde
     // round-trip on every request.
@@ -169,23 +150,7 @@ struct AppState {
     origin: Arc<str>,
 }
 
-const PERSONALIZE_MODEL: &str = "claude-sonnet-4-6";
-const RATE_LIMIT: usize = 10; // requests…
-const RATE_WINDOW: Duration = Duration::from_secs(600); // …per 10 min per IP
-const CACHE_TTL: Duration = Duration::from_secs(3600); // personalize cache: 1 hour
 const DOC_CACHE_TTL: Duration = Duration::from_secs(60); // documents: refresh within 60s of a regen
-/// Hard ceiling on Anthropic calls from /api/personalize per UTC day (one call
-/// per section). At Sonnet rates with max_tokens=1024 this bounds the endpoint's
-/// worst case to a few dollars a day. Override with PERSONALIZE_DAILY_CALL_CAP.
-fn personalize_daily_call_cap() -> usize {
-    static CAP: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
-    *CAP.get_or_init(|| {
-        env::var("PERSONALIZE_DAILY_CALL_CAP")
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(500)
-    })
-}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -207,11 +172,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let state = AppState {
         pool,
-        anthropic_key: env::var("ANTHROPIC_API_KEY").ok(),
         ingest_token,
-        budget: Arc::new(Mutex::new((0, 0))),
-        rate: Arc::new(Mutex::new(HashMap::new())),
-        cache: Arc::new(Mutex::new(HashMap::new())),
         docs: Arc::new(Mutex::new(None)),
         meta: Arc::new(Mutex::new(None)),
         shell: Arc::from(read_shell()),
@@ -238,10 +199,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(spa))
         .route("/robots.txt", get(robots_txt))
         .route("/sitemap.xml", get(sitemap_xml))
-        .route(
-            "/api/personalize",
-            post(personalize).layer(DefaultBodyLimit::max(64 * 1024)),
-        )
         .route(
             "/api/innovations/ingest",
             post(ingest_innovation).layer(DefaultBodyLimit::max(1024 * 1024)),
@@ -501,61 +458,7 @@ async fn sitemap_xml(State(s): State<AppState>) -> Response {
         .into_response()
 }
 
-// ── /api/personalize (faithful port of api/personalize.js) ─────────────────────
-
-#[derive(Deserialize)]
-struct PersonalizeReq {
-    industry: String,
-    sections: Vec<Value>,
-}
-
-/// Client IP from X-Forwarded-For (we run behind Railway's proxy).
-fn client_ip(headers: &HeaderMap) -> String {
-    headers
-        .get("x-forwarded-for")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|s| s.split(',').next())
-        .map(|s| s.trim().to_string())
-        .unwrap_or_else(|| "unknown".into())
-}
-
-/// Sliding-window per-IP limiter. Returns false when the IP is over the limit.
-fn rate_ok(state: &AppState, ip: &str) -> bool {
-    let mut m = state.rate.lock().unwrap();
-    let now = Instant::now();
-    // Evict IPs whose window has fully expired. Without this the map grows
-    // without bound — a slow leak and a memory-exhaustion vector, since the key
-    // is attacker-supplied. Bounded by the number of distinct IPs seen in one
-    // RATE_WINDOW, so the scan stays cheap.
-    m.retain(|_, hits| hits.iter().any(|t| now.duration_since(*t) < RATE_WINDOW));
-    let hits = m.entry(ip.to_string()).or_default();
-    hits.retain(|t| now.duration_since(*t) < RATE_WINDOW);
-    if hits.len() >= RATE_LIMIT {
-        return false;
-    }
-    hits.push(now);
-    true
-}
-
-/// Reserve `calls` against the global daily Anthropic budget for
-/// /api/personalize. The per-IP limiter above is single-instance and trivially
-/// defeated by a distributed caller rotating IPs; this is the backstop that
-/// bounds worst-case spend. Returns false once the day's cap is exhausted.
-fn budget_ok(state: &AppState, calls: usize) -> bool {
-    let day = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs() / 86_400)
-        .unwrap_or(0);
-    let mut g = state.budget.lock().unwrap();
-    if g.0 != day {
-        *g = (day, 0); // new UTC day — reset
-    }
-    if g.1 + calls > personalize_daily_call_cap() {
-        return false;
-    }
-    g.1 += calls;
-    true
-}
+// ── /api/innovations/ingest (write endpoint) ───────────────────────────────────
 
 /// Constant-time byte comparison, so token checks don't leak length or prefix
 /// via timing. Avoids pulling in a crate for ~10 lines.
@@ -566,141 +469,6 @@ fn secret_eq(a: &str, b: &str) -> bool {
     }
     a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
 }
-
-fn cache_key(industry: &str, sections: &[Value]) -> String {
-    let mut h = std::collections::hash_map::DefaultHasher::new();
-    industry.hash(&mut h);
-    serde_json::to_string(sections)
-        .unwrap_or_default()
-        .hash(&mut h);
-    format!("{industry}:{:x}", h.finish())
-}
-
-async fn personalize(
-    State(s): State<AppState>,
-    headers: HeaderMap,
-    Json(req): Json<PersonalizeReq>,
-) -> Result<Json<Value>, AppError> {
-    if req.industry.is_empty() || req.sections.is_empty() {
-        return Err(AppError(
-            StatusCode::BAD_REQUEST,
-            "Missing industry or sections".into(),
-        ));
-    }
-    if req.industry.len() > MAX_INDUSTRY_LEN || req.sections.len() > MAX_SECTIONS {
-        return Err(AppError(
-            StatusCode::BAD_REQUEST,
-            "Request too large".into(),
-        ));
-    }
-    if !rate_ok(&s, &client_ip(&headers)) {
-        return Err(AppError(
-            StatusCode::TOO_MANY_REQUESTS,
-            "Rate limit exceeded".into(),
-        ));
-    }
-
-    // Cache hit? (lock is dropped before any await)
-    // Checked before the budget so cached responses stay free and never consume
-    // the day's allowance.
-    let ck = cache_key(&req.industry, &req.sections);
-    {
-        let mut c = s.cache.lock().unwrap();
-        let fresh = match c.get(&ck) {
-            Some((t, v)) if t.elapsed() < CACHE_TTL => Some(v.clone()),
-            _ => None,
-        };
-        if let Some(v) = fresh {
-            return Ok(Json(v));
-        }
-        c.remove(&ck); // stale or absent
-    }
-
-    let key = s.anthropic_key.clone().ok_or_else(|| {
-        AppError(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "ANTHROPIC_API_KEY not configured".into(),
-        )
-    })?;
-
-    // One Anthropic call per section — reserve them against the daily cap.
-    if !budget_ok(&s, req.sections.len()) {
-        return Err(AppError(
-            StatusCode::SERVICE_UNAVAILABLE,
-            "Daily personalization budget exhausted".into(),
-        ));
-    }
-
-    let client = reqwest::Client::new();
-    let industry = req.industry.clone();
-    let futs = req.sections.into_iter().map(|section| {
-        let client = client.clone();
-        let key = key.clone();
-        let industry = industry.clone();
-        async move { rewrite_section(&client, &key, &industry, section).await }
-    });
-    let rewritten: Vec<Value> = futures::future::join_all(futs).await;
-
-    let out = json!({ "sections": rewritten, "industry": industry });
-    s.cache
-        .lock()
-        .unwrap()
-        .insert(ck, (Instant::now(), out.clone()));
-    Ok(Json(out))
-}
-
-async fn rewrite_section(
-    client: &reqwest::Client,
-    api_key: &str,
-    industry: &str,
-    mut section: Value,
-) -> Value {
-    let body_text = section
-        .get("body")
-        .and_then(|b| b.as_str())
-        .unwrap_or("")
-        .to_string();
-    let prompt = prompts::rewrite_section(industry, &body_text);
-
-    let resp = client
-        .post("https://api.anthropic.com/v1/messages")
-        .header("x-api-key", api_key)
-        .header("anthropic-version", "2023-06-01")
-        .header("content-type", "application/json")
-        .timeout(std::time::Duration::from_secs(25))
-        .json(&json!({
-            "model": PERSONALIZE_MODEL,
-            "max_tokens": 1024,
-            "messages": [{ "role": "user", "content": prompt }],
-        }))
-        .send()
-        .await;
-
-    match resp {
-        Ok(r) if r.status().is_success() => {
-            let data: Value = r.json().await.unwrap_or(Value::Null);
-            let text = data
-                .pointer("/content/0/text")
-                .and_then(|t| t.as_str())
-                .unwrap_or(&body_text)
-                .to_string();
-            if let Some(obj) = section.as_object_mut() {
-                obj.insert("body".into(), json!(text));
-                obj.insert("personalized".into(), json!(true));
-            }
-            section
-        }
-        _ => {
-            // Match the JS fallback: keep the original body, flag the error.
-            if let Some(obj) = section.as_object_mut() {
-                obj.insert("error".into(), json!(true));
-            }
-            section
-        }
-    }
-}
-
-// ── /api/innovations/ingest (write endpoint) ───────────────────────────────────
 
 /// One innovation pushed by the upstream Innovation database. Scalars we
 /// query/join on become columns; the variable-shape nested fields stay as JSON.

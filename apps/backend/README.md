@@ -8,7 +8,7 @@ Minimal by design: each read endpoint is one SQL string in [`src/sql.rs`](src/sq
 that lets Postgres build the JSON (`json_agg(row_to_json(...))`); the handlers in
 [`src/main.rs`](src/main.rs) are a line each.
 
-Stack: Rust · axum · sqlx (Postgres) · reqwest (for `/api/personalize`).
+Stack: Rust · axum · sqlx (Postgres).
 
 ## Endpoints
 
@@ -27,7 +27,6 @@ of concurrent requests wide. They have no UI contract; the app only reads
 | `GET /api/predictions` | predictions ⋈ thinker/source |
 | `GET /api/stats` | aggregate counts |
 | `GET /api/map` | the assembled trend map (the pipeline writes it) — the only document the UI reads |
-| `POST /api/personalize` | rewrites sections for an industry via Claude (rate-limited + daily spend cap) |
 | `POST /api/innovations/ingest` | ingests one innovation → `innovations` table (idempotent on `source_innovation_id`). Requires `X-Ingest-Token`; **404 while `INGEST_TOKEN` is unset** |
 | `GET /*` | the SPA. Unmatched paths return `index.html` so client-side routes deep-link; unmatched `/api/*` paths return a JSON 404 |
 
@@ -39,9 +38,7 @@ of concurrent requests wide. They have no UI contract; the app only reads
 | `PORT` | no | default `8080` |
 | `FRONTEND_ORIGIN` | **yes in release** | CORS allowlist (comma-separated). Release builds panic without it; debug builds allow any origin |
 | `STATIC_DIR` | no | SPA bundle to serve, default `static` (the image sets `/srv/static`) |
-| `ANTHROPIC_API_KEY` | only for `/api/personalize` | server-side only |
 | `INGEST_TOKEN` | only for `/api/innovations/ingest` | shared secret; route 404s while unset |
-| `PERSONALIZE_DAILY_CALL_CAP` | no | daily Anthropic call ceiling for `/api/personalize`, default `500` |
 
 ## Run locally
 
@@ -73,12 +70,6 @@ docker build -f apps/backend/Dockerfile .     # from the repo root, not this dir
 - **`POST /api/innovations/ingest`** requires the `X-Ingest-Token` header to match
   `INGEST_TOKEN` (constant-time compare). While that var is unset the route 404s.
   The token is checked *before* the body is deserialised.
-- **`/api/personalize`** spends Anthropic credits per request, so it has: request
-  caps (≤ 20 sections, industry ≤ 100 chars, 64 KB body), a per-IP sliding-window
-  limiter (10 / 10 min), a 1-hour result cache, and a **global daily call ceiling**
-  (`PERSONALIZE_DAILY_CALL_CAP`, default 500). The per-IP limiter is
-  single-instance and defeated by a distributed caller — the daily ceiling is the
-  backstop that actually bounds spend.
 - **In-memory state** (rate limiter, caches) is per-instance. Move it to a shared
   KV store before scaling horizontally.
 - Large lists (`/api/claims`) return whole — add pagination when needed.

@@ -36,6 +36,14 @@ from .content import (
 #: instead of being dropped.
 MAX_ITEMS_PER_SOURCE = int(os.environ.get('SS_MAX_ITEMS_PER_SOURCE', '30'))
 
+#: Seconds to wait for yt-dlp to list a channel.
+#:
+#: Was a hard-coded 300. YouTube refuses datacenter IPs, and the refusal often
+#: arrives as a stall rather than an error — so three sources spent 15 minutes
+#: of a 63-minute run waiting on a host that had already blocked us. A channel
+#: listing that has not answered in two minutes is not going to.
+YTDLP_TIMEOUT = int(os.environ.get('SS_YTDLP_TIMEOUT', '120'))
+
 
 def scrape_substack(thinker_name, cfg, since, until, mode, log, error_log=None):
     """
@@ -467,7 +475,8 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
     if _youtube_proxy_url():  # route listing through the same proxy as transcripts
         cmd += ['--proxy', _youtube_proxy_url()]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(cmd, capture_output=True, text=True,
+                                timeout=YTDLP_TIMEOUT)
     except Exception as e:
         # Re-raise so scrape_thinker's retry wrapper handles it consistently.
         print(f"    yt-dlp subprocess failed: {e}")

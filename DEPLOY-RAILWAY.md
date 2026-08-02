@@ -40,7 +40,7 @@ which is the single source of truth for migrations, prompts and contracts.
 > build: the Dockerfile copies `packages/`, which is outside that directory.
 
 Set **Watch Paths** so one app's change doesn't rebuild the other:
-- backend → `apps/backend/**`, `apps/frontend/**`, `packages/prompts/**`
+- backend → `apps/backend/**`, `apps/frontend/**`
 - pipeline / synthesize → `apps/pipeline/**`, `packages/**`
 
 **Postgres is added separately** (a Railway database, not from GitHub) and
@@ -97,11 +97,10 @@ New service → **Deploy from repo**.
   - `DATABASE_URL = ${{Postgres.DATABASE_URL}}`
   - `FRONTEND_ORIGIN = https://<your-domain>` — **required.** A release build
     refuses to start without it rather than allowing every origin.
-  - `ANTHROPIC_API_KEY = sk-ant-…` (only for `/api/personalize`)
   - `INGEST_TOKEN = <random secret>` — required to enable
     `POST /api/innovations/ingest`; the route returns 404 while unset.
-  - `PERSONALIZE_DAILY_CALL_CAP` (optional, default 500) — hard daily ceiling on
-    Anthropic calls from `/api/personalize`.
+  - `PUBLIC_ORIGIN` (optional) — absolute origin used for canonical URLs and
+    the sitemap. Defaults to the first `FRONTEND_ORIGIN` entry.
   - `PORT = 8080` (optional; the image defaults to it)
 - **Networking:** Generate Domain. This is the only public domain users hit.
 
@@ -219,5 +218,5 @@ three drift apart.
   is never copied around; rotate the key in one place.
 - Free tier sleeps idle services (cold start on first hit) and has monthly usage
   limits — fine for a demo; upgrade for steady traffic.
-- CORS, the `/api/personalize` caps, and `PORT` binding are already production-set
+- CORS and `PORT` binding are already production-set
   (see `apps/backend`). Remaining follow-ups live in [ARCHITECTURE.md](ARCHITECTURE.md#7-known-gaps--follow-ups).

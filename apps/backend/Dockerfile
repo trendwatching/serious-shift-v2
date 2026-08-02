@@ -2,11 +2,9 @@
 # so there is no second always-on service and no cross-origin hop.
 #
 # BUILD CONTEXT IS THE REPO ROOT:  docker build -f apps/backend/Dockerfile .
-# The crate embeds packages/prompts via include_str!, and the runtime image
-# carries apps/frontend's static export, so both must be in the context.
-#
-# The build stage mirrors the repo layout (/app/apps/backend + /app/packages)
-# because include_str! paths are resolved relative to the source file.
+# The runtime image carries apps/frontend's static export, so the frontend must
+# be in the context. The crate no longer embeds any prompt text — /api/personalize
+# was the only consumer and it had no callers.
 
 # ── 1. Frontend: static export ───────────────────────────────────────────────
 FROM node:22-slim AS web
@@ -25,7 +23,6 @@ COPY apps/backend/Cargo.toml apps/backend/Cargo.lock ./
 RUN mkdir src && echo 'fn main() {}' > src/main.rs \
     && cargo build --release \
     && rm -rf src
-COPY packages/prompts /app/packages/prompts
 COPY apps/backend/src ./src
 # Touch so cargo doesn't reuse the stub's fingerprint for the real main.rs.
 RUN touch src/main.rs && cargo build --release

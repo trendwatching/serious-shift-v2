@@ -46,7 +46,8 @@ a standalone module (`python -m serious_shift_pipeline.<step>`).
 ### `apps/backend` — Rust (axum + sqlx), the reader/API
 Serves the data over HTTP. Each read endpoint is **one SQL string** in `src/sql.rs`
 (Postgres builds the JSON with `json_agg`); handlers in `src/main.rs` are a line
-each. Also hosts `POST /api/personalize` (Claude rewrite, key server-side).
+each. Also serves per-route metadata, `robots.txt` and `sitemap.xml`, built
+from the same cached map document.
 - **Why:** the API surface is essentially "dump these rows as JSON," so letting
   Postgres assemble the JSON keeps it tiny and obviously-correct (no ORM, no
   per-table structs). Replaces the old ~53 MB of static JSON the browser used to download.
@@ -139,9 +140,9 @@ Everything else is internal to one block.
 - **`documents['daily']`** has no generator (it was a static seed); it lives in the
   DB but a fresh DB won't have it until a daily-briefing generator is added or a
   backup is restored.
-- **`/api/personalize` has no caller.** It is rate-limited, cached and
-  budget-capped, but nothing in the frontend calls it. Keep it or delete it —
-  it should not stay in the middle.
+- **Predictions are never resolved.** 1,756 of 8,922 are past their evaluation
+  date, so `accuracy` defaults to 0.5 for everyone — and that is 85% of the
+  credibility weight, which `claim_weight` multiplies by.
 - **`serious-shift.db`** (legacy SQLite) is the local import source only — archive
   it to object storage once a managed Postgres is authoritative.
 - **YouTube needs a proxy credential on any cloud host.** All 11 blocked

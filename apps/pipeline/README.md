@@ -83,6 +83,7 @@ interrupted run now leaves a visible `running` row.
 | `RAW_CONTENT_DIR` | no | default `./raw_content` |
 | `SS_RUN_RETENTION_DAYS` | no | run/error history kept, default `180` |
 | `SS_MAX_ITEMS_PER_SOURCE` | no | items one source may contribute per run, default `30`. Extraction is priced per file, so without this a single high-volume feed sets the bill for the whole run. |
+| `SS_YTDLP_TIMEOUT` | no | seconds to wait for a YouTube channel listing, default `120`. YouTube refuses datacenter IPs and often stalls rather than erroring; a longer wait just burns run time. |
 | `SS_MAX_WORKERS` | no | parallelism for scrape/extract/generate (default `8`). Lower it if you hit API rate limits. |
 | `WEBSHARE_PROXY_USERNAME` / `WEBSHARE_PROXY_PASSWORD` | no | route YouTube transcript fetches through a Webshare residential proxy — needed on cloud hosts, where YouTube IP-blocks datacenter IPs. |
 | `YOUTUBE_PROXY_URL` | no | alternative to Webshare: any `http://user:pass@host:port` proxy for YouTube (used for both yt-dlp listing and transcripts). |
