@@ -227,7 +227,12 @@ a:hover { color: var(--color-link-hover); }
 @keyframes ssRise  { from { opacity: 0; transform: translateY(26px) scale(0.985); } to { opacity: 1; transform: none; } }
 @keyframes ssFade  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ssWord  { from { opacity: 0; transform: translateY(34px) rotate(1.5deg); } to { opacity: 1; transform: none; } }
-@keyframes ssExpand{ from { opacity: 0.4; transform: translateY(180px) scale(0.88); border-radius: 26px; } to { opacity: 1; transform: none; border-radius: 0; } }
+/* No scale(): this runs on the page's outermost <article>, and scaling that
+   shrinks everything inside it — including the `.bleed` bands, which are sized
+   against the viewport and so appeared inset by ~86px a side for the whole
+   0.55s on desktop. Translate and fade read the same and leave geometry
+   alone. */
+@keyframes ssExpand{ from { opacity: 0; transform: translateY(40px); border-radius: 26px; } to { opacity: 1; transform: none; border-radius: 0; } }
 @keyframes ssSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes ssPop   { 0% { transform: scale(1); } 45% { transform: scale(1.22) rotate(-8deg); } 100% { transform: scale(1); } }
 @keyframes ssCue   { 0%, 100% { transform: translateY(0); opacity: 0.55; } 50% { transform: translateY(7px); opacity: 1; } }

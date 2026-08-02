@@ -10,7 +10,7 @@ function VoiceColumn({ title, people, grad, shadow }) {
         {people.map((p, i) => (
           <div key={`${p.name}-${i}`} className="rounded-2xl bg-white px-4 py-4 flex flex-col gap-2" style={{ boxShadow: '0 4px 14px rgba(27,22,32,0.12)' }}>
             <span className="t-display text-[14px]" style={{ letterSpacing: '-0.01em' }}>{p.name}</span>
-            <span className="text-[13.5px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-strong)' }}>“{p.quote}”</span>
+            <span className="text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: 'var(--color-ink-strong)' }}>“{p.quote}”</span>
           </div>
         ))}
       </div>

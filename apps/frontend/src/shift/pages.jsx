@@ -21,9 +21,17 @@ import { Modules } from './modules'
 import { GradientHero, Eyebrow } from './sections'
 import { quoteTitle } from './theme'
 
-/** Reading column: full-bleed on mobile, centred measure on desktop. */
+/** Reading column: full-bleed on mobile, centred measure on desktop.
+ *
+ * 660px, not 860. The sections carry the design's mobile type scale
+ * (13.5-14.5px), and at 816px of content that measured 83-109 characters per
+ * line — well past the ~75 a reader tracks comfortably. Nunito Sans is narrow
+ * (~7px per character at 15px), so the fix is both: a tighter column and a
+ * larger desktop size. Measured with a canvas probe rather than estimated.
+ * Full-bleed bands are unaffected — `.bleed` escapes to the viewport, so they
+ * still span the window and keep the page from feeling like a column of text. */
 const Column = ({ children }) => (
-  <div className="mx-auto flex w-full flex-col gap-[30px] px-[22px] pt-[26px] lg:max-w-[860px] lg:gap-10 lg:pt-12">
+  <div className="mx-auto flex w-full flex-col gap-[30px] px-[22px] pt-[26px] lg:max-w-[660px] lg:gap-10 lg:pt-12">
     {children}
   </div>
 )
@@ -86,7 +94,7 @@ export function DomainSheet() {
         className="mt-2 min-h-[520px] bg-white pb-[130px] pt-2"
         style={{ borderRadius: '28px 28px 0 0' }}
       >
-        <div className="mx-auto w-full px-[22px] lg:max-w-[860px]">
+        <div className="mx-auto w-full px-[22px] lg:max-w-[660px]">
           {domain.keyShifts.map((s, i) => (
             <Link
               key={s.id}

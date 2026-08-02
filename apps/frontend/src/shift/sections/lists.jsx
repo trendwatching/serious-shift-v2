@@ -31,7 +31,7 @@ export function SubShiftList({ subs, onOpen }) {
               >↗</span>
             </span>
             <span className="t-title text-[15px] leading-[1.24]">{quoteTitle(b.title)}</span>
-            <span className="text-[13.5px] leading-[1.5] text-pretty" style={{ color: '#5C5768' }}>{b.dek}</span>
+            <span className="text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: '#5C5768' }}>{b.dek}</span>
           </button>
         ))}
       </div>
@@ -59,7 +59,7 @@ export function HumanNeeds({ needs }) {
       >
         <span className="t-eyebrow whitespace-nowrap" style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>{label}</span>
         <span
-          className="text-[14px] leading-[1.5] text-pretty overflow-hidden"
+          className="text-[14px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty overflow-hidden"
           style={{ opacity: on ? 1 : 0, maxHeight: on ? 260 : 0, transition: 'opacity 0.3s ease, max-height 0.45s var(--ease-out)' }}
         >{text}</span>
       </button>
@@ -102,7 +102,7 @@ export function Innovations({ items }) {
               )}
               <span className="t-display text-[15px] leading-[1.25]" style={{ letterSpacing: '-0.01em' }}>{n.title}</span>
               {n.description && (
-                <span className="text-[13.5px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{n.description}</span>
+                <span className="text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{n.description}</span>
               )}
             </Card>
           )
@@ -133,7 +133,7 @@ export function Timeline({ steps }) {
               <span className="t-display text-[14.5px]" style={{ letterSpacing: '-0.005em' }}>{h.label}</span>
               <span className="ml-auto font-mono text-[11px] opacity-75">{WHEN[i] || ''}</span>
             </span>
-            <span className="text-[13.5px] leading-[1.5] text-pretty">{h.text}</span>
+            <span className="text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty">{h.text}</span>
           </div>
         ))}
       </div>
@@ -201,7 +201,7 @@ export function Territories({ items }) {
               style={{ background: 'var(--color-yellow)', color: 'var(--color-ink)', fontWeight: 800, letterSpacing: 0 }}
             >{i + 1}</span>
             <span className="t-display text-[15px] leading-[1.2]" style={{ letterSpacing: '-0.01em' }}>{t.name}</span>
-            <span className="text-[13.5px] leading-[1.5] text-pretty" style={{ color: '#5C5768' }}>{t.text}</span>
+            <span className="text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: '#5C5768' }}>{t.text}</span>
           </div>
         ))}
         <div

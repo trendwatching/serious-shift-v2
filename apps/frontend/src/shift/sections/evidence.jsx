@@ -26,7 +26,7 @@ export function Evidence({ items }) {
               )}
               {c.date && <span className="ml-auto font-mono text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{c.date}</span>}
             </span>
-            <span className="text-[14px] leading-[1.55] text-pretty" style={{ color: 'var(--color-ink-strong)' }}>{c.text}</span>
+            <span className="text-[14px] leading-[1.55] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: 'var(--color-ink-strong)' }}>{c.text}</span>
             {c.implication && (
               <span className="text-[13px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>
                 <span className="font-semibold">So what — </span>{c.implication}

@@ -45,7 +45,7 @@ export function NumberedCard({ title, items, grad, shadow }) {
             style={{ boxShadow: '0 4px 14px rgba(27,22,32,0.12)' }}
           >
             <span className="shrink-0 w-10 text-center t-display text-[34px] leading-none" style={{ fontWeight: 800 }}>{i + 1}.</span>
-            <span className="flex-1 text-[13.5px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-strong)' }}>{t}</span>
+            <span className="flex-1 text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: 'var(--color-ink-strong)' }}>{t}</span>
           </div>
         ))}
       </div>

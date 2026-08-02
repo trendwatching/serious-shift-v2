@@ -24,7 +24,7 @@ export function PeelTabs({ whatChanging, whyNow }) {
     return (
       <div className="rounded-[20px] p-5 text-white" style={{ backgroundImage: 'var(--a-grad)' }}>
         <div className="t-eyebrow mb-2.5" style={{ letterSpacing: '0.04em' }}>{cards[0].label}</div>
-        <div className="text-[14.5px] leading-[1.58] text-pretty">{cards[0].text}</div>
+        <div className="text-[14.5px] leading-[1.58] lg:text-[16.5px] lg:leading-[1.62] text-pretty">{cards[0].text}</div>
       </div>
     )
   }
@@ -62,7 +62,7 @@ export function PeelTabs({ whatChanging, whyNow }) {
             >
               <div
                 ref={(el) => { refs.current[i] = el }}
-                className="text-[14.5px] leading-[1.58] text-pretty"
+                className="text-[14.5px] leading-[1.58] lg:text-[16.5px] lg:leading-[1.62] text-pretty"
                 style={{ color: fg, opacity: front ? 1 : 0, transition: 'opacity 0.3s ease' }}
               >{c.text}</div>
             </div>

@@ -39,7 +39,7 @@ export function FromToSolid({ from, to }) {
       style={{ backgroundImage: grad }}
     >
       <span className="t-eyebrow text-[11.5px]" style={{ letterSpacing: '0.12em' }}>{label}</span>
-      <span className="text-[13.5px] leading-[1.45]">{text}</span>
+      <span className="text-[13.5px] leading-[1.45] lg:text-[16.5px] lg:leading-[1.58]">{text}</span>
     </div>
   )
   return <div className="flex gap-2.5 items-stretch">{card('From', from, 'var(--pos-grad)')}{card('To', to, 'var(--a-grad)')}</div>
