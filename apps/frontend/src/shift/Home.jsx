@@ -26,7 +26,7 @@ const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
 const spell = (n) => (n >= 0 && n < WORDS.length ? WORDS[n] : n.toLocaleString())
 
 export default function Home() {
-  const { domains, meta } = useDomains()
+  const { domains, meta, loading, unavailable, error, retry } = useDomains()
   // No page title: the homepage IS the site title. Passing undefined also
   // restores it when navigating back from a shift.
   useDocumentMeta(undefined, meta?.shiftCount
@@ -101,6 +101,24 @@ export default function Home() {
   }, [index, go])
 
   const active = index === 0 ? null : domains[index - 1]
+
+  if (loading) {
+    return <section className="min-h-[70dvh]" aria-busy="true" aria-label="Loading this week’s map" />
+  }
+  if (unavailable) {
+    return (
+      <section className="grid min-h-[70dvh] place-items-center px-6 text-center">
+        <div className="flex max-w-[390px] flex-col items-center gap-4">
+          <p className="t-eyebrow" style={{ color: 'var(--color-ink-dim)' }}>Map unavailable</p>
+          <h1 className="t-display text-3xl">The shifts couldn’t be loaded.</h1>
+          <p className="t-body" style={{ color: 'var(--color-ink-mid)' }}>
+            {error?.status >= 500 ? 'The map service is having trouble.' : 'Check your connection and try again.'}
+          </p>
+          <button type="button" className="pill-yellow" onClick={retry}>Retry</button>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section

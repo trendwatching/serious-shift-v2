@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import json
 from datetime import date
+from urllib.parse import urlparse
 
 from ..core.text import url_slug as slugify
 from .config import DOMAINS, MODULE_ORDER
+from .validation import require_valid_map
 
 
 def _attr(stored):
@@ -20,11 +22,24 @@ def _attr(stored):
     for x in items:
         if isinstance(x, dict):
             names.append(x.get('name', ''))
-            detail.append({'name': x.get('name', ''), 'quote': x.get('quote', '')})
+            item = {'name': x.get('name', ''), 'quote': x.get('quote', '')}
+            for field in ('source', 'date', 'url'):
+                if x.get(field):
+                    item[field] = x[field]
+            detail.append(item)
         else:
             names.append(str(x))
             detail.append({'name': str(x), 'quote': ''})
     return names, detail
+
+
+def _http_url(value) -> str:
+    """A publishable HTTP(S) URL, or an empty string."""
+    try:
+        parsed = urlparse(str(value or '').strip())
+        return parsed.geturl() if parsed.scheme in {'http', 'https'} and parsed.netloc else ''
+    except ValueError:
+        return ''
 
 
 def build_map_json_v2(conn) -> dict:
@@ -86,8 +101,20 @@ def build_map_json_v2(conn) -> dict:
         pro = _attr(kt_row['proponents'])[1] or []
         sk = _attr(kt_row['skeptics'])[1] or []
         def keep(xs):
-            return [{'name': x.get('name', ''), 'quote': x.get('quote', '')}
-                    for x in xs if isinstance(x, dict) and x.get('name') and x.get('quote')]
+            items = []
+            for x in xs:
+                if not isinstance(x, dict) or not x.get('name') or not x.get('quote'):
+                    continue
+                source_url = _http_url(x.get('url'))
+                if not source_url:
+                    continue
+                item = {'name': x.get('name', ''), 'quote': x.get('quote', ''), 'url': source_url}
+                if x.get('source'):
+                    item['source'] = x['source']
+                if x.get('date'):
+                    item['date'] = x['date']
+                items.append(item)
+            return items
         pro, sk = keep(pro), keep(sk)
         if not pro and not sk:
             return None
@@ -112,7 +139,7 @@ def build_map_json_v2(conn) -> dict:
     claim_rows_by_st: dict = {}
     for r in conn.execute("""
         SELECT stc.sub_trend_id, c.claim_text, t.name AS thinker, s.title AS source,
-               s.date_published, c.signal_strength, c.consumer_implication
+               s.date_published, s.url, c.signal_strength, c.consumer_implication
         FROM domain_sub_trend_claims stc
         JOIN claims c   ON c.id = stc.claim_id
         JOIN thinkers t ON t.id = c.thinker_id
@@ -120,11 +147,15 @@ def build_map_json_v2(conn) -> dict:
         WHERE c.duplicate_of IS NULL AND c.claim_text IS NOT NULL
         ORDER BY stc.sub_trend_id, COALESCE(c.claim_weight, 0) DESC, c.id
     """).fetchall():
+        source_url = _http_url(r['url'])
+        if not source_url:
+            continue
         claim_rows_by_st.setdefault(r['sub_trend_id'], []).append({
             'text': r['claim_text'],
             'thinker': r['thinker'] or '',
             'source': r['source'] or '',
             'date': str(r['date_published'])[:10] if r['date_published'] else '',
+            'url': source_url,
             'strength': r['signal_strength'] or '',
             'implication': r['consumer_implication'] or '',
         })
@@ -316,7 +347,7 @@ def build_map_json_v2(conn) -> dict:
         rows = conn.execute("""
             SELECT c.id, c.claim_text, c.consumer_implication, c.signal_strength,
                    t.name AS thinker, t.credibility_score,
-                   s.title AS source_title, s.date_published
+                   s.title AS source_title, s.date_published, s.url AS source_url
             FROM claims c
             JOIN thinkers t ON c.thinker_id = t.id
             LEFT JOIN sources s ON c.source_id = s.id
@@ -330,6 +361,7 @@ def build_map_json_v2(conn) -> dict:
                 'thinker_credibility': round(r['credibility_score'] or 50.0, 1),
                 'source_title':      r['source_title'] or '',
                 'source_date':       r['date_published'] or '',
+                'source_url':        _http_url(r['source_url']),
                 'signal_strength':   r['signal_strength'] or '',
                 'consumer_implication': r['consumer_implication'] or '',
             })
@@ -439,10 +471,19 @@ def build_map_json_v2(conn) -> dict:
 
 
 def _write_map_document(conn, out):
-    """Store the assembled map as documents['map'] — served by the backend at /api/map."""
+    """Validate and atomically promote a candidate, rotating the last good map."""
+    require_valid_map(out)
+    encoded = json.dumps(out, default=str)  # Postgres date/datetime → ISO string
+    conn.execute("""
+        INSERT INTO documents (key, body, updated_at)
+        SELECT 'map:previous', body, updated_at FROM documents WHERE key = 'map'
+        ON CONFLICT (key) DO UPDATE SET
+          body = EXCLUDED.body,
+          updated_at = EXCLUDED.updated_at
+    """)
     conn.execute("""INSERT INTO documents (key, body) VALUES ('map', %s::jsonb)
         ON CONFLICT (key) DO UPDATE SET body = EXCLUDED.body, updated_at = now()""",
-        (json.dumps(out, default=str),))  # default=str: Postgres date/datetime → ISO string
+        (encoded,))
     conn.commit()
 
 

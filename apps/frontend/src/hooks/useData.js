@@ -1,60 +1,112 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-/**
- * useData — read a JSON document from the API, once.
- *
- * Same-origin only: the browser fetches /api/<name> from the frontend's own
- * origin and Next proxies it to the backend server-side (see next.config.mjs
- * rewrites), so there is no CORS and no backend URL in the client bundle.
- *
- * Requests are de-duplicated across components. Several components subscribe to
- * the map document, and without this every one of them would open its own
- * connection for the same bytes; instead the first caller starts the request and
- * the rest await the same promise. The settled result (success *or* failure) is
- * cached, so a failing endpoint is not retried on every re-render.
- */
-const cache = new Map()     // url → { data } | { error }
-const inflight = new Map()  // url → Promise<{ data } | { error }>
+const cache = new Map()     // url → successful data only
+const inflight = new Map()  // url → Promise<data>
 
-function load(url) {
-  if (cache.has(url)) return Promise.resolve(cache.get(url))
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+export class ApiError extends Error {
+  constructor(url, status = 0, code = '') {
+    super(status ? `${url} → ${status}` : `${url} → network error`)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+    this.kind = status === 503
+      ? 'unavailable'
+      : status >= 500
+        ? 'server'
+        : status === 408
+          ? 'timeout'
+          : status === 0
+            ? 'offline'
+            : 'request'
+  }
+}
+
+function normaliseUrl(resource) {
+  const value = String(resource || '')
+  if (value.startsWith('/api/')) return value
+  return `/api/${value.replace(/^\/+/, '').replace(/\.json$/, '')}`
+}
+
+function transient(error) {
+  return !error?.status || error.status === 408 || error.status === 429 || error.status >= 500
+}
+
+async function fetchJson(url) {
+  let response
+  try {
+    response = await fetch(url, { headers: { Accept: 'application/json' } })
+  } catch (cause) {
+    throw new ApiError(url, 0, cause?.name || 'network_error')
+  }
+  if (!response.ok) {
+    let code = ''
+    try { code = (await response.json())?.error?.code || '' } catch { /* non-JSON error */ }
+    throw new ApiError(url, response.status, code)
+  }
+  return response.json()
+}
+
+/** Load once, retrying only transient failures. Rejections are never cached. */
+export function load(resource, { force = false } = {}) {
+  const url = normaliseUrl(resource)
+  if (!force && cache.has(url)) return Promise.resolve(cache.get(url))
 
   let pending = inflight.get(url)
   if (!pending) {
-    pending = fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error(`${url} → ${r.status}`)
-        return r.json()
-      })
-      .then((data) => ({ data }))
-      .catch((error) => ({ error }))
-      .then((result) => {
-        cache.set(url, result)
-        inflight.delete(url)
-        return result
-      })
+    pending = (async () => {
+      let lastError
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          const data = await fetchJson(url)
+          cache.set(url, data)
+          return data
+        } catch (error) {
+          lastError = error
+          if (!transient(error) || attempt === 2) throw error
+          await wait(150 * (2 ** attempt))
+        }
+      }
+      throw lastError
+    })().finally(() => inflight.delete(url))
     inflight.set(url, pending)
   }
   return pending
 }
 
-export function useData(file) {
-  const url = `/api/${String(file).replace(/\.json$/, '')}`
-  const [result, setResult] = useState(() => cache.get(url))
+export function useData(resource, { enabled = true } = {}) {
+  const url = useMemo(() => normaliseUrl(resource), [resource])
+  const [result, setResult] = useState(() => (
+    enabled && cache.has(url) ? { data: cache.get(url), error: null } : null
+  ))
+  const [revision, setRevision] = useState(0)
 
   useEffect(() => {
-    if (cache.has(url)) {
-      setResult(cache.get(url))
-      return
+    if (!enabled) {
+      setResult(null)
+      return undefined
     }
     let alive = true
-    load(url).then((r) => { if (alive) setResult(r) })
+    const cached = cache.get(url)
+    setResult(cached ? { data: cached, error: null } : null)
+    load(url, { force: revision > 0 })
+      .then((data) => { if (alive) setResult({ data, error: null }) })
+      .catch((error) => { if (alive) setResult((current) => ({ data: current?.data || cached || null, error })) })
     return () => { alive = false }
-  }, [url])
+  }, [enabled, revision, url])
+
+  const retry = useCallback(() => setRevision((value) => value + 1), [])
 
   return {
     data: result?.data ?? null,
     error: result?.error ?? null,
-    loading: !result,
+    loading: enabled && !result,
+    retry,
   }
+}
+
+export function __resetDataCacheForTests() {
+  cache.clear()
+  inflight.clear()
 }

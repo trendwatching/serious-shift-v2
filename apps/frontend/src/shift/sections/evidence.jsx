@@ -34,7 +34,16 @@ export function Evidence({ items }) {
                 <span className="font-semibold">So what — </span>{c.implication}
               </span>
             )}
-            {c.source && <span className="text-[11.5px]" style={{ color: 'var(--color-ink-dim)' }}>{c.source}</span>}
+            {c.url && (
+              <a
+                href={c.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11.5px] underline underline-offset-2"
+                style={{ color: 'var(--color-link)' }}
+                aria-label={`Read source: ${c.source || 'external evidence'}`}
+              >{c.source || 'Source'}</a>
+            )}
           </div>
         ))}
       </div>

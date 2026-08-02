@@ -31,7 +31,7 @@ def route_claims_for_domain(conn, domain: dict, limit: int = CLAIMS_PER_DOM) -> 
         SELECT c.id, c.claim_text, c.quote, c.consumer_implication,
                c.signal_strength, c.specificity, c.domain AS claim_domain,
                t.name AS thinker, t.credibility_score, t.discovered AS thinker_discovered,
-               s.title AS source_title, s.date_published
+               s.title AS source_title, s.date_published, s.url AS source_url
         FROM claims c
         JOIN thinkers t ON c.thinker_id = t.id
         LEFT JOIN sources s ON c.source_id = s.id

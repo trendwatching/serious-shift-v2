@@ -43,14 +43,19 @@ def parse_thinker_attribution(raw, thinker_groups: dict | None = None) -> dict:
     if not isinstance(raw, dict):
         return result
 
-    # {thinker name -> {normalised quote -> original quote}}
-    allowed: dict[str, dict[str, str]] = {}
+    # {thinker name -> {normalised quote -> verified claim metadata}}
+    allowed: dict[str, dict[str, dict]] = {}
     for name, clms in (thinker_groups or {}).items():
         quotes = {}
         for c in clms:
             q = (c.get('quote') or '').strip() if isinstance(c, dict) else ''
             if q:
-                quotes[_normalise(q)] = q
+                quotes[_normalise(q)] = {
+                    'quote': q,
+                    'source': c.get('source_title') or '',
+                    'date': str(c.get('date_published') or '')[:10],
+                    'url': c.get('source_url') or '',
+                }
         allowed[_normalise(name)] = quotes
 
     for k in ('proponents', 'skeptics'):
@@ -61,12 +66,16 @@ def parse_thinker_attribution(raw, thinker_groups: dict | None = None) -> dict:
             said = allowed.get(_normalise(name))
             if not said:
                 continue  # not a thinker we supplied, or they had no quotes
-            verbatim = said.get(_normalise(str(x.get('quote', ''))))
-            if not verbatim:
+            verified = said.get(_normalise(str(x.get('quote', ''))))
+            if not verified:
                 continue  # not something this thinker demonstrably said
             # Store OUR copy of the quote, not the model's, so any whitespace or
             # punctuation drift never reaches the page.
-            result[k].append({'name': name, 'quote': verbatim})
+            item = {'name': name, 'quote': verified['quote']}
+            for field in ('source', 'date', 'url'):
+                if verified.get(field):
+                    item[field] = verified[field]
+            result[k].append(item)
     return result
 
 

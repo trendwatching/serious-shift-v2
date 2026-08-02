@@ -11,6 +11,15 @@ function VoiceColumn({ title, people, grad, shadow }) {
           <div key={`${p.name}-${i}`} className="rounded-2xl bg-white px-4 py-4 flex flex-col gap-2 lg:px-5 lg:py-5" style={{ boxShadow: '0 4px 14px rgba(27,22,32,0.12)' }}>
             <span className="t-display text-[14px] lg:text-[16px]" style={{ letterSpacing: '-0.01em' }}>{p.name}</span>
             <span className="t-body text-pretty" style={{ color: 'var(--color-ink-strong)' }}>“{p.quote}”</span>
+            {p.url && (
+              <a
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11.5px] underline underline-offset-2"
+                aria-label={`Read source: ${p.source || p.name}`}
+              >{p.source || 'Source'}{p.date ? ` · ${p.date}` : ''}</a>
+            )}
           </div>
         ))}
       </div>

@@ -39,12 +39,16 @@ jobs:
           sudo chmod +x /usr/local/bin/dbmate
           ( cd packages/db && DBMATE_MIGRATIONS_DIR=./migrations dbmate up )
           psql "$DATABASE_URL" -c "INSERT INTO thinkers (name, credibility_score) VALUES ('Smoke Test', 70);"
-          psql "$DATABASE_URL" -c "INSERT INTO documents (key, body) VALUES ('map', '{\"updated\":\"2026-08-01\",\"domains\":[{\"id\":\"society\",\"name\":\"Society\",\"short_description\":\"Test domain\"}],\"key_trends\":[{\"id\":\"kt-1\",\"domain_id\":\"society\",\"slug\":\"test-shift\",\"name\":\"Test Shift\",\"subtitle\":\"Test\"}],\"sub_trends\":[]}'::jsonb);"
+          psql "$DATABASE_URL" -c "INSERT INTO documents (key, body) VALUES ('map', '{\"updated\":\"2026-08-01\",\"domains\":[{\"id\":\"society\",\"name\":\"Society\",\"short_description\":\"Test domain\"}],\"key_trends\":[{\"id\":\"kt-1\",\"domain_id\":\"society\",\"slug\":\"test-shift\",\"name\":\"Test Shift\",\"subtitle\":\"Test\",\"modules\":[]}],\"sub_trends\":[{\"id\":\"st-1\",\"key_trend_id\":\"kt-1\",\"domain_id\":\"society\",\"slug\":\"test-shift/test-sub\",\"name\":\"Test Sub\",\"modules\":[]}],\"synthesis_insights\":[]}'::jsonb);"
 
       - name: Lint
         run: |
           cargo fmt --check
           cargo clippy -- -D warnings
+        working-directory: apps/backend
+
+      - name: Test
+        run: cargo test
         working-directory: apps/backend
 
       - name: Dependency audit
@@ -130,6 +134,10 @@ jobs:
           # the colon — so tolerate optional whitespace rather than assuming
           # serde's compact form.
           check /api/map '"updated": *"2026-08-01"'
+          check /api/v1/map '"key_shifts":1'
+          check /api/v1/map/society '"key_shifts"'
+          check /api/v1/map/society/test-shift '"sub_shifts"'
+          check /api/v1/map/society/test-shift/test-sub '"parent_shift"'
           check_auth /api/claims '\[\]'
 
           # Unknown /api paths must 404 as JSON. The SPA fallback sits behind the
@@ -142,6 +150,7 @@ jobs:
             [ "$code" = "$3" ] || { echo "::error::$2 returned $code, expected $3"; fail=1; }
           }
           expect_code GET  /api/nonexistent          404
+          expect_code GET  /api/v1/map/no-such-domain 404
           expect_code GET  /this-route-does-not-exist 404
           expect_code GET  /map/society/test-shift  200
           expect_code GET  /api/thinkers             401
@@ -162,7 +171,16 @@ jobs:
           check_headers /
           check_headers /map/society/test-shift
           check_headers /test.txt
+          check_headers /_next/static/test.js
+          check_headers /api/v1/map
           check_headers /this-route-does-not-exist
+
+          etag=$(curl -sS -D - -o /dev/null --max-time 5 "$BASE/api/v1/map/society" \
+            | awk 'BEGIN{IGNORECASE=1} /^etag:/{gsub("\\r", ""); print $2}')
+          [ -n "$etag" ] || { echo "::error::v1 domain response missing ETag"; fail=1; }
+          code=$(curl -sS -o /dev/null --max-time 5 -H "If-None-Match: $etag" \
+            -w '%{http_code}' "$BASE/api/v1/map/society")
+          [ "$code" = "304" ] || { echo "::error::matching ETag returned $code, expected 304"; fail=1; }
 
           kill "$SERVER" 2>/dev/null || true
           exit "$fail"

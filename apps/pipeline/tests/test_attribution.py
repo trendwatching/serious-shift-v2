@@ -90,6 +90,27 @@ def test_the_stored_quote_is_ours_not_the_models():
     assert out["proponents"][0]["quote"] == REAL
 
 
+def test_verified_quote_preserves_source_metadata():
+    groups = {
+        "Jakob Nielsen": [{
+            "quote": REAL,
+            "source_title": "Conversion research",
+            "date_published": "2026-07-02",
+            "source_url": "https://example.com/research",
+        }],
+    }
+    out = parse_thinker_attribution(
+        {"proponents": [{"name": "Jakob Nielsen", "quote": REAL}]}, groups,
+    )
+    assert out["proponents"][0] == {
+        "name": "Jakob Nielsen",
+        "quote": REAL,
+        "source": "Conversion research",
+        "date": "2026-07-02",
+        "url": "https://example.com/research",
+    }
+
+
 # ── Fail closed ───────────────────────────────────────────────────────────────
 
 def test_without_evidence_nothing_is_trusted():

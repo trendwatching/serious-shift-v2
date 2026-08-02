@@ -229,13 +229,19 @@
         "proponents": [
           {
             "name": "string",
-            "quote": "string"
+            "quote": "string",
+            "source": "string?",
+            "date": "string?",
+            "url": "string?"
           }
         ],
         "skeptics": [
           {
             "name": "string",
-            "quote": "string"
+            "quote": "string",
+            "source": "string?",
+            "date": "string?",
+            "url": "string?"
           }
         ]
       },
@@ -250,6 +256,7 @@
             "thinker": "string",
             "source": "string?",
             "date": "string?",
+            "url": "string",
             "strength": "string?",
             "implication": "string?"
           }

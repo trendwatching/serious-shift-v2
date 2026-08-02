@@ -16,7 +16,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use axum::{
-    extract::{ConnectInfo, DefaultBodyLimit, Query, State},
+    extract::{ConnectInfo, DefaultBodyLimit, Path as AxumPath, Query, State},
     http::{header, HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::{IntoResponse, Response},
     routing::{any, get, post},
@@ -129,10 +129,21 @@ fn public_origin() -> String {
 /// told nothing had changed.
 const IMMUTABLE: &str = "public, max-age=31536000, immutable";
 
-/// TTL-cached raw JSON for the map document (the only one served).
-type DocCache = Arc<Mutex<Option<(Instant, Arc<str>)>>>;
-/// Route → page metadata, rebuilt whenever the document cache refreshes.
-type MetaCache = Arc<Mutex<Option<(Instant, Arc<seo::SiteIndex>)>>>;
+#[derive(Clone)]
+struct RouteFragment {
+    body: Arc<str>,
+    etag: HeaderValue,
+}
+
+/// One immutable, parsed publication. The legacy body, route fragments and SEO
+/// index are derived together so readers can never observe a mixture of two
+/// weekly map versions.
+struct MapSnapshot {
+    loaded_at: Instant,
+    full_body: Arc<str>,
+    routes: HashMap<String, RouteFragment>,
+    site_index: Arc<seo::SiteIndex>,
+}
 
 #[derive(Clone)]
 struct AppState {
@@ -141,13 +152,10 @@ struct AppState {
     ingest_token: Option<String>,
     /// Shared secret for the operator-only inspection endpoints.
     inspection_token: Option<String>,
-    // Cached map document JSON. It is large (~1 MB) and changes ~weekly, so we
-    // serve the raw JSON text from memory — skipping the Postgres read + serde
-    // round-trip on every request.
-    docs: DocCache,
-    // Route → title/description, derived from the same document. Parsing ~1 MB
-    // of JSON per HTML request would be absurd; this is built once per refresh.
-    meta: MetaCache,
+    /// Current immutable publication. Reads are concurrent; only the process
+    /// that refreshes after the TTL takes the separate refresh mutex.
+    snapshot: Arc<tokio::sync::RwLock<Option<Arc<MapSnapshot>>>>,
+    refresh_lock: Arc<tokio::sync::Mutex<()>>,
     /// The exported `index.html`, read once. Every SPA route is this shell with
     /// its `<head>` rewritten.
     shell: Arc<str>,
@@ -156,6 +164,9 @@ struct AppState {
     /// Deliberately strict compatibility limit for the deprecated full map.
     legacy_map_limiter: Arc<RateLimiter>,
     legacy_map_concurrency: Arc<tokio::sync::Semaphore>,
+    /// Public route fragments are intentionally generous for normal browsing,
+    /// while still bounded against abusive crawlers.
+    public_v1_limiter: Arc<RateLimiter>,
 }
 
 #[derive(Debug)]
@@ -234,12 +245,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         pool,
         ingest_token,
         inspection_token,
-        docs: Arc::new(Mutex::new(None)),
-        meta: Arc::new(Mutex::new(None)),
+        snapshot: Arc::new(tokio::sync::RwLock::new(None)),
+        refresh_lock: Arc::new(tokio::sync::Mutex::new(())),
         shell: Arc::from(read_shell()),
         origin: Arc::from(public_origin()),
         legacy_map_limiter: Arc::new(RateLimiter::per_minute(10, 2)),
         legacy_map_concurrency: Arc::new(tokio::sync::Semaphore::new(2)),
+        public_v1_limiter: Arc::new(RateLimiter::per_minute(120, 30)),
     };
 
     // The fallback service needs its own handle: `with_state` below consumes
@@ -257,6 +269,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/predictions", get(predictions))
         .route("/api/stats", get(stats))
         .route("/api/map", get(map))
+        .route("/api/v1/map", get(map_index_v1))
+        .route("/api/v1/map/:domain", get(map_domain_v1))
+        .route("/api/v1/map/:domain/:shift", get(map_shift_v1))
+        .route("/api/v1/map/:domain/:shift/:subshift", get(map_subshift_v1))
         // Generated from the map document, so they track the current shifts
         // rather than whatever was true when the image was built. Both used to
         // fall through to the SPA and answer 200 text/html.
@@ -326,7 +342,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             StatusCode::REQUEST_TIMEOUT,
             Duration::from_secs(10),
         ))
-        .layer(CompressionLayer::new().gzip(true))
+        .layer(CompressionLayer::new().br(true).gzip(true))
         .layer(cors_layer());
 
     let port = env::var("PORT").unwrap_or_else(|_| "8080".into());
@@ -356,12 +372,14 @@ async fn health(State(s): State<AppState>) -> Result<&'static str, AppError> {
 
 static ERROR_SEQUENCE: AtomicU64 = AtomicU64::new(1);
 
+#[derive(Debug)]
 struct AppError {
     status: StatusCode,
     code: &'static str,
     message: String,
     request_id: String,
     retry_after: Option<u64>,
+    rate_limit: Option<u64>,
 }
 
 impl AppError {
@@ -372,6 +390,7 @@ impl AppError {
             message: message.into(),
             request_id: next_error_id(),
             retry_after: None,
+            rate_limit: None,
         }
     }
 
@@ -384,6 +403,7 @@ impl AppError {
             message: "The request could not be completed.".into(),
             request_id,
             retry_after: None,
+            rate_limit: None,
         }
     }
 
@@ -394,6 +414,18 @@ impl AppError {
             message: "Too many requests. Try again shortly.".into(),
             request_id: next_error_id(),
             retry_after: Some(retry_after),
+            rate_limit: Some(10),
+        }
+    }
+
+    fn rate_limited_with_limit(retry_after: u64, limit: u64) -> Self {
+        Self {
+            status: StatusCode::TOO_MANY_REQUESTS,
+            code: "rate_limited",
+            message: "Too many requests. Try again shortly.".into(),
+            request_id: next_error_id(),
+            retry_after: Some(retry_after),
+            rate_limit: Some(limit),
         }
     }
 }
@@ -429,7 +461,11 @@ impl IntoResponse for AppError {
                 header::RETRY_AFTER,
                 HeaderValue::from_str(&seconds.to_string()).unwrap(),
             );
-            insert_u64_header(response.headers_mut(), "ratelimit-limit", 10);
+            insert_u64_header(
+                response.headers_mut(),
+                "ratelimit-limit",
+                self.rate_limit.unwrap_or(10),
+            );
             insert_u64_header(response.headers_mut(), "ratelimit-remaining", 0);
         }
         response
@@ -532,23 +568,304 @@ async fn stats(State(s): State<AppState>, headers: HeaderMap) -> Result<Json<Val
 
 // ── /api/map ───────────────────────────────────────────────────────────────────
 
-/// Serve a cached document as raw JSON. The body is the verbatim text from
-/// Postgres (jsonb::text) — no parse/re-serialize — with cache headers so the
-/// browser/proxy cache it too.
-fn doc_response(body: Arc<str>) -> Response {
+const PUBLIC_CACHE_CONTROL: &str = "public, max-age=60, stale-while-revalidate=300";
+
+fn string_field<'a>(value: &'a Value, key: &str) -> &'a str {
+    value.get(key).and_then(Value::as_str).unwrap_or_default()
+}
+
+fn key_shift_summary(shift: &Value, sub_count: usize) -> Value {
+    json!({
+        "id": shift.get("id").cloned().unwrap_or(Value::Null),
+        "domain_id": shift.get("domain_id").cloned().unwrap_or(Value::Null),
+        "slug": shift.get("slug").cloned().unwrap_or(Value::Null),
+        "name": shift.get("name").cloned().unwrap_or(Value::Null),
+        "subtitle": shift.get("subtitle").cloned().unwrap_or(Value::Null),
+        "velocity": shift.get("velocity").cloned().unwrap_or(Value::Null),
+        "read_time": shift.get("read_time").cloned().unwrap_or(Value::Null),
+        "sub_shift_count": sub_count,
+    })
+}
+
+fn sub_shift_summary(sub: &Value) -> Value {
+    let full_slug = string_field(sub, "slug");
+    json!({
+        "id": sub.get("id").cloned().unwrap_or(Value::Null),
+        "key_trend_id": sub.get("key_trend_id").cloned().unwrap_or(Value::Null),
+        "domain_id": sub.get("domain_id").cloned().unwrap_or(Value::Null),
+        "slug": full_slug.rsplit('/').next().unwrap_or(full_slug),
+        "name": sub.get("name").cloned().unwrap_or(Value::Null),
+        "subtitle": sub.get("subtitle").cloned().unwrap_or(Value::Null),
+        "description": sub.get("description").cloned().unwrap_or(Value::Null),
+    })
+}
+
+fn domain_summary(domain: &Value, shift_count: usize) -> Value {
+    json!({
+        "id": domain.get("id").cloned().unwrap_or(Value::Null),
+        "name": domain.get("name").cloned().unwrap_or(Value::Null),
+        "label": domain.get("label").cloned().unwrap_or(Value::Null),
+        "short_description": domain.get("short_description").cloned().unwrap_or(Value::Null),
+        "description": domain.get("description").cloned().unwrap_or(Value::Null),
+        "horizon": domain.get("horizon").cloned().unwrap_or(Value::Null),
+        "key_shift_count": shift_count,
+    })
+}
+
+fn weak_etag(version: &str, identity: &str) -> HeaderValue {
+    // Deterministic FNV-1a is sufficient here: this is a cache validator, not a
+    // signature. Including route identity prevents two fragments from sharing
+    // an ETag even when their bytes happen to match.
+    let mut hash = 0xcbf29ce484222325u64;
+    for byte in version.bytes().chain([0]).chain(identity.bytes()) {
+        hash ^= u64::from(byte);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    HeaderValue::from_str(&format!("W/\"{hash:016x}\"")).unwrap()
+}
+
+fn route_fragment(version: &str, identity: &str, value: Value) -> RouteFragment {
+    RouteFragment {
+        body: Arc::from(serde_json::to_string(&value).expect("JSON Value must serialize")),
+        etag: weak_etag(version, identity),
+    }
+}
+
+/// Parse one publication and derive every public response exactly once.
+fn build_snapshot(body: String, version: &str) -> Result<MapSnapshot, serde_json::Error> {
+    let document: Value = serde_json::from_str(&body)?;
+    let domains = document
+        .get("domains")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let shifts = document
+        .get("key_trends")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let subs = document
+        .get("sub_trends")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let insights = document
+        .get("synthesis_insights")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+
+    let mut shifts_by_domain: HashMap<&str, Vec<&Value>> = HashMap::new();
+    let mut subs_by_shift: HashMap<&str, Vec<&Value>> = HashMap::new();
+    for shift in &shifts {
+        shifts_by_domain
+            .entry(string_field(shift, "domain_id"))
+            .or_default()
+            .push(shift);
+    }
+    for sub in &subs {
+        subs_by_shift
+            .entry(string_field(sub, "key_trend_id"))
+            .or_default()
+            .push(sub);
+    }
+
+    let updated = document.get("updated").cloned().unwrap_or(Value::Null);
+    let domain_summaries: Vec<Value> = domains
+        .iter()
+        .map(|domain| {
+            domain_summary(
+                domain,
+                shifts_by_domain
+                    .get(string_field(domain, "id"))
+                    .map_or(0, |items| items.len()),
+            )
+        })
+        .collect();
+    let mut routes = HashMap::new();
+    routes.insert(
+        String::new(),
+        route_fragment(
+            version,
+            "index",
+            json!({
+                "updated": updated,
+                "totals": {
+                    "domains": domains.len(),
+                    "key_shifts": shifts.len(),
+                    "sub_shifts": subs.len(),
+                },
+                "domains": domain_summaries,
+            }),
+        ),
+    );
+
+    for domain in &domains {
+        let domain_id = string_field(domain, "id");
+        if domain_id.is_empty() {
+            continue;
+        }
+        let domain_shifts = shifts_by_domain.get(domain_id).cloned().unwrap_or_default();
+        let domain_shift_count = domain_shifts.len();
+        let summaries: Vec<Value> = domain_shifts
+            .iter()
+            .map(|shift| {
+                key_shift_summary(
+                    shift,
+                    subs_by_shift
+                        .get(string_field(shift, "id"))
+                        .map_or(0, |items| items.len()),
+                )
+            })
+            .collect();
+        let domain_insights: Vec<Value> = insights
+            .iter()
+            .filter(|item| string_field(item, "domain_id") == domain_id)
+            .cloned()
+            .collect();
+        routes.insert(
+            domain_id.to_string(),
+            route_fragment(
+                version,
+                domain_id,
+                json!({
+                    "updated": updated,
+                    "domain": domain_summary(domain, domain_shift_count),
+                    "key_shifts": summaries,
+                    "insights": domain_insights,
+                }),
+            ),
+        );
+
+        for shift in domain_shifts {
+            let shift_slug = string_field(shift, "slug");
+            let shift_id = string_field(shift, "id");
+            if shift_slug.is_empty() || shift_id.is_empty() {
+                continue;
+            }
+            let route_id = format!("{domain_id}/{shift_slug}");
+            let shift_subs = subs_by_shift.get(shift_id).cloned().unwrap_or_default();
+            let sub_summaries: Vec<Value> = shift_subs
+                .iter()
+                .map(|sub| sub_shift_summary(sub))
+                .collect();
+            routes.insert(
+                route_id.clone(),
+                route_fragment(
+                    version,
+                    &route_id,
+                    json!({
+                        "updated": updated,
+                        "domain": domain_summary(domain, domain_shift_count),
+                        "shift": shift,
+                        "sub_shifts": sub_summaries,
+                    }),
+                ),
+            );
+
+            for sub in &shift_subs {
+                let full_slug = string_field(sub, "slug");
+                let sub_slug = full_slug.rsplit('/').next().unwrap_or(full_slug);
+                if sub_slug.is_empty() {
+                    continue;
+                }
+                let sub_route_id = format!("{route_id}/{sub_slug}");
+                let siblings: Vec<Value> = shift_subs
+                    .iter()
+                    .map(|sibling| sub_shift_summary(sibling))
+                    .collect();
+                routes.insert(
+                    sub_route_id.clone(),
+                    route_fragment(
+                        version,
+                        &sub_route_id,
+                        json!({
+                            "updated": updated,
+                            "domain": domain_summary(domain, domain_shift_count),
+                            "parent_shift": key_shift_summary(shift, shift_subs.len()),
+                            "sub_shift": sub,
+                            "siblings": siblings,
+                        }),
+                    ),
+                );
+            }
+        }
+    }
+
+    Ok(MapSnapshot {
+        loaded_at: Instant::now(),
+        site_index: Arc::new(seo::build_index(&body)),
+        full_body: Arc::from(body),
+        routes,
+    })
+}
+
+async fn fetch_snapshot(s: &AppState) -> Result<Arc<MapSnapshot>, AppError> {
+    let row: Option<(String, String)> =
+        sqlx::query_as("SELECT body::text, updated_at::text FROM documents WHERE key = 'map'")
+            .fetch_optional(&s.pool)
+            .await?;
+    let (body, version) = row.ok_or_else(|| {
+        AppError::public(
+            StatusCode::NOT_FOUND,
+            "not_found",
+            "Map document not found.",
+        )
+    })?;
+    build_snapshot(body, &version)
+        .map(Arc::new)
+        .map_err(|error| AppError::internal(format!("invalid published map JSON: {error}")))
+}
+
+/// Current snapshot, with one refresh under concurrent misses. If Postgres is
+/// briefly unavailable after the TTL, keep serving the last known good map.
+async fn map_snapshot(s: &AppState) -> Result<Arc<MapSnapshot>, AppError> {
+    if let Some(snapshot) = s.snapshot.read().await.as_ref().cloned() {
+        if snapshot.loaded_at.elapsed() < DOC_CACHE_TTL {
+            return Ok(snapshot);
+        }
+    }
+
+    let _refresh = s.refresh_lock.lock().await;
+    if let Some(snapshot) = s.snapshot.read().await.as_ref().cloned() {
+        if snapshot.loaded_at.elapsed() < DOC_CACHE_TTL {
+            return Ok(snapshot);
+        }
+    }
+
+    match fetch_snapshot(s).await {
+        Ok(snapshot) => {
+            *s.snapshot.write().await = Some(snapshot.clone());
+            Ok(snapshot)
+        }
+        Err(error) => {
+            if let Some(snapshot) = s.snapshot.read().await.as_ref().cloned() {
+                tracing::warn!(request_id = %error.request_id, "map refresh failed; serving last good snapshot");
+                Ok(snapshot)
+            } else {
+                Err(error)
+            }
+        }
+    }
+}
+
+async fn site_index(s: &AppState) -> Arc<seo::SiteIndex> {
+    map_snapshot(s)
+        .await
+        .map(|snapshot| snapshot.site_index.clone())
+        .unwrap_or_else(|_| Arc::new(seo::SiteIndex::default()))
+}
+
+fn json_response(body: Arc<str>) -> Response {
     (
         [
             (
                 header::CONTENT_TYPE,
                 HeaderValue::from_static("application/json"),
             ),
-            // Short window on purpose. These documents are rewritten whenever the
-            // pipeline runs, and a long stale-while-revalidate meant a browser
-            // served yesterday's copy for up to a day after a regeneration —
-            // the content looked "missing" even though the API was correct.
             (
                 header::CACHE_CONTROL,
-                HeaderValue::from_static("public, max-age=60, stale-while-revalidate=300"),
+                HeaderValue::from_static(PUBLIC_CACHE_CONTROL),
             ),
         ],
         body.as_ref().to_owned(),
@@ -556,49 +873,81 @@ fn doc_response(body: Arc<str>) -> Response {
         .into_response()
 }
 
-/// The map document as raw text, from cache when fresh.
-async fn map_doc(s: &AppState) -> Result<Arc<str>, AppError> {
-    if let Some(body) = {
-        let cache = s.docs.lock().unwrap();
-        cache
-            .as_ref()
-            .and_then(|(at, body)| (at.elapsed() < DOC_CACHE_TTL).then(|| body.clone()))
-    } {
-        return Ok(body);
-    }
-    let body: Option<String> =
-        sqlx::query_scalar("SELECT body::text FROM documents WHERE key = 'map'")
-            .fetch_optional(&s.pool)
-            .await?;
-    let body = body.ok_or_else(|| {
-        AppError::public(
-            StatusCode::NOT_FOUND,
-            "not_found",
-            "Map document not found.",
-        )
-    })?;
-    let body: Arc<str> = Arc::from(body);
-    *s.docs.lock().unwrap() = Some((Instant::now(), body.clone()));
-    Ok(body)
+fn fragment_response(fragment: &RouteFragment, headers: &HeaderMap, remaining: u32) -> Response {
+    let not_modified = headers
+        .get(header::IF_NONE_MATCH)
+        .is_some_and(|value| value == fragment.etag);
+    let mut response = if not_modified {
+        StatusCode::NOT_MODIFIED.into_response()
+    } else {
+        json_response(fragment.body.clone())
+    };
+    response
+        .headers_mut()
+        .insert(header::ETAG, fragment.etag.clone());
+    response.headers_mut().insert(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static(PUBLIC_CACHE_CONTROL),
+    );
+    insert_u64_header(response.headers_mut(), "ratelimit-limit", 120);
+    insert_u64_header(
+        response.headers_mut(),
+        "ratelimit-remaining",
+        u64::from(remaining),
+    );
+    response
 }
 
-/// Route index, rebuilt when the document cache turns over.
-async fn site_index(s: &AppState) -> Arc<seo::SiteIndex> {
-    if let Some(idx) = {
-        let c = s.meta.lock().unwrap();
-        c.as_ref()
-            .and_then(|(at, idx)| (at.elapsed() < DOC_CACHE_TTL).then(|| idx.clone()))
-    } {
-        return idx;
-    }
-    // A missing document must not break page serving — fall back to an empty
-    // index, which leaves the shell's build-time metadata in place.
-    let idx = match map_doc(s).await {
-        Ok(doc) => Arc::new(seo::build_index(&doc)),
-        Err(_) => Arc::new(seo::SiteIndex::default()),
-    };
-    *s.meta.lock().unwrap() = Some((Instant::now(), idx.clone()));
-    idx
+async fn public_fragment(
+    s: &AppState,
+    headers: &HeaderMap,
+    peer: SocketAddr,
+    identity: String,
+) -> Result<Response, AppError> {
+    let remaining = s
+        .public_v1_limiter
+        .check(client_ip(headers, peer))
+        .map_err(|seconds| AppError::rate_limited_with_limit(seconds, 120))?;
+    let snapshot = map_snapshot(s).await?;
+    let fragment = snapshot.routes.get(&identity).ok_or_else(|| {
+        AppError::public(StatusCode::NOT_FOUND, "not_found", "Map route not found.")
+    })?;
+    Ok(fragment_response(fragment, headers, remaining))
+}
+
+async fn map_index_v1(
+    State(s): State<AppState>,
+    headers: HeaderMap,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+) -> Result<Response, AppError> {
+    public_fragment(&s, &headers, peer, String::new()).await
+}
+
+async fn map_domain_v1(
+    State(s): State<AppState>,
+    AxumPath(domain): AxumPath<String>,
+    headers: HeaderMap,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+) -> Result<Response, AppError> {
+    public_fragment(&s, &headers, peer, domain).await
+}
+
+async fn map_shift_v1(
+    State(s): State<AppState>,
+    AxumPath((domain, shift)): AxumPath<(String, String)>,
+    headers: HeaderMap,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+) -> Result<Response, AppError> {
+    public_fragment(&s, &headers, peer, format!("{domain}/{shift}")).await
+}
+
+async fn map_subshift_v1(
+    State(s): State<AppState>,
+    AxumPath((domain, shift, subshift)): AxumPath<(String, String, String)>,
+    headers: HeaderMap,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+) -> Result<Response, AppError> {
+    public_fragment(&s, &headers, peer, format!("{domain}/{shift}/{subshift}")).await
 }
 
 fn client_ip(headers: &HeaderMap, peer: SocketAddr) -> IpAddr {
@@ -642,7 +991,7 @@ async fn map(
         .try_acquire_owned()
         .map_err(|_| AppError::rate_limited(1))?;
 
-    let mut response = doc_response(map_doc(&s).await?);
+    let mut response = json_response(map_snapshot(&s).await?.full_body.clone());
     let response_headers = response.headers_mut();
     response_headers.insert(
         HeaderName::from_static("deprecation"),
@@ -943,5 +1292,135 @@ mod tests {
         headers.insert("x-forwarded-for", HeaderValue::from_static("198.51.100.4"));
         let peer: SocketAddr = "127.0.0.1:1234".parse().unwrap();
         assert_eq!(client_ip(&headers, peer), peer.ip());
+    }
+
+    fn sample_map() -> String {
+        json!({
+            "updated": "2026-08-02",
+            "domains": [{
+                "id": "society", "name": "Society", "label": "AI × Society",
+                "short_description": "A domain", "description": "Longer domain copy",
+                "horizon": "2028", "key_trend_ids": ["kt-1"]
+            }],
+            "key_trends": [{
+                "id": "kt-1", "domain_id": "society", "slug": "trust-machines",
+                "name": "Trust Machines", "subtitle": "A shift", "velocity": "rising",
+                "read_time": "4 min read", "sub_trend_ids": ["st-1"],
+                "modules": [{"type": "dek", "data": {"text": "A shift"}}]
+            }],
+            "sub_trends": [{
+                "id": "st-1", "key_trend_id": "kt-1", "domain_id": "society",
+                "slug": "trust-machines/proof-of-human", "name": "Proof of Human",
+                "subtitle": "A sub-shift", "description": "Sub copy",
+                "modules": [{"type": "lede", "data": {"text": "Sub copy"}}]
+            }],
+            "synthesis_insights": [{
+                "id": 1, "domain_id": "society", "name": "Trust moves",
+                "description": "Verification becomes a product."
+            }]
+        })
+        .to_string()
+    }
+
+    #[test]
+    fn route_snapshot_has_distinct_scoped_documents_and_etags() {
+        let snapshot = build_snapshot(sample_map(), "2026-08-02 14:00:00+00").unwrap();
+        let index = snapshot.routes.get("").unwrap();
+        let domain = snapshot.routes.get("society").unwrap();
+        let shift = snapshot.routes.get("society/trust-machines").unwrap();
+        let sub = snapshot
+            .routes
+            .get("society/trust-machines/proof-of-human")
+            .unwrap();
+
+        let index_json: Value = serde_json::from_str(&index.body).unwrap();
+        let domain_json: Value = serde_json::from_str(&domain.body).unwrap();
+        let shift_json: Value = serde_json::from_str(&shift.body).unwrap();
+        let sub_json: Value = serde_json::from_str(&sub.body).unwrap();
+        assert!(index_json.get("totals").is_some());
+        assert!(index_json.get("key_trends").is_none());
+        assert!(domain_json.get("key_shifts").is_some());
+        assert!(shift_json.get("shift").is_some());
+        assert!(shift_json.get("sub_shifts").is_some());
+        assert!(sub_json.get("parent_shift").is_some());
+        assert!(sub_json.get("siblings").is_some());
+        assert_ne!(index.etag, domain.etag);
+        assert_ne!(domain.etag, shift.etag);
+        assert_ne!(shift.etag, sub.etag);
+    }
+
+    #[test]
+    fn matching_etag_returns_304_without_a_body() {
+        let snapshot = build_snapshot(sample_map(), "version").unwrap();
+        let fragment = snapshot.routes.get("society").unwrap();
+        let mut headers = HeaderMap::new();
+        headers.insert(header::IF_NONE_MATCH, fragment.etag.clone());
+        let response = fragment_response(fragment, &headers, 29);
+        assert_eq!(response.status(), StatusCode::NOT_MODIFIED);
+        assert_eq!(response.headers().get(header::ETAG), Some(&fragment.etag));
+    }
+
+    #[test]
+    fn route_fragments_fit_compressed_response_budgets() {
+        use std::io::Write;
+
+        let snapshot = build_snapshot(sample_map(), "version").unwrap();
+        for (route, budget) in [
+            ("", 25 * 1024),
+            ("society", 75 * 1024),
+            ("society/trust-machines", 100 * 1024),
+            ("society/trust-machines/proof-of-human", 100 * 1024),
+        ] {
+            let body = snapshot.routes.get(route).unwrap().body.as_bytes();
+            let mut compressed = Vec::new();
+            {
+                let mut writer = brotli::CompressorWriter::new(&mut compressed, 4096, 6, 20);
+                writer.write_all(body).unwrap();
+            }
+            assert!(
+                compressed.len() <= budget,
+                "{route:?} compressed to {} bytes (budget {budget})",
+                compressed.len()
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn concurrent_cold_reads_share_one_snapshot_refresh() {
+        let Ok(database_url) = std::env::var("DATABASE_URL") else {
+            return; // DB-backed in CI; unit-only local runs remain self-contained.
+        };
+        let pool = PgPoolOptions::new()
+            .max_connections(4)
+            .connect(&database_url)
+            .await
+            .unwrap();
+        let state = AppState {
+            pool,
+            ingest_token: None,
+            inspection_token: None,
+            snapshot: Arc::new(tokio::sync::RwLock::new(None)),
+            refresh_lock: Arc::new(tokio::sync::Mutex::new(())),
+            shell: Arc::from(""),
+            origin: Arc::from(""),
+            legacy_map_limiter: Arc::new(RateLimiter::per_minute(10, 2)),
+            legacy_map_concurrency: Arc::new(tokio::sync::Semaphore::new(2)),
+            public_v1_limiter: Arc::new(RateLimiter::per_minute(120, 30)),
+        };
+
+        let mut tasks = tokio::task::JoinSet::new();
+        for _ in 0..20 {
+            let cloned = state.clone();
+            tasks.spawn(async move { map_snapshot(&cloned).await.unwrap() });
+        }
+        let mut snapshots = Vec::new();
+        while let Some(result) = tasks.join_next().await {
+            snapshots.push(result.unwrap());
+        }
+        assert_eq!(snapshots.len(), 20);
+        assert!(snapshots
+            .iter()
+            .skip(1)
+            .all(|snapshot| Arc::ptr_eq(&snapshots[0], snapshot)));
     }
 }

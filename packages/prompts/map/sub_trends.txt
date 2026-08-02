@@ -3,7 +3,7 @@
 You are synthesising trend intelligence for Serious Shift — a consumer trend platform tracking AGI-driven shifts.
 
 TASK
-Identify 3–5 coherent SUB-TRENDS that emerge from the evidence below. Each sub-trend is a distinct, named micro-pattern that a brand strategist or consumer researcher would recognise as real.
+Identify exactly 5 coherent SUB-TRENDS that emerge from the evidence below. Each sub-trend is a distinct, named micro-pattern that a brand strategist or consumer researcher would recognise as real. Returning fewer or more than 5 invalidates the publication.
 
 RULES FOR SUB-TREND NAMES
 - 1–2 words. Short, intriguing, memorable (NOT "AI Adoption", "Trust Issues", "Changing Behavior"). Alliteration welcome, not required.
