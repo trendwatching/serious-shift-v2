@@ -5,6 +5,7 @@
 //!      PORT (default 8080), FRONTEND_ORIGIN (CORS allowlist, comma-separated).
 
 mod prompts;
+mod seo;
 mod sql;
 
 use std::collections::HashMap;
@@ -89,6 +90,39 @@ fn static_service() -> ServeDir<SetStatus<ServeFile>> {
     ServeDir::new(&dir).fallback(SetStatus::new(ServeFile::new(index), StatusCode::OK))
 }
 
+/// The exported `index.html`, or an empty string when there is no SPA build.
+fn read_shell() -> String {
+    let path = Path::new(&static_dir()).join("index.html");
+    std::fs::read_to_string(&path).unwrap_or_else(|_| {
+        tracing::warn!(
+            "no index.html at {} — SPA metadata disabled",
+            path.display()
+        );
+        String::new()
+    })
+}
+
+/// Absolute origin for canonical URLs and the sitemap.
+///
+/// PUBLIC_ORIGIN when set, else the first FRONTEND_ORIGIN entry — which for
+/// this deploy is the same host, since the binary serves the app and the API.
+fn public_origin() -> String {
+    if let Ok(v) = env::var("PUBLIC_ORIGIN") {
+        if !v.trim().is_empty() {
+            return v.trim().trim_end_matches('/').to_string();
+        }
+    }
+    env::var("FRONTEND_ORIGIN")
+        .ok()
+        .and_then(|v| {
+            v.split(',')
+                .next()
+                .map(|s| s.trim().trim_end_matches('/').to_string())
+        })
+        .filter(|s| !s.is_empty())
+        .unwrap_or_default()
+}
+
 /// `Cache-Control` for the content-addressed bundles under /_next/static.
 ///
 /// Next puts a content hash in every filename there, so a changed file is a
@@ -103,6 +137,8 @@ type RateMap = Arc<Mutex<HashMap<String, Vec<Instant>>>>;
 type ResultCache = Arc<Mutex<HashMap<String, (Instant, Value)>>>;
 /// TTL-cached raw JSON for the map document (the only one served).
 type DocCache = Arc<Mutex<Option<(Instant, Arc<str>)>>>;
+/// Route → page metadata, rebuilt whenever the document cache refreshes.
+type MetaCache = Arc<Mutex<Option<(Instant, Arc<seo::SiteIndex>)>>>;
 /// (UTC day number, Anthropic calls made that day) for the global spend cap.
 type BudgetGuard = Arc<Mutex<(u64, usize)>>;
 
@@ -123,6 +159,14 @@ struct AppState {
     // serve the raw JSON text from memory — skipping the Postgres read + serde
     // round-trip on every request.
     docs: DocCache,
+    // Route → title/description, derived from the same document. Parsing ~1 MB
+    // of JSON per HTML request would be absurd; this is built once per refresh.
+    meta: MetaCache,
+    /// The exported `index.html`, read once. Every SPA route is this shell with
+    /// its `<head>` rewritten.
+    shell: Arc<str>,
+    /// Absolute origin for canonical URLs and the sitemap.
+    origin: Arc<str>,
 }
 
 const PERSONALIZE_MODEL: &str = "claude-sonnet-4-6";
@@ -169,7 +213,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         rate: Arc::new(Mutex::new(HashMap::new())),
         cache: Arc::new(Mutex::new(HashMap::new())),
         docs: Arc::new(Mutex::new(None)),
+        meta: Arc::new(Mutex::new(None)),
+        shell: Arc::from(read_shell()),
+        origin: Arc::from(public_origin()),
     };
+
+    // The fallback service needs its own handle: `with_state` below consumes
+    // the router's copy.
+    let state_for_spa = state.clone();
 
     let app = Router::new()
         .route("/health", get(health))
@@ -179,6 +230,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/predictions", get(predictions))
         .route("/api/stats", get(stats))
         .route("/api/map", get(map))
+        // Generated from the map document, so they track the current shifts
+        // rather than whatever was true when the image was built. Both used to
+        // fall through to the SPA and answer 200 text/html.
+        // "/" explicitly: ServeDir would otherwise answer it with index.html
+        // straight off disk and skip the metadata rewrite entirely.
+        .route("/", get(spa))
+        .route("/robots.txt", get(robots_txt))
+        .route("/sitemap.xml", get(sitemap_xml))
         .route(
             "/api/personalize",
             post(personalize).layer(DefaultBodyLimit::max(64 * 1024)),
@@ -212,11 +271,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ))
                 .service(ServeDir::new(Path::new(&static_dir()).join("_next/static"))),
         )
-        // Static SPA, served from the same origin as the API — so the browser
-        // makes no cross-origin request and there is no proxy hop. Registered
-        // last so every /api route above wins. Unmatched paths fall back to
-        // index.html, which is what makes client-side deep links resolve.
-        .fallback_service(static_service());
+        // Static files first (real assets under /shift, /logo.png, …); anything
+        // they do not have falls through to `spa`, which serves index.html with
+        // this route's metadata stamped in. Registered last so every /api route
+        // above wins.
+        .fallback_service(static_service().fallback(get(spa).with_state(state_for_spa)));
 
     let port = env::var("PORT").unwrap_or_else(|_| "8080".into());
     // Bind IPv6 dual-stack: Railway's private network is IPv6-only, so a service
@@ -335,18 +394,16 @@ fn doc_response(body: Arc<str>) -> Response {
         .into_response()
 }
 
-/// The trend map — the only document the frontend reads.
-async fn map(State(s): State<AppState>) -> Result<Response, AppError> {
-    // Fresh cache hit → serve from memory (no DB, no serde).
+/// The map document as raw text, from cache when fresh.
+async fn map_doc(s: &AppState) -> Result<Arc<str>, AppError> {
     if let Some(body) = {
         let cache = s.docs.lock().unwrap();
         cache
             .as_ref()
             .and_then(|(at, body)| (at.elapsed() < DOC_CACHE_TTL).then(|| body.clone()))
     } {
-        return Ok(doc_response(body));
+        return Ok(body);
     }
-    // Miss: read the jsonb as text (skips parsing into a Value), cache, serve.
     let body: Option<String> =
         sqlx::query_scalar("SELECT body::text FROM documents WHERE key = 'map'")
             .fetch_optional(&s.pool)
@@ -355,7 +412,93 @@ async fn map(State(s): State<AppState>) -> Result<Response, AppError> {
         body.ok_or_else(|| AppError(StatusCode::NOT_FOUND, "map document not found".into()))?;
     let body: Arc<str> = Arc::from(body);
     *s.docs.lock().unwrap() = Some((Instant::now(), body.clone()));
-    Ok(doc_response(body))
+    Ok(body)
+}
+
+/// Route index, rebuilt when the document cache turns over.
+async fn site_index(s: &AppState) -> Arc<seo::SiteIndex> {
+    if let Some(idx) = {
+        let c = s.meta.lock().unwrap();
+        c.as_ref()
+            .and_then(|(at, idx)| (at.elapsed() < DOC_CACHE_TTL).then(|| idx.clone()))
+    } {
+        return idx;
+    }
+    // A missing document must not break page serving — fall back to an empty
+    // index, which leaves the shell's build-time metadata in place.
+    let idx = match map_doc(s).await {
+        Ok(doc) => Arc::new(seo::build_index(&doc)),
+        Err(_) => Arc::new(seo::SiteIndex::default()),
+    };
+    *s.meta.lock().unwrap() = Some((Instant::now(), idx.clone()));
+    idx
+}
+
+/// The trend map — the only document the frontend reads.
+async fn map(State(s): State<AppState>) -> Result<Response, AppError> {
+    Ok(doc_response(map_doc(&s).await?))
+}
+
+// ── SPA shell, robots, sitemap ────────────────────────────────────────────────
+
+/// Serve the app shell with this route's metadata stamped into its `<head>`.
+///
+/// Registered as the fallback, so it handles every path the API and the static
+/// files did not. A route we have no metadata for still gets the shell verbatim
+/// — the client router resolves it, and unknown shifts render the app's own
+/// not-found state.
+async fn spa(State(s): State<AppState>, uri: axum::http::Uri) -> Response {
+    if s.shell.is_empty() {
+        return (StatusCode::NOT_FOUND, "no SPA build").into_response();
+    }
+    let path = uri.path();
+    let idx = site_index(&s).await;
+    let html = match idx.pages.get(path) {
+        Some(meta) => seo::render(&s.shell, path, meta, &s.origin),
+        None => s.shell.to_string(),
+    };
+    (
+        [
+            (
+                header::CONTENT_TYPE,
+                HeaderValue::from_static("text/html; charset=utf-8"),
+            ),
+            // Never cached: it names the current hashed bundles, and it now also
+            // carries metadata that changes with the map.
+            (header::CACHE_CONTROL, HeaderValue::from_static("no-cache")),
+        ],
+        html,
+    )
+        .into_response()
+}
+
+async fn robots_txt(State(s): State<AppState>) -> Response {
+    (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("text/plain; charset=utf-8"),
+        )],
+        seo::robots(&s.origin),
+    )
+        .into_response()
+}
+
+async fn sitemap_xml(State(s): State<AppState>) -> Response {
+    let idx = site_index(&s).await;
+    (
+        [
+            (
+                header::CONTENT_TYPE,
+                HeaderValue::from_static("application/xml"),
+            ),
+            (
+                header::CACHE_CONTROL,
+                HeaderValue::from_static("public, max-age=3600"),
+            ),
+        ],
+        idx.sitemap(&s.origin),
+    )
+        .into_response()
 }
 
 // ── /api/personalize (faithful port of api/personalize.js) ─────────────────────

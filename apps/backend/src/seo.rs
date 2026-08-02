@@ -1,0 +1,421 @@
+//! Per-page metadata, robots.txt and sitemap.xml, derived from the map document.
+//!
+//! The frontend is a static export: every route is served the same `index.html`,
+//! so all 347 pages shared one `<title>`, one description, no Open Graph tags
+//! and no canonical. Crawlers and link unfurlers saw one page; `robots.txt` and
+//! `sitemap.xml` did not exist and the SPA fallback answered them with HTML.
+//!
+//! It is done here rather than at build time because the frontend build has no
+//! database access — and doing it here means the metadata tracks the current map
+//! instead of whatever was true when the image was built. The backend already
+//! holds the document in memory, so this costs a lookup.
+
+use std::collections::HashMap;
+
+use serde_json::Value;
+
+/// Title and description for one route.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PageMeta {
+    pub title: String,
+    pub description: String,
+}
+
+/// Every canonical route in the map, with its metadata.
+#[derive(Debug, Default)]
+pub struct SiteIndex {
+    pub pages: HashMap<String, PageMeta>,
+    /// Canonical routes, in document order — the sitemap's contents.
+    pub routes: Vec<String>,
+    /// `updated` from the document, used as the sitemap's lastmod.
+    pub updated: String,
+}
+
+const SITE_NAME: &str = "Serious Shi(f)t";
+/// Descriptions longer than this are cut at a word boundary. Search engines
+/// truncate around 155-160 characters; a sentence cut mid-word reads as broken.
+const MAX_DESC: usize = 155;
+
+fn s(v: &Value, k: &str) -> String {
+    v.get(k)
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .trim()
+        .to_string()
+}
+
+/// Trim to `MAX_DESC` on a word boundary, adding an ellipsis when cut.
+fn clamp(text: &str) -> String {
+    let t: String = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    if t.chars().count() <= MAX_DESC {
+        return t;
+    }
+    let cut: String = t.chars().take(MAX_DESC).collect();
+    let head = cut.rsplit_once(' ').map(|(a, _)| a).unwrap_or(&cut);
+    format!("{}…", head.trim_end_matches([',', ';', ':', '-', '.']))
+}
+
+/// Build the route index from the raw map document.
+///
+/// Slugs are taken from the document, never re-derived: `key_trends[].slug` and
+/// `sub_trends[].slug` are already the path segments the frontend routes on
+/// (a sub-trend's slug carries its parent, e.g. `parent-shift/this-one`).
+/// Re-implementing the slug rule here would be a third copy to keep in step.
+pub fn build_index(doc: &str) -> SiteIndex {
+    let Ok(v) = serde_json::from_str::<Value>(doc) else {
+        return SiteIndex::default();
+    };
+    let mut idx = SiteIndex {
+        updated: s(&v, "updated"),
+        ..Default::default()
+    };
+
+    let arr = |k: &str| -> Vec<Value> {
+        v.get(k)
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+    };
+
+    let domains = arr("domains");
+    let shift_count = arr("key_trends").len();
+    idx.add(
+        "/".into(),
+        PageMeta {
+            title: format!("{SITE_NAME} — Everything that is about to change"),
+            description: clamp(&format!(
+                "{} domains, {} shifts this week, told as stories. \
+                 What is about to change, and who is saying so.",
+                domains.len(),
+                shift_count
+            )),
+        },
+    );
+
+    for d in &domains {
+        let id = s(d, "id");
+        if id.is_empty() {
+            continue;
+        }
+        let name = s(d, "name");
+        let desc = {
+            let short = s(d, "short_description");
+            if short.is_empty() {
+                s(d, "description")
+            } else {
+                short
+            }
+        };
+        idx.add(
+            format!("/map/{id}"),
+            PageMeta {
+                title: format!("{name} — {SITE_NAME}"),
+                description: clamp(&desc),
+            },
+        );
+    }
+
+    for kt in arr("key_trends") {
+        let (domain, slug, name) = (s(&kt, "domain_id"), s(&kt, "slug"), s(&kt, "name"));
+        if domain.is_empty() || slug.is_empty() {
+            continue;
+        }
+        idx.add(
+            format!("/map/{domain}/{slug}"),
+            PageMeta {
+                title: format!("{name} — {SITE_NAME}"),
+                description: clamp(&s(&kt, "subtitle")),
+            },
+        );
+    }
+
+    for st in arr("sub_trends") {
+        let (domain, slug, name) = (s(&st, "domain_id"), s(&st, "slug"), s(&st, "name"));
+        if domain.is_empty() || slug.is_empty() {
+            continue;
+        }
+        let desc = {
+            let d = s(&st, "description");
+            if d.is_empty() {
+                s(&st, "subtitle")
+            } else {
+                d
+            }
+        };
+        idx.add(
+            format!("/map/{domain}/{slug}"),
+            PageMeta {
+                title: format!("{name} — {SITE_NAME}"),
+                description: clamp(&desc),
+            },
+        );
+    }
+    idx
+}
+
+impl SiteIndex {
+    fn add(&mut self, route: String, meta: PageMeta) {
+        if self.pages.insert(route.clone(), meta).is_none() {
+            self.routes.push(route);
+        }
+    }
+
+    /// `<sitemap>` XML for every route, or None when the index is empty.
+    pub fn sitemap(&self, origin: &str) -> String {
+        let lastmod = if self.updated.is_empty() {
+            String::new()
+        } else {
+            format!("<lastmod>{}</lastmod>", self.updated)
+        };
+        let urls: String = self
+            .routes
+            .iter()
+            .map(|r| {
+                format!(
+                    "<url><loc>{}{}</loc>{}</url>",
+                    origin,
+                    xml_escape(r),
+                    lastmod
+                )
+            })
+            .collect();
+        format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>"#
+        )
+    }
+}
+
+pub fn robots(origin: &str) -> String {
+    // Deliberately open: this is a public publication. The only thing worth
+    // keeping crawlers out of is the JSON API, which is not content.
+    format!("User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: {origin}/sitemap.xml\n")
+}
+
+fn xml_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
+}
+
+fn attr_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
+/// Rewrite the exported shell's `<head>` for one route.
+///
+/// Replaces the build-time title and description and appends canonical, Open
+/// Graph and Twitter tags. Everything else in the shell — the hashed script
+/// tags especially — is left exactly as Next emitted it.
+pub fn render(shell: &str, route: &str, meta: &PageMeta, origin: &str) -> String {
+    let title = attr_escape(&meta.title);
+    let desc = attr_escape(&meta.description);
+    let url = format!("{}{}", origin, route);
+
+    let mut out = replace_between(shell, "<title>", "</title>", &title);
+    out = replace_meta_description(&out, &desc);
+
+    let extra = format!(
+        concat!(
+            r#"<link rel="canonical" href="{url}"/>"#,
+            r#"<meta property="og:type" content="website"/>"#,
+            r#"<meta property="og:site_name" content="{site}"/>"#,
+            r#"<meta property="og:title" content="{title}"/>"#,
+            r#"<meta property="og:description" content="{desc}"/>"#,
+            r#"<meta property="og:url" content="{url}"/>"#,
+            r#"<meta property="og:image" content="{origin}/og.png"/>"#,
+            r#"<meta name="twitter:card" content="summary_large_image"/>"#,
+            r#"<meta name="twitter:title" content="{title}"/>"#,
+            r#"<meta name="twitter:description" content="{desc}"/>"#,
+            r#"<meta name="twitter:image" content="{origin}/og.png"/>"#,
+        ),
+        url = attr_escape(&url),
+        site = SITE_NAME,
+        title = title,
+        desc = desc,
+        origin = attr_escape(origin),
+    );
+
+    match out.find("</head>") {
+        Some(i) => {
+            out.insert_str(i, &extra);
+            out
+        }
+        None => out,
+    }
+}
+
+fn replace_between(hay: &str, open: &str, close: &str, with: &str) -> String {
+    let Some(a) = hay.find(open) else {
+        return hay.to_string();
+    };
+    let from = a + open.len();
+    let Some(rel) = hay[from..].find(close) else {
+        return hay.to_string();
+    };
+    let mut out = String::with_capacity(hay.len() + with.len());
+    out.push_str(&hay[..from]);
+    out.push_str(with);
+    out.push_str(&hay[from + rel..]);
+    out
+}
+
+/// Swap the content of the build-time `<meta name="description">`, whatever
+/// attribute order Next emitted it in.
+fn replace_meta_description(hay: &str, desc: &str) -> String {
+    let Some(start) = hay.find(r#"<meta name="description""#) else {
+        return hay.to_string();
+    };
+    let Some(rel_end) = hay[start..].find("/>") else {
+        return hay.to_string();
+    };
+    let end = start + rel_end + 2;
+    let mut out = String::with_capacity(hay.len());
+    out.push_str(&hay[..start]);
+    out.push_str(&format!(r#"<meta name="description" content="{desc}"/>"#));
+    out.push_str(&hay[end..]);
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const DOC: &str = r#"{
+      "updated": "2026-08-01",
+      "domains": [{"id":"society","name":"Society","short_description":"How AGI rewrites the social contract."}],
+      "key_trends": [{"domain_id":"society","slug":"sovereign-collapse","name":"Sovereign Collapse","subtitle":"Private AI companies now hold national-security-equivalent capabilities."}],
+      "sub_trends": [{"domain_id":"society","slug":"sovereign-collapse/threshold-blindness","name":"Threshold Blindness","description":"Nobody agrees where the line is."}]
+    }"#;
+
+    const SHELL: &str = r#"<!DOCTYPE html><html><head><meta charSet="utf-8"/><title>Old Title</title><meta name="description" content="Four domains, eight shifts this week."/></head><body>x</body></html>"#;
+
+    #[test]
+    fn every_level_of_the_route_tree_gets_metadata() {
+        let idx = build_index(DOC);
+        for r in [
+            "/",
+            "/map/society",
+            "/map/society/sovereign-collapse",
+            "/map/society/sovereign-collapse/threshold-blindness",
+        ] {
+            assert!(idx.pages.contains_key(r), "missing {r}");
+        }
+    }
+
+    #[test]
+    fn titles_are_distinct_per_page() {
+        // The defect this replaces: 347 pages sharing one title.
+        let idx = build_index(DOC);
+        let titles: std::collections::HashSet<_> = idx.pages.values().map(|m| &m.title).collect();
+        assert_eq!(titles.len(), idx.pages.len());
+    }
+
+    #[test]
+    fn homepage_counts_come_from_the_document() {
+        // Not "eight shifts this week", which was hard-coded and wrong.
+        let idx = build_index(DOC);
+        let d = &idx.pages["/"].description;
+        assert!(d.contains("1 domains") && d.contains("1 shifts"), "{d}");
+    }
+
+    #[test]
+    fn descriptions_are_clamped_on_a_word_boundary() {
+        let long = "word ".repeat(100);
+        let out = clamp(&long);
+        assert!(out.chars().count() <= MAX_DESC + 1);
+        assert!(out.ends_with('…'));
+        assert!(!out.contains("  "));
+    }
+
+    #[test]
+    fn short_descriptions_are_untouched() {
+        assert_eq!(clamp("A short one."), "A short one.");
+    }
+
+    #[test]
+    fn render_replaces_title_and_description() {
+        let idx = build_index(DOC);
+        let out = render(
+            SHELL,
+            "/map/society",
+            &idx.pages["/map/society"],
+            "https://x.test",
+        );
+        assert!(out.contains("<title>Society — Serious Shi(f)t</title>"));
+        assert!(!out.contains("Old Title"));
+        assert!(out.contains("How AGI rewrites the social contract."));
+        assert!(!out.contains("eight shifts this week"));
+    }
+
+    #[test]
+    fn render_adds_canonical_and_social_tags() {
+        let idx = build_index(DOC);
+        let out = render(
+            SHELL,
+            "/map/society",
+            &idx.pages["/map/society"],
+            "https://x.test",
+        );
+        assert!(out.contains(r#"<link rel="canonical" href="https://x.test/map/society"/>"#));
+        assert!(out.contains(r#"<meta property="og:title""#));
+        assert!(out.contains(r#"<meta name="twitter:card" content="summary_large_image"/>"#));
+    }
+
+    #[test]
+    fn render_leaves_the_script_tags_alone() {
+        let shell = r#"<html><head><title>t</title><script src="/_next/static/chunks/a.js"></script></head><body></body></html>"#;
+        let meta = PageMeta {
+            title: "T".into(),
+            description: "D".into(),
+        };
+        let out = render(shell, "/", &meta, "https://x.test");
+        assert!(out.contains(r#"<script src="/_next/static/chunks/a.js"></script>"#));
+    }
+
+    #[test]
+    fn quotes_in_content_cannot_break_out_of_an_attribute() {
+        let meta = PageMeta {
+            title: r#"He said "hi" & <b>left</b>"#.into(),
+            description: r#"a "quoted" phrase"#.into(),
+        };
+        let out = render(SHELL, "/", &meta, "https://x.test");
+        assert!(out.contains("&quot;hi&quot;"));
+        assert!(out.contains("&lt;b&gt;"));
+        assert!(!out.contains(r#"content="a "quoted""#));
+    }
+
+    #[test]
+    fn sitemap_lists_every_route_with_lastmod() {
+        let idx = build_index(DOC);
+        let xml = idx.sitemap("https://x.test");
+        assert_eq!(xml.matches("<url>").count(), idx.routes.len());
+        assert!(xml.contains("<loc>https://x.test/map/society</loc>"));
+        assert!(xml.contains("<lastmod>2026-08-01</lastmod>"));
+    }
+
+    #[test]
+    fn robots_points_at_the_sitemap_and_excludes_the_api() {
+        let r = robots("https://x.test");
+        assert!(r.contains("Sitemap: https://x.test/sitemap.xml"));
+        assert!(r.contains("Disallow: /api/"));
+    }
+
+    #[test]
+    fn a_malformed_document_yields_an_empty_index_rather_than_panicking() {
+        let idx = build_index("not json");
+        assert!(idx.pages.is_empty() && idx.routes.is_empty());
+    }
+
+    #[test]
+    fn entries_without_a_slug_are_skipped_not_rendered_as_bare_paths() {
+        let doc = r#"{"domains":[],"key_trends":[{"domain_id":"society","name":"No Slug"}],"sub_trends":[]}"#;
+        let idx = build_index(doc);
+        assert!(idx.routes.iter().all(|r| r != "/map/society/"));
+    }
+}

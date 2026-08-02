@@ -10,10 +10,10 @@
 
 @theme {
   /* ── Type ─────────────────────────────────────────────────────────── */
-  --font-display: 'Urbanist', system-ui, sans-serif;
-  --font-sans:    'Nunito Sans', system-ui, sans-serif;
-  --font-title:   'Suez One', Georgia, serif;
-  --font-serif:   'Suez One', Georgia, serif;
+  --font-display: var(--font-urbanist), system-ui, sans-serif;
+  --font-sans:    var(--font-nunito), system-ui, sans-serif;
+  --font-title:   var(--font-suez), Georgia, serif;
+  --font-serif:   var(--font-suez), Georgia, serif;
   /* The design specifies the platform mono stack, not a webfont — so the mono
      labels match it exactly and there is one less font to download. */
   --font-mono:    ui-monospace, 'SF Mono', Menlo, monospace;
