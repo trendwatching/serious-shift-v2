@@ -34,6 +34,8 @@ jobs:
         working-directory: packages/db
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.13" }
 
       - name: Install dbmate
         run: |
