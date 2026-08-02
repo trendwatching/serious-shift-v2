@@ -78,7 +78,7 @@ jobs:
         # every schema object remains strict.
         run: |
           dbmate dump
-          git show HEAD:schema.sql | sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d; /^SET transaction_timeout = 0;$/d' > /tmp/schema.expected.sql
+          git show HEAD:packages/db/schema.sql | sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d; /^SET transaction_timeout = 0;$/d' > /tmp/schema.expected.sql
           sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d; /^SET transaction_timeout = 0;$/d' schema.sql > /tmp/schema.actual.sql
           diff -u /tmp/schema.expected.sql /tmp/schema.actual.sql \
             || { echo "schema.sql is out of date — run 'dbmate dump' and commit"; exit 1; }
