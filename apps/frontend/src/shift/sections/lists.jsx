@@ -1,5 +1,5 @@
 /** List-shaped sections: sub-shifts, needs, innovations, timeline, industries, territories. */
-import { useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { Eyebrow, SectionHead } from './primitives'
 import { CONTACT_URL } from '../site'
 import { quoteTitle } from '../theme'
@@ -41,13 +41,14 @@ export function SubShiftList({ subs, onOpen }) {
 
 export function HumanNeeds({ needs }) {
   const [pick, setPick] = useState('u')
+  const id = useId()
   if (!needs?.unlocked && !needs?.threatened) return null
 
   const card = (key, label, text, grad, shadow) => {
     const on = pick === key
     return (
       <button
-        type="button" onClick={() => setPick(key)} onMouseEnter={() => setPick(key)} aria-expanded={on}
+        type="button" onClick={() => setPick(key)} onMouseEnter={() => setPick(key)} aria-expanded={on} aria-controls={`${id}-${key}`}
         className="box-border min-w-0 rounded-[18px] px-4 py-[18px] text-white text-left flex flex-col gap-2.5 overflow-hidden lg:px-6 lg:py-6"
         style={{
           flex: on ? '3 1 0%' : '1 1 0%',
@@ -61,6 +62,9 @@ export function HumanNeeds({ needs }) {
         {/* 0fr → 1fr rather than a max-height: the copy runs to 441 characters
             and the old 260px cap simply cut the end off the longer ones. */}
         <span
+          id={`${id}-${key}`}
+          aria-hidden={!on}
+          inert={on ? undefined : ''}
           className="grid overflow-hidden"
           style={{
             gridTemplateRows: on ? '1fr' : '0fr',
@@ -74,7 +78,7 @@ export function HumanNeeds({ needs }) {
 
   return (
     <div className="flex flex-col gap-2.5">
-      <Eyebrow>Human needs</Eyebrow>
+      <Eyebrow as="h2">Human needs</Eyebrow>
       <div className="flex gap-2.5 items-stretch lg:gap-4">
         {card('u', 'Unlocked', needs.unlocked, 'var(--pos-grad)', '0 12px 26px var(--pos-shadow)')}
         {card('t', 'Threatened', needs.threatened, 'var(--a-grad)', '0 12px 26px var(--a-shadow)')}
@@ -128,7 +132,7 @@ export function Timeline({ steps }) {
 
   return (
     <div className="flex flex-col gap-2.5">
-      <Eyebrow>Now / next / beyond</Eyebrow>
+      <Eyebrow as="h2">Now / next / beyond</Eyebrow>
       {/* A rail down the left on mobile; across the top on desktop, where
           "now → next → beyond" reads as the horizontal thing it is and three
           stacked cards become one row. */}
@@ -161,23 +165,39 @@ export function Timeline({ steps }) {
 
 export function Industries({ items }) {
   const [i, setI] = useState(0)
+  const id = useId()
+  const tabs = useRef([])
   if (!items?.length) return null
   const active = items[Math.min(i, items.length - 1)]
+  const onKeyDown = (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const next = event.key === 'Home' ? 0
+      : event.key === 'End' ? items.length - 1
+        : (i + (event.key === 'ArrowRight' ? 1 : -1) + items.length) % items.length
+    setI(next)
+    tabs.current[next]?.focus()
+  }
   return (
     <div className="flex flex-col gap-2.5">
       <SectionHead title="Implications by industry" aside={`${Math.min(i, items.length - 1) + 1} of ${items.length}`} />
       {/* Mobile scrolls the chip row; desktop has room to wrap, which shows the
           whole sector list at once instead of hiding it behind a swipe. */}
       <div
-        className="bleed-m flex gap-2 overflow-x-auto pt-0.5 pb-1 lg:flex-wrap lg:overflow-x-visible"
+        role="tablist"
+        aria-label="Industries"
+        onKeyDown={onKeyDown}
+        className="bleed-m carousel-scrollbar-hidden flex gap-2 overflow-x-auto pt-0.5 pb-1 lg:flex-wrap lg:overflow-x-visible"
         style={{ scrollSnapType: 'x proximity' }}
       >
         {items.map((n, k) => {
           const on = k === i
           return (
             <button
-              key={n.name} type="button" onClick={() => setI(k)}
-              className="flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[12.5px]"
+              key={n.name} ref={(node) => { tabs.current[k] = node }} id={`${id}-tab-${k}`}
+              type="button" role="tab" aria-selected={on} aria-controls={`${id}-panel`} tabIndex={on ? 0 : -1}
+              onClick={() => setI(k)}
+              className="flex h-11 shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[12.5px]"
               style={{
                 scrollSnapAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 650,
                 border: `1px solid ${on ? 'var(--color-ink)' : 'var(--color-hairline)'}`,
@@ -189,8 +209,8 @@ export function Industries({ items }) {
           )
         })}
       </div>
-      <div key={active.name} className="card a-rise flex flex-col gap-2 p-[18px] md:p-6 lg:gap-3 lg:p-7" style={{ animationDuration: '0.42s' }}>
-        <span className="t-display text-[15px] md:text-[17px] lg:text-[19px]" style={{ letterSpacing: '-0.01em' }}>{active.name}</span>
+      <div key={active.name} id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab-${i}`} tabIndex={0} className="card a-rise flex flex-col gap-2 p-[18px] md:p-6 lg:gap-3 lg:p-7" style={{ animationDuration: '0.42s' }}>
+        <h3 className="t-display text-[15px] md:text-[17px] lg:text-[19px]" style={{ letterSpacing: '-0.01em' }}>{active.name}</h3>
         {/* The one card in the wide track that holds running prose, so it takes
             the prose measure rather than stretching to 1120px. */}
         <span className="t-prose max-w-[var(--measure)] text-pretty" style={{ color: 'var(--color-ink-soft)' }}>{active.text}</span>
@@ -207,7 +227,7 @@ export function Territories({ items }) {
       {/* A scroller on mobile; on desktop the cards fit as a grid, so show them
           all rather than making a wide screen swipe. */}
       <div
-        className="bleed-m flex gap-3 overflow-x-auto pt-0.5 pb-1.5 lg:grid lg:grid-cols-2 lg:gap-5 lg:overflow-x-visible xl:grid-cols-3"
+        className="bleed-m carousel-scrollbar-hidden flex gap-3 overflow-x-auto pt-0.5 pb-1.5 lg:grid lg:grid-cols-2 lg:gap-5 lg:overflow-x-visible xl:grid-cols-3"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {items.map((t, i) => (
@@ -226,14 +246,14 @@ export function Territories({ items }) {
         ))}
         <div
           className="a-rise box-border flex w-[250px] shrink-0 flex-col gap-2.5 rounded-[18px] px-[18px] py-5 text-white lg:w-auto lg:p-6"
-          style={{ scrollSnapAlign: 'center', backgroundImage: 'var(--a-grad-hot)', boxShadow: '0 12px 26px var(--a-shadow)', animationDelay: '0.34s' }}
+          style={{ scrollSnapAlign: 'center', backgroundImage: 'linear-gradient(rgba(13,11,16,0.34), rgba(13,11,16,0.34)), var(--a-grad-hot)', boxShadow: '0 12px 26px var(--a-shadow)', animationDelay: '0.34s' }}
         >
           <span className="t-eyebrow" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--color-yellow)' }}>Work with us</span>
           <span className="text-[21px] leading-[1.14] lg:text-[24px]" style={{ fontFamily: 'var(--font-title)' }}>Don’t see your angle here?</span>
           <span className="text-[13px] leading-[1.48] opacity-95 text-pretty lg:text-[14.5px] lg:leading-[1.55]">
             These territories are starting points, not limits. We work with organisations to find where a shift like this creates real commercial space for their specific context.
           </span>
-          <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="pill-yellow mt-auto self-start h-10 px-4 text-[13.5px]">
+          <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="pill-yellow mt-auto h-11 self-start px-4 text-[13.5px]">
             Contact us <span className="text-[15px]">→</span>
           </a>
         </div>

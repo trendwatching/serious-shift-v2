@@ -25,18 +25,18 @@
   --color-ink-strong:#2C2735;
   --color-ink-soft:  #4A4459;
   --color-ink-mid:   #6B6577;
-  --color-ink-dim:   #9A94A8;
-  --color-ink-faint: #B3AEC0;
+  --color-ink-dim:   #655F70;
+  --color-ink-faint: #746E80;
   --color-hairline:  #EDEAF2;
   --color-hairline-soft: #F0EEF4;
 
   /* ── Brand ───────────────────────────────────────────────────────── */
   --color-yellow:      #FDFF85;
   --color-yellow-soft: #FEFFC6;
-  --color-accent:      #F04E09;   /* orange CTA  */
-  --color-accent-light:#E8503A;
+  --color-accent:      #C63800;   /* readable orange CTA */
+  --color-accent-light:#F04E09;   /* bright decorative orange */
   --color-link:        #341482;
-  --color-link-hover:  #FA83DD;
+  --color-link-hover:  #8B1E63;
   --color-dark:        #1B1620;
   --color-darker:      #0D0B10;
 
@@ -130,7 +130,7 @@
 
 [data-domain='organisations'] {
   --a-hot:   #ADB03A;
-  --a:       #7E7F2E;   /* darkened from the domain mid so white type holds */
+  --a:       #737425;   /* readable olive text surface; bright olive stays decorative */
   --a-deep:  #5F6E13;
   --a-abyss: #46520E;
   --a-ink:   #5F6120;
@@ -193,10 +193,18 @@ body {
 a { color: var(--color-link); text-decoration: none; }
 a:hover { color: var(--color-link-hover); }
 
-/* Hide scrollbars — the design is edge-to-edge and scroll affordances are
-   explicit ("Scroll ›", dots, hints) rather than native bars. */
-::-webkit-scrollbar { width: 0; height: 0; display: none; }
-* { scrollbar-width: none; -ms-overflow-style: none; }
+/* Native page scrollbars remain visible. Only labelled horizontal carousels
+   opt into this helper, and those retain buttons/cues for non-pointer users. */
+.carousel-scrollbar-hidden { scrollbar-width: none; -ms-overflow-style: none; }
+.carousel-scrollbar-hidden::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-link);
+}
+
+dialog::backdrop { background: rgba(13, 11, 16, 0.72); }
 
 /* ── Utilities ─────────────────────────────────────────────────────── */
 
@@ -284,7 +292,7 @@ a:hover { color: var(--color-link-hover); }
   font-family: var(--font-display); font-weight: 650;
   transition: transform 0.24s var(--ease-out), box-shadow 0.24s ease;
 }
-.pill-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(240,78,9,0.4); color: #fff; }
+.pill-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(198,56,0,0.4); color: #fff; }
 
 /* Card surface used across detail sections. */
 .card {
@@ -347,9 +355,9 @@ a:hover { color: var(--color-link-hover); }
 .a-expand { animation: ssExpand 0.55s var(--ease-out) both; }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
   }
 }

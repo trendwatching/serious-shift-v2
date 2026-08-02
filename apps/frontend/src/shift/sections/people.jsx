@@ -4,19 +4,19 @@ import { SectionHead } from './primitives'
 function VoiceColumn({ title, people, grad, shadow }) {
   if (!people?.length) return null
   return (
-    <div className="flex-1 min-w-0 rounded-[22px] overflow-hidden flex flex-col" style={{ backgroundImage: grad, boxShadow: shadow }}>
-      <div className="t-eyebrow px-5 pt-5 pb-3.5 text-white lg:px-6 lg:pt-6" style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.16em' }}>{title}</div>
+    <div className="flex-1 min-w-0 rounded-[22px] overflow-hidden flex flex-col" style={{ backgroundImage: `linear-gradient(rgba(13,11,16,0.34), rgba(13,11,16,0.34)), ${grad}`, boxShadow: shadow }}>
+      <h3 className="t-eyebrow px-5 pt-5 pb-3.5 text-white lg:px-6 lg:pt-6" style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.16em' }}>{title}</h3>
       <div className="flex flex-col gap-3 px-4 pb-[18px] lg:px-6 lg:pb-6">
         {people.map((p, i) => (
           <div key={`${p.name}-${i}`} className="rounded-2xl bg-white px-4 py-4 flex flex-col gap-2 lg:px-5 lg:py-5" style={{ boxShadow: '0 4px 14px rgba(27,22,32,0.12)' }}>
-            <span className="t-display text-[14px] lg:text-[16px]" style={{ letterSpacing: '-0.01em' }}>{p.name}</span>
+            <h4 className="t-display text-[14px] lg:text-[16px]" style={{ letterSpacing: '-0.01em' }}>{p.name}</h4>
             <span className="t-body text-pretty" style={{ color: 'var(--color-ink-strong)' }}>“{p.quote}”</span>
             {p.url && (
               <a
                 href={p.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11.5px] underline underline-offset-2"
+                className="inline-flex min-h-11 items-center self-start text-[11.5px] underline underline-offset-2"
                 aria-label={`Read source: ${p.source || p.name}`}
               >{p.source || 'Source'}{p.date ? ` · ${p.date}` : ''}</a>
             )}

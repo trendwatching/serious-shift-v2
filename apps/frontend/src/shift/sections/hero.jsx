@@ -8,6 +8,7 @@ export function GradientHero({ grad, onBack, eyebrow, eyebrowColor, title, sub, 
   const layers = [
     stripes && 'linear-gradient(180deg, rgba(27,22,32,0) 34%, rgba(27,22,32,0.58) 100%)',
     stripes && 'repeating-linear-gradient(115deg, rgba(255,255,255,0.1) 0 10px, rgba(255,255,255,0) 10px 26px)',
+    'linear-gradient(rgba(13,11,16,0.38), rgba(13,11,16,0.38))',
     grad,
   ].filter(Boolean)
 
@@ -47,7 +48,7 @@ export function GradientHero({ grad, onBack, eyebrow, eyebrowColor, title, sub, 
               // single stretched line.
               <h1 className="t-title mt-2.5 text-[32px] leading-[1.1] md:text-[40px] lg:text-[52px] lg:leading-[1.05]">{quoteTitle(title)}</h1>
             ))}
-            {sub && <div className="t-body mt-2.5 opacity-90">{sub}</div>}
+            {sub && <p className="t-body mt-2.5 text-white">{sub}</p>}
             {blurb && <p className="mt-3.5 max-w-[290px] text-[15px] leading-[1.5] opacity-95 md:max-w-none md:text-[16px] lg:text-[17px]">{blurb}</p>}
           </div>
         </div>

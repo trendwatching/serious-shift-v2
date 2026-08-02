@@ -9,7 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "check:slugs": "node scripts/check-slug-fixture.mjs"
+    "check:slugs": "node scripts/check-slug-fixture.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs"
   },
   "dependencies": {
     "next": "^15.1.0",

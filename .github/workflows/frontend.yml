@@ -26,6 +26,8 @@ jobs:
         # These two implementations must agree byte-for-byte or every shift with
         # punctuation in its title deep-links to a 404.
         run: npm run check:slugs
+      - name: WCAG AA contrast tokens
+        run: npm run check:contrast
       - run: npm run build
       - name: Assert a static export was produced
         # `output: 'export'` silently degrades to a server build if the app grows

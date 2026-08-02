@@ -6,7 +6,7 @@ function FromToCard({ label, text, grad, panel, ink }) {
       className="relative overflow-hidden rounded-[22px] bg-white"
       style={{ border: '1px solid var(--color-hairline)', boxShadow: '0 6px 18px rgba(27,22,32,0.06)' }}
     >
-      <div className="absolute inset-0" style={{ backgroundImage: grad, animation: `${panel} 8s ease-in-out infinite` }} />
+      <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(rgba(13,11,16,0.38), rgba(13,11,16,0.38)), ${grad}`, animation: `${panel} 8s ease-in-out infinite` }} />
       <div
         className="relative box-border flex h-[208px] flex-col items-center justify-center gap-2.5 px-[15px] py-5 text-center md:h-[240px] md:px-6 lg:h-[264px] lg:gap-3.5 lg:px-8"
         style={{ animation: `${ink} 8s ease-in-out infinite` }}
@@ -22,10 +22,11 @@ function FromToCard({ label, text, grad, panel, ink }) {
 export function FromTo({ from, to, grad }) {
   if (!from || !to) return null
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <section className="grid grid-cols-2 gap-3" aria-label="From and to">
+      <h2 className="sr-only">From and to</h2>
       <FromToCard label="From" text={from} grad={grad} panel="ssPanelA" ink="ssInkA" />
       <FromToCard label="To" text={to} grad={grad} panel="ssPanelB" ink="ssInkB" />
-    </div>
+    </section>
   )
 }
 
@@ -41,5 +42,5 @@ export function FromToSolid({ from, to }) {
       <span className="t-body">{text}</span>
     </div>
   )
-  return <div className="flex gap-2.5 items-stretch lg:gap-4">{card('From', from, 'var(--pos-grad)')}{card('To', to, 'var(--a-grad)')}</div>
+  return <section className="flex gap-2.5 items-stretch lg:gap-4" aria-label="From and to"><h2 className="sr-only">From and to</h2>{card('From', from, 'var(--pos-grad)')}{card('To', to, 'var(--a-grad)')}</section>
 }
