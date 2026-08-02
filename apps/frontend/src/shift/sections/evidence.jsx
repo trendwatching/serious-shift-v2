@@ -19,7 +19,7 @@ export function Evidence({ items }) {
         {items.map((c, i) => (
           <div key={i} className="card flex flex-col gap-2.5 p-4 lg:p-5">
             <span className="flex flex-wrap items-center gap-2">
-              <span className="t-display text-[13.5px]" style={{ letterSpacing: '-0.01em' }}>{c.thinker}</span>
+              <h3 className="t-display text-[13.5px]" style={{ letterSpacing: '-0.01em' }}>{c.thinker}</h3>
               {c.strength && (
                 <span
                   className="t-eyebrow inline-flex h-[20px] items-center rounded-full px-2"
@@ -39,7 +39,7 @@ export function Evidence({ items }) {
                 href={c.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11.5px] underline underline-offset-2"
+                className="inline-flex min-h-11 items-center self-start text-[11.5px] underline underline-offset-2"
                 style={{ color: 'var(--color-link)' }}
                 aria-label={`Read source: ${c.source || 'external evidence'}`}
               >{c.source || 'Source'}</a>

@@ -15,15 +15,19 @@ export function StatBand({ stat, size = 58 }) {
   return (
     <div
       className="bleed box-border flex flex-wrap items-center gap-[18px] py-[34px] text-white md:gap-8 md:py-11 lg:gap-10 lg:py-14"
+      role="region"
+      aria-label="Key statistic"
       // The design shipped this band as a pink PNG, which only ever suited
       // Society — and cost 256 KB. A gradient built from the accent gives every
       // domain its own band and removes the request entirely.
       style={{
         backgroundImage:
+          'linear-gradient(rgba(13,11,16,0.38), rgba(13,11,16,0.38)), ' +
           'radial-gradient(120% 140% at 12% 15%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 55%), ' +
           'linear-gradient(115deg, var(--a-hot) 0%, var(--a) 46%, var(--a-abyss) 100%)',
       }}
     >
+      <h2 className="sr-only">Key statistic</h2>
       <span
         className="shrink-0 leading-[0.9]"
         style={{

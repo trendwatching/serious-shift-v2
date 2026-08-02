@@ -18,14 +18,14 @@ export const Frame = ({ className = '', children }) => (
   </div>
 )
 
-export function Eyebrow({ children, color = 'var(--color-ink)', className = '' }) {
-  return <div className={`t-eyebrow ${className}`} style={{ color }}>{children}</div>
+export function Eyebrow({ children, color = 'var(--color-ink)', className = '', as: Tag = 'div', id }) {
+  return <Tag id={id} className={`t-eyebrow ${className}`} style={{ color }}>{children}</Tag>
 }
 
 export function SectionHead({ title, aside, color }) {
   return (
     <div className="flex items-baseline gap-2.5">
-      <Eyebrow color={color}>{title}</Eyebrow>
+      <Eyebrow as="h2" color={color}>{title}</Eyebrow>
       {aside && <div className="ml-auto text-[11.5px]" style={{ color: 'var(--color-ink-dim)' }}>{aside}</div>}
     </div>
   )
@@ -35,9 +35,9 @@ export function BackButton({ onClick, label = 'Back' }) {
   return (
     <button
       type="button" onClick={onClick} aria-label={label}
-      className="grid place-items-center w-[34px] h-[34px] rounded-full text-[17px] font-semibold text-white shrink-0 transition-colors hover:bg-white/40"
-      style={{ background: 'rgba(255,255,255,0.24)', fontFamily: 'var(--font-display)' }}
-    >‹</button>
+      className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[17px] font-semibold text-white transition-colors hover:bg-white/40"
+      style={{ fontFamily: 'var(--font-display)' }}
+    ><span className="grid h-[34px] w-[34px] place-items-center rounded-full" style={{ background: 'rgba(13,11,16,0.42)' }}>‹</span></button>
   )
 }
 
@@ -53,8 +53,8 @@ export function BackButton({ onClick, label = 'Back' }) {
 export function NumberedCard({ title, items, grad, shadow }) {
   if (!items?.length) return null
   return (
-    <div className="rounded-[22px] overflow-hidden flex flex-col" style={{ backgroundImage: grad, boxShadow: shadow }}>
-      <div className="t-eyebrow px-5 pt-5 pb-3.5 text-white lg:px-6 lg:pt-6" style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.16em' }}>{title}</div>
+    <div className="rounded-[22px] overflow-hidden flex flex-col" style={{ backgroundImage: `linear-gradient(rgba(13,11,16,0.34), rgba(13,11,16,0.34)), ${grad}`, boxShadow: shadow }}>
+      <h2 className="t-eyebrow px-5 pt-5 pb-3.5 text-white lg:px-6 lg:pt-6" style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.16em' }}>{title}</h2>
       <div className="flex flex-col gap-3 px-4 pb-[18px] lg:grid lg:grid-cols-2 lg:gap-4 lg:px-6 lg:pb-6">
         {items.map((t, i) => (
           <div

@@ -48,10 +48,14 @@ export const SUBSCRIBE_URL = `${ABOUT_URL}#subscribe`
 export const SERVICES_URL = `${ABOUT_URL}#services`
 export const TRENDWATCHING_URL = `${ABOUT_URL}#trendwatching`
 export const CONTACT_URL = 'mailto:hello@trendwatching.com'
+export const LINKEDIN_URL = 'https://www.linkedin.com/company/trendwatching-com/'
 
-// Secondary menu group, below the four domains.
+// The later Miro navigation is authoritative. Keep this list exact: no dormant
+// Saved/Room destinations and no unverified social stand-ins.
 export const MENU_LINKS = [
+  { label: 'Shifts', href: '/', internal: true },
   { label: 'Methodology', href: METHODOLOGY_URL },
+  { label: 'Subscribe', href: SUBSCRIBE_URL },
   { label: 'Services', href: SERVICES_URL },
   { label: 'TrendWatching', href: TRENDWATCHING_URL },
   { label: 'About', href: ABOUT_URL },
@@ -63,4 +67,6 @@ export const FOOTER_LINKS = [
   { label: 'What else you’d like?', href: CONTACT_URL },
 ]
 
-export const SOCIALS = ['in', 'X', 'IG', 'YT']
+export const SOCIALS = [
+  { label: 'LinkedIn', mark: 'in', href: LINKEDIN_URL },
+]

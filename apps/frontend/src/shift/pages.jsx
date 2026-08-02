@@ -35,7 +35,7 @@ function Missing({ what }) {
     <div className="grid min-h-[60vh] place-items-center px-6 text-center">
       <div className="flex flex-col items-center gap-4">
         <Eyebrow color="var(--color-ink-dim)">Not found</Eyebrow>
-        <p className="t-display text-2xl">We couldn’t find that {what}.</p>
+        <h1 className="t-display text-2xl">We couldn’t find that {what}.</h1>
         <Link to="/" className="pill-yellow">Back to the domains</Link>
       </div>
     </div>
@@ -49,7 +49,7 @@ export function Unavailable({ error, onRetry }) {
     <div className="grid min-h-[60vh] place-items-center px-6 text-center">
       <div className="flex flex-col items-center gap-4">
         <Eyebrow color="var(--color-ink-dim)">Unavailable</Eyebrow>
-        <p className="t-display text-2xl">This week’s map couldn’t be loaded.</p>
+        <h1 className="t-display text-2xl">This week’s map couldn’t be loaded.</h1>
         <p className="max-w-[380px]" style={{ color: 'var(--color-ink-soft)' }}>
           {error?.status >= 500
             ? 'The map service is having trouble. Your last successful pages remain cached.'
@@ -95,6 +95,7 @@ export function DomainSheet() {
           {/* The shift list is read line by line, so it stays at the measure
               even though the frame around it is wider. */}
           <div className="w-prose">
+            <h2 className="sr-only">Key shifts</h2>
             {domain.keyShifts.map((s, i) => (
               <Link
                 key={s.id}
@@ -104,7 +105,7 @@ export function DomainSheet() {
               >
                 <div className="pt-1 font-mono text-xs" style={{ color: 'var(--color-ink-faint)' }}>{s.num}</div>
                 <div className="flex flex-1 flex-col gap-1.5">
-                  <div className="t-title text-[19px] leading-[1.2] md:text-[21px] lg:text-[22px]" style={{ color: 'var(--color-ink)' }}>{quoteTitle(s.title)}</div>
+                  <h3 className="t-title text-[19px] leading-[1.2] md:text-[21px] lg:text-[22px]" style={{ color: 'var(--color-ink)' }}>{quoteTitle(s.title)}</h3>
                   <div className="t-body" style={{ color: 'var(--color-ink-mid)' }}>{s.dek}</div>
                   <div className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                     Key shift{s.velocity ? ` · ${s.velocity}` : ''} · {s.read}
@@ -119,11 +120,11 @@ export function DomainSheet() {
               wide track and read as a grid rather than a stack. */}
           {domain.insights?.length > 0 && (
             <section className="w-wide flex flex-col gap-2.5 pt-10">
-              <Eyebrow>What it adds up to</Eyebrow>
+              <Eyebrow as="h2">What it adds up to</Eyebrow>
               <div className="grid gap-2.5 md:grid-cols-2 lg:gap-4 xl:grid-cols-3">
                 {domain.insights.map((s) => (
                   <div key={s.id} className="card flex flex-col gap-2 p-4 lg:p-5">
-                    <span className="t-display text-[15px] leading-[1.25] lg:text-[17px]" style={{ letterSpacing: '-0.01em' }}>{s.name}</span>
+                    <h3 className="t-display text-[15px] leading-[1.25] lg:text-[17px]" style={{ letterSpacing: '-0.01em' }}>{s.name}</h3>
                     <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{s.description}</span>
                   </div>
                 ))}

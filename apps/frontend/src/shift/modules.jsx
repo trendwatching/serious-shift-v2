@@ -57,7 +57,7 @@ const RichText = ({ data }) => {
   const heading = str(data?.heading)
   return (
     <div className="flex flex-col gap-2.5">
-      {heading && <Eyebrow>{heading}</Eyebrow>}
+      {heading && <Eyebrow as="h2">{heading}</Eyebrow>}
       <p className="t-prose text-pretty" style={{ color: 'var(--color-ink-strong)' }}>
         {body}
       </p>

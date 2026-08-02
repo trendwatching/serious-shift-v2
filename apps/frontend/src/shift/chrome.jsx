@@ -5,10 +5,9 @@
  * notch via env(safe-area-inset-top) rather than the concept's hard-coded 58px
  * status-bar offset.
  */
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { LOGOS, SOCIALS, SUBSCRIBE_URL, FOOTER_LINKS, MENU_LINKS } from './site'
-import { useDomains } from './useDomains'
 
 const LOGO = '/shift/serious-shift-logo-white.png'
 
@@ -16,10 +15,35 @@ const LOGO = '/shift/serious-shift-logo-white.png'
 
 export function TopBar() {
   const [open, setOpen] = useState(false)
-  const { domains } = useDomains()
-  const navigate = useNavigate()
+  const dialogRef = useRef(null)
+  const triggerRef = useRef(null)
+  const closeRef = useRef(null)
 
-  const go = (to) => { setOpen(false); navigate(to) }
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return undefined
+    if (open && !dialog.open) {
+      dialog.showModal()
+      requestAnimationFrame(() => closeRef.current?.focus())
+    }
+    if (!open && dialog.open) dialog.close()
+    if (!open) return undefined
+
+    const previous = document.documentElement.style.overflow
+    const desktop = window.matchMedia('(min-width: 64rem)')
+    const closeAtDesktop = (event) => { if (event.matches) setOpen(false) }
+    desktop.addEventListener('change', closeAtDesktop)
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      desktop.removeEventListener('change', closeAtDesktop)
+      document.documentElement.style.overflow = previous
+    }
+  }, [open])
+
+  const close = () => {
+    setOpen(false)
+    requestAnimationFrame(() => triggerRef.current?.focus())
+  }
 
   return (
     <>
@@ -28,65 +52,63 @@ export function TopBar() {
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
       >
         <div className="mx-auto flex items-center justify-between px-[22px] pb-3.5 lg:max-w-[1180px] lg:px-8">
-          <Link to="/" aria-label="Serious Shi(f)t — home" className="shrink-0">
+          <Link to="/" aria-label="Serious Shi(f)t — home" className="flex min-h-11 shrink-0 items-center">
             <img src={LOGO} alt="Serious Shi(f)t" width={110} height={38} className="block h-[34px] w-auto object-contain lg:h-[38px]" draggable="false" />
           </Link>
           <button
+            ref={triggerRef}
             type="button" onClick={() => setOpen((v) => !v)}
-            aria-label="Menu" aria-expanded={open}
-            className="flex cursor-pointer flex-col items-end gap-[5px] pb-2.5 pl-3.5 pt-1"
+            aria-label="Open navigation" aria-expanded={open} aria-controls="mobile-navigation"
+            className="grid h-11 w-11 cursor-pointer place-content-center justify-items-end gap-[5px] lg:hidden"
           >
             {[26, 20, 13].map((w) => (
               <span key={w} className="block h-[2.5px] rounded-sm bg-white transition-all" style={{ width: open ? 22 : w }} />
             ))}
           </button>
+
+          <nav aria-label="Primary" className="hidden items-center gap-6 lg:flex">
+            {MENU_LINKS.map((link) => link.internal ? (
+              <Link key={link.label} to={link.href} className="t-eyebrow inline-flex min-h-11 items-center !text-white hover:!text-[var(--color-yellow)]">
+                {link.label}
+              </Link>
+            ) : (
+              <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="t-eyebrow inline-flex min-h-11 items-center !text-white hover:!text-[var(--color-yellow)]">
+                {link.label}
+              </a>
+            ))}
+          </nav>
         </div>
       </header>
 
-      {open && (
-        <nav
-          className="fixed inset-x-0 z-40 bg-black px-[22px] pb-[26px] pt-2 text-white"
-          style={{ top: 'calc(max(14px, env(safe-area-inset-top)) + 48px)', animation: 'ssRise 0.42s var(--ease-out) both' }}
-        >
-          <div className="mx-auto lg:max-w-[1180px] lg:px-8">
-            {domains.map((d) => (
-              <MenuRow key={d.id} dot={d.dot} label={d.name} meta={`${d.count} shifts`} onClick={() => go(`/map/${d.slug}`)} />
-            ))}
-            <MenuRow dot="var(--color-yellow)" label="The room" meta="1,400 members" href={SUBSCRIBE_URL} onClick={() => setOpen(false)} />
-            <MenuRow dot="var(--color-yellow)" label="Saved" meta="3 shifts" onClick={() => setOpen(false)} />
-
-            {/* Secondary destinations — the wider Serious Shift / TrendWatching site. */}
-            <div className="mt-5 flex flex-col gap-1 lg:flex-row lg:gap-8">
-              {MENU_LINKS.map((l) => (
-                <a
-                  key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
-                  onClick={() => setOpen(false)}
-                  className="t-eyebrow py-2 !text-white/70 transition-colors hover:!text-[var(--color-yellow)]"
-                >{l.label}</a>
-              ))}
-            </div>
+      <dialog
+        ref={dialogRef}
+        id="mobile-navigation"
+        aria-label="Site navigation"
+        onCancel={(event) => { event.preventDefault(); close() }}
+        onClose={() => setOpen(false)}
+        className="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-black p-0 text-white lg:hidden"
+      >
+        <div className="flex min-h-full flex-col px-[22px] pb-8" style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
+          <div className="flex h-12 items-center justify-between">
+            <img src={LOGO} alt="Serious Shi(f)t" width={110} height={38} className="block h-[34px] w-auto object-contain" />
+            <button ref={closeRef} type="button" onClick={close} aria-label="Close navigation" className="grid h-11 w-11 place-items-center rounded-full text-3xl text-white hover:bg-white/15">×</button>
           </div>
-        </nav>
-      )}
+          <nav aria-label="Primary" className="mt-8 flex flex-1 flex-col justify-center">
+            {MENU_LINKS.map((link, index) => link.internal ? (
+              <Link key={link.label} to={link.href} onClick={close} className="flex min-h-14 items-center border-b !text-white hover:!text-[var(--color-yellow)]" style={{ borderColor: 'rgba(255,255,255,0.18)' }}>
+                <span className="mr-4 font-mono text-xs text-white/65">{String(index + 1).padStart(2, '0')}</span>
+                <span className="t-display text-[clamp(25px,8vw,34px)]">{link.label}</span>
+              </Link>
+            ) : (
+              <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" onClick={close} className="flex min-h-14 items-center border-b !text-white hover:!text-[var(--color-yellow)]" style={{ borderColor: 'rgba(255,255,255,0.18)' }}>
+                <span className="mr-4 font-mono text-xs text-white/65">{String(index + 1).padStart(2, '0')}</span>
+                <span className="t-display text-[clamp(25px,8vw,34px)]">{link.label}</span>
+              </a>
+            ))}
+          </nav>
+        </div>
+      </dialog>
     </>
-  )
-}
-
-function MenuRow({ dot, label, meta, onClick, href }) {
-  const inner = (
-    <>
-      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: dot }} />
-      <span className="t-display text-xl" style={{ fontWeight: 600, letterSpacing: '-0.01em' }}>{label}</span>
-      <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>{meta}</span>
-    </>
-  )
-  const cls = 'flex w-full items-center gap-3 border-b py-[15px] text-left !text-white transition-colors hover:!text-[var(--color-yellow)]'
-  const style = { borderColor: 'rgba(255,255,255,0.12)' }
-
-  return href ? (
-    <a href={href} target="_blank" rel="noopener noreferrer" onClick={onClick} className={cls} style={style}>{inner}</a>
-  ) : (
-    <button type="button" onClick={onClick} className={cls} style={style}>{inner}</button>
   )
 }
 
@@ -129,12 +151,12 @@ export function ShiftFooter() {
         <img src={LOGO} alt="Serious Shi(f)t" width={127} height={44} className="block h-11 w-auto object-contain" />
 
         <div className="flex items-center gap-[26px]">
-          {SOCIALS.map((s) => (
+          {SOCIALS.map((social) => (
             <a
-              key={s} href={SUBSCRIBE_URL} target="_blank" rel="noopener noreferrer"
-              className="t-display grid h-[34px] w-[34px] place-items-center rounded-full text-[13px] text-white transition-colors hover:!bg-[var(--color-yellow)] hover:!text-[var(--color-ink)]"
-              style={{ border: '1px solid rgba(255,255,255,0.28)' }}
-            >{s}</a>
+              key={social.label} href={social.href} target="_blank" rel="noopener noreferrer"
+              aria-label={`TrendWatching on ${social.label}`}
+              className="t-display grid h-11 w-11 place-items-center rounded-full text-[13px] text-white transition-colors hover:!bg-[var(--color-yellow)] hover:!text-[var(--color-ink)]"
+            ><span className="grid h-[34px] w-[34px] place-items-center rounded-full" style={{ border: '1px solid rgba(255,255,255,0.5)' }}>{social.mark}</span></a>
           ))}
         </div>
 
@@ -154,13 +176,13 @@ export function ShiftFooter() {
           {FOOTER_LINKS.map((l) => (
             <a
               key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
-              className="t-eyebrow !text-white/85 transition-colors hover:!text-[var(--color-yellow)]"
+              className="t-eyebrow inline-flex min-h-11 items-center !text-white/85 transition-colors hover:!text-[var(--color-yellow)]"
               style={{ fontSize: 14, fontWeight: 650, letterSpacing: '0.1em' }}
             >{l.label}</a>
           ))}
         </div>
 
-        <div className="mt-1 text-[11px]" style={{ letterSpacing: '0.06em', color: 'rgba(255,255,255,0.45)' }}>
+        <div className="mt-1 text-[11px]" style={{ letterSpacing: '0.06em', color: 'rgba(255,255,255,0.72)' }}>
           © {new Date().getFullYear()} TrendWatching · Serious Shi(f)t
         </div>
       </div>

@@ -54,19 +54,21 @@ export default function Home() {
 
   const onPointerDown = (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return
-    drag.current = { x: e.clientX, y: e.clientY, t: performance.now(), dx: 0, axis: null }
+    if (e.target.closest?.('button, a, input, textarea, select, [role="button"], [role="dialog"]')) return
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    drag.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), dx: 0, axis: null }
     const el = trackRef.current
     if (el) el.style.transition = 'none'
   }
 
   const onPointerMove = (e) => {
     const d = drag.current
-    if (!d) return
+    if (!d || d.pointerId !== e.pointerId) return
     const dx = e.clientX - d.x
     const dy = e.clientY - d.y
     // Decide once whether this gesture is a horizontal swipe or a vertical
     // scroll, then stay committed — otherwise the deck fights the page.
-    if (!d.axis && Math.abs(dx) + Math.abs(dy) > 8) d.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    if (!d.axis && Math.abs(dx) + Math.abs(dy) > 8) d.axis = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'x' : 'y'
     if (d.axis !== 'x') return
     d.dx = dx
     // Rubber-band at the two ends.
@@ -74,10 +76,11 @@ export default function Home() {
     paint(index, overscroll ? dx * 0.35 : dx)
   }
 
-  const endDrag = () => {
+  const endDrag = (event) => {
     const d = drag.current
-    if (!d) return
+    if (!d || (event?.pointerId !== undefined && d.pointerId !== event.pointerId)) return
     drag.current = null
+    if (event?.currentTarget?.hasPointerCapture?.(d.pointerId)) event.currentTarget.releasePointerCapture(d.pointerId)
     const el = trackRef.current
     if (el) el.style.transition = 'transform 0.55s cubic-bezier(0.22,1,0.28,1)'
 
@@ -91,8 +94,20 @@ export default function Home() {
     else setIndex(clamped)
   }
 
+  const cancelDrag = (event) => {
+    const d = drag.current
+    if (!d || d.pointerId !== event.pointerId) return
+    drag.current = null
+    if (event.currentTarget.hasPointerCapture?.(d.pointerId)) event.currentTarget.releasePointerCapture(d.pointerId)
+    const el = trackRef.current
+    if (el) el.style.transition = 'transform 0.55s cubic-bezier(0.22,1,0.28,1)'
+    paint(index)
+  }
+
   useEffect(() => {
     const onKey = (e) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      if (e.target.closest?.('button, a, input, textarea, select, [contenteditable="true"], [role="dialog"], [role="tab"]')) return
       if (e.key === 'ArrowRight') go(index + 1)
       else if (e.key === 'ArrowLeft') go(index - 1)
     }
@@ -124,6 +139,7 @@ export default function Home() {
     <section
       className="relative overflow-hidden bg-white"
       style={{ height: 'calc(100dvh - var(--topbar))' }}
+      aria-label="This week’s shift domains"
       aria-roledescription="carousel"
     >
       <div
@@ -131,8 +147,8 @@ export default function Home() {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onPointerLeave={endDrag}
+        onPointerCancel={cancelDrag}
+        onLostPointerCapture={cancelDrag}
         className="flex h-full cursor-grab active:cursor-grabbing"
         style={{
           width: `${count * 100}%`,
@@ -141,7 +157,7 @@ export default function Home() {
           transition: 'transform 0.55s cubic-bezier(0.22,1,0.28,1)',
         }}
       >
-        <Intro width={`${step}%`} meta={meta} />
+        <Intro width={`${step}%`} meta={meta} active={index === 0} count={count} />
         {domains.map((d, i) => (
           <DomainPanel
             key={d.id}
@@ -149,6 +165,8 @@ export default function Home() {
             width={`${step}%`}
             active={index === i + 1}
             total={domains.length}
+            position={i + 2}
+            count={count}
             onOpen={() => navigate(`/map/${d.slug}`)}
             onOpenShift={(s) => navigate(`/map/${d.slug}/${s.slug}`)}
           />
@@ -170,21 +188,23 @@ export default function Home() {
         {index === last ? 'Swipe back' : `Swipe for ${domains[index]?.name ?? ''}`}
       </div>
 
-      <div className="absolute inset-x-0 bottom-8 flex items-center justify-center gap-2">
+      <div className="absolute inset-x-0 bottom-3 flex items-center justify-center">
         {Array.from({ length: count }, (_, i) => (
           <button
             key={i} type="button" onClick={() => go(i)}
             aria-label={i === 0 ? 'Intro' : `Go to ${domains[i - 1]?.name}`}
             aria-current={i === index}
-            className="h-1 rounded-full"
-            style={{
-              width: i === index ? 26 : 10,
-              background: i === index
-                ? (index === 0 ? 'var(--color-ink)' : 'var(--color-yellow)')
-                : (index === 0 ? '#8E88A0' : 'rgba(255,255,255,0.45)'),
-              transition: 'width 0.35s ease, background 0.35s ease',
-            }}
-          />
+            className="grid h-11 w-11 place-items-center"
+          ><span
+              className="block h-1 rounded-full"
+              style={{
+                width: i === index ? 26 : 10,
+                background: i === index
+                  ? (index === 0 ? 'var(--color-ink)' : 'var(--color-yellow)')
+                  : (index === 0 ? '#655F70' : 'rgba(255,255,255,0.72)'),
+                transition: 'width 0.35s ease, background 0.35s ease',
+              }}
+            /></button>
         ))}
       </div>
 
@@ -216,7 +236,7 @@ function Arrow({ side, show, onClick, dark }) {
 
 /* ── Panel 0 — the editorial intro ───────────────────────────────────── */
 
-function Intro({ width, meta }) {
+function Intro({ width, meta, active, count }) {
   // Both lines are counted from the map document. Until it loads there is
   // nothing truthful to say, so the eyebrow renders the domain list alone and
   // the standfirst drops the counts rather than guessing at them.
@@ -238,6 +258,11 @@ function Intro({ width, meta }) {
     <div
       className="relative box-border flex h-full shrink-0 flex-col overflow-hidden bg-white px-6 pb-[104px] pt-[30px] lg:justify-center lg:px-24"
       style={{ width }}
+      role="group"
+      aria-roledescription="slide"
+      aria-label={`Introduction, 1 of ${count}`}
+      aria-hidden={!active}
+      inert={active ? undefined : ''}
     >
       {/* Ambient orb — transform-only animation, runs on the compositor. */}
       <div
@@ -292,11 +317,16 @@ function Intro({ width, meta }) {
 
 /* ── Panels 1..N — one per domain ────────────────────────────────────── */
 
-function DomainPanel({ domain, width, active, total, onOpen, onOpenShift }) {
+function DomainPanel({ domain, width, active, total, position, count, onOpen, onOpenShift }) {
   return (
     <div
       className="box-border flex h-full shrink-0 flex-col px-6 pb-[74px] pt-[30px] text-white lg:justify-center lg:px-24"
-      style={{ width, backgroundImage: domain.grad }}
+      style={{ width, backgroundImage: `linear-gradient(rgba(13,11,16,0.38), rgba(13,11,16,0.38)), ${domain.grad}` }}
+      role="group"
+      aria-roledescription="slide"
+      aria-label={`${domain.name}, ${position} of ${count}`}
+      aria-hidden={!active}
+      inert={active ? undefined : ''}
     >
       <div className="mx-auto flex w-full flex-1 flex-col lg:max-w-[1180px] lg:flex-none lg:flex-row lg:items-center lg:gap-20">
         {/* Left — the headline block. This is the entire panel on mobile. */}
@@ -307,12 +337,12 @@ function DomainPanel({ domain, width, active, total, onOpen, onOpenShift }) {
           </div>
 
           <div className="mt-[26px] text-[15px] italic opacity-90 lg:text-[19px]">Everything that is about to change in</div>
-          <div
+          <h2
             className="t-display mt-1.5 text-[clamp(40px,12vw,46px)] leading-[0.98] lg:text-[clamp(64px,6.4vw,112px)]"
             style={{ letterSpacing: '-0.035em' }}
           >
             {domain.name}
-          </div>
+          </h2>
           <p className="mt-3.5 max-w-[290px] text-[15px] leading-[1.5] opacity-95 lg:max-w-[520px] lg:text-[19px]">{domain.blurb}</p>
 
           <div className="mt-auto flex flex-col border-t pt-5 lg:mt-9 lg:border-t-0 lg:pt-0" style={{ borderColor: 'rgba(255,255,255,0.3)' }}>
@@ -325,7 +355,7 @@ function DomainPanel({ domain, width, active, total, onOpen, onOpenShift }) {
         {/* Right — a peek at what's inside. Desktop only: on a wide viewport the
             gradient is otherwise dead space, and naming the shifts gives the
             panel something to read rather than only to look at. */}
-        <div className="hidden w-[38%] max-w-[420px] shrink-0 lg:block">
+        {domain.keyShifts.length > 0 && <div className="hidden w-[38%] max-w-[420px] shrink-0 lg:block">
           <div className="t-eyebrow opacity-80">In this domain</div>
           <ul className="mt-4">
             {domain.keyShifts.slice(0, 4).map((s) => (
@@ -343,7 +373,7 @@ function DomainPanel({ domain, width, active, total, onOpen, onOpenShift }) {
               </li>
             ))}
           </ul>
-        </div>
+        </div>}
       </div>
     </div>
   )
