@@ -8,6 +8,13 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',
+  expect: {
+    // Chromium's font rasterisation differs slightly between macOS (where the
+    // approved reference images are reviewed) and Ubuntu (where CI runs).
+    // Keep this below the observed layout-regression scale while allowing the
+    // stable ~1% anti-aliasing delta across platforms.
+    toHaveScreenshot: { maxDiffPixelRatio: 0.015 },
+  },
   use: {
     baseURL: 'http://127.0.0.1:3100',
     trace: 'retain-on-failure',
