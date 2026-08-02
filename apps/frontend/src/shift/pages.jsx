@@ -20,6 +20,7 @@ import { ShiftFooter } from './chrome'
 import { Modules } from './modules'
 import { GradientHero, Eyebrow, Frame } from './sections'
 import { quoteTitle } from './theme'
+import { failureState } from './failure'
 
 /** Frame plus the module rhythm — the body of a shift or sub-shift page.
  *
@@ -45,15 +46,14 @@ function Missing({ what }) {
 /** The map document could not be loaded. Distinct from "not found": nothing is
  *  readable right now, and saying so is better than rendering stale prose. */
 export function Unavailable({ error, onRetry }) {
+  const failure = failureState(error)
   return (
     <div className="grid min-h-[60vh] place-items-center px-6 text-center">
       <div className="flex flex-col items-center gap-4">
-        <Eyebrow color="var(--color-ink-dim)">Unavailable</Eyebrow>
-        <h1 className="t-display text-2xl">This week’s map couldn’t be loaded.</h1>
+        <Eyebrow color="var(--color-ink-dim)">{failure.eyebrow}</Eyebrow>
+        <h1 className="t-display text-2xl">{failure.title}</h1>
         <p className="max-w-[380px]" style={{ color: 'var(--color-ink-soft)' }}>
-          {error?.status >= 500
-            ? 'The map service is having trouble. Your last successful pages remain cached.'
-            : 'Check your connection, then try again.'}
+          {failure.body}
         </p>
         {onRetry && <button type="button" className="pill-yellow" onClick={onRetry}>Retry</button>}
       </div>
@@ -62,6 +62,29 @@ export function Unavailable({ error, onRetry }) {
 }
 
 const Loading = () => <div className="min-h-[60vh]" aria-busy="true" />
+
+function SiblingNavigation({ previous, next, hrefFor, label }) {
+  if (!previous && !next) return null
+  return (
+    <Frame className="mt-10">
+      <nav aria-label={label} className="w-prose grid grid-cols-2 gap-3 border-t pt-6" style={{ borderColor: 'var(--color-hairline)' }}>
+        <h2 className="sr-only">{label}</h2>
+        {previous ? (
+          <Link to={hrefFor(previous)} className="card card-lift flex min-h-20 flex-col justify-center gap-1 p-4" rel="prev">
+            <span className="t-eyebrow" style={{ color: 'var(--color-ink-dim)' }}>← Previous</span>
+            <span className="t-title text-[14px] leading-[1.25]" style={{ color: 'var(--color-ink)' }}>{quoteTitle(previous.title)}</span>
+          </Link>
+        ) : <span />}
+        {next && (
+          <Link to={hrefFor(next)} className="card card-lift flex min-h-20 flex-col items-end justify-center gap-1 p-4 text-right" rel="next">
+            <span className="t-eyebrow" style={{ color: 'var(--color-ink-dim)' }}>Next →</span>
+            <span className="t-title text-[14px] leading-[1.25]" style={{ color: 'var(--color-ink)' }}>{quoteTitle(next.title)}</span>
+          </Link>
+        )}
+      </nav>
+    </Frame>
+  )
+}
 
 /* ── Domain sheet ────────────────────────────────────────────────────────── */
 
@@ -144,7 +167,7 @@ export function DomainSheet() {
 export function ShiftDetail() {
   const { domainSlug, ktSlug } = useParams()
   const navigate = useNavigate()
-  const { domain, shift, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug })
+  const { domain, shift, shiftSiblings, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug })
   useDocumentMeta(shift?.title, shift?.dek)
 
   if (loading && !shift) return <Loading />
@@ -174,6 +197,12 @@ export function ShiftDetail() {
         />
       </Column>
 
+      <SiblingNavigation
+        {...shiftSiblings}
+        label="Adjacent key shifts"
+        hrefFor={(item) => `/map/${domain.slug}/${item.slug}`}
+      />
+
       <div className="mt-[22px]"><ShiftFooter /></div>
     </article>
   )
@@ -184,7 +213,7 @@ export function ShiftDetail() {
 export function SubShiftDetail() {
   const { domainSlug, ktSlug, subSlug } = useParams()
   const navigate = useNavigate()
-  const { domain, shift, sub, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug, subSlug })
+  const { domain, shift, sub, subSiblings, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug, subSlug })
   useDocumentMeta(sub?.title, sub?.dek)
 
   // A sub-shift is a fresh reading context — always open at the top.
@@ -200,7 +229,7 @@ export function SubShiftDetail() {
         grad="var(--a-grad-hot)"
         minHeight={260}
         onBack={() => navigate(`/map/${domain.slug}/${shift.slug}`)}
-        eyebrow={`Sub-shift ${sub.num}`}
+        eyebrow={<><Link to={`/map/${domain.slug}/${shift.slug}`} className="!text-[var(--color-yellow)] underline underline-offset-4">Sub-shift of “{shift.title}”</Link> · AI × {domain.name}</>}
         eyebrowColor="var(--color-yellow)"
         title={sub.title}
         sub={sub.context}
@@ -209,6 +238,12 @@ export function SubShiftDetail() {
       <Column>
         <Modules modules={sub.modules} ctx={{ scope: 'sub_shift', domain, subs: [] }} />
       </Column>
+
+      <SiblingNavigation
+        {...subSiblings}
+        label="Adjacent sub-shifts"
+        hrefFor={(item) => `/map/${domain.slug}/${shift.slug}/${item.slug}`}
+      />
 
       <div className="mt-[22px]"><ShiftFooter /></div>
     </article>

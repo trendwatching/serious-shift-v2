@@ -3,6 +3,8 @@ node_modules/
 # monorepo build artifacts
 apps/frontend/.next/
 apps/frontend/out/
+apps/frontend/test-results/
+apps/frontend/playwright-report/
 apps/backend/target/
 # legacy SQLite source DB — kept locally as the ETL source, not committed
 # (migrate to Postgres via packages/db/etl; archive to object storage for prod)

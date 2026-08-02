@@ -155,7 +155,7 @@ export function ShiftFooter() {
             <a
               key={social.label} href={social.href} target="_blank" rel="noopener noreferrer"
               aria-label={`TrendWatching on ${social.label}`}
-              className="t-display grid h-11 w-11 place-items-center rounded-full text-[13px] text-white transition-colors hover:!bg-[var(--color-yellow)] hover:!text-[var(--color-ink)]"
+              className="t-display grid h-11 w-11 place-items-center rounded-full text-[13px] !text-white transition-colors hover:!bg-[var(--color-yellow)] hover:!text-[var(--color-ink)]"
             ><span className="grid h-[34px] w-[34px] place-items-center rounded-full" style={{ border: '1px solid rgba(255,255,255,0.5)' }}>{social.mark}</span></a>
           ))}
         </div>

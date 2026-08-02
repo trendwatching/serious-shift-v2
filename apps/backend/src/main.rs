@@ -731,13 +731,13 @@ fn build_snapshot(body: String, version: &str) -> Result<MapSnapshot, serde_json
                 json!({
                     "updated": updated,
                     "domain": domain_summary(domain, domain_shift_count),
-                    "key_shifts": summaries,
+                    "key_shifts": summaries.clone(),
                     "insights": domain_insights,
                 }),
             ),
         );
 
-        for shift in domain_shifts {
+        for shift in &domain_shifts {
             let shift_slug = string_field(shift, "slug");
             let shift_id = string_field(shift, "id");
             if shift_slug.is_empty() || shift_id.is_empty() {
@@ -758,6 +758,7 @@ fn build_snapshot(body: String, version: &str) -> Result<MapSnapshot, serde_json
                         "updated": updated,
                         "domain": domain_summary(domain, domain_shift_count),
                         "shift": shift,
+                        "siblings": summaries.clone(),
                         "sub_shifts": sub_summaries,
                     }),
                 ),
@@ -1341,6 +1342,7 @@ mod tests {
         assert!(index_json.get("key_trends").is_none());
         assert!(domain_json.get("key_shifts").is_some());
         assert!(shift_json.get("shift").is_some());
+        assert!(shift_json.get("siblings").is_some());
         assert!(shift_json.get("sub_shifts").is_some());
         assert!(sub_json.get("parent_shift").is_some());
         assert!(sub_json.get("siblings").is_some());

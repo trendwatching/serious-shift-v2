@@ -103,7 +103,11 @@ export function useDomains() {
       if (detail?.domain?.id === id && Array.isArray(detail.key_shifts)) {
         rows = detail.key_shifts
       } else if (detail?.domain?.id === id && detail.shift) {
-        rows = [{ ...detail.shift, sub_trends: detail.sub_shifts || [] }]
+        const current = { ...detail.shift, sub_trends: detail.sub_shifts || [] }
+        rows = (detail.siblings || []).map((sibling) => (
+          sibling.id === detail.shift.id ? current : sibling
+        ))
+        if (!rows.length) rows = [current]
       } else if (detail?.domain?.id === id && detail.parent_shift) {
         const siblings = detail.siblings || []
         const subRows = siblings.map((sibling) => (
@@ -158,5 +162,20 @@ export function useResolved({ domainSlug, ktSlug, subSlug } = {}) {
   const domain = state.domains.find((item) => item.slug === domainSlug || item.id === domainSlug)
   const shift = ktSlug ? domain?.keyShifts.find((item) => item.slug === ktSlug) : undefined
   const sub = subSlug ? shift?.subshifts.find((item) => item.slug === subSlug) : undefined
-  return { ...state, domain, shift, sub }
+  const shiftIndex = shift ? domain?.keyShifts.findIndex((item) => item.id === shift.id) : -1
+  const subIndex = sub ? shift?.subshifts.findIndex((item) => item.id === sub.id) : -1
+  return {
+    ...state,
+    domain,
+    shift,
+    sub,
+    shiftSiblings: shiftIndex >= 0 ? {
+      previous: domain.keyShifts[shiftIndex - 1] || null,
+      next: domain.keyShifts[shiftIndex + 1] || null,
+    } : { previous: null, next: null },
+    subSiblings: subIndex >= 0 ? {
+      previous: shift.subshifts[subIndex - 1] || null,
+      next: shift.subshifts[subIndex + 1] || null,
+    } : { previous: null, next: null },
+  }
 }
