@@ -12,8 +12,9 @@ Stack: Rust · axum · sqlx (Postgres).
 
 ## Endpoints
 
-The four list endpoints (`/api/thinkers`, `/api/sources`, `/api/claims`,
-`/api/predictions`) take `?limit=` — default 500, ceiling 5000. Unbounded they
+The four inspection endpoints (`/api/thinkers`, `/api/sources`, `/api/claims`,
+`/api/predictions`) require `INSPECTION_TOKEN` and take `?limit=` — default 500,
+ceiling 5000. Unbounded they
 answered ~7-8 MB each, which on a public URL is a denial of service a handful
 of concurrent requests wide. They have no UI contract; the app only reads
 `/api/map`.
@@ -26,9 +27,9 @@ of concurrent requests wide. They have no UI contract; the app only reads
 | `GET /api/claims` | claims ⋈ thinker/source (ordered by `claim_weight`) |
 | `GET /api/predictions` | predictions ⋈ thinker/source |
 | `GET /api/stats` | aggregate counts |
-| `GET /api/map` | the assembled trend map (the pipeline writes it) — the only document the UI reads |
+| `GET /api/map` | deprecated full trend map compatibility endpoint; rate and concurrency limited |
 | `POST /api/innovations/ingest` | ingests one innovation → `innovations` table (idempotent on `source_innovation_id`). Requires `X-Ingest-Token`; **404 while `INGEST_TOKEN` is unset** |
-| `GET /*` | the SPA. Unmatched paths return `index.html` so client-side routes deep-link; unmatched `/api/*` paths return a JSON 404 |
+| `GET /*` | canonical SPA routes deep-link; unknown routes and unmatched `/api/*` paths return real 404 responses |
 
 ## Configuration (env)
 
@@ -39,6 +40,7 @@ of concurrent requests wide. They have no UI contract; the app only reads
 | `FRONTEND_ORIGIN` | **yes in release** | CORS allowlist (comma-separated). Release builds panic without it; debug builds allow any origin |
 | `STATIC_DIR` | no | SPA bundle to serve, default `static` (the image sets `/srv/static`) |
 | `INGEST_TOKEN` | only for `/api/innovations/ingest` | shared secret; route 404s while unset |
+| `INSPECTION_TOKEN` | only for inspection endpoints | bearer token; endpoints 404 while unset |
 
 ## Run locally
 
