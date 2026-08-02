@@ -98,17 +98,33 @@ def prompt_st_editorial(kt_name: str, kt_subtitle: str, sub_trends: list, claims
 # ── Phase 6: Thinker attribution ────────────────────────────────────────────
 
 def prompt_thinker_attribution(node_type: str, node_name: str, thinker_groups: dict) -> str:
+    """Render the attribution prompt with quotes and summaries kept apart.
+
+    The two are labelled differently because only one of them is the thinker's
+    words. `claim_text` is our extractor's paraphrase; `quote` is the verbatim
+    span it was drawn from. Feeding only paraphrases — which is what this did —
+    made it impossible for the model to return a real quote, while the UI
+    rendered whatever came back inside quotation marks under the person's name.
+
+    Quotes are NOT truncated: the parser accepts a returned quote only if it
+    matches one of these verbatim, so a clipped source line could never match.
+    """
     lines = []
     for thinker, clms in thinker_groups.items():
         lines.append(f'\n[{thinker}]')
         for c in clms[:8]:
-            text = c['claim_text'] if isinstance(c, dict) else c
-            lines.append(f'  - {text[:200]}')
+            if not isinstance(c, dict):
+                lines.append(f'  SUMMARY: {str(c)[:200]}')
+                continue
+            lines.append(f"  SUMMARY: {(c.get('claim_text') or '')[:200]}")
+            quote = (c.get('quote') or '').strip()
+            if quote:
+                lines.append(f'  QUOTE: {quote}')
     return load_and_render(
         "map/thinker_attribution.txt",
         node_type=node_type,
         node_name=node_name,
-        thinker_claims=''.join(lines),
+        thinker_claims='\n'.join(lines),
     )
 
 

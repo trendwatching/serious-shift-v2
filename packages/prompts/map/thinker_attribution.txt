@@ -1,17 +1,32 @@
 You are analysing thinker stances for Serious Shift.
 
 TASK
-Based on the claims below (grouped by thinker), identify:
-- 2–3 PROPONENTS: thinkers whose claims most strongly support or accelerate this {{node_type}}
-- 2–3 SKEPTICS: thinkers whose claims question, complicate, or push back on it
+From the evidence below (grouped by thinker), identify:
+- 2–3 PROPONENTS: thinkers whose evidence most strongly supports or accelerates this {{node_type}}
+- 2–3 SKEPTICS: thinkers whose evidence questions, complicates, or pushes back on it
 
-For each thinker, include one direct quote or close paraphrase from THEIR evidence that demonstrates why they are a proponent or skeptic. Without the quote the attribution is unverifiable. Cite nothing they did not say.
+QUOTING RULE — the important one
+Each thinker's evidence lists QUOTE: lines. Those are the only words that
+thinker actually said. For each thinker you name, copy ONE of their QUOTE: lines
+VERBATIM into the `quote` field — character for character. Do not trim, tidy,
+shorten, merge two lines, or paraphrase.
+
+The SUMMARY: lines are our own descriptions of what a thinker argued. They are
+NOT that thinker's words. Never put a SUMMARY line in the `quote` field.
+
+If a thinker has no QUOTE: line, or none of their quotes supports the stance you
+would give them, LEAVE THEM OUT. A shorter list is correct; an invented or
+paraphrased quote is not. This is published under a real person's name, so
+anything in the `quote` field must be something they demonstrably said.
 
 Return ONLY valid JSON:
-{"proponents":[{"name":"Name A","quote":"short quote from their evidence"}],"skeptics":[{"name":"Name C","quote":"short quote from their evidence"}]}
+{"proponents":[{"name":"Name A","quote":"one QUOTE line, copied exactly"}],"skeptics":[{"name":"Name C","quote":"one QUOTE line, copied exactly"}]}
+
+Return {"proponents":[],"skeptics":[]} if the evidence does not support a
+confident attribution.
 
 NODE TYPE: {{node_type}}
 NODE NAME: {{node_name}}
 
-THINKER CLAIMS:
+THINKER EVIDENCE:
 {{thinker_claims}}

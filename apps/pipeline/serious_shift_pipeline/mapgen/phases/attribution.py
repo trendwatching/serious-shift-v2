@@ -19,7 +19,8 @@ def phase5_thinker_attribution(conn, api_key: str, domain_claims: dict, domain_k
         for kt in domain_kts.get(d['id'], []):
             preferred_ids = set(kt.get('_claim_ids', []))
             kt_claims = [c for c in claims if c['id'] in preferred_ids] or claims[:60]
-            groups = _collect_by_thinker(kt_claims, max_per=8)
+            # Curated roster only: this panel names people as authorities.
+            groups = _collect_by_thinker(kt_claims, max_per=8, curated_only=True)
             if groups:
                 work.append((kt, groups))
 
@@ -30,7 +31,10 @@ def phase5_thinker_attribution(conn, api_key: str, domain_claims: dict, domain_k
         default=dict,
         describe=lambda item: item[0]['name'][:30],
     )
-    results = [parse_thinker_attribution(r or {}) for r in raw]
+    # Pass the evidence back in: the parser verifies each returned quote
+    # against the thinker's actual verbatim spans and drops the rest.
+    results = [parse_thinker_attribution(r or {}, groups)
+               for r, (_, groups) in zip(raw, work)]
 
     # Serial: write attribution.
     for (kt, _), attr in zip(work, results):

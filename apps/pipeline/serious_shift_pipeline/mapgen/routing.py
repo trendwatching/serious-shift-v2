@@ -28,9 +28,9 @@ def route_claims_for_domain(conn, domain: dict, limit: int = CLAIMS_PER_DOM) -> 
     # most one source per claim), so rows are already unique — and DISTINCT would
     # forbid ordering by the computed score expression below.
     SELECT = """
-        SELECT c.id, c.claim_text, c.consumer_implication,
+        SELECT c.id, c.claim_text, c.quote, c.consumer_implication,
                c.signal_strength, c.specificity, c.domain AS claim_domain,
-               t.name AS thinker, t.credibility_score,
+               t.name AS thinker, t.credibility_score, t.discovered AS thinker_discovered,
                s.title AS source_title, s.date_published
         FROM claims c
         JOIN thinkers t ON c.thinker_id = t.id
