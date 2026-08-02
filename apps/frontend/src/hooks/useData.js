@@ -6,20 +6,20 @@ const inflight = new Map()  // url → Promise<data>
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export class ApiError extends Error {
-  constructor(url, status = 0, code = '') {
+  constructor(url, status = 0, code = '', kind = '') {
     super(status ? `${url} → ${status}` : `${url} → network error`)
     this.name = 'ApiError'
     this.status = status
     this.code = code
-    this.kind = status === 503
+    this.kind = kind || (status === 503 || code === 'unavailable'
       ? 'unavailable'
-      : status >= 500
+      : status === 408 || status === 504
+        ? 'timeout'
+        : status >= 500
         ? 'server'
-        : status === 408
-          ? 'timeout'
           : status === 0
             ? 'offline'
-            : 'request'
+            : 'request')
   }
 }
 
@@ -34,11 +34,16 @@ function transient(error) {
 }
 
 async function fetchJson(url) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10_000)
   let response
   try {
-    response = await fetch(url, { headers: { Accept: 'application/json' } })
+    response = await fetch(url, { headers: { Accept: 'application/json' }, signal: controller.signal })
   } catch (cause) {
-    throw new ApiError(url, 0, cause?.name || 'network_error')
+    const timedOut = cause?.name === 'AbortError'
+    throw new ApiError(url, 0, timedOut ? 'timeout' : 'network_error', timedOut ? 'timeout' : 'offline')
+  } finally {
+    clearTimeout(timeout)
   }
   if (!response.ok) {
     let code = ''

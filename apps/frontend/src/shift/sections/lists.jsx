@@ -7,16 +7,54 @@ import { quoteTitle } from '../theme'
 const WHEN = ['0–12 months', '1–3 years', '3–10 years']
 
 export function SubShiftList({ subs, onOpen }) {
+  const [current, setCurrent] = useState(0)
+  const rail = useRef(null)
+  const cards = useRef([])
+  const frame = useRef(0)
   if (!subs?.length) return null
+
+  const go = (index) => {
+    const next = Math.max(0, Math.min(subs.length - 1, index))
+    setCurrent(next)
+    cards.current[next]?.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'nearest',
+      inline: 'start',
+    })
+  }
+
+  const onScroll = () => {
+    cancelAnimationFrame(frame.current)
+    frame.current = requestAnimationFrame(() => {
+      const node = rail.current
+      if (!node) return
+      let nearest = 0
+      let distance = Number.POSITIVE_INFINITY
+      cards.current.forEach((card, index) => {
+        const next = Math.abs((card?.offsetLeft || 0) - node.scrollLeft)
+        if (next < distance) { nearest = index; distance = next }
+      })
+      setCurrent(nearest)
+    })
+  }
+
   return (
     <div className="flex flex-col gap-2.5">
-      <SectionHead title={`The ${subs.length} sub-shift${subs.length === 1 ? '' : 's'}`} aside="Tap to open" />
-      <div className="grid gap-2.5 md:grid-cols-2 lg:gap-4 xl:grid-cols-3">
+      <SectionHead title={`The ${subs.length} sub-shift${subs.length === 1 ? '' : 's'}`} aside={<><span className="md:hidden">Scroll</span><span className="hidden md:inline">Select to open</span></>} />
+      <div className="flex items-center justify-between md:hidden">
+        <span className="font-mono text-xs" role="status" aria-live="polite">{current + 1} of {subs.length}</span>
+        <span className="flex gap-2">
+          <button type="button" onClick={() => go(current - 1)} disabled={current === 0} aria-label="Previous sub-shift" className="grid h-11 w-11 place-items-center rounded-full border disabled:opacity-35" style={{ borderColor: 'var(--color-hairline)' }}>←</button>
+          <button type="button" onClick={() => go(current + 1)} disabled={current === subs.length - 1} aria-label="Next sub-shift" className="grid h-11 w-11 place-items-center rounded-full border disabled:opacity-35" style={{ borderColor: 'var(--color-hairline)' }}>→</button>
+        </span>
+      </div>
+      <div ref={rail} onScroll={onScroll} aria-label="Sub-shifts" aria-roledescription="carousel" className="bleed-m carousel-scrollbar-hidden flex snap-x snap-mandatory gap-3 overflow-x-auto md:grid md:grid-cols-2 md:overflow-x-visible lg:gap-4 xl:grid-cols-3">
         {subs.map((b, i) => (
           <button
-            key={b.id} type="button" onClick={() => onOpen(b)}
-            className="card card-lift a-rise relative overflow-hidden text-left flex flex-col gap-[9px] pl-[17px] pr-4 py-[15px] lg:pl-[21px] lg:pr-5 lg:py-[18px]"
-            style={{ animationDelay: `${(0.05 + i * 0.06).toFixed(2)}s` }}
+            key={b.id} ref={(node) => { cards.current[i] = node }} type="button" onClick={() => onOpen(b)}
+            aria-label={`Open sub-shift ${i + 1} of ${subs.length}: ${b.title}`}
+            className="card card-lift a-rise relative flex w-[82%] shrink-0 snap-start flex-col gap-[9px] overflow-hidden py-[15px] pl-[17px] pr-4 text-left md:w-auto md:shrink lg:py-[18px] lg:pl-[21px] lg:pr-5"
+            style={{ animationDelay: `${(0.05 + i * 0.06).toFixed(2)}s`, scrollMarginInline: 'var(--gutter)' }}
           >
             <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundImage: 'var(--a-grad)' }} />
             <span className="flex items-center gap-2">

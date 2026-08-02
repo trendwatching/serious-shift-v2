@@ -29,6 +29,12 @@ jobs:
       - name: WCAG AA contrast tokens
         run: npm run check:contrast
       - run: npm run build
+      - name: Unit and component tests
+        run: npm test
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser, axe, and visual regression tests
+        run: npm run test:e2e
       - name: Assert a static export was produced
         # `output: 'export'` silently degrades to a server build if the app grows
         # a server-only feature; the backend image would then ship nothing.
