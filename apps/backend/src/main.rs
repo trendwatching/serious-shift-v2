@@ -210,6 +210,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/api/*rest",
             any(|| async { AppError(StatusCode::NOT_FOUND, "no such endpoint".into()) }),
         )
+        // Baseline security headers. The site embeds no third-party frames or
+        // scripts (fonts are self-hosted), so a restrictive policy costs nothing
+        // and closes clickjacking, MIME sniffing and referrer leakage.
+        .layer(SetResponseHeaderLayer::overriding(
+            header::X_CONTENT_TYPE_OPTIONS,
+            HeaderValue::from_static("nosniff"),
+        ))
+        .layer(SetResponseHeaderLayer::overriding(
+            header::X_FRAME_OPTIONS,
+            HeaderValue::from_static("DENY"),
+        ))
+        .layer(SetResponseHeaderLayer::overriding(
+            header::REFERRER_POLICY,
+            HeaderValue::from_static("strict-origin-when-cross-origin"),
+        ))
+        .layer(SetResponseHeaderLayer::overriding(
+            header::STRICT_TRANSPORT_SECURITY,
+            HeaderValue::from_static("max-age=31536000; includeSubDomains"),
+        ))
+        .layer(SetResponseHeaderLayer::overriding(
+            header::CONTENT_SECURITY_POLICY,
+            // 'unsafe-inline' on script-src is required by the legacy hash
+            // redirect and Next's bootstrap; everything else is same-origin.
+            HeaderValue::from_static(
+                "default-src 'self'; script-src 'self' 'unsafe-inline'; \
+                 style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; \
+                 font-src 'self'; connect-src 'self'; frame-ancestors 'none'; \
+                 base-uri 'self'; form-action 'self'",
+            ),
+        ))
         // The map document is large — ~1 MB of JSON once every shift carries its
         // editorial modules — and compresses to roughly a quarter of that.
         // Applied to the whole router so /api/claims benefits too; responses are
@@ -404,11 +434,25 @@ async fn map(State(s): State<AppState>) -> Result<Response, AppError> {
 /// files did not. A route we have no metadata for still gets the shell verbatim
 /// — the client router resolves it, and unknown shifts render the app's own
 /// not-found state.
+/// True when a path looks like a file request rather than a client-side route.
+///
+/// App routes are built from slugs, which strip punctuation — so no real route
+/// ever contains a dot in its last segment. Anything that does is asking for an
+/// asset, and answering that with the app shell at 200 is actively harmful: a
+/// mistyped `<script src>` silently receives HTML instead of failing, and search
+/// engines read 200-with-shell on arbitrary URLs as soft 404s.
+fn looks_like_asset(path: &str) -> bool {
+    path.rsplit('/').next().is_some_and(|seg| seg.contains('.'))
+}
+
 async fn spa(State(s): State<AppState>, uri: axum::http::Uri) -> Response {
     if s.shell.is_empty() {
         return (StatusCode::NOT_FOUND, "no SPA build").into_response();
     }
     let path = uri.path();
+    if looks_like_asset(path) {
+        return (StatusCode::NOT_FOUND, "not found").into_response();
+    }
     let idx = site_index(&s).await;
     let html = match idx.pages.get(path) {
         Some(meta) => seo::render(&s.shell, path, meta, &s.origin),
@@ -593,6 +637,34 @@ mod tests {
         assert_eq!(list_limit(&q(&[("limit", "abc")])), DEFAULT_LIST_LIMIT);
         assert_eq!(list_limit(&q(&[("limit", "-5")])), 1);
         assert_eq!(list_limit(&q(&[("limit", "0")])), 1);
+    }
+
+    #[test]
+    fn asset_like_paths_are_404ed_not_answered_with_the_app_shell() {
+        // A missing asset answered with 200 HTML makes a broken <script src>
+        // silently succeed, and reads as a soft 404 to a crawler.
+        for p in [
+            "/nonexistent.js",
+            "/styles.css",
+            "/foo.json",
+            "/a/b/image.png",
+        ] {
+            assert!(looks_like_asset(p), "{p} should be treated as an asset");
+        }
+    }
+
+    #[test]
+    fn real_app_routes_are_never_mistaken_for_assets() {
+        // Slugs strip punctuation, so no route's last segment contains a dot.
+        for p in [
+            "/",
+            "/map/society",
+            "/map/society/sovereign-collapse",
+            "/map/society/sovereign-collapse/threshold-blindness",
+            "/some/deep/path",
+        ] {
+            assert!(!looks_like_asset(p), "{p} is a route, not an asset");
+        }
     }
 
     #[test]

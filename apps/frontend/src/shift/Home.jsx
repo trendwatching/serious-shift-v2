@@ -13,6 +13,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { useDomains } from './useDomains'
 import { DOMAIN_ORDER, DOMAIN_THEME, pad2, quoteTitle } from './theme'
 
@@ -26,6 +27,11 @@ const spell = (n) => (n >= 0 && n < WORDS.length ? WORDS[n] : n.toLocaleString()
 
 export default function Home() {
   const { domains, meta } = useDomains()
+  // No page title: the homepage IS the site title. Passing undefined also
+  // restores it when navigating back from a shift.
+  useDocumentMeta(undefined, meta?.shiftCount
+    ? `${meta.domainCount} domains, ${meta.shiftCount} shifts this week, told as stories.`
+    : undefined)
   const navigate = useNavigate()
   const [index, setIndex] = useState(0)
   const trackRef = useRef(null)

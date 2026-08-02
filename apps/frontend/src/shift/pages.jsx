@@ -14,6 +14,7 @@
  */
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { useResolved } from './useDomains'
 import { ShiftFooter } from './chrome'
 import { Modules } from './modules'
@@ -63,6 +64,7 @@ export function DomainSheet() {
   const { domainSlug } = useParams()
   const navigate = useNavigate()
   const { domain, loading, unavailable } = useResolved({ domainSlug })
+  useDocumentMeta(domain?.name, domain?.blurb)
 
   if (loading && !domain) return <Loading />
   if (unavailable) return <Unavailable />
@@ -132,6 +134,7 @@ export function ShiftDetail() {
   const { domainSlug, ktSlug } = useParams()
   const navigate = useNavigate()
   const { domain, shift, loading, unavailable } = useResolved({ domainSlug, ktSlug })
+  useDocumentMeta(shift?.title, shift?.dek)
 
   if (loading && !shift) return <Loading />
   if (unavailable) return <Unavailable />
@@ -171,6 +174,7 @@ export function SubShiftDetail() {
   const { domainSlug, ktSlug, subSlug } = useParams()
   const navigate = useNavigate()
   const { domain, shift, sub, loading, unavailable } = useResolved({ domainSlug, ktSlug, subSlug })
+  useDocumentMeta(sub?.title, sub?.dek)
 
   // A sub-shift is a fresh reading context — always open at the top.
   useEffect(() => { window.scrollTo(0, 0) }, [subSlug])
