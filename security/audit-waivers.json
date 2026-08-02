@@ -6,5 +6,13 @@
       "owner": "Serious Shift engineering",
       "expires": "2026-10-31"
     }
+  ],
+  "rust": [
+    {
+      "id": "RUSTSEC-2023-0071",
+      "reason": "The medium-severity Marvin Attack advisory has no fixed release. rsa 0.9.10 is retained only in Cargo.lock through an inactive optional dependency: cargo tree -i rsa reports no active path for this backend. Serious Shift performs no RSA operations and terminates TLS outside the application on Railway.",
+      "owner": "Serious Shift engineering",
+      "expires": "2026-10-31"
+    }
   ]
 }

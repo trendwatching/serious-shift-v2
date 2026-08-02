@@ -73,5 +73,5 @@ build from the repo root so they can copy `packages/` in.
 
 `.github/workflows/` has one workflow per block (db, pipeline, backend, frontend),
 each triggered on changes to its path and relevant root Railway configuration.
-High/critical dependency findings block; the only temporary waiver is named,
-owned, justified, and expiring in `security/audit-waivers.json`.
+High/critical dependency findings block; temporary waivers must be named, owned,
+justified, and expiring in `security/audit-waivers.json`.

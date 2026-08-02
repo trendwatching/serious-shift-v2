@@ -6,9 +6,9 @@ name: pipeline
 
 on:
   push:
-    paths: ["apps/pipeline/**", "packages/**", "railway.ingest.json", "railway.synthesize.json", ".github/workflows/pipeline.yml"]
+    paths: ["apps/pipeline/**", "packages/**", "security/audit-waivers.json", "railway.ingest.json", "railway.synthesize.json", ".github/workflows/pipeline.yml"]
   pull_request:
-    paths: ["apps/pipeline/**", "packages/**", "railway.ingest.json", "railway.synthesize.json", ".github/workflows/pipeline.yml"]
+    paths: ["apps/pipeline/**", "packages/**", "security/audit-waivers.json", "railway.ingest.json", "railway.synthesize.json", ".github/workflows/pipeline.yml"]
   workflow_dispatch: {}
 
 jobs:
