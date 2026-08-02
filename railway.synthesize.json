@@ -5,8 +5,8 @@
     "dockerfilePath": "apps/pipeline/Dockerfile"
   },
   "deploy": {
-    "startCommand": "python -m serious_shift_pipeline.run synthesize",
-    "cronSchedule": "1 7 * * *",
+    "startCommand": "python -m serious_shift_pipeline.run synthesize --force",
+    "cronSchedule": "2 7 * * *",
     "restartPolicyType": "NEVER"
   }
 }
