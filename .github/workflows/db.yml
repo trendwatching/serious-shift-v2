@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:18@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
+        image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
         env:
           POSTGRES_USER: serious
           POSTGRES_PASSWORD: serious
@@ -73,12 +73,13 @@ jobs:
       - name: schema.sql matches the migrations
         # The committed dump is documentation and a fast rebuild path. It went
         # six migrations stale once; this makes that impossible. pg_dump embeds
-        # its OS packaging in two comments, so compare the semantic dump after
-        # removing only those non-schema lines.
+        # its OS packaging in two comments and Postgres 17+ adds a session-only
+        # transaction_timeout SET. Compare after removing only that metadata;
+        # every schema object remains strict.
         run: |
           dbmate dump
-          git show HEAD:schema.sql | sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d' > /tmp/schema.expected.sql
-          sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d' schema.sql > /tmp/schema.actual.sql
+          git show HEAD:schema.sql | sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d; /^SET transaction_timeout = 0;$/d' > /tmp/schema.expected.sql
+          sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d; /^SET transaction_timeout = 0;$/d' schema.sql > /tmp/schema.actual.sql
           diff -u /tmp/schema.expected.sql /tmp/schema.actual.sql \
             || { echo "schema.sql is out of date — run 'dbmate dump' and commit"; exit 1; }
 
@@ -108,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:18@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
+        image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
         env:
           POSTGRES_USER: serious
           POSTGRES_PASSWORD: serious
