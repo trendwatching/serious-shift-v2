@@ -29,6 +29,7 @@ from psycopg.types.json import Json
 
 from . import db
 from .config import cost_of
+from .redaction import redact_secrets
 
 # How long run history is kept. Long enough to compare against the same week
 # last quarter, short enough that the tables stay small without any operator
@@ -70,8 +71,10 @@ class ErrorLog:
 
     def record(self, *, step: str, thinker, exc, retry_attempted: bool,
                outcome: str = "skipped", **extra) -> None:
+        message = redact_secrets(exc)
+        traceback = redact_secrets(tb.format_exc())
         print(
-            f"  ✗ [{step}] {thinker or '—'}: {type(exc).__name__}: {str(exc)[:120]}",
+            f"  ✗ [{step}] {thinker or '—'}: {type(exc).__name__}: {message[:120]}",
             flush=True,
         )
         _write(
@@ -80,9 +83,9 @@ class ErrorLog:
                   traceback, retry_attempted, outcome, detail)
                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
             (
-                self.run_id, step, thinker, type(exc).__name__, str(exc)[:2000],
-                tb.format_exc()[:20000], retry_attempted, outcome,
-                Json({k: str(v)[:500] for k, v in extra.items()}) if extra else None,
+                self.run_id, step, thinker, type(exc).__name__, message[:2000],
+                traceback[:20000], retry_attempted, outcome,
+                Json({k: redact_secrets(v)[:500] for k, v in extra.items()}) if extra else None,
             ),
         )
         with self._lock:

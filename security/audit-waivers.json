@@ -1,0 +1,10 @@
+{
+  "npm": [
+    {
+      "id": "GHSA-qwww-vcr4-c8h2",
+      "reason": "The published advisory affects React Router RSC action handling. Serious Shift is a client-only BrowserRouter SPA exported as static files and defines no RSC routes or server actions. The advisory's stated patched 8.3.0 release is not published; downgrading would reintroduce other fixed React Router advisories.",
+      "owner": "Serious Shift engineering",
+      "expires": "2026-10-31"
+    }
+  ]
+}

@@ -97,8 +97,10 @@ New service → **Deploy from repo**.
   - `DATABASE_URL = ${{Postgres.DATABASE_URL}}`
   - `FRONTEND_ORIGIN = https://<your-domain>` — **required.** A release build
     refuses to start without it rather than allowing every origin.
-  - `INGEST_TOKEN = <random secret>` — required to enable
-    `POST /api/innovations/ingest`; the route returns 404 while unset.
+  - `INSPECTION_TOKEN = <random secret>` — bearer token for thinkers, sources,
+    claims, predictions, and stats. Leave it unset to disable those routes.
+  - **Do not set `INGEST_TOKEN`.** Innovations are deferred; the dormant route
+    must remain a 404 in staging and production.
   - `PUBLIC_ORIGIN` (optional) — absolute origin used for canonical URLs and
     the sitemap. Defaults to the first `FRONTEND_ORIGIN` entry.
   - `PORT = 8080` (optional; the image defaults to it)
@@ -110,6 +112,10 @@ New service → **Deploy from repo**.
 - **Cron Schedule:** comes from that file (`0 22 * * 0`, Sundays 22:00 UTC).
   Railway runs the container on schedule, then the service sleeps.
 - **Variables:** `DATABASE_URL = ${{Postgres.DATABASE_URL}}`, `ANTHROPIC_API_KEY`.
+  - `YOUTUBE_PROXY_URL` — managed secret required for the YouTube source canary.
+    Never print it. The pipeline redacts HTTP userinfo before writing errors.
+  - `YOUTUBE_PROXY_COST_USD_PER_REQUEST` — optional unit-cost estimate recorded
+    with proxy request counts in `pipeline_runs.detail`.
   - `SS_ALERT_WEBHOOK` — **set this.** Cost and failure alerts POST here
     (Slack/Discord/ntfy all accept the payload). Without it alerts only reach
     stdout, and the previous macOS-only implementation reached nothing at all.
@@ -117,22 +123,44 @@ New service → **Deploy from repo**.
   - `SS_COST_ALERT_USD` (default 25) — notify threshold.
   - `SS_DISABLE_BATCH=1` — opt out of the Batch API (2x the cost; only for
     debugging, since batches take minutes to hours to return).
-- On startup the run **applies any pending migrations**, then scrapes → processes
-  → (gated) regenerates the map. Pass `--skip-migrate` if you manage the schema
-  externally. A full refresh spends roughly **$8–9** of Anthropic credits with
-  batching enabled; the run is budget-guarded and gates the expensive map regen
-  on new claims having landed.
+- On startup the run **applies any pending migrations**, then scrapes → processes.
+  Synthesis is the separate Monday service. A candidate is validated before
+  publication; failure exits non-zero and leaves `documents['map']` untouched.
+  Success atomically rotates the old map to `documents['map:previous']`.
 
 ## 5. Verify
 - `https://<domain>/health` → `ok` (it queries Postgres, so it goes red if the DB does).
-- `https://<domain>/api/map` → the trend-map JSON; `/api/stats` → counts.
+- `https://<domain>/api/v1/map` → small index JSON. Domain/shift/sub-shift routes
+  return only that route's document and honor ETags. `/api/map` is deprecated.
+- `/api/stats` without a valid inspection bearer token → `401` (or `404` when
+  `INSPECTION_TOKEN` is disabled).
 - `https://<domain>/` → the app renders; a deep link like `/map/society` loads directly.
-- `https://<domain>/api/nonsense` → `404 {"error":"no such endpoint"}` (not HTML).
+- `https://<domain>/api/nonsense` → JSON 404 with stable `not_found` code.
+- An unknown content path renders the accessible Not Found shell with HTTP 404
+  and noindex; a valid deep link returns HTTP 200 with canonical/OG metadata.
 - Trigger each stage once from the dashboard ("Run now") and watch logs.
 - `SELECT * FROM pipeline_runs ORDER BY started_at DESC LIMIT 5;` — every run
   records status, claim delta and spend here, so a failed cron is diagnosable
   after its container is gone. A row still `running` with a NULL `finished_at`
   means the container died mid-flight.
+
+### Controlled synthesis and editorial rollback
+
+Run one controlled staging synthesis only after the route API is deployed. The
+validator must report unique slugs/references, exactly five sub-shifts per shift,
+all 16 industries once and in order, canonical modules, parent integrity, and
+HTTP(S) provenance. If the bounded targeted repair still fails, report the exact
+records and keep the live map. During an incident, roll back code to the previous
+successful Railway deployment and data by atomically promoting `map:previous`;
+do not rerun paid generation while responding.
+
+### YouTube canary
+
+After `YOUTUBE_PROXY_URL` exists, enable one YouTube channel and run ingest.
+Check listing and transcript success, item count, latency, request count, cost,
+and source status in `pipeline_runs.detail`. Restore all 11 sources only after
+that canary passes. The variable is currently a prerequisite, not something the
+application can synthesize or infer.
 
 ## 6. Shift modules (the editorial page content)
 

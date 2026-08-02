@@ -28,7 +28,7 @@ jobs:
     env:
       DATABASE_URL: postgres://serious:serious@localhost:5432/serious_shift?sslmode=disable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with: { components: "rustfmt, clippy" }
 
@@ -52,16 +52,19 @@ jobs:
         working-directory: apps/backend
 
       - name: Dependency audit
-        # Advisory, like pip-audit on the pipeline: an unfixable upstream
-        # advisory should be visible without blocking an unrelated deploy.
         run: |
-          cargo install cargo-audit --locked || true
-          cargo audit || echo "::warning::cargo-audit reported findings"
+          cargo install cargo-audit --locked
+          cargo audit
         working-directory: apps/backend
 
       - name: Build
         run: cargo build --release
         working-directory: apps/backend
+
+      - name: Build non-root production image
+        run: |
+          docker build -f apps/backend/Dockerfile -t serious-shift-backend:ci .
+          test "$(docker image inspect serious-shift-backend:ci --format '{{.Config.User}}')" = "10001:10001"
 
       - name: Smoke test endpoints
         working-directory: apps/backend

@@ -97,6 +97,12 @@ interrupted run now leaves a visible `running` row.
 | `SS_MAX_TARGETED_REPAIR_SHIFTS` | no | maximum parent shifts in the single targeted repair pass, default `12` |
 | `WEBSHARE_PROXY_USERNAME` / `WEBSHARE_PROXY_PASSWORD` | no | route YouTube transcript fetches through a Webshare residential proxy — needed on cloud hosts, where YouTube IP-blocks datacenter IPs. |
 | `YOUTUBE_PROXY_URL` | no | alternative to Webshare: any `http://user:pass@host:port` proxy for YouTube (used for both yt-dlp listing and transcripts). |
+| `YOUTUBE_PROXY_COST_USD_PER_REQUEST` | no | optional unit cost used to estimate proxy spend in run telemetry; default `0` |
+
+Never print or paste proxy values into logs or tickets. HTTP proxy userinfo is
+redacted centrally before errors reach stdout or `pipeline_errors`. Each scrape
+stores per-source status, item count, latency, proxy usage, source success rate,
+and estimated proxy cost in `pipeline_runs.detail`.
 
 Run modules from the **repo root** (`raw_content` is cwd-relative).
 
@@ -132,7 +138,8 @@ preserved across the optional legacy SQLite import — see
 ```bash
 # Postgres + data first — see ../../packages/db/README.md
 python -m venv .venv && . .venv/bin/activate
-pip install -e ".[dev]"
+pip install --require-hashes -r requirements-dev.lock
+pip install --no-deps --no-build-isolation -e .
 export DATABASE_URL=postgres://serious:serious@localhost:5432/serious_shift
 export ANTHROPIC_API_KEY=sk-...
 
@@ -152,6 +159,10 @@ python -m serious_shift_pipeline.steps.evaluate
 ```
 
 Lint/type: `ruff check` · `mypy serious_shift_pipeline`. CI: `.github/workflows/pipeline.yml`.
+Production dependencies are in `requirements.lock`; development/test tooling is
+in `requirements-dev.lock`. Regenerate both with Python 3.13 and `pip-compile
+--generate-hashes`; Docker installs the production lock with `--require-hashes`
+and installs this local package without dependency resolution or build isolation.
 
 ## Scheduling (deploy)
 
@@ -159,6 +170,15 @@ Both stages are batch jobs. On Railway they are two cron services built from
 one image (`railway.ingest.json`, `railway.synthesize.json`): ingest runs
 Sunday 22:00 UTC, synthesize Monday 02:00 UTC — four hours later, so it sees a
 finished ingest. Either can also be triggered on its own from the dashboard.
+
+### YouTube proxy rollout
+
+`YOUTUBE_PROXY_URL` is required on Railway before YouTube is considered healthy.
+Canary exactly one of the 11 YouTube sources first. Verify channel listing,
+transcript fetch, non-zero item count, latency, redacted logs, and proxy cost in
+`pipeline_runs.detail`; only then restore the full manifest. If the canary fails,
+remove/disable the proxy variable and leave the sources classified `blocked`
+rather than repeatedly retrying them as generic failures.
 
 A full refresh spends roughly **$8–9** of Anthropic credits with the Batch API
 enabled (the default; the weekly run is latency-insensitive, so every bulk

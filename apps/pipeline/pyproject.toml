@@ -21,6 +21,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+build = [
+    "setuptools==83.0.0",
+    "wheel==0.47.0",
+]
 dev = [
     "pytest>=8.0",
     # Ruff 0.16 expands the effective default rule set for this legacy tree.
@@ -28,6 +32,7 @@ dev = [
     # addresses the expanded rules with dedicated behavior tests.
     "ruff==0.15.13",
     "mypy>=1.10",
+    "pip-audit>=2.10",
     "sqlglot>=25.0",            # server-free SQL validation (test_queries_sql.py)
 ]
 
@@ -44,3 +49,12 @@ lint.ignore = ["E701", "E702"]
 [tool.mypy]
 python_version = "3.13"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "serious_shift_pipeline.run",
+    "serious_shift_pipeline.steps.deduplicate",
+    "serious_shift_pipeline.steps.scraper.handlers",
+    "serious_shift_pipeline.steps.scraper.runner",
+]
+check_untyped_defs = true

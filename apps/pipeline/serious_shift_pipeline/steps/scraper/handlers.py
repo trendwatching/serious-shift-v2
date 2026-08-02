@@ -20,6 +20,7 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 
 from ...core import db
+from ...core.redaction import redact_secrets
 from ...core.text import fs_slug as slugify
 from .content import (
     ScrapeFetchError, extract_date_from_url, external_id_in_db, fetch_article_text,
@@ -293,8 +294,9 @@ def scrape_blog(thinker_name, cfg, since, until, log, error_log=None):
 
     archive_urls = [base_url]
     for a in soup.find_all('a', href=True):
-        if 'archive' in a['href'].lower():
-            archive_urls.append(urljoin(base_url, a['href']))
+        archive_href = a.get('href')
+        if isinstance(archive_href, str) and 'archive' in archive_href.lower():
+            archive_urls.append(urljoin(base_url, archive_href))
 
     links = set()
     for page_url in archive_urls[:2]:
@@ -401,6 +403,10 @@ def _youtube_proxy_url():
     return os.environ.get('YOUTUBE_PROXY_URL')
 
 
+def _youtube_proxy_configured():
+    return bool(_youtube_proxy_url() or os.environ.get('WEBSHARE_PROXY_USERNAME'))
+
+
 def _build_ytt():
     """YouTubeTranscriptApi, optionally routed through a proxy.
 
@@ -425,7 +431,8 @@ def _build_ytt():
             return YouTubeTranscriptApi(proxy_config=GenericProxyConfig(
                 http_url=generic, https_url=generic))
     except Exception as e:  # noqa: BLE001 — proxy is best-effort; fall back to direct
-        print(f"    ⚠  YouTube proxy config failed ({e}); continuing without a proxy.")
+        print(f"    ⚠  YouTube proxy config failed ({redact_secrets(e)}); "
+              "continuing without a proxy.")
     return YouTubeTranscriptApi()
 
 
@@ -474,6 +481,8 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
     ]
     if _youtube_proxy_url():  # route listing through the same proxy as transcripts
         cmd += ['--proxy', _youtube_proxy_url()]
+        if hasattr(log, 'proxy_request'):
+            log.proxy_request()
     try:
         result = subprocess.run(cmd, capture_output=True, text=True,
                                 timeout=YTDLP_TIMEOUT)
@@ -487,7 +496,7 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
     # If we got partial output despite a non-zero code, warn and use what we have.
     if result.returncode != 0:
         if not result.stdout.strip():
-            stderr_snippet = (result.stderr or '').strip()[:200]
+            stderr_snippet = redact_secrets((result.stderr or '').strip())[:200]
             raise RuntimeError(
                 f"yt-dlp exited {result.returncode} with no output. "
                 f"stderr: {stderr_snippet or '(empty)'}"
@@ -530,6 +539,8 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
         log.log('found', thinker_name, platform, title, url)
         try:
             time.sleep(2)
+            if _youtube_proxy_configured() and hasattr(log, 'proxy_request'):
+                log.proxy_request()
             transcript_list = ytt.fetch(vid_id)
             text = ' '.join(entry.text for entry in transcript_list)
             if len(text) < 100:
@@ -543,7 +554,8 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
                     newest_date = date_str
                 print(f"    FETCHED: {title[:50]} ({len(text)} chars)")
         except Exception as e:
-            log.log('failed', thinker_name, platform, title, url, str(e))
+            safe_error = redact_secrets(e)
+            log.log('failed', thinker_name, platform, title, url, safe_error)
             if is_ip_block(e):
                 # The whole channel is blocked from this IP — don't hammer every
                 # video (each would sleep + fail identically). Stop here.
@@ -551,7 +563,7 @@ def scrape_youtube(thinker_name, cfg, since, until, log):
                       f"Skipping YouTube for {thinker_name}. Set WEBSHARE_PROXY_USERNAME/"
                       f"WEBSHARE_PROXY_PASSWORD or YOUTUBE_PROXY_URL to enable it.")
                 break
-            print(f"    FAILED: {title[:50]} — {e}")
+            print(f"    FAILED: {title[:50]} — {safe_error}")
 
     return newest_date, fetched
 
@@ -601,7 +613,7 @@ def ingest_papers(papers, since, until, platform, log, error_log=None,
                    apply_gate=False, gate_params=None):
     """Shared paper ingest: gate for reputability, attribute to the primary
     author, save abstract + metadata. Returns (watermark_date, count_fetched)."""
-    from . import gate as _gate
+    from .. import gate as _gate
     gp = gate_params or {}
     allowlist, overrides = _load_gate_context() if apply_gate else (set(), {})
 
@@ -724,5 +736,3 @@ def _run_scraper(method, name, src, since, until, mode, log, error_log):
     if method == 'openalex_query':
         return scrape_openalex(name, src, since, until, log, error_log)
     raise ValueError(f"Unknown scrape method '{method}'")
-
-

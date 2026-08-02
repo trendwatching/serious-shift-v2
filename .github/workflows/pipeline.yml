@@ -32,8 +32,8 @@ jobs:
       # database whose contents matter.
       SS_ALLOW_DESTRUCTIVE_TESTS: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: "3.13" }
 
       - name: Install dbmate + apply schema
@@ -45,7 +45,9 @@ jobs:
         working-directory: packages/db
 
       - name: Install pipeline (dev extras)
-        run: pip install -e ".[dev]"
+        run: |
+          pip install --require-hashes -r requirements-dev.lock
+          pip install --no-deps --no-build-isolation -e .
         working-directory: apps/pipeline
 
       - name: Lint
@@ -58,12 +60,10 @@ jobs:
         working-directory: apps/pipeline
 
       - name: Dependency audit
-        # The scraper fetches and parses arbitrary third-party HTML, so
-        # feedparser/yt-dlp/requests are real supply-chain surface. Advisory:
-        # an upstream CVE with no fix available should be visible, not a wall.
-        run: |
-          pip install pip-audit
-          pip-audit --desc || echo "::warning::pip-audit reported findings"
+        # The scraper fetches and parses arbitrary third-party HTML, so every
+        # known Python advisory is release-blocking unless a named, owned,
+        # expiring waiver is added to the repository.
+        run: pip-audit --requirement requirements.lock --disable-pip
         working-directory: apps/pipeline
 
       - name: Test (SQL validation + live integration)
@@ -72,3 +72,8 @@ jobs:
         env:
           # The ETL manifest regression test imports packages/db/etl by path.
           SS_PACKAGES_DIR: ${{ github.workspace }}/packages
+
+      - name: Build non-root production image
+        run: |
+          docker build -f apps/pipeline/Dockerfile -t serious-shift-pipeline:ci .
+          test "$(docker image inspect serious-shift-pipeline:ci --format '{{.Config.User}}')" = "10001:10001"

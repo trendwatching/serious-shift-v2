@@ -12,8 +12,9 @@ Stack: Rust · axum · sqlx (Postgres).
 
 ## Endpoints
 
-The four inspection endpoints (`/api/thinkers`, `/api/sources`, `/api/claims`,
-`/api/predictions`) require `INSPECTION_TOKEN` and take `?limit=` — default 500,
+The inspection endpoints (`/api/thinkers`, `/api/sources`, `/api/claims`,
+`/api/predictions`, and `/api/stats`) require `Authorization: Bearer
+<INSPECTION_TOKEN>`. List routes take `?limit=` — default 500,
 ceiling 5000. Unbounded they
 answered ~7-8 MB each, which on a public URL is a denial of service a handful
 of concurrent requests wide. They have no UI contract; the app reads only the
@@ -29,7 +30,7 @@ route-scoped v1 map documents.
 | `GET /api/stats` | aggregate counts |
 | `GET /api/v1/map` | update timestamp, totals, and domain summaries |
 | `GET /api/v1/map/{domain}` | domain metadata, key-shift summaries, and insights |
-| `GET /api/v1/map/{domain}/{shift}` | one full key shift and five sub-shift summaries |
+| `GET /api/v1/map/{domain}/{shift}` | one full key shift, key-shift siblings, and five sub-shift summaries |
 | `GET /api/v1/map/{domain}/{shift}/{subshift}` | one full sub-shift, parent context, and sibling summaries |
 | `GET /api/map` | deprecated full trend map compatibility endpoint; rate and concurrency limited |
 | `POST /api/innovations/ingest` | ingests one innovation → `innovations` table (idempotent on `source_innovation_id`). Requires `X-Ingest-Token`; **404 while `INGEST_TOKEN` is unset** |
@@ -45,6 +46,7 @@ route-scoped v1 map documents.
 | `STATIC_DIR` | no | SPA bundle to serve, default `static` (the image sets `/srv/static`) |
 | `INGEST_TOKEN` | only for `/api/innovations/ingest` | shared secret; route 404s while unset |
 | `INSPECTION_TOKEN` | only for inspection endpoints | bearer token; endpoints 404 while unset |
+| `RAILWAY_ENVIRONMENT_ID` | Railway-provided | when present, trust Railway `X-Forwarded-For`; otherwise use the socket peer |
 
 ## Run locally
 
@@ -81,9 +83,18 @@ docker build -f apps/backend/Dockerfile .     # from the repo root, not this dir
   **release build refuses to start** without it — a misconfigured CORS policy
   should fail loudly, not serve `*` behind a log line. Debug builds still allow
   any origin so `cargo run` works.
-- **`POST /api/innovations/ingest`** requires the `X-Ingest-Token` header to match
-  `INGEST_TOKEN` (constant-time compare). While that var is unset the route 404s.
-  The token is checked *before* the body is deserialised.
+- **Inspection auth** is constant-time and never logs credentials. Disabled
+  inspection routes return 404; missing/invalid bearer credentials return 401.
+- **`POST /api/innovations/ingest`** remains dormant: production and staging must
+  leave `INGEST_TOKEN` unset, so the route returns 404.
+- **Security middleware** wraps the complete router, including static assets,
+  SPA deep links and fallbacks. Valid routes return 200; unknown app paths render
+  the accessible shell with HTTP 404 and noindex; unknown API/assets are ordinary
+  404 responses. Public errors expose stable codes plus a request ID, while the
+  detailed database error stays in structured server logs.
+- **Legacy `/api/map`** is deprecated and constrained to 10 requests/minute,
+  burst 2, and two concurrent responses. Route-scoped v1 is 120/minute, burst 30.
+  All requests have a ten-second timeout.
 - **In-memory state** (rate limiter, caches) is per-instance. Move it to a shared
   KV store before scaling horizontally.
-- Large lists (`/api/claims`) return whole — add pagination when needed.
+- Inspection list pagination is deliberately capped at 5,000 rows per request.
