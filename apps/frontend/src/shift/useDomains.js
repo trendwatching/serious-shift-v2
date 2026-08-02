@@ -1,20 +1,6 @@
-/**
- * useDomains — the one adapter between `/api/map` and the UI.
- *
- * Components consume the view-model below and never touch the raw document. A
- * shift's page composition is its `modules` array, so this file does not know
- * what a section is — it only decides WHICH module list to hand over:
- *
- *   1. the live list from the map document, when the pipeline has written one;
- *   2. otherwise a minimal list projected from the fields the document always
- *      has (dek, hero stat, sub-shift list), so a database that has not run the
- *      editorial phase yet still renders a real page rather than a blank one.
- *
- * There is deliberately no third tier of authored fallback prose. Serving
- * months-old editorial as if it were this week's is worse than saying the map
- * is unavailable, so callers get `unavailable` and render an honest empty state.
- */
+/** Route-scoped map data → the view-model consumed by the UI. */
 import { useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useData } from '../hooks/useData'
 import { DECK } from './site'
 import { DOMAIN_ORDER, themeFor, pad2, slugify, readTimeOf } from './theme'
@@ -22,28 +8,15 @@ import { DOMAIN_ORDER, themeFor, pad2, slugify, readTimeOf } from './theme'
 const first = (...v) => v.find((x) => x !== undefined && x !== null && x !== '')
 const nonEmpty = (v) => (Array.isArray(v) && v.length ? v : null)
 
-/**
- * ISO-8601 week number for a `YYYY-MM-DD` string, or null.
- *
- * ISO rather than a naive day-of-year / 7: weeks start Monday and week 1 is the
- * one containing the first Thursday, which is the convention a reader checking
- * against a calendar will assume.
- */
 function isoWeek(dateStr) {
   if (!dateStr) return null
   const d = new Date(`${dateStr}T00:00:00Z`)
   if (Number.isNaN(d.getTime())) return null
-  // Shift to the Thursday of this week; its year is the ISO week-numbering year.
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
   const jan1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
   return Math.ceil(((d - jan1) / 86400000 + 1) / 7)
 }
 
-/**
- * Minimal composition for a live shift whose editorial modules haven't been
- * generated. Mirrors the head of the pipeline's template so the page reads the
- * same, just shorter.
- */
 function projectKtModules(row) {
   const hero = row.hero_stat || {}
   const out = []
@@ -64,21 +37,20 @@ function projectStModules(row) {
   return text ? [{ type: 'lede', data: { text } }] : []
 }
 
-/** One sub-shift: identity for routing plus its module list. */
 function toSubShift(src, i) {
   const title = src.name || ''
+  const routeSlug = typeof src.slug === 'string' ? src.slug.split('/').filter(Boolean).at(-1) : ''
   return {
     id: first(src.id, `sub-${i}`),
     num: pad2(i + 1),
-    slug: slugify(title),
+    slug: first(routeSlug, slugify(title)),
     title,
     context: src.context,
-    dek: src.description || '',
+    dek: src.description || src.subtitle || '',
     modules: nonEmpty(src.modules) || projectStModules(src),
   }
 }
 
-/** One key shift: identity, the bits the domain sheet shows, and its modules. */
 function toShift(src, i, domain) {
   const title = src.name || ''
   const dek = first(src.subtitle, src.description) || ''
@@ -92,7 +64,6 @@ function toShift(src, i, domain) {
     kicker: first(src.kicker, `Shift ${pad2(i + 1)}`),
     title,
     dek,
-    // Generated every run by the taxonomy phase; shown on the domain sheet row.
     velocity: src.velocity,
     read: first(src.read_time, readTimeOf(dek)),
     modules: nonEmpty(src.modules) || projectKtModules(src),
@@ -100,93 +71,92 @@ function toShift(src, i, domain) {
   }
 }
 
+function routeSegments(pathname) {
+  if (!pathname.startsWith('/map/')) return []
+  return pathname.slice('/map/'.length).split('/').filter(Boolean).slice(0, 3)
+}
+
 export function useDomains() {
-  // `loading` comes from the fetch, not from `!data`: a failed request settles
-  // with no data, and the page must then show the unavailable state rather than
-  // spinning forever.
-  const { data, error, loading } = useData('map.json')
+  const { pathname } = useLocation()
+  const segments = useMemo(() => routeSegments(pathname), [pathname])
+  const detailEnabled = segments.length > 0
+  const detailResource = `/api/v1/map/${segments.join('/')}`
+
+  const indexRequest = useData('/api/v1/map')
+  const detailRequest = useData(detailResource, { enabled: detailEnabled })
+  const index = indexRequest.data
+  const detail = detailRequest.data
 
   const domains = useMemo(() => {
-    const liveDomains = new Map((data?.domains || []).map((d) => [d.id, d]))
-    const ktsByDomain = new Map()
-    const subsByKt = new Map()
-
-    for (const st of data?.sub_trends || []) {
-      const arr = subsByKt.get(st.key_trend_id) || []
-      arr.push(st)
-      subsByKt.set(st.key_trend_id, arr)
-    }
-    for (const kt of data?.key_trends || []) {
-      const arr = ktsByDomain.get(kt.domain_id) || []
-      arr.push({ ...kt, sub_trends: subsByKt.get(kt.id) || [] })
-      ktsByDomain.set(kt.domain_id, arr)
-    }
-
-    // Order comes from the document — `domains` is emitted in display order by
-    // the pipeline. DOMAIN_ORDER is only the fallback for when there is no
-    // document yet; hard-coding it as the source would silently drop a fifth
-    // domain the moment the pipeline produced one.
-    const order = data?.domains?.length
-      ? data.domains.map((d) => d.id)
-      : DOMAIN_ORDER
+    const summaries = index?.domains || []
+    const order = summaries.length ? summaries.map((domain) => domain.id) : DOMAIN_ORDER
 
     return order.map((id) => {
-      const deck = DECK.find((d) => d.id === id) || {}
-      const live = liveDomains.get(id)
-      const liveKts = ktsByDomain.get(id) || []
-      const t = themeFor(id)
-      const domainRef = { id, name: first(live?.name, deck.name), grad: t.grad, dot: t.dot }
+      const deck = DECK.find((domain) => domain.id === id) || {}
+      const summary = summaries.find((domain) => domain.id === id)
+      const current = detail?.domain?.id === id ? detail.domain : null
+      const live = current || summary
+      const theme = themeFor(id)
+      const domainRef = { id, name: first(live?.name, deck.name), grad: theme.grad, dot: theme.dot }
 
-      const keyShifts = liveKts.map((row, i) => toShift(row, i, domainRef))
+      let rows = []
+      if (detail?.domain?.id === id && Array.isArray(detail.key_shifts)) {
+        rows = detail.key_shifts
+      } else if (detail?.domain?.id === id && detail.shift) {
+        rows = [{ ...detail.shift, sub_trends: detail.sub_shifts || [] }]
+      } else if (detail?.domain?.id === id && detail.parent_shift) {
+        const siblings = detail.siblings || []
+        const subRows = siblings.map((sibling) => (
+          sibling.id === detail.sub_shift?.id ? detail.sub_shift : sibling
+        ))
+        rows = [{ ...detail.parent_shift, sub_trends: subRows }]
+      }
 
+      const keyShifts = rows.map((row, i) => toShift(row, i, domainRef))
       return {
         id,
         slug: id,
         name: domainRef.name || id,
-        num: t.num,
-        grad: t.grad,
-        dot: t.dot,
+        num: theme.num,
+        grad: theme.grad,
+        dot: theme.dot,
         horizon: first(live?.horizon, deck.horizon) || '',
         blurb: first(live?.short_description, deck.blurb) || '',
-        // How many shifts the domain tracks, which can exceed the number listed.
-        count: first(live?.key_trend_ids?.length, liveKts.length),
+        count: first(live?.key_shift_count, keyShifts.length),
         keyShifts,
-        // Per-domain closing insights from the synthesis phase. Generated every
-        // run and previously unrendered; the domain sheet now closes on them.
-        insights: (data?.synthesis_insights || [])
-          .filter((s) => s?.domain_id === id && s?.name && s?.description)
-          .map((s) => ({ id: s.id, name: s.name, description: s.description })),
+        insights: (detail?.domain?.id === id ? detail.insights || [] : [])
+          .filter((insight) => insight?.name && insight?.description)
+          .map((insight) => ({ id: insight.id, name: insight.name, description: insight.description })),
       }
     })
-  }, [data])
+  }, [detail, index])
 
-  // Headline figures, counted from the document rather than written into the
-  // copy. The homepage used to state "Week 31 · four domains" and "eight shifts
-  // this week" as literals; the database held 60 shifts, and the week number
-  // was going to drift every Monday. On a product whose whole claim is sourced
-  // evidence, the numbers on the front page have to come from the evidence.
   const meta = useMemo(() => {
-    const updated = data?.updated || null
+    const updated = index?.updated || null
     return {
       updated,
       week: isoWeek(updated),
-      domainCount: domains.length,
-      shiftCount: domains.reduce((n, d) => n + d.keyShifts.length, 0),
+      domainCount: index?.totals?.domains ?? domains.length,
+      shiftCount: index?.totals?.key_shifts ?? 0,
     }
-  }, [data, domains])
+  }, [domains.length, index])
 
-  // No document (network failure, or the pipeline has never written one) means
-  // there is nothing to read — distinct from "loaded, but this domain is empty".
-  const unavailable = !loading && (!!error || !data)
+  const loading = indexRequest.loading || (detailEnabled && detailRequest.loading)
+  const error = indexRequest.error || (detailEnabled ? detailRequest.error : null)
+  const notFound = error?.status === 404
+  const unavailable = !loading && !notFound && (!index || (detailEnabled && !detail && !!error))
+  const retry = () => {
+    indexRequest.retry()
+    if (detailEnabled) detailRequest.retry()
+  }
 
-  return { domains, meta, loading, unavailable }
+  return { domains, meta, loading, unavailable, notFound, error, retry }
 }
 
-/** Resolve a domain (and optionally a shift / sub-shift) from URL params. */
 export function useResolved({ domainSlug, ktSlug, subSlug } = {}) {
-  const { domains, loading, unavailable } = useDomains()
-  const domain = domains.find((d) => d.slug === domainSlug || d.id === domainSlug)
-  const shift = ktSlug ? domain?.keyShifts.find((s) => s.slug === ktSlug) : undefined
-  const sub = subSlug ? shift?.subshifts.find((s) => s.slug === subSlug) : undefined
-  return { domains, domain, shift, sub, loading, unavailable }
+  const state = useDomains()
+  const domain = state.domains.find((item) => item.slug === domainSlug || item.id === domainSlug)
+  const shift = ktSlug ? domain?.keyShifts.find((item) => item.slug === ktSlug) : undefined
+  const sub = subSlug ? shift?.subshifts.find((item) => item.slug === subSlug) : undefined
+  return { ...state, domain, shift, sub }
 }

@@ -46,7 +46,7 @@ serious_shift_pipeline/
       runner.py           manifest loading, fan-out, CLI
     process_raw.py      Claude extraction → claims/sources/predictions  (prompt lives here)
     scoring.py          source_depth · freshness · claim_weight (free, no API)
-    mapgen/               → documents['map']      (Claude; served at /api/map)
+    mapgen/               → validated candidate → documents['map']
       config.py             domain table, tuning constants, module-order contract
       routing.py            which claims each domain's generation sees
       llm.py                batched Claude calls + per-run cost accounting
@@ -69,6 +69,15 @@ and regenerating on unchanged input is pure spend. `--force` overrides.
 **To change behaviour, edit the relevant `steps/` file; shared plumbing lives
 in `core/`.**
 
+Publication is a separate, atomic step. The assembled candidate must pass the
+route/module contract (unique slugs and references, exactly five sub-shifts per
+shift, the 16 industries exactly once and in order, required module fields, and
+HTTP(S) provenance for every evidence/voice item). One bounded targeted repair
+pass may regenerate only the invalid parents. If the candidate still fails,
+the run exits non-zero with structured issue details and `documents['map']`
+remains untouched. A successful promotion copies the old map to
+`documents['map:previous']` in the same transaction before replacing it.
+
 Every invocation opens a row in `pipeline_runs` and files its errors against it
 in `pipeline_errors`. Those used to be JSONL files under `./logs`, which died
 with the container — so a failed cron left an alert and no detail. An
@@ -85,6 +94,7 @@ interrupted run now leaves a visible `running` row.
 | `SS_MAX_ITEMS_PER_SOURCE` | no | items one source may contribute per run, default `30`. Extraction is priced per file, so without this a single high-volume feed sets the bill for the whole run. |
 | `SS_YTDLP_TIMEOUT` | no | seconds to wait for a YouTube channel listing, default `120`. YouTube refuses datacenter IPs and often stalls rather than erroring; a longer wait just burns run time. |
 | `SS_MAX_WORKERS` | no | parallelism for scrape/extract/generate (default `8`). Lower it if you hit API rate limits. |
+| `SS_MAX_TARGETED_REPAIR_SHIFTS` | no | maximum parent shifts in the single targeted repair pass, default `12` |
 | `WEBSHARE_PROXY_USERNAME` / `WEBSHARE_PROXY_PASSWORD` | no | route YouTube transcript fetches through a Webshare residential proxy — needed on cloud hosts, where YouTube IP-blocks datacenter IPs. |
 | `YOUTUBE_PROXY_URL` | no | alternative to Webshare: any `http://user:pass@host:port` proxy for YouTube (used for both yt-dlp listing and transcripts). |
 

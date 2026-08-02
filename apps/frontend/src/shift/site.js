@@ -1,6 +1,7 @@
 /**
  * site.js — static site configuration: the four domains and the external links
- * in the chrome. Everything editorial comes from `/api/map`.
+ * in the chrome. Editorial content comes from the route-scoped `/api/v1/map/*`
+ * documents; the deprecated full-map endpoint is never fetched by the client.
  *
  * This replaced a 36 KB `content.js` that also carried a full authored copy of
  * the editorial content as an offline fallback. That fallback shipped to every

@@ -16,8 +16,8 @@ The four inspection endpoints (`/api/thinkers`, `/api/sources`, `/api/claims`,
 `/api/predictions`) require `INSPECTION_TOKEN` and take `?limit=` — default 500,
 ceiling 5000. Unbounded they
 answered ~7-8 MB each, which on a public URL is a denial of service a handful
-of concurrent requests wide. They have no UI contract; the app only reads
-`/api/map`.
+of concurrent requests wide. They have no UI contract; the app reads only the
+route-scoped v1 map documents.
 
 | Route | Returns |
 |---|---|
@@ -27,6 +27,10 @@ of concurrent requests wide. They have no UI contract; the app only reads
 | `GET /api/claims` | claims ⋈ thinker/source (ordered by `claim_weight`) |
 | `GET /api/predictions` | predictions ⋈ thinker/source |
 | `GET /api/stats` | aggregate counts |
+| `GET /api/v1/map` | update timestamp, totals, and domain summaries |
+| `GET /api/v1/map/{domain}` | domain metadata, key-shift summaries, and insights |
+| `GET /api/v1/map/{domain}/{shift}` | one full key shift and five sub-shift summaries |
+| `GET /api/v1/map/{domain}/{shift}/{subshift}` | one full sub-shift, parent context, and sibling summaries |
 | `GET /api/map` | deprecated full trend map compatibility endpoint; rate and concurrency limited |
 | `POST /api/innovations/ingest` | ingests one innovation → `innovations` table (idempotent on `source_innovation_id`). Requires `X-Ingest-Token`; **404 while `INGEST_TOKEN` is unset** |
 | `GET /*` | canonical SPA routes deep-link; unknown routes and unmatched `/api/*` paths return real 404 responses |
@@ -65,6 +69,14 @@ docker build -f apps/backend/Dockerfile .     # from the repo root, not this dir
 ```
 
 ## Hardening
+
+- **Map snapshots** parse one published document per version, then derive all
+  route fragments, ETags, and SEO metadata together behind an async read lock.
+  One refresh mutex prevents a cold-request stampede; a failed refresh keeps the
+  previous in-memory snapshot serving.
+- **Public v1 map routes** are limited to 120 requests/minute/client with burst
+  30. Responses use per-route weak ETags, short cache/SWR headers, and Brotli or
+  gzip compression. Unknown slugs return JSON 404s.
 - **CORS** is restricted to `FRONTEND_ORIGIN` (comma-separated allowlist). A
   **release build refuses to start** without it — a misconfigured CORS policy
   should fail loudly, not serve `*` behind a log line. Debug builds still allow

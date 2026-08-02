@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import re
 import sys
 
 from ..core import observability
@@ -27,6 +29,107 @@ from .phases.routing import phase2_claim_routing
 from .phases.sub_trends import phase4_sub_trends
 from .phases.synthesis import phase7_synthesis
 from .routing import route_claims_for_domain
+from .validation import PublicationValidationError, validate_map
+
+MAX_TARGETED_REPAIR_SHIFTS = int(os.environ.get('SS_MAX_TARGETED_REPAIR_SHIFTS', '12'))
+
+
+def _record_validation_failure(exc: PublicationValidationError) -> None:
+    """Persist structured failure detail for both orchestrated and manual runs."""
+    run_id = os.environ.get('SS_RUN_ID') or observability.new_run_id('synthesize')
+    run = RunLog(run_id, 'synthesize')
+    if not os.environ.get('SS_RUN_ID'):
+        run.start()
+    run.finish(status='failed', detail=exc.detail())
+    print(json.dumps(exc.detail(), indent=2), file=sys.stderr)
+
+
+def _issue_shift_ids(out: dict, issues) -> set[str]:
+    """Resolve repairable issue paths back to parent shift document IDs."""
+    shift_ids: set[str] = set()
+    sub_to_parent = {
+        str(sub.get('id')): str(sub.get('key_trend_id'))
+        for sub in out.get('sub_trends') or [] if isinstance(sub, dict)
+    }
+    shifts = out.get('key_trends') or []
+    for issue in issues:
+        match = re.match(r'key_trends\[(\d+)\]', issue.path)
+        if match and int(match.group(1)) < len(shifts):
+            shift_ids.add(str(shifts[int(match.group(1))].get('id')))
+            continue
+        match = re.match(r'sub_trends\[([^\]]+)\]', issue.path)
+        if match and match.group(1) in sub_to_parent:
+            shift_ids.add(sub_to_parent[match.group(1)])
+    return {shift_id for shift_id in shift_ids if shift_id and shift_id != 'None'}
+
+
+def _targeted_repair_once(conn, api_key: str, out: dict, issues,
+                          domain_claims: dict, domain_kts: dict) -> bool:
+    """One bounded repair pass over only the invalid parents."""
+    repairable = [issue for issue in issues if issue.repairable]
+    if not repairable:
+        return False
+    shift_ids = _issue_shift_ids(out, repairable)
+    if not shift_ids or len(shift_ids) > MAX_TARGETED_REPAIR_SHIFTS:
+        print(f'  targeted repair skipped: {len(shift_ids)} parent shift(s), '
+              f'limit is {MAX_TARGETED_REPAIR_SHIFTS}')
+        return False
+
+    db_ids = {int(shift_id.removeprefix('kt-')) for shift_id in shift_ids}
+    filtered = {
+        domain_id: [kt for kt in items if kt.get('_db_id') in db_ids]
+        for domain_id, items in domain_kts.items()
+    }
+    filtered = {domain_id: items for domain_id, items in filtered.items() if items}
+    if not filtered:
+        return False
+
+    count_ids = {
+        int(shifts_match.group(1))
+        for issue in repairable
+        if issue.code == 'sub_shift_count'
+        for shifts_match in [re.match(r'key_trends\[(\d+)\]', issue.path)]
+        if shifts_match
+    }
+    count_db_ids = {
+        int((out.get('key_trends') or [])[index]['id'].removeprefix('kt-'))
+        for index in count_ids
+    }
+    if count_db_ids:
+        conn.execute(
+            'DELETE FROM domain_sub_trend_claims WHERE sub_trend_id IN '
+            '(SELECT id FROM domain_sub_trends WHERE kt_id = ANY(%s))',
+            (list(count_db_ids),),
+        )
+        conn.execute('DELETE FROM domain_sub_trends WHERE kt_id = ANY(%s)',
+                     (list(count_db_ids),))
+        conn.commit()
+        repair_counts = {
+            domain_id: [kt for kt in items if kt.get('_db_id') in count_db_ids]
+            for domain_id, items in filtered.items()
+        }
+        phase4_sub_trends(conn, api_key, domain_claims, repair_counts)
+
+    # Editorial is regenerated once for the affected parents. This repairs both
+    # their own modules and every child module created or found invalid above.
+    phase4b_editorial(conn, api_key, domain_claims, filtered)
+    return True
+
+
+def _publish_candidate(conn, out: dict, *, api_key: str = '', domain_claims=None,
+                       domain_kts=None, allow_repair: bool = False) -> dict:
+    issues = validate_map(out)
+    if issues and allow_repair and api_key and domain_claims is not None and domain_kts is not None:
+        print(f'Candidate invalid ({len(issues)} issue(s)); running one targeted repair pass…')
+        if _targeted_repair_once(conn, api_key, out, issues, domain_claims, domain_kts):
+            out = build_map_json_v2(conn)
+            issues = validate_map(out)
+    if issues:
+        exc = PublicationValidationError(issues)
+        _record_validation_failure(exc)
+        raise exc
+    _write_map_document(conn, out)
+    return out
 
 def _record_spend(out: dict) -> None:
     """Attach this rebuild's Anthropic spend to the pipeline run.
@@ -97,7 +200,10 @@ def main():
         phase4b_editorial(conn, api_key, domain_claims, domain_kts)
         print('\nPhase 9 — Exporting map…')
         out = build_map_json_v2(conn)
-        _write_map_document(conn, out)
+        out = _publish_candidate(
+            conn, out, api_key=api_key, domain_claims=domain_claims,
+            domain_kts=domain_kts, allow_repair=True,
+        )
         n_mod = sum(len(kt.get('modules') or []) for kt in out['key_trends'])
         _record_spend(out)
         print("✓  map written → documents['map']")
@@ -110,7 +216,7 @@ def main():
     if args.export_only:
         print('--export-only: reading existing v2 data…')
         out = build_map_json_v2(conn)
-        _write_map_document(conn, out)
+        out = _publish_candidate(conn, out)
         print("✓  map written → documents['map']")
         print(f'   {len(out["domains"])} domains · {len(out["key_trends"])} KTs · '
               f'{len(out["sub_trends"])} sub-trends · {len(out["links"])} links')
@@ -169,7 +275,10 @@ def main():
     # ── Phase 9: export ───────────────────────────────────────────────────────
     print('\nPhase 9 — Exporting map…')
     out = build_map_json_v2(conn)
-    _write_map_document(conn, out)
+    out = _publish_candidate(
+        conn, out, api_key=api_key, domain_claims=domain_claims,
+        domain_kts=domain_kts, allow_repair=True,
+    )
     conn.close()
 
     # Report spend to the run row. mapgen already accumulates it in
