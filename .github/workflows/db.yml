@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
         env:
           POSTGRES_USER: serious
           POSTGRES_PASSWORD: serious
@@ -72,10 +72,14 @@ jobs:
 
       - name: schema.sql matches the migrations
         # The committed dump is documentation and a fast rebuild path. It went
-        # six migrations stale once; this makes that impossible.
+        # six migrations stale once; this makes that impossible. pg_dump embeds
+        # its OS packaging in two comments, so compare the semantic dump after
+        # removing only those non-schema lines.
         run: |
           dbmate dump
-          git diff --exit-code -- schema.sql \
+          git show HEAD:schema.sql | sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d' > /tmp/schema.expected.sql
+          sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d' schema.sql > /tmp/schema.actual.sql
+          diff -u /tmp/schema.expected.sql /tmp/schema.actual.sql \
             || { echo "schema.sql is out of date — run 'dbmate dump' and commit"; exit 1; }
 
       - name: Scrape manifest survives the legacy import
@@ -104,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
         env:
           POSTGRES_USER: serious
           POSTGRES_PASSWORD: serious
