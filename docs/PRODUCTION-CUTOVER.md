@@ -2,7 +2,14 @@
 
 Moving `seriousshift.ai` from the current hash-routed site to the redesign.
 
-**Order matters.** Two things will break production if done early:
+**Order matters.** Three things will break production if done early:
+
+- The production **`frontend` service owns `www.seriousshift.ai` and auto-deploys
+  from the repo.** Merging `mobile-ui` into `main` rebuilds it with the redesign
+  and flips the live site with no verification — and Next serving the export
+  alone has no SPA fallback, so every deep link would 404. **Freeze or
+  disconnect that service before merging**, or skip the merge entirely and point
+  the *backend* service at the `mobile-ui` branch for verification (see step 4).
 
 - The new backend **panics on startup without `FRONTEND_ORIGIN`** (deliberate —
   it fails closed rather than allowing every origin). Production does not have
@@ -71,14 +78,24 @@ images copy `packages/`, which sits outside `apps/`.
 
 The `synthesize` service needs `DATABASE_URL` and `ANTHROPIC_API_KEY`.
 
-### 4. Merge and deploy
+### 4. Deploy the backend — without touching the live site
+
+Two ways, and the second is safer:
+
+**a. Point the backend service at `mobile-ui`.** No merge, so the `frontend`
+service never rebuilds and the live site cannot move. The backend builds the
+redesign and serves it on its own Railway URL for verification. Merge to `main`
+later, once the domain has moved and the frontend service is gone.
+
+**b. Merge to `main`** — only after freezing/disconnecting the `frontend`
+service, otherwise it deploys the redesign to `www.seriousshift.ai` immediately:
 
 ```bash
 git checkout main && git merge --no-ff mobile-ui && git push origin main
 ```
 
-The backend rebuilds from the Dockerfile: frontend static export + release Rust
-binary in one image.
+Either way the backend rebuilds from the Dockerfile: frontend static export +
+release Rust binary in one image.
 
 ### 5. Verify on the Railway URL — before touching the domain
 
