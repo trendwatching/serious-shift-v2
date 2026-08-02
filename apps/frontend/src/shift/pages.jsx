@@ -18,22 +18,16 @@ import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { useResolved } from './useDomains'
 import { ShiftFooter } from './chrome'
 import { Modules } from './modules'
-import { GradientHero, Eyebrow } from './sections'
+import { GradientHero, Eyebrow, Frame } from './sections'
 import { quoteTitle } from './theme'
 
-/** Reading column: full-bleed on mobile, centred measure on desktop.
+/** Frame plus the module rhythm — the body of a shift or sub-shift page.
  *
- * 660px, not 860. The sections carry the design's mobile type scale
- * (13.5-14.5px), and at 816px of content that measured 83-109 characters per
- * line — well past the ~75 a reader tracks comfortably. Nunito Sans is narrow
- * (~7px per character at 15px), so the fix is both: a tighter column and a
- * larger desktop size. Measured with a canvas probe rather than estimated.
- * Full-bleed bands are unaffected — `.bleed` escapes to the viewport, so they
- * still span the window and keep the page from feeling like a column of text. */
+ * `Frame` is the wide track; each module is pulled back to `--measure` or left
+ * at `--frame` by the wrapper in modules.jsx, so this file no longer decides
+ * how wide anything is. */
 const Column = ({ children }) => (
-  <div className="mx-auto flex w-full flex-col gap-[30px] px-[22px] pt-[26px] lg:max-w-[660px] lg:gap-10 lg:pt-12">
-    {children}
-  </div>
+  <Frame className="flex flex-col gap-[var(--module-gap)] pt-[26px] md:pt-10 lg:pt-12">{children}</Frame>
 )
 
 function Missing({ what }) {
@@ -94,41 +88,46 @@ export function DomainSheet() {
         className="mt-2 min-h-[520px] bg-white pb-[130px] pt-2"
         style={{ borderRadius: '28px 28px 0 0' }}
       >
-        <div className="mx-auto w-full px-[22px] lg:max-w-[660px]">
-          {domain.keyShifts.map((s, i) => (
-            <Link
-              key={s.id}
-              to={`/map/${domain.slug}/${s.slug}`}
-              className="a-rise flex gap-4 border-b py-[22px] transition-colors hover:bg-[var(--color-paper)]"
-              style={{ borderColor: 'var(--color-hairline-soft)', animationDelay: `${(0.06 + i * 0.07).toFixed(2)}s` }}
-            >
-              <div className="pt-1 font-mono text-xs" style={{ color: 'var(--color-ink-faint)' }}>{s.num}</div>
-              <div className="flex flex-1 flex-col gap-1.5">
-                <div className="t-title text-[19px] leading-[1.2] lg:text-[22px]" style={{ color: 'var(--color-ink)' }}>{quoteTitle(s.title)}</div>
-                <div className="text-[13.5px] leading-[1.5]" style={{ color: 'var(--color-ink-mid)' }}>{s.dek}</div>
-                <div className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Key shift{s.velocity ? ` · ${s.velocity}` : ''} · {s.read}
+        <Frame>
+          {/* The shift list is read line by line, so it stays at the measure
+              even though the frame around it is wider. */}
+          <div className="w-prose">
+            {domain.keyShifts.map((s, i) => (
+              <Link
+                key={s.id}
+                to={`/map/${domain.slug}/${s.slug}`}
+                className="a-rise flex gap-4 border-b py-[22px] transition-colors hover:bg-[var(--color-paper)]"
+                style={{ borderColor: 'var(--color-hairline-soft)', animationDelay: `${(0.06 + i * 0.07).toFixed(2)}s` }}
+              >
+                <div className="pt-1 font-mono text-xs" style={{ color: 'var(--color-ink-faint)' }}>{s.num}</div>
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <div className="t-title text-[19px] leading-[1.2] md:text-[21px] lg:text-[22px]" style={{ color: 'var(--color-ink)' }}>{quoteTitle(s.title)}</div>
+                  <div className="t-body" style={{ color: 'var(--color-ink-mid)' }}>{s.dek}</div>
+                  <div className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                    Key shift{s.velocity ? ` · ${s.velocity}` : ''} · {s.read}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
 
           {/* The synthesis phase writes a few cross-cutting insights per domain
-              every run. This is where they land. */}
+              every run. This is where they land — short cards, so they take the
+              wide track and read as a grid rather than a stack. */}
           {domain.insights?.length > 0 && (
-            <section className="flex flex-col gap-2.5 pt-10">
+            <section className="w-wide flex flex-col gap-2.5 pt-10">
               <Eyebrow>What it adds up to</Eyebrow>
-              <div className="grid gap-2.5 lg:grid-cols-2">
+              <div className="grid gap-2.5 md:grid-cols-2 lg:gap-4 xl:grid-cols-3">
                 {domain.insights.map((s) => (
                   <div key={s.id} className="card flex flex-col gap-2 p-4 lg:p-5">
                     <span className="t-display text-[15px] leading-[1.25] lg:text-[17px]" style={{ letterSpacing: '-0.01em' }}>{s.name}</span>
-                    <span className="text-[13.5px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{s.description}</span>
+                    <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{s.description}</span>
                   </div>
                 ))}
               </div>
             </section>
           )}
-        </div>
+        </Frame>
       </div>
 
       <ShiftFooter />

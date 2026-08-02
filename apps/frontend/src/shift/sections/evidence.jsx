@@ -1,5 +1,5 @@
 /** Evidence: the sourced claims behind a sub-shift. */
-import { Eyebrow, SectionHead } from './primitives'
+import { SectionHead } from './primitives'
 
 const STRENGTH_LABEL = {
   strong_signal: 'Strong signal',
@@ -13,7 +13,9 @@ export function Evidence({ items }) {
   return (
     <div className="flex flex-col gap-2.5">
       <SectionHead title="The evidence" aside={`${items.length} sourced`} />
-      <div className="flex flex-col gap-2.5">
+      {/* The tallest module on the site by a distance — a stack of 5-6 short
+          cards. As a grid it is a third of the height for the same copy. */}
+      <div className="grid gap-2.5 md:grid-cols-2 lg:gap-4 xl:grid-cols-3">
         {items.map((c, i) => (
           <div key={i} className="card flex flex-col gap-2.5 p-4 lg:p-5">
             <span className="flex flex-wrap items-center gap-2">
@@ -26,9 +28,9 @@ export function Evidence({ items }) {
               )}
               {c.date && <span className="ml-auto font-mono text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{c.date}</span>}
             </span>
-            <span className="text-[14px] leading-[1.55] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: 'var(--color-ink-strong)' }}>{c.text}</span>
+            <span className="t-body text-pretty" style={{ color: 'var(--color-ink-strong)' }}>{c.text}</span>
             {c.implication && (
-              <span className="text-[13px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>
+              <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>
                 <span className="font-semibold">So what — </span>{c.implication}
               </span>
             )}

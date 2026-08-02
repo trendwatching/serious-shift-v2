@@ -1,5 +1,4 @@
 /** From / To: the shift stated as a before-and-after pair. */
-import { PAD } from './primitives'
 
 function FromToCard({ label, text, grad, panel, ink }) {
   return (
@@ -9,11 +8,11 @@ function FromToCard({ label, text, grad, panel, ink }) {
     >
       <div className="absolute inset-0" style={{ backgroundImage: grad, animation: `${panel} 8s ease-in-out infinite` }} />
       <div
-        className="relative box-border flex h-[208px] flex-col items-center justify-center gap-2.5 px-[15px] py-5 text-center lg:h-[264px] lg:gap-3.5 lg:px-8"
+        className="relative box-border flex h-[208px] flex-col items-center justify-center gap-2.5 px-[15px] py-5 text-center md:h-[240px] md:px-6 lg:h-[264px] lg:gap-3.5 lg:px-8"
         style={{ animation: `${ink} 8s ease-in-out infinite` }}
       >
-        <span className="t-display text-[25px] lg:text-[32px]" style={{ letterSpacing: '-0.02em' }}>{label}</span>
-        <span className="text-[13.5px] leading-[1.42] lg:text-[16px] lg:leading-[1.5]">{text}</span>
+        <span className="t-display text-[25px] md:text-[28px] lg:text-[32px]" style={{ letterSpacing: '-0.02em' }}>{label}</span>
+        <span className="text-[13.5px] leading-[1.42] md:text-[15px] md:leading-[1.48] lg:text-[16px] lg:leading-[1.5]">{text}</span>
       </div>
     </div>
   )
@@ -35,12 +34,12 @@ export function FromToSolid({ from, to }) {
   if (!from || !to) return null
   const card = (label, text, grad) => (
     <div
-      className="flex-1 min-w-0 box-border rounded-[18px] p-4 text-white flex flex-col gap-2"
+      className="flex-1 min-w-0 box-border rounded-[18px] p-4 text-white flex flex-col gap-2 md:p-5 lg:gap-3 lg:p-6"
       style={{ backgroundImage: grad }}
     >
       <span className="t-eyebrow text-[11.5px]" style={{ letterSpacing: '0.12em' }}>{label}</span>
-      <span className="text-[13.5px] leading-[1.45] lg:text-[16.5px] lg:leading-[1.58]">{text}</span>
+      <span className="t-body">{text}</span>
     </div>
   )
-  return <div className="flex gap-2.5 items-stretch">{card('From', from, 'var(--pos-grad)')}{card('To', to, 'var(--a-grad)')}</div>
+  return <div className="flex gap-2.5 items-stretch lg:gap-4">{card('From', from, 'var(--pos-grad)')}{card('To', to, 'var(--a-grad)')}</div>
 }

@@ -35,7 +35,7 @@ const Dek = ({ data }) => {
   if (!text) return null
   return (
     <p
-      className="t-display text-[19px] leading-[1.35] text-pretty lg:text-[23px]"
+      className="t-display text-[19px] leading-[1.35] text-pretty md:text-[21px] lg:text-[23px]"
       style={{ fontWeight: 600, letterSpacing: '-0.01em' }}
     >{text}</p>
   )
@@ -45,7 +45,7 @@ const Lede = ({ data }) => {
   const text = str(data?.text)
   if (!text) return null
   return (
-    <p className="text-[16.5px] leading-[1.55] text-pretty lg:text-[19px]" style={{ color: 'var(--color-ink-strong)' }}>
+    <p className="t-prose text-pretty" style={{ color: 'var(--color-ink-strong)' }}>
       {text}
     </p>
   )
@@ -58,7 +58,7 @@ const RichText = ({ data }) => {
   return (
     <div className="flex flex-col gap-2.5">
       {heading && <Eyebrow>{heading}</Eyebrow>}
-      <p className="text-[15px] leading-[1.6] text-pretty lg:text-[17px]" style={{ color: 'var(--color-ink-strong)' }}>
+      <p className="t-prose text-pretty" style={{ color: 'var(--color-ink-strong)' }}>
         {body}
       </p>
     </div>
@@ -111,6 +111,29 @@ export const SHIFT_MODULES = {
   ),
 }
 
+/**
+ * Which width track a module sits in.
+ *
+ * Running prose is capped at the measure at every width, because a line only
+ * stays readable to ~80 characters however big the window is. But most of what
+ * makes these pages long is not prose — it is *lists of short items* stacked
+ * one per row inside that same narrow column. Those get the wider track and
+ * become grids on desktop, which is what reclaims the empty half of a 1440px
+ * window without touching the copy.
+ *
+ * Prose is the default, so a type the pipeline starts emitting before this file
+ * knows about it lands somewhere sane. Named here rather than in each section
+ * so that a component never decides how wide it is.
+ *
+ * The two full-bleed bands are deliberately absent: `.bleed` escapes to the
+ * viewport on its own, and the prose wrapper is what pulls their *content* back
+ * into line with the article.
+ */
+const WIDE = new Set([
+  'sub_shift_list', 'evidence', 'territories', 'industries', 'timeline',
+  'signals', 'counter_signals', 'voices', 'related_shifts', 'innovations',
+])
+
 /* ── Isolation ───────────────────────────────────────────────────────────── */
 
 class ModuleBoundary extends Component {
@@ -151,9 +174,11 @@ export function Modules({ modules, ctx }) {
     // A type may legitimately repeat (two rich_text blocks), so the key pairs it
     // with its position rather than assuming uniqueness.
     return (
-      <ModuleBoundary key={`${type}-${i}`} type={type}>
-        <Body data={m.data || {}} ctx={ctx} />
-      </ModuleBoundary>
+      <div key={`${type}-${i}`} className={WIDE.has(type) ? 'w-wide' : 'w-prose'}>
+        <ModuleBoundary type={type}>
+          <Body data={m.data || {}} ctx={ctx} />
+        </ModuleBoundary>
+      </div>
     )
   })
 }

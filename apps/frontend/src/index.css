@@ -58,6 +58,25 @@
 }
 
 :root {
+  /* ── Layout ───────────────────────────────────────────────────────────
+   * Two widths, and every reading view is built from them.
+   *
+   * `--measure` is the running-prose column. 660px at the desktop body size
+   * is ~78 characters, which is where a reader still tracks line to line.
+   * It is capped at EVERY width, not behind a breakpoint — a 900px window
+   * used to render 127-character lines because the cap only started at
+   * 1024px.
+   *
+   * `--frame` is the wider track that list-shaped modules expand into on
+   * desktop: three 360px cards and two gaps. Below 1024px it collapses to
+   * the measure, so phone and tablet stay a single column and only the
+   * gutter and the type scale move.
+   * ------------------------------------------------------------------- */
+  --measure:    660px;
+  --frame:      660px;
+  --gutter:     22px;
+  --module-gap: 30px;
+
   /* Per-domain 135° gradients — the spine of the whole experience. */
   --grad-society:       linear-gradient(135deg, #FF0B85 0%, #ED026B 46%, #9A0046 100%);
   --grad-economy:       linear-gradient(135deg, #0F91EE 0%, #0A7FDA 46%, #04528B 100%);
@@ -148,6 +167,15 @@
   --topbar: calc(max(14px, env(safe-area-inset-top)) + 48px);
 }
 
+/* The three layout states. Breakpoints are Tailwind's own `md` and `lg` in
+   rem, so the variables and the utility variants can never drift apart. */
+@media (min-width: 48rem) {
+  :root { --gutter: 32px; --module-gap: 36px; }
+}
+@media (min-width: 64rem) {
+  :root { --frame: 1120px; --gutter: 40px; --module-gap: 40px; }
+}
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -189,8 +217,55 @@ a:hover { color: var(--color-link-hover); }
 }
 .t-display { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.03em; }
 
-/* Full-bleed band inside a padded/centred column. */
+/* ── Body copy ────────────────────────────────────────────────────────
+ * Two running-text sizes, both stepped across the three layout states.
+ * `.t-body` is text inside a card, which is ~360px wide on desktop;
+ * `.t-prose` is text at the measure. Sized by canvas measurement rather
+ * than by eye — Nunito Sans runs ~0.467em per character, so `.t-prose`
+ * at 18px in 660px is 78 characters and `.t-body` at 15.5px in a 360px
+ * card is 50.
+ *
+ * These replace a `text-[13.5px] … lg:text-[16.5px] …` pair that was
+ * copy-pasted across six files and simply missing from five others.
+ * ------------------------------------------------------------------- */
+.t-body  { font-size: 13.5px; line-height: 1.5; }
+.t-prose { font-size: 16.5px; line-height: 1.55; }
+/* `.t-body` is sized for a card ~360px wide. A few modules stay one column
+   until 1024px, which handed the same 14.5px text the full 660px measure and
+   96-character lines. The cap binds only in that case — inside a card it is
+   wider than the card and does nothing. `ch` is the "0" advance, ~1.2× the
+   average character in Nunito Sans, so 62ch is ~75 characters. */
+.t-body { max-width: 62ch; }
+@media (min-width: 48rem) {
+  .t-body  { font-size: 14.5px; line-height: 1.55; }
+  .t-prose { font-size: 17.5px; line-height: 1.58; }
+}
+@media (min-width: 64rem) {
+  .t-body  { font-size: 15.5px; line-height: 1.6; }
+  .t-prose { font-size: 18px;   line-height: 1.6; }
+}
+
+/* ── Width tracks ─────────────────────────────────────────────────────
+ * Every module sits in one of these; which one is declared per module
+ * type in modules.jsx, so a section component never decides its own
+ * width. Below `lg` the two are identical (`--frame` = `--measure`).
+ * ------------------------------------------------------------------- */
+.w-prose, .w-wide { width: 100%; margin-inline: auto; }
+.w-prose { max-width: var(--measure); }
+.w-wide  { max-width: var(--frame); }
+/* A module that validated its own data away renders nothing — the track
+   wrapper stays, and as a flex child it would otherwise contribute a
+   module-gap of blank space. */
+.w-prose:empty, .w-wide:empty { display: none; }
+
+/* Full-bleed band inside a padded/centred column. Sits *inside* a
+   `.w-prose` wrapper, which is what pulls the band's own content back to
+   the measure while the band itself spans the window. */
 .bleed { margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - 50%); }
+/* Same escape, but only while the layout is a single column — the two
+   horizontal card rails become grids on desktop and must stop bleeding. */
+.bleed-m { margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - 50%); }
+@media (min-width: 64rem) { .bleed-m { margin-inline: 0; padding-inline: 0; } }
 
 /* Yellow pill CTA (the design's primary action). */
 .pill-yellow {
@@ -259,9 +334,9 @@ a:hover { color: var(--color-link-hover); }
 /* Now / next / beyond timeline sweep. The lit state reads the accent in scope
    (var() resolves against the animated element), so the sweep is the domain's
    colour rather than a fixed pink. */
-@keyframes ssFill1 { 0%, 32% { background-color: var(--a-wash); color: var(--a-ink); } 34%, 100% { background-color: #FBFAFD; color: #2C2735; } }
-@keyframes ssFill2 { 0%, 32% { background-color: #FBFAFD; color: #2C2735; } 34%, 65% { background-color: var(--a-wash); color: var(--a-ink); } 67%, 100% { background-color: #FBFAFD; color: #2C2735; } }
-@keyframes ssFill3 { 0%, 65% { background-color: #FBFAFD; color: #2C2735; } 67%, 99% { background-color: var(--a-wash); color: var(--a-ink); } 100% { background-color: #FBFAFD; color: #2C2735; } }
+@keyframes ssFill1 { 0%, 32% { background-color: var(--a-wash); color: var(--a-ink); } 34%, 100% { background-color: var(--color-paper); color: var(--color-ink-strong); } }
+@keyframes ssFill2 { 0%, 32% { background-color: var(--color-paper); color: var(--color-ink-strong); } 34%, 65% { background-color: var(--a-wash); color: var(--a-ink); } 67%, 100% { background-color: var(--color-paper); color: var(--color-ink-strong); } }
+@keyframes ssFill3 { 0%, 65% { background-color: var(--color-paper); color: var(--color-ink-strong); } 67%, 99% { background-color: var(--a-wash); color: var(--a-ink); } 100% { background-color: var(--color-paper); color: var(--color-ink-strong); } }
 @keyframes ssDot1  { 0%, 32% { background: var(--a); } 34%, 100% { background: #fff; } }
 @keyframes ssDot2  { 0%, 32% { background: #fff; } 34%, 65% { background: var(--a); } 67%, 100% { background: #fff; } }
 @keyframes ssDot3  { 0%, 65% { background: #fff; } 67%, 99% { background: var(--a); } 100% { background: #fff; } }

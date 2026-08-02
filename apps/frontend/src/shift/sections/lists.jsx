@@ -11,11 +11,11 @@ export function SubShiftList({ subs, onOpen }) {
   return (
     <div className="flex flex-col gap-2.5">
       <SectionHead title={`The ${subs.length} sub-shift${subs.length === 1 ? '' : 's'}`} aside="Tap to open" />
-      <div className="grid gap-2.5 lg:grid-cols-2">
+      <div className="grid gap-2.5 md:grid-cols-2 lg:gap-4 xl:grid-cols-3">
         {subs.map((b, i) => (
           <button
             key={b.id} type="button" onClick={() => onOpen(b)}
-            className="card card-lift a-rise relative overflow-hidden text-left flex flex-col gap-[9px] pl-[17px] pr-4 py-[15px]"
+            className="card card-lift a-rise relative overflow-hidden text-left flex flex-col gap-[9px] pl-[17px] pr-4 py-[15px] lg:pl-[21px] lg:pr-5 lg:py-[18px]"
             style={{ animationDelay: `${(0.05 + i * 0.06).toFixed(2)}s` }}
           >
             <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundImage: 'var(--a-grad)' }} />
@@ -30,8 +30,8 @@ export function SubShiftList({ subs, onOpen }) {
                 style={{ background: 'var(--a-wash)', color: 'var(--a-ink)' }}
               >↗</span>
             </span>
-            <span className="t-title text-[15px] leading-[1.24]">{quoteTitle(b.title)}</span>
-            <span className="text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: '#5C5768' }}>{b.dek}</span>
+            <span className="t-title text-[15px] leading-[1.24] lg:text-[17px]">{quoteTitle(b.title)}</span>
+            <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{b.dek}</span>
           </button>
         ))}
       </div>
@@ -48,7 +48,7 @@ export function HumanNeeds({ needs }) {
     return (
       <button
         type="button" onClick={() => setPick(key)} onMouseEnter={() => setPick(key)} aria-expanded={on}
-        className="box-border min-w-0 rounded-[18px] px-4 py-[18px] text-white text-left flex flex-col gap-2.5 overflow-hidden"
+        className="box-border min-w-0 rounded-[18px] px-4 py-[18px] text-white text-left flex flex-col gap-2.5 overflow-hidden lg:px-6 lg:py-6"
         style={{
           flex: on ? '3 1 0%' : '1 1 0%',
           backgroundImage: grad,
@@ -58,10 +58,16 @@ export function HumanNeeds({ needs }) {
         }}
       >
         <span className="t-eyebrow whitespace-nowrap" style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>{label}</span>
+        {/* 0fr → 1fr rather than a max-height: the copy runs to 441 characters
+            and the old 260px cap simply cut the end off the longer ones. */}
         <span
-          className="text-[14px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty overflow-hidden"
-          style={{ opacity: on ? 1 : 0, maxHeight: on ? 260 : 0, transition: 'opacity 0.3s ease, max-height 0.45s var(--ease-out)' }}
-        >{text}</span>
+          className="grid overflow-hidden"
+          style={{
+            gridTemplateRows: on ? '1fr' : '0fr',
+            opacity: on ? 1 : 0,
+            transition: 'grid-template-rows 0.45s var(--ease-out), opacity 0.3s ease',
+          }}
+        ><span className="t-body min-h-0 text-pretty">{text}</span></span>
       </button>
     )
   }
@@ -69,7 +75,7 @@ export function HumanNeeds({ needs }) {
   return (
     <div className="flex flex-col gap-2.5">
       <Eyebrow>Human needs</Eyebrow>
-      <div className="flex gap-2.5 items-stretch">
+      <div className="flex gap-2.5 items-stretch lg:gap-4">
         {card('u', 'Unlocked', needs.unlocked, 'var(--pos-grad)', '0 12px 26px var(--pos-shadow)')}
         {card('t', 'Threatened', needs.threatened, 'var(--a-grad)', '0 12px 26px var(--a-shadow)')}
       </div>
@@ -82,7 +88,7 @@ export function Innovations({ items }) {
   return (
     <div className="flex flex-col gap-2.5">
       <SectionHead title="Innovations in the wild" aside={`${items.length}`} />
-      <div className="grid gap-2.5 lg:grid-cols-2">
+      <div className="grid gap-2.5 md:grid-cols-2 lg:gap-4 xl:grid-cols-3">
         {items.map((n, i) => {
           const Card = n.url ? 'a' : 'div'
           return (
@@ -93,16 +99,16 @@ export function Innovations({ items }) {
             >
               {n.image && (
                 <img src={n.image} alt="" loading="lazy" decoding="async"
-                     className="mb-1 h-[132px] w-full rounded-xl object-cover" />
+                     className="mb-1 h-[132px] w-full rounded-xl object-cover lg:h-[160px]" />
               )}
               {n.brand && (
                 <span className="t-eyebrow" style={{ color: 'var(--a-ink)', fontSize: 10, letterSpacing: '0.14em' }}>
                   {n.brand}
                 </span>
               )}
-              <span className="t-display text-[15px] leading-[1.25]" style={{ letterSpacing: '-0.01em' }}>{n.title}</span>
+              <span className="t-display text-[15px] leading-[1.25] lg:text-[17px]" style={{ letterSpacing: '-0.01em' }}>{n.title}</span>
               {n.description && (
-                <span className="text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{n.description}</span>
+                <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{n.description}</span>
               )}
             </Card>
           )
@@ -114,26 +120,38 @@ export function Innovations({ items }) {
 
 export function Timeline({ steps }) {
   if (!steps?.length) return null
+  // The sweep is a three-phase loop. Real data is always three steps, but a
+  // fourth would have asked for a `ssFill4` that doesn't exist and rendered
+  // inert, so anything past the third simply sits still.
+  const anim = (i) => (i < 3 ? { animation: `ssFill${i + 1} 12s linear infinite` } : null)
+  const dotAnim = (i) => (i < 3 ? { animation: `ssDot${i + 1} 12s linear infinite` } : null)
+
   return (
     <div className="flex flex-col gap-2.5">
       <Eyebrow>Now / next / beyond</Eyebrow>
-      <div className="relative pl-[26px] flex flex-col gap-3">
-        <span className="absolute left-[6px] top-2.5 bottom-2.5 w-0.5" style={{ background: '#E6E2EE' }} />
+      {/* A rail down the left on mobile; across the top on desktop, where
+          "now → next → beyond" reads as the horizontal thing it is and three
+          stacked cards become one row. */}
+      <div className="relative flex flex-col gap-3 pl-[26px] lg:grid lg:auto-cols-fr lg:grid-flow-col lg:gap-5 lg:pl-0 lg:pt-7">
+        <span
+          className="absolute left-[6px] top-2.5 bottom-2.5 w-0.5 lg:inset-x-6 lg:top-[6px] lg:bottom-auto lg:h-0.5 lg:w-auto"
+          style={{ background: 'var(--color-hairline)' }}
+        />
         {steps.map((h, i) => (
           <div
             key={h.label || i}
-            className="relative box-border rounded-2xl px-4 py-[15px] flex flex-col gap-1.5"
-            style={{ background: '#FBFAFD', color: 'var(--color-ink-strong)', animation: `ssFill${i + 1} 12s linear infinite` }}
+            className="relative box-border flex flex-col gap-1.5 rounded-2xl px-4 py-[15px] lg:px-5 lg:py-5"
+            style={{ background: 'var(--color-paper)', color: 'var(--color-ink-strong)', ...anim(i) }}
           >
             <span
-              className="absolute w-[13px] h-[13px] rounded-full box-border"
-              style={{ left: -26, top: 18, border: '2.5px solid var(--a)', background: '#fff', animation: `ssDot${i + 1} 12s linear infinite` }}
+              className="absolute box-border h-[13px] w-[13px] rounded-full left-[-26px] top-[18px] lg:left-6 lg:top-[-28px]"
+              style={{ border: '2.5px solid var(--a)', background: '#fff', ...dotAnim(i) }}
             />
             <span className="flex items-baseline gap-2.5">
-              <span className="t-display text-[14.5px]" style={{ letterSpacing: '-0.005em' }}>{h.label}</span>
+              <span className="t-display text-[14.5px] lg:text-[16px]" style={{ letterSpacing: '-0.005em' }}>{h.label}</span>
               <span className="ml-auto font-mono text-[11px] opacity-75">{WHEN[i] || ''}</span>
             </span>
-            <span className="text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty">{h.text}</span>
+            <span className="t-body text-pretty">{h.text}</span>
           </div>
         ))}
       </div>
@@ -151,7 +169,7 @@ export function Industries({ items }) {
       {/* Mobile scrolls the chip row; desktop has room to wrap, which shows the
           whole sector list at once instead of hiding it behind a swipe. */}
       <div
-        className="bleed flex gap-2 overflow-x-auto pt-0.5 pb-1 lg:flex-wrap lg:overflow-x-visible"
+        className="bleed-m flex gap-2 overflow-x-auto pt-0.5 pb-1 lg:flex-wrap lg:overflow-x-visible"
         style={{ scrollSnapType: 'x proximity' }}
       >
         {items.map((n, k) => {
@@ -162,7 +180,7 @@ export function Industries({ items }) {
               className="flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[12.5px]"
               style={{
                 scrollSnapAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 650,
-                border: `1px solid ${on ? 'var(--color-ink)' : '#E7E3EF'}`,
+                border: `1px solid ${on ? 'var(--color-ink)' : 'var(--color-hairline)'}`,
                 background: on ? 'var(--color-ink)' : '#fff',
                 color: on ? '#fff' : 'var(--color-ink-soft)',
                 transition: 'background 0.28s ease, color 0.28s ease, border-color 0.28s ease',
@@ -171,9 +189,11 @@ export function Industries({ items }) {
           )
         })}
       </div>
-      <div key={active.name} className="card a-rise flex flex-col gap-2 p-[18px] lg:gap-3 lg:p-7" style={{ animationDuration: '0.42s' }}>
-        <span className="t-display text-[15px] lg:text-[19px]" style={{ letterSpacing: '-0.01em' }}>{active.name}</span>
-        <span className="text-[14.5px] leading-[1.55] text-pretty lg:text-[16.5px]" style={{ color: '#4E485C' }}>{active.text}</span>
+      <div key={active.name} className="card a-rise flex flex-col gap-2 p-[18px] md:p-6 lg:gap-3 lg:p-7" style={{ animationDuration: '0.42s' }}>
+        <span className="t-display text-[15px] md:text-[17px] lg:text-[19px]" style={{ letterSpacing: '-0.01em' }}>{active.name}</span>
+        {/* The one card in the wide track that holds running prose, so it takes
+            the prose measure rather than stretching to 1120px. */}
+        <span className="t-prose max-w-[var(--measure)] text-pretty" style={{ color: 'var(--color-ink-soft)' }}>{active.text}</span>
       </div>
     </div>
   )
@@ -187,7 +207,7 @@ export function Territories({ items }) {
       {/* A scroller on mobile; on desktop the cards fit as a grid, so show them
           all rather than making a wide screen swipe. */}
       <div
-        className="bleed flex gap-3 overflow-x-auto pt-0.5 pb-1.5 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-x-visible"
+        className="bleed-m flex gap-3 overflow-x-auto pt-0.5 pb-1.5 lg:grid lg:grid-cols-2 lg:gap-5 lg:overflow-x-visible xl:grid-cols-3"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {items.map((t, i) => (
@@ -200,8 +220,8 @@ export function Territories({ items }) {
               className="grid place-items-center w-[26px] h-[26px] rounded-full t-display text-xs"
               style={{ background: 'var(--color-yellow)', color: 'var(--color-ink)', fontWeight: 800, letterSpacing: 0 }}
             >{i + 1}</span>
-            <span className="t-display text-[15px] leading-[1.2]" style={{ letterSpacing: '-0.01em' }}>{t.name}</span>
-            <span className="text-[13.5px] leading-[1.5] lg:text-[16.5px] lg:leading-[1.62] text-pretty" style={{ color: '#5C5768' }}>{t.text}</span>
+            <span className="t-display text-[15px] leading-[1.2] lg:text-[17px]" style={{ letterSpacing: '-0.01em' }}>{t.name}</span>
+            <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{t.text}</span>
           </div>
         ))}
         <div
@@ -209,8 +229,8 @@ export function Territories({ items }) {
           style={{ scrollSnapAlign: 'center', backgroundImage: 'var(--a-grad-hot)', boxShadow: '0 12px 26px var(--a-shadow)', animationDelay: '0.34s' }}
         >
           <span className="t-eyebrow" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--color-yellow)' }}>Work with us</span>
-          <span style={{ fontFamily: 'var(--font-title)', fontSize: 21, lineHeight: 1.14 }}>Don’t see your angle here?</span>
-          <span className="text-[13px] leading-[1.48] opacity-95 text-pretty">
+          <span className="text-[21px] leading-[1.14] lg:text-[24px]" style={{ fontFamily: 'var(--font-title)' }}>Don’t see your angle here?</span>
+          <span className="text-[13px] leading-[1.48] opacity-95 text-pretty lg:text-[14.5px] lg:leading-[1.55]">
             These territories are starting points, not limits. We work with organisations to find where a shift like this creates real commercial space for their specific context.
           </span>
           <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="pill-yellow mt-auto self-start h-10 px-4 text-[13.5px]">

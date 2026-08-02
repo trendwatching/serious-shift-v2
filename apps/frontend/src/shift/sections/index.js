@@ -10,7 +10,7 @@
  * Re-exported from one place so consumers (modules.jsx, pages.jsx) import from
  * './sections' regardless of which file a block lives in.
  */
-export { Eyebrow, SectionHead, BackButton, NumberedCard, PAD } from './primitives'
+export { Frame, Eyebrow, SectionHead, BackButton, NumberedCard } from './primitives'
 export { GradientHero } from './hero'
 export { FromTo, FromToSolid } from './fromto'
 export { StatBand } from './stats'

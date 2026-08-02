@@ -1,5 +1,5 @@
 /** Related shifts: typed edges from the interrelatedness phase. */
-import { Eyebrow, SectionHead } from './primitives'
+import { SectionHead } from './primitives'
 import { quoteTitle } from '../theme'
 
 export function RelatedShifts({ items, onOpen }) {
@@ -7,7 +7,7 @@ export function RelatedShifts({ items, onOpen }) {
   return (
     <div className="flex flex-col gap-2.5">
       <SectionHead title="Connected shifts" aside={`${items.length}`} />
-      <div className="flex flex-col">
+      <div className="grid md:grid-cols-2 md:gap-x-8">
         {items.map((r, i) => (
           <button
             key={`${r.href}-${i}`} type="button" onClick={() => onOpen?.(r)}
@@ -18,7 +18,7 @@ export function RelatedShifts({ items, onOpen }) {
               <span className="t-eyebrow" style={{ color: 'var(--a-ink)', fontSize: 10, letterSpacing: '0.14em' }}>{r.relationship}</span>
               <span className="t-title text-[16px] leading-[1.2] lg:text-[18px]">{quoteTitle(r.title)}</span>
               {r.reasoning && (
-                <span className="text-[13px] leading-[1.5] text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{r.reasoning}</span>
+                <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{r.reasoning}</span>
               )}
             </span>
             <span className="pt-1 text-[15px]" style={{ color: 'var(--color-ink-dim)' }}>›</span>
