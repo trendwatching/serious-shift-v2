@@ -6,7 +6,7 @@
   },
   "deploy": {
     "startCommand": "python -m serious_shift_pipeline.run synthesize",
-    "cronSchedule": "0 2 * * 1",
+    "cronSchedule": "1 7 * * *",
     "restartPolicyType": "NEVER"
   }
 }
