@@ -43,7 +43,10 @@ python etl/sqlite_to_postgres.py --sqlite ../../serious-shift.db --truncate
 python etl/verify_parity.py     --sqlite ../../serious-shift.db     # "lossless ✓"
 
 # 2. Pipeline — two independently triggerable stages
-cd ../../apps/pipeline && pip install -e ".[dev]" && pytest
+cd ../../apps/pipeline
+pip install --require-hashes -r requirements-dev.lock
+pip install --no-deps --no-build-isolation -e .
+pytest
 (cd ../.. && python -m serious_shift_pipeline.tools.status)
 (cd ../.. && python -m serious_shift_pipeline.run all --dry-run)   # plan only
 # python -m serious_shift_pipeline.run ingest       # scrape -> ... -> evaluate
@@ -61,12 +64,14 @@ npm run build && STATIC_DIR=$PWD/out cargo run --manifest-path ../backend/Cargo.
 
 ## Deploy
 
-[DEPLOY-RAILWAY.md](DEPLOY-RAILWAY.md) is the current, tested path: Postgres plus
-**two** services — `web` (the Rust binary, which serves both `/api/*` and the built
-SPA) and `pipeline` (a weekly cron). Both images build from the repo root so they
-can copy `packages/` in.
+[DEPLOY-RAILWAY.md](DEPLOY-RAILWAY.md) is the current path: Postgres plus
+**three application services** — `backend` (Rust API + built SPA), `pipeline`
+(Sunday ingest), and `synthesize` (Monday publication). Both application images
+build from the repo root so they can copy `packages/` in.
 
 ## CI
 
 `.github/workflows/` has one workflow per block (db, pipeline, backend, frontend),
-each triggered on changes to its path.
+each triggered on changes to its path and relevant root Railway configuration.
+High/critical dependency findings block; temporary waivers must be named, owned,
+justified, and expiring in `security/audit-waivers.json`.

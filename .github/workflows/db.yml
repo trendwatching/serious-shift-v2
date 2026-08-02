@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
         env:
           POSTGRES_USER: serious
           POSTGRES_PASSWORD: serious
@@ -33,7 +33,9 @@ jobs:
       run:
         working-directory: packages/db
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.13" }
 
       - name: Install dbmate
         run: |
@@ -72,10 +74,15 @@ jobs:
 
       - name: schema.sql matches the migrations
         # The committed dump is documentation and a fast rebuild path. It went
-        # six migrations stale once; this makes that impossible.
+        # six migrations stale once; this makes that impossible. pg_dump embeds
+        # its OS packaging in two comments and Postgres 17+ adds a session-only
+        # transaction_timeout SET. Compare after removing only that metadata;
+        # every schema object remains strict.
         run: |
           dbmate dump
-          git diff --exit-code -- schema.sql \
+          git show HEAD:packages/db/schema.sql | sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d; /^SET transaction_timeout = 0;$/d' > /tmp/schema.expected.sql
+          sed '/^-- Dumped from database version /d; /^-- Dumped by pg_dump version /d; /^SET transaction_timeout = 0;$/d' schema.sql > /tmp/schema.actual.sql
+          diff -u /tmp/schema.expected.sql /tmp/schema.actual.sql \
             || { echo "schema.sql is out of date — run 'dbmate dump' and commit"; exit 1; }
 
       - name: Scrape manifest survives the legacy import
@@ -89,7 +96,8 @@ jobs:
           SS_ALLOW_DESTRUCTIVE_TESTS: "1"
           SS_PACKAGES_DIR: ${{ github.workspace }}/packages
         run: |
-          pip install -e ".[dev]"
+          pip install --require-hashes -r requirements-dev.lock
+          pip install --no-deps --no-build-isolation -e .
           pytest tests/test_etl_manifest.py -q
 
   etl-parity:
@@ -103,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
         env:
           POSTGRES_USER: serious
           POSTGRES_PASSWORD: serious
@@ -119,8 +127,8 @@ jobs:
       run:
         working-directory: packages/db
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: "3.13" }
       - name: Install dbmate
         run: |
@@ -139,6 +147,7 @@ jobs:
         # to the recorded digest — the regression net for mapgen/export.py.
         working-directory: apps/pipeline
         run: |
-          pip install -e ".[dev]"
+          pip install --require-hashes -r requirements-dev.lock
+          pip install --no-deps --no-build-isolation -e .
           python -m serious_shift_pipeline.mapgen.cli --export-only
           pytest tests/test_map_export_golden.py -q

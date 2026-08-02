@@ -43,6 +43,10 @@ railway variables --set FRONTEND_ORIGIN=https://www.seriousshift.ai \
 
 `PUBLIC_ORIGIN` is what canonical URLs and `sitemap.xml` are built from. Without
 it they fall back to the first `FRONTEND_ORIGIN` entry, which is the same here.
+Set a strong `INSPECTION_TOKEN` separately. Leave `INGEST_TOKEN` absent: the
+innovations feature is deferred and must stay disabled. Before enabling YouTube,
+provision managed `YOUTUBE_PROXY_URL` on the pipeline service; never put the
+credential in this runbook or a command transcript.
 
 ### 2. Reconcile the schema
 
@@ -107,7 +111,11 @@ this point. Check:
 - `/#/map/society` redirects to `/map/society`  ← the legacy-link path
 - `/robots.txt` is `text/plain`; `/sitemap.xml` is `application/xml`
 - `/map/society` has its own `<title>` and `og:` tags
-- `/api/nonsense` → `404 {"error":"no such endpoint"}`
+- `/api/v1/map` is the small index; route fragments have distinct ETags
+- `/api/nonsense` → JSON 404 with stable `not_found` code
+- an invalid content path → accessible HTML, HTTP 404, and noindex
+- inspection routes → 401 without a bearer token; 404 if disabled
+- `POST /api/innovations/ingest` → 404 while `INGEST_TOKEN` is absent
 
 ### 6. Move the domain  ← the visible flip
 
@@ -134,15 +142,20 @@ railway run --service synthesize --environment production -- \
   python -m serious_shift_pipeline.run synthesize
 ```
 
-~$5 of Sonnet, ~17 minutes. This is also what applies the **quote
+~$5 of Sonnet, ~17 minutes. Publication is conditional: validate unique route
+slugs/references, five sub-shifts, the ordered 16-industry contract, module
+shape/order, referential integrity, and evidence/voice URLs before promotion.
+One bounded targeted repair is permitted. Failure must leave the current map
+untouched and exit non-zero. This is also what applies the **quote
 misattribution fix** to production's pages: until it runs, the "Who is saying
 this" panel keeps showing paraphrases attributed to named people.
 
 ## Rollback
 
 Before step 6, rollback is: point the domain back at the `frontend` service.
-After step 7, restoring the old site means redeploying the `frontend` service
-from a commit before the merge.
+After step 7, roll application code back to the previous successful Railway
+deployment. Roll editorial data back by atomically promoting
+`documents['map:previous']`; do not rerun synthesis during an incident.
 
 The schema reconciliation (step 2) is not rolled back by either — but it only
 dropped empty tables and rewrote bookkeeping rows, and the old backend's
@@ -189,6 +202,10 @@ So a clone is a new, empty environment — it does not replace the existing
    `https://${{RAILWAY_PUBLIC_DOMAIN}}`) so they re-resolve in the clone rather
    than pointing back at staging. `ANTHROPIC_API_KEY` is a literal and is meant
    to be.
+
+5. **YouTube proxy.** A clone does not make a missing managed proxy credential
+   appear. Set `YOUTUBE_PROXY_URL`, canary one channel, verify listing/transcript
+   telemetry, then restore all 11 sources.
 
 ### Which route to pick
 

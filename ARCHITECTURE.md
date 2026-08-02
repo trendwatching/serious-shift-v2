@@ -28,10 +28,11 @@ doc is the overview.
 ## 2. The modules
 
 ### `apps/pipeline` — Python, batch (the writer)
-Scrapes sources → extracts claims via Claude → scores them → generates the trend
-map. Two independently triggerable stages (`python -m serious_shift_pipeline.run
-ingest` / `synthesize`): ingest is Haiku spend proportional to what landed,
-synthesis is a flat ~$5 of Sonnet and is gated on new claims. Each step is also
+Scrapes sources → extracts claims via Claude → scores them → generates and
+validates the trend map. Two independently triggerable stages (`python -m serious_shift_pipeline.run
+ingest` / `synthesize`): ingest runs Sunday 22:00 UTC and synthesis runs Monday
+02:00 UTC. Ingest is Haiku spend proportional to what landed; synthesis is a
+flat ~$5 of Sonnet and is gated on new claims. Each step is also
 a standalone module (`python -m serious_shift_pipeline.<step>`).
 - **Key files:** `run.py` (the step table), `steps/scraper/` (content · watermark ·
   handlers · runner), `process_raw.py` (LLM extraction), `scoring.py`,
@@ -44,10 +45,10 @@ a standalone module (`python -m serious_shift_pipeline.<step>`).
   then in the app after the next pipeline run.
 
 ### `apps/backend` — Rust (axum + sqlx), the reader/API
-Serves the data over HTTP. Each read endpoint is **one SQL string** in `src/sql.rs`
-(Postgres builds the JSON with `json_agg`); handlers in `src/main.rs` are a line
-each. Also serves per-route metadata, `robots.txt` and `sitemap.xml`, built
-from the same cached map document.
+Serves the data over HTTP. Inspection reads are SQL strings in `src/sql.rs`.
+The public map API parses one immutable published snapshot and derives the index,
+domain, shift, and sub-shift fragments, ETags, and SEO metadata once per document
+version. It also serves `robots.txt` and `sitemap.xml` from that same snapshot.
 - **Why:** the API surface is essentially "dump these rows as JSON," so letting
   Postgres assemble the JSON keeps it tiny and obviously-correct (no ORM, no
   per-table structs). Replaces the old ~53 MB of static JSON the browser used to download.
@@ -79,7 +80,7 @@ SQLite→Postgres import.
 | Contract | Defined in | Producer → consumer | If you change it… |
 |---|---|---|---|
 | **DB schema** | `packages/db/migrations/*.sql` | pipeline writes → backend reads | add a migration; update the writer (pipeline) and reader (backend SQL) |
-| **API shapes** | `apps/backend/src/sql.rs` (JSON shapes) | backend serves → frontend reads | keep the JSON shape stable, or update the frontend's `useData` consumers |
+| **API shapes** | `apps/backend/src/main.rs` + `packages/contracts` | backend serves → frontend reads | keep route-scoped v1 shapes stable, or update `useDomains` and its fixtures |
 
 Everything else is internal to one block.
 
@@ -114,9 +115,10 @@ Everything else is internal to one block.
   reproduces the old static-file shapes exactly.
 - **dbmate migrations.** Language-neutral, so the schema isn't tied to a Python or
   Rust migration tool.
-- **`documents` blob table for the map.** It isn't a simple table dump (it is
-  assembled across phases), so it's stored as a whole JSON
-  the backend serves verbatim.
+- **Validated last-good publication.** The candidate is assembled across phases,
+  checked against the route/module/provenance contract, then atomically promoted.
+  `documents['map:previous']` always holds the rollback document. The backend
+  exposes route-scoped fragments; only deprecated `/api/map` serves the full blob.
 - **The SPA is served by the backend.** One always-on service instead of two,
   same origin, no proxy hop. Smallest faithful
   migration — behaviour unchanged, only the data source moved to the API.
@@ -127,11 +129,10 @@ Everything else is internal to one block.
 
 - **Run locally:** see the root [`README.md`](README.md#local-quickstart-end-to-end)
   (DB → pipeline → backend → frontend).
-- **CI:** `.github/workflows/` — one workflow per block, triggered on changes to
-  its path (db applies/validates migrations; pipeline lint+test; backend
-  compile+smoke; frontend build).
-- **Deploy (free tier):** Neon (Postgres) → Fly.io/Render (backend) → Vercel
-  (frontend). Steps in each block's README.
+- **CI:** `.github/workflows/` — one workflow per block, including hash/audit
+  gates, Rust/Python/frontend tests, axe, Playwright, and visual regression.
+- **Deploy:** Railway Postgres + backend + pipeline ingest + synthesis. The backend
+  image serves the SPA; there is no production Node hop. See `DEPLOY-RAILWAY.md`.
 
 ---
 
@@ -145,9 +146,13 @@ Everything else is internal to one block.
   credibility weight, which `claim_weight` multiplies by.
 - **`serious-shift.db`** (legacy SQLite) is the local import source only — archive
   it to object storage once a managed Postgres is authoritative.
-- **YouTube needs a proxy credential on any cloud host.** All 11 blocked
-  sources are YouTube; it refuses datacenter IPs. Set `YOUTUBE_PROXY_URL` or
-  `WEBSHARE_PROXY_USERNAME`/`WEBSHARE_PROXY_PASSWORD`.
+- **YouTube proxy rollout is operationally gated.** All 11 blocked sources are
+  YouTube. Configure `YOUTUBE_PROXY_URL`, canary one channel, then restore all
+  sources only after listing/transcript metrics are healthy. Credentials are
+  redacted and source success, item count, latency, proxy request count, and
+  estimated cost are persisted in `pipeline_runs.detail`.
+- **Innovations are deliberately dormant.** Leave `INGEST_TOKEN` unset. The
+  endpoint returns 404 and no matching/ingestion infrastructure is in this scope.
 - **Planned seams not yet built:** `packages/contracts` (a formal OpenAPI spec +
   generated client) and `packages/design-tokens` (Figma → Tailwind). Until then the
   contracts are the DB schema and the backend's JSON shapes.

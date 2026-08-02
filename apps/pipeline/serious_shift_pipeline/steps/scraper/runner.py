@@ -17,6 +17,7 @@ from datetime import datetime
 
 from ...core import db, observability, parallel
 from ...core.observability import ErrorLog, RunLog
+from ...core.redaction import redact_secrets
 from .handlers import _run_scraper, handle_manual, is_ip_block
 from .watermark import (
     FALLBACK_SINCE, get_since_for_source, get_thinker_id, update_source_state,
@@ -29,6 +30,9 @@ class Log:
     def __init__(self):
         self.stats = {'found': 0, 'fetched': 0, 'skipped': 0, 'failed': 0}
         self.entries = []
+        self.source_results = []
+        self.proxy_requests = 0
+        self.proxy_cost_usd = 0.0
         self._lock = threading.Lock()   # log() is called from worker threads
 
     def log(self, action, thinker, platform, title='', url='', error=''):
@@ -41,11 +45,36 @@ class Log:
             })
             self.stats[action] = self.stats.get(action, 0) + 1
 
+    def proxy_request(self):
+        """Record one proxied YouTube HTTP operation without logging its URL."""
+        try:
+            unit_cost = float(os.environ.get('YOUTUBE_PROXY_COST_USD_PER_REQUEST', '0'))
+        except ValueError:
+            unit_cost = 0.0
+        with self._lock:
+            self.proxy_requests += 1
+            self.proxy_cost_usd += max(0.0, unit_cost)
+
+    def source_result(self, *, thinker, platform, status, item_count,
+                      duration_seconds, proxied=False):
+        with self._lock:
+            self.source_results.append({
+                'thinker': thinker,
+                'platform': platform,
+                'status': status,
+                'item_count': item_count,
+                'duration_seconds': round(duration_seconds, 3),
+                'proxied': bool(proxied),
+            })
+
     def save(self):
         with open(LOG_PATH, 'w') as f:
             json.dump(
                 {'run_at': datetime.now().isoformat(),
                  'stats': self.stats,
+                 'sources': self.source_results,
+                 'proxy': {'requests': self.proxy_requests,
+                           'estimated_cost_usd': round(self.proxy_cost_usd, 6)},
                  'entries': self.entries},
                 f, indent=2,
             )
@@ -54,6 +83,13 @@ class Log:
         print(f"\n{'='*50}\nSCRAPE SUMMARY\n{'='*50}")
         for k, v in self.stats.items():
             print(f"  {k}: {v}")
+        total = len(self.source_results)
+        successful = sum(item['status'] == 'ok' for item in self.source_results)
+        if total:
+            print(f"  source success: {successful}/{total} ({successful / total:.1%})")
+        if self.proxy_requests:
+            print(f"  proxy requests: {self.proxy_requests} "
+                  f"(estimated ${self.proxy_cost_usd:.4f})")
 
 
 
@@ -128,6 +164,7 @@ def scrape_thinker(cfg, mode, global_since, until, log, conn, auto_since, error_
 
         newest_date, count, status = None, 0, 'ok'
         last_exc = None
+        source_started = time.monotonic()
 
         for attempt in range(2):
             try:
@@ -141,7 +178,7 @@ def scrape_thinker(cfg, mode, global_since, until, log, conn, auto_since, error_
                 if attempt == 0:
                     print(
                         f"  ⚠  attempt 1 failed "
-                        f"({type(exc).__name__}: {str(exc)[:120]}). "
+                        f"({type(exc).__name__}: {redact_secrets(exc)[:120]}). "
                         f"Retrying in 10 s…"
                     )
                     time.sleep(10)
@@ -159,7 +196,8 @@ def scrape_thinker(cfg, mode, global_since, until, log, conn, auto_since, error_
                       f"Set YOUTUBE_PROXY_URL or WEBSHARE_PROXY_USERNAME/"
                       f"WEBSHARE_PROXY_PASSWORD to fetch it from a cloud host.")
             else:
-                print(f"  ✗  {platform} | {src_url[:60]} failed after retry: {last_exc}")
+                print(f"  ✗  {platform} | {src_url[:60]} failed after retry: "
+                      f"{redact_secrets(last_exc)}")
             error_log.record(
                 step='scrape',
                 thinker=name,
@@ -169,6 +207,18 @@ def scrape_thinker(cfg, mode, global_since, until, log, conn, auto_since, error_
                 platform=platform,
                 source_url=src_url,
             )
+
+        log.source_result(
+            thinker=name,
+            platform=platform,
+            status=status,
+            item_count=count,
+            duration_seconds=time.monotonic() - source_started,
+            proxied=(platform == 'youtube' and bool(
+                os.environ.get('YOUTUBE_PROXY_URL')
+                or os.environ.get('WEBSHARE_PROXY_USERNAME')
+            )),
+        )
 
         # Update watermark — ALWAYS called, success or failure.
         # On failure: newest_date=None → last_item_date does not change.
@@ -245,7 +295,8 @@ def main():
         except Exception as exc:  # noqa: BLE001 — one thinker failing must not stop the rest
             error_log.record(step='scrape', thinker=t.get('name', '?'), exc=exc,
                              retry_attempted=False, outcome='skipped')
-            print(f"  ✗  {t.get('name', '?')} failed: {type(exc).__name__}: {str(exc)[:100]}")
+            print(f"  ✗  {t.get('name', '?')} failed: {type(exc).__name__}: "
+                  f"{redact_secrets(exc)[:100]}")
         finally:
             wconn.close()
 
@@ -255,7 +306,16 @@ def main():
     log.save()
     log.summary()
 
-    run.add_usage(detail={'scrape': {**log.stats, 'errors': error_log.count}})
+    source_total = len(log.source_results)
+    source_ok = sum(item['status'] == 'ok' for item in log.source_results)
+    run.add_usage(detail={'scrape': {
+        **log.stats,
+        'errors': error_log.count,
+        'source_success_rate': round(source_ok / source_total, 4) if source_total else None,
+        'sources': log.source_results,
+        'proxy_requests': log.proxy_requests,
+        'proxy_cost_usd': round(log.proxy_cost_usd, 6),
+    }})
     if not orchestrated:
         run.finish(status='ok')
 

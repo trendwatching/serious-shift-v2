@@ -69,30 +69,41 @@ screenshots, not in the chosen one. Left out deliberately rather than invented:
 Each maps cleanly onto a new module type (`prose`, `so_what`, `room_cta`, `image`)
 if you want them. That is now a data + registry change, not a redesign.
 
-## Known limitations, not yet addressed
+## Remediation status
 
-- **No SEO or link previews.** The app is a `HashRouter` SPA with SSR disabled, so
-  shift URLs (`/#/map/society/…`) cannot be crawled or unfurled. Every shift page
-  is invisible to search and to social cards. This predates the redesign but now
-  applies to the whole public site.
-- **Deleted routes 404 → home.** `/about`, `/daily`, `/thinker/:name`,
-  `/map/thinkers`, `/map/synthesis`, `/map/macros/*` now redirect to the deck. Any
-  inbound links to those break.
-- **"Saved" is inert.** The menu item needs per-user state; there is no auth or
-  per-user storage in the backend. "The room" points at Subscribe.
-- **No frontend tests.** The pipeline has 42; the front end has none. The module
-  registry, the adapter's live/fallback branching and the drag maths are all
-  untested.
-- **"Innovations in the wild" cannot be populated yet.** The Miro's AI × Consumer
-  sub-shift page calls for real branded examples, and `POST /api/innovations/ingest`
-  exists to receive them — but the `innovations` table has **no link to a shift or
-  sub-shift** (no join table; `tags` is free-form JSONB and the table is empty in
-  every environment). The `innovations` module type, its data contract and its
-  component are all in place and render-ready; what is missing is a linking step in
-  the pipeline — tag→domain mapping, or matching innovations to sub-shifts the way
-  claims are matched. Not invented here, because guessing the join would silently
-  attach the wrong brands to the wrong shift.
-- **Unused-but-served endpoints remain**: `/api/thinkers`, `/sources`, `/claims`,
-  `/predictions`, `/stats`, `/keynote`, `/synthesis`, `/daily`, `/personalize`.
-  The UI calls only `/api/map`. `keynote` in particular is regenerated weekly at
-  real cost and has no screen in the design.
+- **SEO and real 404s are implemented.** `BrowserRouter` uses path URLs. Valid
+  deep links return 200 with route-specific title, canonical, Open Graph, robots,
+  and sitemap metadata. Unknown content paths render the accessible Not Found
+  shell with HTTP 404 and noindex; unknown API/assets are ordinary 404 responses.
+- **Navigation now follows the later Miro board.** The exact six items are
+  Shifts, Methodology, Subscribe, Services, TrendWatching, and About. Saved and
+  The room were removed. Only the verified TrendWatching LinkedIn destination
+  ships; unverified social destinations are omitted.
+- **The mobile prototype remains visual authority.** The 393×852 domain-swipe
+  homepage, 0.55-second easing, typography, gradients, cards, footer, and domain
+  composition are preserved. Offscreen panels are inert/hidden from assistive
+  technology, pointer cancellation is safe, and reduced motion removes
+  nonessential movement.
+- **Detail navigation is explicit, not whole-page swipe.** Mobile sub-shifts use
+  a scroll-snap carousel with visible controls and position. Shift/sub-shift pages
+  expose previous/next siblings, and every sub-shift visibly links its parent.
+- **WCAG 2.2 AA is the release bar.** Text tokens, text surfaces, headings,
+  44-pixel targets, modal-menu focus, tabs/disclosures, carousel state, and source
+  link names are covered by unit, Playwright, and axe gates. Visual baselines are
+  tracked at 390×844, 393×852, 768×1024, and 1440×900.
+- **The frontend reads route-scoped documents.** It fetches the index globally
+  and only the current detail document, retains successful cached data during a
+  refresh, retries transient failures twice, and distinguishes offline, timeout,
+  server-error, and unavailable states. It does not silently render an empty deck.
+
+## Deliberately deferred or operationally blocked
+
+- **Innovations stay dormant.** The module contract remains, but `INGEST_TOKEN`
+  is unset and no ingestion/matching infrastructure is being invented.
+- **YouTube requires a managed proxy canary.** Code supports credential-redacted
+  proxying and records source success, count, latency, requests, and estimated
+  cost. Railway must provide `YOUTUBE_PROXY_URL` before one channel can be
+  canaried and the other ten restored.
+- **A connected in-app Browser pass is still required for staging acceptance.**
+  Automated Chromium/axe/visual coverage is present, but it is not a substitute
+  for the signed-in connected Browser network/console/focus review.
