@@ -250,6 +250,28 @@ pub fn render(shell: &str, route: &str, meta: &PageMeta, origin: &str) -> String
     }
 }
 
+/// Rewrite the shell for a genuine 404 without advertising the invalid URL as
+/// canonical or generating a share preview for it.
+pub fn render_not_found(shell: &str) -> String {
+    let mut out = replace_between(
+        shell,
+        "<title>",
+        "</title>",
+        "Page not found · Serious Shi(f)t",
+    );
+    out = replace_meta_description(
+        &out,
+        "This address is not part of the current Serious Shift map.",
+    );
+    match out.find("</head>") {
+        Some(i) => {
+            out.insert_str(i, r#"<meta name="robots" content="noindex, nofollow"/>"#);
+            out
+        }
+        None => out,
+    }
+}
+
 fn replace_between(hay: &str, open: &str, close: &str, with: &str) -> String {
     let Some(a) = hay.find(open) else {
         return hay.to_string();
@@ -417,5 +439,14 @@ mod tests {
         let doc = r#"{"domains":[],"key_trends":[{"domain_id":"society","name":"No Slug"}],"sub_trends":[]}"#;
         let idx = build_index(doc);
         assert!(idx.routes.iter().all(|r| r != "/map/society/"));
+    }
+
+    #[test]
+    fn not_found_metadata_replaces_the_build_defaults_and_is_not_canonical() {
+        let out = render_not_found(SHELL);
+        assert!(out.contains("<title>Page not found · Serious Shi(f)t</title>"));
+        assert!(out.contains(r#"content="noindex, nofollow""#));
+        assert!(!out.contains("canonical"));
+        assert!(!out.contains("Old Title"));
     }
 }

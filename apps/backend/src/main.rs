@@ -9,13 +9,15 @@ mod sql;
 
 use std::collections::HashMap;
 use std::env;
+use std::net::{IpAddr, SocketAddr};
 use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use axum::{
-    extract::{DefaultBodyLimit, Query, State},
-    http::{header, HeaderMap, HeaderValue, Method, StatusCode},
+    extract::{ConnectInfo, DefaultBodyLimit, Query, State},
+    http::{header, HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::{IntoResponse, Response},
     routing::{any, get, post},
     Json, Router,
@@ -28,9 +30,9 @@ use sqlx::PgPool;
 use tower::ServiceBuilder;
 use tower_http::compression::CompressionLayer;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
-use tower_http::services::{ServeDir, ServeFile};
+use tower_http::services::ServeDir;
 use tower_http::set_header::SetResponseHeaderLayer;
-use tower_http::set_status::SetStatus;
+use tower_http::timeout::TimeoutLayer;
 
 /// CORS from FRONTEND_ORIGIN (comma-separated allowlist).
 ///
@@ -40,7 +42,7 @@ use tower_http::set_status::SetStatus;
 fn cors_layer() -> CorsLayer {
     let base = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST])
-        .allow_headers([header::CONTENT_TYPE]);
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
     match env::var("FRONTEND_ORIGIN") {
         Ok(v) if !v.trim().is_empty() => {
             let origins: Vec<HeaderValue> =
@@ -75,14 +77,15 @@ fn static_dir() -> String {
 /// bundles, so caching it is what makes a deploy invisible to a returning
 /// browser. The immutable assets are handled separately — see
 /// `immutable_assets`.
-fn static_service() -> ServeDir<SetStatus<ServeFile>> {
+fn static_service() -> ServeDir {
     let dir = static_dir();
     let index = Path::new(&dir).join("index.html");
     if !index.is_file() {
         tracing::warn!("no SPA build at {} — serving API only", index.display());
     }
-    // 200, not 404: the path is a client-side route, not a missing file.
-    ServeDir::new(&dir).fallback(SetStatus::new(ServeFile::new(index), StatusCode::OK))
+    // Real files are served here. Missing paths continue to `spa`, which can
+    // distinguish canonical application routes from genuine 404s.
+    ServeDir::new(&dir)
 }
 
 /// The exported `index.html`, or an empty string when there is no SPA build.
@@ -136,6 +139,8 @@ struct AppState {
     pool: PgPool,
     /// Shared secret for POST /api/innovations/ingest. None disables the route.
     ingest_token: Option<String>,
+    /// Shared secret for the operator-only inspection endpoints.
+    inspection_token: Option<String>,
     // Cached map document JSON. It is large (~1 MB) and changes ~weekly, so we
     // serve the raw JSON text from memory — skipping the Postgres read + serde
     // round-trip on every request.
@@ -148,6 +153,55 @@ struct AppState {
     shell: Arc<str>,
     /// Absolute origin for canonical URLs and the sitemap.
     origin: Arc<str>,
+    /// Deliberately strict compatibility limit for the deprecated full map.
+    legacy_map_limiter: Arc<RateLimiter>,
+    legacy_map_concurrency: Arc<tokio::sync::Semaphore>,
+}
+
+#[derive(Debug)]
+struct Bucket {
+    tokens: f64,
+    updated: Instant,
+}
+
+#[derive(Debug)]
+struct RateLimiter {
+    buckets: Mutex<HashMap<IpAddr, Bucket>>,
+    capacity: f64,
+    refill_per_second: f64,
+}
+
+impl RateLimiter {
+    fn per_minute(limit: u32, burst: u32) -> Self {
+        Self {
+            buckets: Mutex::new(HashMap::new()),
+            capacity: f64::from(burst),
+            refill_per_second: f64::from(limit) / 60.0,
+        }
+    }
+
+    fn check(&self, ip: IpAddr) -> Result<u32, u64> {
+        let now = Instant::now();
+        let mut buckets = self.buckets.lock().unwrap();
+        if buckets.len() > 4_096 {
+            buckets
+                .retain(|_, bucket| now.duration_since(bucket.updated) < Duration::from_secs(600));
+        }
+        let bucket = buckets.entry(ip).or_insert(Bucket {
+            tokens: self.capacity,
+            updated: now,
+        });
+        let elapsed = now.duration_since(bucket.updated).as_secs_f64();
+        bucket.tokens = (bucket.tokens + elapsed * self.refill_per_second).min(self.capacity);
+        bucket.updated = now;
+        if bucket.tokens >= 1.0 {
+            bucket.tokens -= 1.0;
+            Ok(bucket.tokens.floor() as u32)
+        } else {
+            let retry = ((1.0 - bucket.tokens) / self.refill_per_second).ceil() as u64;
+            Err(retry.max(1))
+        }
+    }
 }
 
 const DOC_CACHE_TTL: Duration = Duration::from_secs(60); // documents: refresh within 60s of a regen
@@ -169,20 +223,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if ingest_token.is_none() {
         tracing::warn!("INGEST_TOKEN not set — POST /api/innovations/ingest is disabled");
     }
+    let inspection_token = env::var("INSPECTION_TOKEN")
+        .ok()
+        .filter(|t| !t.trim().is_empty());
+    if inspection_token.is_none() {
+        tracing::info!("INSPECTION_TOKEN not set — inspection endpoints are disabled");
+    }
 
     let state = AppState {
         pool,
         ingest_token,
+        inspection_token,
         docs: Arc::new(Mutex::new(None)),
         meta: Arc::new(Mutex::new(None)),
         shell: Arc::from(read_shell()),
         origin: Arc::from(public_origin()),
+        legacy_map_limiter: Arc::new(RateLimiter::per_minute(10, 2)),
+        legacy_map_concurrency: Arc::new(tokio::sync::Semaphore::new(2)),
     };
 
     // The fallback service needs its own handle: `with_state` below consumes
     // the router's copy.
     let state_for_spa = state.clone();
 
+    // Compose every route and fallback before applying middleware. Axum layers
+    // only wrap routes that already exist, so attaching the SPA afterwards left
+    // deep links outside CSP/HSTS/frame protections.
     let app = Router::new()
         .route("/health", get(health))
         .route("/api/thinkers", get(thinkers))
@@ -208,11 +274,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // API client would happily try to parse.
         .route(
             "/api/*rest",
-            any(|| async { AppError(StatusCode::NOT_FOUND, "no such endpoint".into()) }),
+            any(|| async {
+                AppError::public(StatusCode::NOT_FOUND, "not_found", "No such endpoint.")
+            }),
         )
-        // Baseline security headers. The site embeds no third-party frames or
-        // scripts (fonts are self-hosted), so a restrictive policy costs nothing
-        // and closes clickjacking, MIME sniffing and referrer leakage.
+        .with_state(state)
+        // Hashed bundles, cached for a year. Registered before the fallback so
+        // these paths never reach the un-cached index.html handler.
+        .nest_service(
+            "/_next/static",
+            ServiceBuilder::new()
+                .layer(SetResponseHeaderLayer::overriding(
+                    header::CACHE_CONTROL,
+                    HeaderValue::from_static(IMMUTABLE),
+                ))
+                .service(ServeDir::new(Path::new(&static_dir()).join("_next/static"))),
+        )
+        // Static files first (real assets under /shift, /logo.png, …); anything
+        // they do not have falls through to `spa`, which serves index.html with
+        // this route's metadata stamped in. Registered last so every /api route
+        // above wins.
+        .fallback_service(static_service().fallback(get(spa).with_state(state_for_spa)))
+        // Baseline security headers. These intentionally wrap the completed
+        // router, including ServeDir and the SPA fallback.
         .layer(SetResponseHeaderLayer::overriding(
             header::X_CONTENT_TYPE_OPTIONS,
             HeaderValue::from_static("nosniff"),
@@ -231,8 +315,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ))
         .layer(SetResponseHeaderLayer::overriding(
             header::CONTENT_SECURITY_POLICY,
-            // 'unsafe-inline' on script-src is required by the legacy hash
-            // redirect and Next's bootstrap; everything else is same-origin.
             HeaderValue::from_static(
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; \
                  style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; \
@@ -240,29 +322,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                  base-uri 'self'; form-action 'self'",
             ),
         ))
-        // The map document is large — ~1 MB of JSON once every shift carries its
-        // editorial modules — and compresses to roughly a quarter of that.
-        // Applied to the whole router so /api/claims benefits too; responses are
-        // only encoded when the client sends Accept-Encoding.
+        .layer(TimeoutLayer::with_status_code(
+            StatusCode::REQUEST_TIMEOUT,
+            Duration::from_secs(10),
+        ))
         .layer(CompressionLayer::new().gzip(true))
-        .layer(cors_layer())
-        .with_state(state)
-        // Hashed bundles, cached for a year. Registered before the fallback so
-        // these paths never reach the un-cached index.html handler.
-        .nest_service(
-            "/_next/static",
-            ServiceBuilder::new()
-                .layer(SetResponseHeaderLayer::overriding(
-                    header::CACHE_CONTROL,
-                    HeaderValue::from_static(IMMUTABLE),
-                ))
-                .service(ServeDir::new(Path::new(&static_dir()).join("_next/static"))),
-        )
-        // Static files first (real assets under /shift, /logo.png, …); anything
-        // they do not have falls through to `spa`, which serves index.html with
-        // this route's metadata stamped in. Registered last so every /api route
-        // above wins.
-        .fallback_service(static_service().fallback(get(spa).with_state(state_for_spa)));
+        .layer(cors_layer());
 
     let port = env::var("PORT").unwrap_or_else(|_| "8080".into());
     // Bind IPv6 dual-stack: Railway's private network is IPv6-only, so a service
@@ -270,7 +335,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // both private IPv6 and the public IPv4 edge (IPv4-mapped).
     let listener = tokio::net::TcpListener::bind(format!("[::]:{port}")).await?;
     tracing::info!("listening on {}", listener.local_addr()?);
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
     Ok(())
 }
 
@@ -285,17 +354,91 @@ async fn health(State(s): State<AppState>) -> Result<&'static str, AppError> {
 
 // ── error type ───────────────────────────────────────────────────────────────
 
-struct AppError(StatusCode, String);
+static ERROR_SEQUENCE: AtomicU64 = AtomicU64::new(1);
+
+struct AppError {
+    status: StatusCode,
+    code: &'static str,
+    message: String,
+    request_id: String,
+    retry_after: Option<u64>,
+}
+
+impl AppError {
+    fn public(status: StatusCode, code: &'static str, message: impl Into<String>) -> Self {
+        Self {
+            status,
+            code,
+            message: message.into(),
+            request_id: next_error_id(),
+            retry_after: None,
+        }
+    }
+
+    fn internal(error: impl std::fmt::Display) -> Self {
+        let request_id = next_error_id();
+        tracing::error!(%request_id, error = %error, "request failed");
+        Self {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            code: "internal_error",
+            message: "The request could not be completed.".into(),
+            request_id,
+            retry_after: None,
+        }
+    }
+
+    fn rate_limited(retry_after: u64) -> Self {
+        Self {
+            status: StatusCode::TOO_MANY_REQUESTS,
+            code: "rate_limited",
+            message: "Too many requests. Try again shortly.".into(),
+            request_id: next_error_id(),
+            retry_after: Some(retry_after),
+        }
+    }
+}
+
+fn next_error_id() -> String {
+    format!(
+        "ss-{}-{}",
+        std::process::id(),
+        ERROR_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+    )
+}
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        (self.0, Json(json!({ "error": self.1 }))).into_response()
+        let request_id = self.request_id;
+        let mut response = (
+            self.status,
+            Json(json!({
+                "error": {
+                    "code": self.code,
+                    "message": self.message,
+                    "request_id": request_id.clone(),
+                }
+            })),
+        )
+            .into_response();
+        response.headers_mut().insert(
+            HeaderName::from_static("x-request-id"),
+            HeaderValue::from_str(&request_id).unwrap(),
+        );
+        if let Some(seconds) = self.retry_after {
+            response.headers_mut().insert(
+                header::RETRY_AFTER,
+                HeaderValue::from_str(&seconds.to_string()).unwrap(),
+            );
+            insert_u64_header(response.headers_mut(), "ratelimit-limit", 10);
+            insert_u64_header(response.headers_mut(), "ratelimit-remaining", 0);
+        }
+        response
     }
 }
 
 impl From<sqlx::Error> for AppError {
     fn from(e: sqlx::Error) -> Self {
-        AppError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        AppError::internal(e)
     }
 }
 
@@ -326,31 +469,63 @@ async fn run_list(pool: &PgPool, query: &str, limit: i64) -> Result<Json<Value>,
     Ok(Json(doc))
 }
 
+fn require_inspection(s: &AppState, headers: &HeaderMap) -> Result<(), AppError> {
+    let Some(expected) = s.inspection_token.as_deref() else {
+        return Err(AppError::public(
+            StatusCode::NOT_FOUND,
+            "not_found",
+            "Not found.",
+        ));
+    };
+    let presented = headers
+        .get(header::AUTHORIZATION)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.strip_prefix("Bearer "))
+        .unwrap_or_default();
+    if !secret_eq(presented, expected) {
+        return Err(AppError::public(
+            StatusCode::UNAUTHORIZED,
+            "unauthorized",
+            "Unauthorized.",
+        ));
+    }
+    Ok(())
+}
+
 async fn thinkers(
     State(s): State<AppState>,
+    headers: HeaderMap,
     Query(q): Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, AppError> {
+    require_inspection(&s, &headers)?;
     run_list(&s.pool, sql::THINKERS, list_limit(&q)).await
 }
 async fn sources(
     State(s): State<AppState>,
+    headers: HeaderMap,
     Query(q): Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, AppError> {
+    require_inspection(&s, &headers)?;
     run_list(&s.pool, sql::SOURCES, list_limit(&q)).await
 }
 async fn claims(
     State(s): State<AppState>,
+    headers: HeaderMap,
     Query(q): Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, AppError> {
+    require_inspection(&s, &headers)?;
     run_list(&s.pool, sql::CLAIMS, list_limit(&q)).await
 }
 async fn predictions(
     State(s): State<AppState>,
+    headers: HeaderMap,
     Query(q): Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, AppError> {
+    require_inspection(&s, &headers)?;
     run_list(&s.pool, sql::PREDICTIONS, list_limit(&q)).await
 }
-async fn stats(State(s): State<AppState>) -> Result<Json<Value>, AppError> {
+async fn stats(State(s): State<AppState>, headers: HeaderMap) -> Result<Json<Value>, AppError> {
+    require_inspection(&s, &headers)?;
     let doc: Value = sqlx::query_scalar(sql::STATS).fetch_one(&s.pool).await?;
     Ok(Json(doc))
 }
@@ -395,8 +570,13 @@ async fn map_doc(s: &AppState) -> Result<Arc<str>, AppError> {
         sqlx::query_scalar("SELECT body::text FROM documents WHERE key = 'map'")
             .fetch_optional(&s.pool)
             .await?;
-    let body =
-        body.ok_or_else(|| AppError(StatusCode::NOT_FOUND, "map document not found".into()))?;
+    let body = body.ok_or_else(|| {
+        AppError::public(
+            StatusCode::NOT_FOUND,
+            "not_found",
+            "Map document not found.",
+        )
+    })?;
     let body: Arc<str> = Arc::from(body);
     *s.docs.lock().unwrap() = Some((Instant::now(), body.clone()));
     Ok(body)
@@ -421,9 +601,66 @@ async fn site_index(s: &AppState) -> Arc<seo::SiteIndex> {
     idx
 }
 
-/// The trend map — the only document the frontend reads.
-async fn map(State(s): State<AppState>) -> Result<Response, AppError> {
-    Ok(doc_response(map_doc(&s).await?))
+fn client_ip(headers: &HeaderMap, peer: SocketAddr) -> IpAddr {
+    // Railway normalises X-Forwarded-For at its public edge. Do not trust the
+    // header during direct/local operation, where a client can supply it.
+    if env::var_os("RAILWAY_ENVIRONMENT_ID").is_some() {
+        if let Some(ip) = headers
+            .get("x-forwarded-for")
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.split(',').next())
+            .and_then(|value| value.trim().parse().ok())
+        {
+            return ip;
+        }
+    }
+    peer.ip()
+}
+
+fn insert_u64_header(headers: &mut HeaderMap, name: &'static str, value: u64) {
+    headers.insert(
+        HeaderName::from_static(name),
+        HeaderValue::from_str(&value.to_string()).unwrap(),
+    );
+}
+
+/// The legacy full trend map. New clients use the route-scoped v1 API; this
+/// compatibility surface is cached but deliberately rate and concurrency
+/// limited because every response is large and expensive to compress.
+async fn map(
+    State(s): State<AppState>,
+    headers: HeaderMap,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+) -> Result<Response, AppError> {
+    let remaining = s
+        .legacy_map_limiter
+        .check(client_ip(&headers, peer))
+        .map_err(AppError::rate_limited)?;
+    let permit = s
+        .legacy_map_concurrency
+        .clone()
+        .try_acquire_owned()
+        .map_err(|_| AppError::rate_limited(1))?;
+
+    let mut response = doc_response(map_doc(&s).await?);
+    let response_headers = response.headers_mut();
+    response_headers.insert(
+        HeaderName::from_static("deprecation"),
+        HeaderValue::from_static("true"),
+    );
+    response_headers.insert(
+        header::LINK,
+        HeaderValue::from_static("</api/v1/map>; rel=\"successor-version\""),
+    );
+    insert_u64_header(response_headers, "ratelimit-limit", 10);
+    insert_u64_header(
+        response_headers,
+        "ratelimit-remaining",
+        u64::from(remaining),
+    );
+    // Keep the permit alive until the response body has been consumed.
+    response.extensions_mut().insert(Arc::new(permit));
+    Ok(response)
 }
 
 // ── SPA shell, robots, sitemap ────────────────────────────────────────────────
@@ -454,11 +691,13 @@ async fn spa(State(s): State<AppState>, uri: axum::http::Uri) -> Response {
         return (StatusCode::NOT_FOUND, "not found").into_response();
     }
     let idx = site_index(&s).await;
-    let html = match idx.pages.get(path) {
-        Some(meta) => seo::render(&s.shell, path, meta, &s.origin),
-        None => s.shell.to_string(),
+    let (status, html) = match idx.pages.get(path) {
+        Some(meta) => (StatusCode::OK, seo::render(&s.shell, path, meta, &s.origin)),
+        None if path == "/" => (StatusCode::OK, s.shell.to_string()),
+        None => (StatusCode::NOT_FOUND, seo::render_not_found(&s.shell)),
     };
     (
+        status,
         [
             (
                 header::CONTENT_TYPE,
@@ -556,18 +795,31 @@ async fn ingest_innovation(
     // unauthenticated write endpoint should not exist by default, and 404 leaks
     // less about what is deployed here than 401 does.
     let Some(expected) = s.ingest_token.as_deref() else {
-        return Err(AppError(StatusCode::NOT_FOUND, "Not found".into()));
+        return Err(AppError::public(
+            StatusCode::NOT_FOUND,
+            "not_found",
+            "Not found.",
+        ));
     };
     let presented = headers
         .get("x-ingest-token")
         .and_then(|v| v.to_str().ok())
         .unwrap_or_default();
     if !secret_eq(presented, expected) {
-        return Err(AppError(StatusCode::UNAUTHORIZED, "Unauthorized".into()));
+        return Err(AppError::public(
+            StatusCode::UNAUTHORIZED,
+            "unauthorized",
+            "Unauthorized.",
+        ));
     }
 
-    let req: IngestInnovationReq = serde_json::from_slice(&body)
-        .map_err(|e| AppError(StatusCode::BAD_REQUEST, format!("invalid JSON: {e}")))?;
+    let req: IngestInnovationReq = serde_json::from_slice(&body).map_err(|_| {
+        AppError::public(
+            StatusCode::BAD_REQUEST,
+            "invalid_request",
+            "Request body is not valid JSON.",
+        )
+    })?;
 
     sqlx::query(
         r#"
@@ -673,5 +925,23 @@ mod tests {
         assert!(!secret_eq("abc123", "abc124"));
         assert!(!secret_eq("abc", "abc123"));
         assert!(!secret_eq("", "x"));
+    }
+
+    #[test]
+    fn legacy_rate_limit_enforces_its_burst() {
+        let limiter = RateLimiter::per_minute(10, 2);
+        let ip: IpAddr = "203.0.113.7".parse().unwrap();
+        assert_eq!(limiter.check(ip), Ok(1));
+        assert_eq!(limiter.check(ip), Ok(0));
+        assert!(limiter.check(ip).is_err());
+    }
+
+    #[test]
+    fn forwarded_ip_is_ignored_outside_railway() {
+        std::env::remove_var("RAILWAY_ENVIRONMENT_ID");
+        let mut headers = HeaderMap::new();
+        headers.insert("x-forwarded-for", HeaderValue::from_static("198.51.100.4"));
+        let peer: SocketAddr = "127.0.0.1:1234".parse().unwrap();
+        assert_eq!(client_ip(&headers, peer), peer.ip());
     }
 }
