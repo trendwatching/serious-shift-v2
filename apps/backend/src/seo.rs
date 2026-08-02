@@ -259,7 +259,10 @@ pub fn render_not_found(shell: &str) -> String {
         "</title>",
         "Page not found · Serious Shi(f)t",
     );
-    out = replace_meta_description(&out, "This address is not part of the current Serious Shift map.");
+    out = replace_meta_description(
+        &out,
+        "This address is not part of the current Serious Shift map.",
+    );
     match out.find("</head>") {
         Some(i) => {
             out.insert_str(i, r#"<meta name="robots" content="noindex, nofollow"/>"#);
