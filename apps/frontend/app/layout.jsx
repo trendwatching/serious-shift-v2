@@ -55,9 +55,27 @@ export const viewport = {
   themeColor: '#000000',
 }
 
+// Legacy hash routes -> real paths.
+//
+// The previous site was hash-routed (seriousshift.ai/#/map/society). Every link
+// shared or bookmarked before this redesign carries that form, and a fragment
+// is never sent to the server — so the redirect has to happen here, inline in
+// <head>, before React mounts. Doing it in a component would show the homepage
+// first and then jump.
+const LEGACY_HASH_REDIRECT = `(function(){try{
+  var h = window.location.hash;
+  if (h.indexOf('#/') !== 0) return;
+  var p = h.slice(1);
+  if (p.indexOf('/map/thinkers') === 0) p = '/';   // no equivalent page now
+  window.history.replaceState(null, '', p + window.location.search);
+}catch(e){}})();`
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${urbanist.variable} ${suez.variable} ${nunito.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: LEGACY_HASH_REDIRECT }} />
+      </head>
       <body>{children}</body>
     </html>
   )
