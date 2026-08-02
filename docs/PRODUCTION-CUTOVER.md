@@ -147,3 +147,53 @@ from a commit before the merge.
 The schema reconciliation (step 2) is not rolled back by either — but it only
 dropped empty tables and rewrote bookkeeping rows, and the old backend's
 `/api/stats` is the only thing that referenced them.
+
+---
+
+## Cloning staging instead of migrating production
+
+`railway environment new <name> --duplicate staging` is the other route. It
+copies services, their settings and their variables — but **not volumes**, so
+the new environment gets an **empty Postgres**.
+
+That matters here, because the data is not interchangeable:
+
+| | rows |
+|---|---|
+| production Postgres | 45,988 claims · 2,233 sources · 10,279 predictions |
+| a freshly cloned Postgres | 0 |
+
+So a clone is a new, empty environment — it does not replace the existing
+`production` environment, and it does not inherit `seriousshift.ai`.
+
+### What a clone still needs afterwards
+
+1. **Data.** Either accept an empty database and let `run ingest` rebuild from
+   the 120-source manifest (weeks of back-catalogue, real API spend), or dump
+   and restore the production Postgres into the cloned one:
+   ```bash
+   pg_dump "$PROD_DATABASE_URL" --no-owner --no-acl -Fc -f prod.dump
+   pg_restore -d "$CLONE_DATABASE_URL" --no-owner --no-acl prod.dump
+   ```
+   A restored copy still needs the reconciliation (step 2) — it carries
+   production's `0001`–`0007` bookkeeping with it.
+
+2. **Branch.** Cloned services track whatever staging tracks (`mobile-ui`).
+   Point them at `main` if that is what should deploy to production.
+
+3. **The domain.** `seriousshift.ai` stays on the old `production` environment's
+   `frontend` service until it is moved (step 6).
+
+4. **Anything staging-only.** Nothing today — the variables are deliberately
+   references (`${{Postgres.DATABASE_URL}}`,
+   `https://${{RAILWAY_PUBLIC_DOMAIN}}`) so they re-resolve in the clone rather
+   than pointing back at staging. `ANTHROPIC_API_KEY` is a literal and is meant
+   to be.
+
+### Which route to pick
+
+- **Migrate the existing `production` environment** (steps 1–8 above) if you
+  want to keep the data and the domain where they are. Fewer moving parts.
+- **Clone** if you want to stand the new stack up beside the old one, verify it
+  on its own URL, and switch the domain when ready — at the cost of moving
+  ~46k claims across first.
