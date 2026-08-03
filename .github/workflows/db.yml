@@ -6,14 +6,18 @@ name: db
 
 on:
   push:
-    paths: ["packages/db/**", ".github/workflows/db.yml"]
+    paths: ["packages/db/**", "railway*.json", ".github/workflows/db.yml"]
   pull_request:
-    paths: ["packages/db/**", ".github/workflows/db.yml"]
+    paths: ["packages/db/**", "railway*.json", ".github/workflows/db.yml"]
   workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     services:
       postgres:
         image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
@@ -33,15 +37,15 @@ jobs:
       run:
         working-directory: packages/db
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with: { python-version: "3.13" }
 
       - name: Install dbmate
         run: |
-          sudo curl -fsSL -o /usr/local/bin/dbmate \
-            https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
-          sudo chmod +x /usr/local/bin/dbmate
+          mkdir -p /tmp/dbmate-bin
+          GOBIN=/tmp/dbmate-bin go install github.com/amacneil/dbmate/v2@v2.34.1
+          sudo install -m 0755 /tmp/dbmate-bin/dbmate /usr/local/bin/dbmate
           dbmate --version
 
       - name: Apply migrations
@@ -109,6 +113,7 @@ jobs:
     # to the checkout step. It is workflow_dispatch-only for that reason.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
@@ -127,14 +132,14 @@ jobs:
       run:
         working-directory: packages/db
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with: { python-version: "3.13" }
       - name: Install dbmate
         run: |
-          sudo curl -fsSL -o /usr/local/bin/dbmate \
-            https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
-          sudo chmod +x /usr/local/bin/dbmate
+          mkdir -p /tmp/dbmate-bin
+          GOBIN=/tmp/dbmate-bin go install github.com/amacneil/dbmate/v2@v2.34.1
+          sudo install -m 0755 /tmp/dbmate-bin/dbmate /usr/local/bin/dbmate
       - run: pip install "psycopg[binary]"
       - name: Migrate + import + verify
         run: |

@@ -1,6 +1,6 @@
 # frontend — the UI
 
-The Serious Shift trend map: a client-side React SPA (react-router + Tailwind v4),
+The Serious Shift trend map: a client-side React SPA (React + Tailwind v4),
 built to a **static export** and served by the [Rust backend](../backend/README.md)
 from the same origin as `/api/*`.
 
@@ -14,7 +14,8 @@ browser → Next → backend proxy hop.
 ```
 app/            Next entry: layout.jsx (document head), page.jsx (mounts the SPA)
 src/
-  Spa.jsx       <BrowserRouter><App/></BrowserRouter>
+  Spa.jsx       mounts the browser router and app
+  router.jsx    minimal path router/link primitives (no router dependency)
   App.jsx       routes
   shift/
     Home.jsx      the swipe deck
@@ -22,10 +23,10 @@ src/
     sections/     editorial section components (barrel re-export in index.js)
     modules.jsx   {type,data} → component registry (see packages/contracts)
     chrome.jsx    top bar, menu, footer
-    useDomains.js the one adapter between /api/map and the UI
+    useDomains.js the one adapter between route-scoped /api/v1/map documents and the UI
     site.js       domains + external links (static config only)
     theme.js      per-domain colour, slug, read-time helpers
-  hooks/useData.js  fetches /api/<name>, de-duplicated and cached
+  hooks/useData.js  validated fetch, ETag revalidation, retry, de-duplication, and stale cache
 ```
 
 Routes are real paths (`/map/:domain/:shift/:sub`), so shifts deep-link and unfurl.
@@ -33,12 +34,15 @@ The backend serves `index.html` for any unmatched path, which is what makes that
 
 ## Data
 
-One endpoint: `GET /api/map`. `useDomains` turns that document into the view model;
-components never touch the raw JSON. A shift's page composition is its `modules`
-array, so adding or reordering a section is a data change, not a code change.
+The homepage fetches `GET /api/v1/map`; reading views fetch only the current
+domain, shift, or sub-shift route document. The deprecated full `/api/map`
+document is never fetched by the client. `useDomains` turns those responses into
+the view model; components never touch raw JSON. A shift's page composition is
+its `modules` array, so adding or reordering a section is a data change.
 
-There is no offline copy of the editorial content. If the map can't be loaded the UI
-says so (`unavailable`) rather than rendering stale prose as if it were current.
+Successful responses are cached briefly and revalidated with ETags. A failed
+refresh keeps visibly labelled saved data; a cold failure distinguishes offline,
+timeout, server, and unavailable states. Failed responses are never cached.
 
 ## Run locally
 

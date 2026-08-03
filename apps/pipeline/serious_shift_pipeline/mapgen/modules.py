@@ -135,13 +135,15 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
         _module('stat_band', {
             # The model is asked for a display figure; hero_stat.value is a
             # fallback and is usually prose, so it has to be reduced first.
-            'value': (e.get('stat_value') or '').strip() or _short_figure(hero.get('value')) or '',
-            'text': e.get('stat_text') or hero.get('value') or '',
+            'value': _short_figure(hero.get('value')) or '',
+            'text': hero.get('text') or hero.get('value') or '',
             'source': hero.get('source') or hero.get('thinker') or '',
+            'url': hero.get('url') or '',
         }, ('value',)),
         _module('peel_tabs', {
             'whats_changing': e.get('whats_changing') or '',
             'why_now': e.get('why_now') or '',
+            'evidence_ids': e.get('evidence_ids') or [],
         }),
         # Resolved from the shift's sub-shifts at render time, so it carries no
         # data of its own — but it still has to sit in the order.
@@ -173,10 +175,12 @@ def st_modules(st_row: dict, editorial: dict) -> list:
             'value': stat.get('value') or '',
             'text': stat.get('text') or '',
             'source': stat.get('source') or '',
+            'url': stat.get('url') or '',
         }, ('value',)),
         _module('peel_tabs', {
             'whats_changing': e.get('whats_changing') or '',
             'why_now': e.get('why_now') or '',
+            'evidence_ids': e.get('evidence_ids') or [],
         }),
         _module('human_needs', {
             'unlocked': needs.get('unlocked') or '',

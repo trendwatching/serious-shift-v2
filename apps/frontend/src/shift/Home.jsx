@@ -12,7 +12,7 @@
  *    hint read — they change once per swipe, not once per frame.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from '../router'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { useDomains } from './useDomains'
 import { failureState } from './failure'
@@ -27,13 +27,12 @@ const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
 const spell = (n) => (n >= 0 && n < WORDS.length ? WORDS[n] : n.toLocaleString())
 
 export default function Home() {
-  const { domains, meta, loading, unavailable, error, retry } = useDomains()
+  const { domains, meta, loading, unavailable, stale, error, retry } = useDomains()
   // No page title: the homepage IS the site title. Passing undefined also
   // restores it when navigating back from a shift.
   useDocumentMeta(undefined, meta?.shiftCount
-    ? `${meta.domainCount} domains, ${meta.shiftCount} shifts this week, told as stories.`
+    ? `${meta.domainCount} domains and ${meta.shiftCount} shifts in the current weekly map.`
     : undefined)
-  const navigate = useNavigate()
   const [index, setIndex] = useState(0)
   const trackRef = useRef(null)
   const drag = useRef(null)
@@ -119,7 +118,7 @@ export default function Home() {
   const active = index === 0 ? null : domains[index - 1]
 
   if (loading) {
-    return <section className="min-h-[70dvh]" aria-busy="true" aria-label="Loading this week’s map" />
+    return <section className="grid min-h-[70dvh] place-items-center px-6" aria-busy="true" aria-label="Loading the current map"><div className="w-full max-w-[420px] animate-pulse space-y-5" aria-hidden="true"><div className="h-3 w-28 rounded bg-black/15"/><div className="h-16 rounded-xl bg-black/10"/><div className="h-20 rounded-xl bg-black/10"/></div></section>
   }
   if (unavailable) {
     const failure = failureState(error)
@@ -141,7 +140,7 @@ export default function Home() {
     <section
       className="relative overflow-hidden bg-white"
       style={{ height: 'calc(100dvh - var(--topbar))' }}
-      aria-label="This week’s shift domains"
+      aria-label="Current shift domains"
       aria-roledescription="carousel"
     >
       <div
@@ -169,8 +168,6 @@ export default function Home() {
             total={domains.length}
             position={i + 2}
             count={count}
-            onOpen={() => navigate(`/map/${d.slug}`)}
-            onOpenShift={(s) => navigate(`/map/${d.slug}/${s.slug}`)}
           />
         ))}
       </div>
@@ -217,6 +214,7 @@ export default function Home() {
       <span className="sr-only" aria-live="polite">
         {active ? `${active.name}, panel ${index + 1} of ${count}` : `Intro, panel 1 of ${count}`}
       </span>
+      {stale && <button type="button" onClick={retry} className="absolute left-1/2 top-3 z-30 min-h-11 -translate-x-1/2 rounded-full bg-black px-4 text-xs font-semibold text-white shadow-lg">Showing saved data · retry live map</button>}
     </section>
   )
 }
@@ -252,7 +250,7 @@ function Intro({ width, meta, active, count }) {
   const domainsWord = spell(meta?.domainCount ?? 0)
   const standfirst = meta?.shiftCount
     ? `${domainsWord[0].toUpperCase()}${domainsWord.slice(1)} domains, `
-      + `${meta.shiftCount.toLocaleString()} shifts this week, told as stories. `
+      + `${meta.shiftCount.toLocaleString()} shifts in the current weekly map, told as stories. `
       + 'Swipe and they come to you.'
     : 'Everything that is about to change, told as stories. Swipe and they come to you.'
 
@@ -264,7 +262,7 @@ function Intro({ width, meta, active, count }) {
       aria-roledescription="slide"
       aria-label={`Introduction, 1 of ${count}`}
       aria-hidden={!active}
-      inert={active ? undefined : ''}
+      inert={!active}
     >
       {/* Ambient orb — transform-only animation, runs on the compositor. */}
       <div
@@ -319,7 +317,7 @@ function Intro({ width, meta, active, count }) {
 
 /* ── Panels 1..N — one per domain ────────────────────────────────────── */
 
-function DomainPanel({ domain, width, active, total, position, count, onOpen, onOpenShift }) {
+function DomainPanel({ domain, width, active, total, position, count }) {
   return (
     <div
       className="box-border flex h-full shrink-0 flex-col px-6 pb-[74px] pt-[30px] text-white lg:justify-center lg:px-24"
@@ -328,7 +326,7 @@ function DomainPanel({ domain, width, active, total, position, count, onOpen, on
       aria-roledescription="slide"
       aria-label={`${domain.name}, ${position} of ${count}`}
       aria-hidden={!active}
-      inert={active ? undefined : ''}
+      inert={!active}
     >
       <div className="mx-auto flex w-full flex-1 flex-col lg:max-w-[1180px] lg:flex-none lg:flex-row lg:items-center lg:gap-20">
         {/* Left — the headline block. This is the entire panel on mobile. */}
@@ -348,9 +346,9 @@ function DomainPanel({ domain, width, active, total, position, count, onOpen, on
           <p className="mt-3.5 max-w-[290px] text-[15px] leading-[1.5] opacity-95 lg:max-w-[520px] lg:text-[19px]">{domain.blurb}</p>
 
           <div className="mt-auto flex flex-col border-t pt-5 lg:mt-9 lg:border-t-0 lg:pt-0" style={{ borderColor: 'rgba(255,255,255,0.3)' }}>
-            <button type="button" onClick={onOpen} className="pill-yellow mt-5 self-start lg:mt-0 lg:h-12 lg:px-7 lg:text-[15px]" tabIndex={active ? 0 : -1}>
+            <Link to={`/map/${domain.slug}`} onClick={(event) => { if (!active) event.preventDefault() }} className="pill-yellow mt-5 self-start lg:mt-0 lg:h-12 lg:px-7 lg:text-[15px]" tabIndex={active ? 0 : -1}>
               All {domain.count} shifts <span className="text-[15px]">›</span>
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -362,16 +360,16 @@ function DomainPanel({ domain, width, active, total, position, count, onOpen, on
           <ul className="mt-4">
             {domain.keyShifts.slice(0, 4).map((s) => (
               <li key={s.id} style={{ borderTop: '1px solid rgba(255,255,255,0.28)' }}>
-                <button
-                  type="button"
+                <Link
+                  to={`/map/${domain.slug}/${s.slug}`}
                   tabIndex={active ? 0 : -1}
-                  onClick={() => onOpenShift(s)}
+                  onClick={(event) => { if (!active) event.preventDefault() }}
                   className="group flex w-full items-start gap-3.5 py-3.5 text-left opacity-90 transition-opacity hover:opacity-100"
                 >
                   <span className="mt-0.5 font-mono text-[11px] opacity-70">{s.num}</span>
                   <span className="t-title flex-1 text-[15px] leading-[1.22]">{quoteTitle(s.title)}</span>
                   <span className="mt-0.5 text-[15px] opacity-0 transition-opacity group-hover:opacity-100">›</span>
-                </button>
+                </Link>
               </li>
             ))}
           </ul>

@@ -28,11 +28,11 @@ export function Evidence({ items }) {
               )}
               {c.date && <span className="ml-auto font-mono text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{c.date}</span>}
             </span>
-            <span className="t-body text-pretty" style={{ color: 'var(--color-ink-strong)' }}>{c.text}</span>
+            <p className="t-body text-pretty" style={{ color: 'var(--color-ink-strong)' }}>{c.text}</p>
             {c.implication && (
-              <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>
+              <p className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>
                 <span className="font-semibold">So what — </span>{c.implication}
-              </span>
+              </p>
             )}
             {c.url && (
               <a

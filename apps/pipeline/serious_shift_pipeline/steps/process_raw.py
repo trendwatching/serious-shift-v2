@@ -73,7 +73,9 @@ def get_thinker_context(conn, thinker_id):
 def get_next_prediction_id(conn):
     r = db.query_one(conn, "SELECT prediction_id FROM predictions ORDER BY id DESC LIMIT 1")
     if r:
-        return int(re.search(r"\d+", r["prediction_id"]).group()) + 1
+        match = re.search(r"\d+", r["prediction_id"])
+        if match:
+            return int(match.group()) + 1
     return 70
 
 
@@ -133,9 +135,9 @@ def extract_batch(preps, cost_tracker):
                 return llm.call(r)
             except Exception as exc:  # noqa: BLE001 — surfaced per-file below
                 return (None, {"error": repr(exc)})
-        results = {r.custom_id: pair for r, pair in zip(reqs, parallel.pmap(one, reqs))}
+        results = {str(r.custom_id): pair for r, pair in zip(reqs, parallel.pmap(one, reqs))}
 
-    out = []
+    out: list[object] = []
     for i, prep in enumerate(preps):
         text, usage = results.get(f"f{i}", (None, {"error": "no result"}))
         if usage and not usage.get("error"):

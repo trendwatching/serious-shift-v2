@@ -1,12 +1,13 @@
 /** List-shaped sections: sub-shifts, needs, innovations, timeline, industries, territories. */
 import { useId, useRef, useState } from 'react'
+import { Link } from '../../router'
 import { Eyebrow, SectionHead } from './primitives'
 import { CONTACT_URL } from '../site'
 import { quoteTitle } from '../theme'
 
 const WHEN = ['0–12 months', '1–3 years', '3–10 years']
 
-export function SubShiftList({ subs, onOpen }) {
+export function SubShiftList({ subs, hrefFor }) {
   const [current, setCurrent] = useState(0)
   const rail = useRef(null)
   const cards = useRef([])
@@ -50,8 +51,8 @@ export function SubShiftList({ subs, onOpen }) {
       </div>
       <div ref={rail} onScroll={onScroll} aria-label="Sub-shifts" aria-roledescription="carousel" className="bleed-m carousel-scrollbar-hidden flex snap-x snap-mandatory gap-3 overflow-x-auto md:grid md:grid-cols-2 md:overflow-x-visible lg:gap-4 xl:grid-cols-3">
         {subs.map((b, i) => (
-          <button
-            key={b.id} ref={(node) => { cards.current[i] = node }} type="button" onClick={() => onOpen(b)}
+          <Link
+            key={b.id} ref={(node) => { cards.current[i] = node }} to={hrefFor(b)}
             aria-label={`Open sub-shift ${i + 1} of ${subs.length}: ${b.title}`}
             className="card card-lift a-rise relative flex w-[82%] shrink-0 snap-start flex-col gap-[9px] overflow-hidden py-[15px] pl-[17px] pr-4 text-left md:w-auto md:shrink lg:py-[18px] lg:pl-[21px] lg:pr-5"
             style={{ animationDelay: `${(0.05 + i * 0.06).toFixed(2)}s`, scrollMarginInline: 'var(--gutter)' }}
@@ -70,7 +71,7 @@ export function SubShiftList({ subs, onOpen }) {
             </span>
             <span className="t-title text-[15px] leading-[1.24] lg:text-[17px]">{quoteTitle(b.title)}</span>
             <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{b.dek}</span>
-          </button>
+          </Link>
         ))}
       </div>
     </div>
@@ -102,7 +103,7 @@ export function HumanNeeds({ needs }) {
         <span
           id={`${id}-${key}`}
           aria-hidden={!on}
-          inert={on ? undefined : ''}
+          inert={!on}
           className="grid overflow-hidden"
           style={{
             gridTemplateRows: on ? '1fr' : '0fr',
@@ -251,7 +252,7 @@ export function Industries({ items }) {
         <h3 className="t-display text-[15px] md:text-[17px] lg:text-[19px]" style={{ letterSpacing: '-0.01em' }}>{active.name}</h3>
         {/* The one card in the wide track that holds running prose, so it takes
             the prose measure rather than stretching to 1120px. */}
-        <span className="t-prose max-w-[var(--measure)] text-pretty" style={{ color: 'var(--color-ink-soft)' }}>{active.text}</span>
+        <p className="t-prose max-w-[var(--measure)] text-pretty" style={{ color: 'var(--color-ink-soft)' }}>{active.text}</p>
       </div>
     </div>
   )
@@ -279,7 +280,7 @@ export function Territories({ items }) {
               style={{ background: 'var(--color-yellow)', color: 'var(--color-ink)', fontWeight: 800, letterSpacing: 0 }}
             >{i + 1}</span>
             <span className="t-display text-[15px] leading-[1.2] lg:text-[17px]" style={{ letterSpacing: '-0.01em' }}>{t.name}</span>
-            <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{t.text}</span>
+            <p className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{t.text}</p>
           </div>
         ))}
         <div
@@ -288,9 +289,9 @@ export function Territories({ items }) {
         >
           <span className="t-eyebrow" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--color-yellow)' }}>Work with us</span>
           <span className="text-[21px] leading-[1.14] lg:text-[24px]" style={{ fontFamily: 'var(--font-title)' }}>Don’t see your angle here?</span>
-          <span className="text-[13px] leading-[1.48] opacity-95 text-pretty lg:text-[14.5px] lg:leading-[1.55]">
+          <p className="text-[13px] leading-[1.48] opacity-95 text-pretty lg:text-[14.5px] lg:leading-[1.55]">
             These territories are starting points, not limits. We work with organisations to find where a shift like this creates real commercial space for their specific context.
-          </span>
+          </p>
           <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="pill-yellow mt-auto h-11 self-start px-4 text-[13.5px]">
             Contact us <span className="text-[15px]">→</span>
           </a>

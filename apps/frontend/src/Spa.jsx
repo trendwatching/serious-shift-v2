@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter } from './router'
 import App from './App'
 
 // Mounts the React app. BrowserRouter gives real, shareable URLs; the backend

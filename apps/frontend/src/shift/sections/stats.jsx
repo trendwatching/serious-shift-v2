@@ -44,7 +44,9 @@ export function StatBand({ stat, size = 58 }) {
           setting beside the numeral, so the row breaks instead. */}
       <span className="flex flex-1 basis-[260px] flex-col gap-2">
         <span className="text-[13.5px] leading-[1.45] text-pretty md:text-[15.5px] md:leading-[1.5] lg:text-[17px]">{stat.text}</span>
-        {stat.source && <span className="text-[11px] leading-[1.4] opacity-75 md:text-[12px] lg:text-[12.5px]">{stat.source}</span>}
+        {stat.source && (stat.url ? (
+          <a href={stat.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center self-start text-[11px] leading-[1.4] underline underline-offset-4 md:text-[12px] lg:text-[12.5px]" aria-label={`Read source: ${stat.source}`}>{stat.source}</a>
+        ) : <span className="text-[11px] leading-[1.4] opacity-85 md:text-[12px] lg:text-[12.5px]">{stat.source}</span>)}
       </span>
     </div>
   )

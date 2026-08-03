@@ -6,7 +6,7 @@
  * status-bar offset.
  */
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from '../router'
 import { LOGOS, SOCIALS, SUBSCRIBE_URL, FOOTER_LINKS, MENU_LINKS } from './site'
 
 const LOGO = '/shift/serious-shift-logo-white.png'

@@ -71,7 +71,8 @@ build from the repo root so they can copy `packages/` in.
 
 ## CI
 
-`.github/workflows/` has one workflow per block (db, pipeline, backend, frontend),
-each triggered on changes to its path and relevant root Railway configuration.
+`.github/workflows/` has one workflow per block plus an always-on governance
+workflow. Every block workflow is triggered by relevant root Railway configuration.
 High/critical dependency findings block; temporary waivers must be named, owned,
-justified, and expiring in `security/audit-waivers.json`.
+justified, and expiring in `security/audit-waivers.json`. Third-party Actions are
+pinned to immutable commits and jobs have read-only permissions and timeouts.

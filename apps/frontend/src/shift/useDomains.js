@@ -1,6 +1,6 @@
 /** Route-scoped map data → the view-model consumed by the UI. */
 import { useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation } from '../router'
 import { useData } from '../hooks/useData'
 import { DECK } from './site'
 import { DOMAIN_ORDER, themeFor, pad2, slugify, readTimeOf } from './theme'
@@ -114,6 +114,8 @@ export function useDomains() {
           sibling.id === detail.sub_shift?.id ? detail.sub_shift : sibling
         ))
         rows = [{ ...detail.parent_shift, sub_trends: subRows }]
+      } else if (Array.isArray(summary?.key_shifts)) {
+        rows = summary.key_shifts
       }
 
       const keyShifts = rows.map((row, i) => toShift(row, i, domainRef))
@@ -149,12 +151,13 @@ export function useDomains() {
   const error = indexRequest.error || (detailEnabled ? detailRequest.error : null)
   const notFound = error?.status === 404
   const unavailable = !loading && !notFound && (!index || (detailEnabled && !detail && !!error))
+  const stale = !unavailable && !!error && !!index
   const retry = () => {
     indexRequest.retry()
     if (detailEnabled) detailRequest.retry()
   }
 
-  return { domains, meta, loading, unavailable, notFound, error, retry }
+  return { domains, meta, loading, unavailable, stale, notFound, error, retry }
 }
 
 export function useResolved({ domainSlug, ktSlug, subSlug } = {}) {

@@ -33,8 +33,8 @@ def select_hero_stat(conn, kt_id) -> dict | None:
     Ranked by claim weight × thinker credibility; statistics come from the
     `claims.statistic` / `claims.has_statistic` fields (process_raw extracts them)."""
     row = conn.execute("""
-        SELECT c.statistic, t.name AS thinker,
-               s.title AS source, s.date_published AS pub_date
+        SELECT c.statistic, c.claim_text, t.name AS thinker,
+               s.title AS source, s.date_published AS pub_date, s.url
         FROM domain_sub_trends st
         JOIN domain_sub_trend_claims stc ON stc.sub_trend_id = st.id
         JOIN claims c   ON c.id = stc.claim_id
@@ -43,6 +43,7 @@ def select_hero_stat(conn, kt_id) -> dict | None:
         WHERE st.kt_id = %s
           AND c.has_statistic IS TRUE
           AND c.statistic IS NOT NULL
+          AND s.url ~* '^https?://'
           AND c.duplicate_of IS NULL
         ORDER BY COALESCE(c.claim_weight,0)
                  * (GREATEST(COALESCE(t.credibility_score,50.0), 30.0) / 100.0) DESC,
@@ -54,9 +55,11 @@ def select_hero_stat(conn, kt_id) -> dict | None:
     year = str(row['pub_date'])[:4] if row['pub_date'] else ''
     return {
         'value':   row['statistic'],
+        'text':    row['claim_text'] or '',
         'thinker': row['thinker'] or '',
         'source':  _attribution(row['thinker'], row['source'], year),
         'year':    year,
+        'url':     row['url'] or '',
     }
 
 

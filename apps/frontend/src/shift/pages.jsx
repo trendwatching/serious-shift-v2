@@ -13,7 +13,7 @@
  * removing or reordering a section is a data change (see modules.jsx).
  */
 import { useEffect } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from '../router'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { useResolved } from './useDomains'
 import { ShiftFooter } from './chrome'
@@ -32,6 +32,7 @@ const Column = ({ children }) => (
 )
 
 function Missing({ what }) {
+  useDocumentMeta('Page not found', undefined, { notFound: true })
   return (
     <div className="grid min-h-[60vh] place-items-center px-6 text-center">
       <div className="flex flex-col items-center gap-4">
@@ -61,7 +62,12 @@ export function Unavailable({ error, onRetry }) {
   )
 }
 
-const Loading = () => <div className="min-h-[60vh]" aria-busy="true" />
+const Loading = () => <div className="grid min-h-[60vh] place-items-center px-6" aria-busy="true" aria-label="Loading map content"><div className="w-full max-w-[660px] animate-pulse space-y-4" aria-hidden="true"><div className="h-10 w-2/3 rounded-lg bg-black/10"/><div className="h-24 rounded-2xl bg-black/10"/><div className="h-40 rounded-2xl bg-black/10"/></div></div>
+
+function StaleNotice({ show, onRetry }) {
+  if (!show) return null
+  return <div role="status" className="mx-auto mt-4 flex min-h-11 max-w-[660px] items-center justify-between gap-4 rounded-xl bg-[var(--color-yellow)] px-4 text-sm"><span>Showing saved data because the live refresh failed.</span><button type="button" onClick={onRetry} className="min-h-11 font-bold underline underline-offset-4">Retry</button></div>
+}
 
 function SiblingNavigation({ previous, next, hrefFor, label }) {
   if (!previous && !next) return null
@@ -91,7 +97,7 @@ function SiblingNavigation({ previous, next, hrefFor, label }) {
 export function DomainSheet() {
   const { domainSlug } = useParams()
   const navigate = useNavigate()
-  const { domain, loading, unavailable, error, retry } = useResolved({ domainSlug })
+  const { domain, loading, unavailable, stale, error, retry } = useResolved({ domainSlug })
   useDocumentMeta(domain?.name, domain?.blurb)
 
   if (loading && !domain) return <Loading />
@@ -114,6 +120,7 @@ export function DomainSheet() {
         className="mt-2 min-h-[520px] bg-white pb-[130px] pt-2"
         style={{ borderRadius: '28px 28px 0 0' }}
       >
+        <StaleNotice show={stale} onRetry={retry} />
         <Frame>
           {/* The shift list is read line by line, so it stays at the measure
               even though the frame around it is wider. */}
@@ -129,10 +136,10 @@ export function DomainSheet() {
                 <div className="pt-1 font-mono text-xs" style={{ color: 'var(--color-ink-faint)' }}>{s.num}</div>
                 <div className="flex flex-1 flex-col gap-1.5">
                   <h3 className="t-title text-[19px] leading-[1.2] md:text-[21px] lg:text-[22px]" style={{ color: 'var(--color-ink)' }}>{quoteTitle(s.title)}</h3>
-                  <div className="t-body" style={{ color: 'var(--color-ink-mid)' }}>{s.dek}</div>
-                  <div className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  <p className="t-body" style={{ color: 'var(--color-ink-mid)' }}>{s.dek}</p>
+                  <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                     Key shift{s.velocity ? ` · ${s.velocity}` : ''} · {s.read}
-                  </div>
+                  </p>
                 </div>
               </Link>
             ))}
@@ -148,7 +155,7 @@ export function DomainSheet() {
                 {domain.insights.map((s) => (
                   <div key={s.id} className="card flex flex-col gap-2 p-4 lg:p-5">
                     <h3 className="t-display text-[15px] leading-[1.25] lg:text-[17px]" style={{ letterSpacing: '-0.01em' }}>{s.name}</h3>
-                    <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{s.description}</span>
+                    <p className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{s.description}</p>
                   </div>
                 ))}
               </div>
@@ -167,7 +174,7 @@ export function DomainSheet() {
 export function ShiftDetail() {
   const { domainSlug, ktSlug } = useParams()
   const navigate = useNavigate()
-  const { domain, shift, shiftSiblings, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug })
+  const { domain, shift, shiftSiblings, loading, unavailable, stale, error, retry } = useResolved({ domainSlug, ktSlug })
   useDocumentMeta(shift?.title, shift?.dek)
 
   if (loading && !shift) return <Loading />
@@ -184,6 +191,8 @@ export function ShiftDetail() {
         title={shift.title}
       />
 
+      <StaleNotice show={stale} onRetry={retry} />
+
       <Column>
         <Modules
           modules={shift.modules}
@@ -191,8 +200,7 @@ export function ShiftDetail() {
             scope: 'shift',
             domain,
             subs: shift.subshifts,
-            onOpenSub: (b) => navigate(`/map/${domain.slug}/${shift.slug}/${b.slug}`),
-            onNavigate: (r) => navigate(r.href),
+            basePath: `/map/${domain.slug}/${shift.slug}`,
           }}
         />
       </Column>
@@ -213,7 +221,7 @@ export function ShiftDetail() {
 export function SubShiftDetail() {
   const { domainSlug, ktSlug, subSlug } = useParams()
   const navigate = useNavigate()
-  const { domain, shift, sub, subSiblings, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug, subSlug })
+  const { domain, shift, sub, subSiblings, loading, unavailable, stale, error, retry } = useResolved({ domainSlug, ktSlug, subSlug })
   useDocumentMeta(sub?.title, sub?.dek)
 
   // A sub-shift is a fresh reading context — always open at the top.
@@ -234,6 +242,8 @@ export function SubShiftDetail() {
         title={sub.title}
         sub={sub.context}
       />
+
+      <StaleNotice show={stale} onRetry={retry} />
 
       <Column>
         <Modules modules={sub.modules} ctx={{ scope: 'sub_shift', domain, subs: [] }} />

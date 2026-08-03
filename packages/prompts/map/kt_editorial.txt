@@ -7,7 +7,9 @@ The Key Trend below has already been named and evidenced. Your job is to write t
 RULES — GENERAL
 - Every field must be grounded in the evidence. Never invent a statistic, a study, or a source.
 - Write like a journalist briefing a strategist: specific, declarative, no marketing register.
-- British/international English. No em-dash pile-ups, no bullet fragments inside a field.
+- US English. No em dashes, no bullet fragments inside a field.
+- Separate observation from inference. Do not turn one incident, forecast, or opinion into a universal claim.
+- Use only events, dates, organizations, and numbers present in EVIDENCE. A source URL is provenance, not permission to infer beyond its claim.
 
 FROM / TO (the spine of the shift)
 - `from` = the assumption or arrangement that is ending. `to` = what replaces it.
@@ -16,21 +18,14 @@ FROM / TO (the spine of the shift)
 - Wrong: a restatement, a cause/effect pair, or two unrelated observations.
 
 WHATS_CHANGING / WHY_NOW (two panels the reader toggles between)
-- `whats_changing`: 3–5 sentences. The mechanism of the shift — what is actually moving, and why the obvious reading of it is wrong.
-- `why_now`: 3–4 sentences. Why this is landing in this window rather than five years ago or five years hence. Name the converging forces.
+- `whats_changing`: 2–3 sentences, at most 75 words. The mechanism of the shift: what is actually moving, and why the obvious reading is incomplete.
+- `why_now`: 2 sentences, at most 55 words. Why this is landing in this window rather than five years ago or five years hence. Name only converging forces present in the evidence.
 - These must not overlap. If `why_now` could be pasted into `whats_changing`, rewrite it.
-
-STAT_VALUE / STAT_TEXT (a headline figure and the prose beside it)
-- `stat_value` is the bare figure, displayed very large on its own. Keep it SHORT — at most about 12 characters, no sentence, no trailing unit words unless they are part of the figure.
-- Right: "25%", "3×", "2:1", "18-34", "$4.2bn", "6 of 9", "100%"
-- Wrong: "200 years of encyclical history, first time dedicated entirely to technology" (that is prose, not a figure), "16 million Claude chats harvested via fake accounts"
-- `stat_text` is one or two sentences explaining what the figure measures and why it matters. Do not restate the bare number — it is displayed separately.
-- Both must come from the same statistic in the evidence. If the evidence contains no attributable, dated statistic, return "" for both.
 
 HUMAN_NEEDS
 - `unlocked`: the human need this shift genuinely satisfies. Steelman it — the reader must believe the appeal.
 - `threatened`: the need it puts at risk. Name the need, then the fear in the reader's own voice.
-- One or two sentences each, starting with the need itself (e.g. "Cognitive relief — …").
+- One or two sentences each, at most 40 words, starting with the need itself (e.g. "Cognitive relief: …").
 
 PULL_QUOTE (the editorial verdict, set immediately after From→To)
 - One short, declarative line — the sentence a reader would screenshot. This is the analyst's judgement, not a consumer speaking, and NOT the same line as `consumer_tension`.
@@ -39,29 +34,29 @@ PULL_QUOTE (the editorial verdict, set immediately after From→To)
 - Wrong: "AI may have negative effects on human reasoning over time." (hedged, not quotable)
 
 CONSUMER_TENSION
-- One sentence, first person, that a real consumer could say out loud. It must contain the contradiction, not describe it.
+- One sentence, at most 32 words and in first person, that a real consumer could say out loud. It must contain the contradiction, not describe it.
 - Right: "I use AI because it makes me more capable — but I'm starting to suspect it's making me less capable."
 - Wrong: "Consumers feel conflicted about AI." (describes rather than voices)
 
 TIMELINE
-- `now` (0–12 months), `next` (1–3 years), `beyond` (3–10 years). One or two sentences each.
+- `now` (0–12 months), `next` (1–3 years), `beyond` (3–10 years). One or two sentences and at most 40 words each.
 - Each step must be a different order of consequence, not the same claim escalated by adverbs.
 
 INDUSTRIES
 - Return one entry for EACH of these 16 TrendWatching sectors, in this exact order and with these exact names:
   Beauty & Personal Care, Consumer Tech, Digital Tech, Entertainment, Fashion & Accessories, Financial Services, Food & Beverage, Government & Public Sector, Health & Wellbeing, Home & Living, Media & Publishing, Mobility & Transport, Nonprofit & Social Cause, Retail & Commerce, Travel & Hospitality, Work & Education
-- 2–3 sentences each: what this shift means for that sector specifically, and where the commercial move is.
+- One sentence each, at most 32 words: what this shift means for that sector specifically and where the commercial move is.
 - If a sector is genuinely peripheral to this shift, say so plainly and name the residual stake. Do not pad.
 
 OPPORTUNITIES (opportunity territories)
-- 3–5 entries. Each is a `name` (2–4 words, a product or service category that does not yet exist at scale) and a `text` (one or two sentences on what it is).
+- 3–4 entries. Each is a `name` (2–4 words, a product or service category that does not yet exist at scale) and `text` of one sentence, at most 35 words.
 - These are commercial starting points, not restatements of the trend.
 
 READ_TIME
 - Estimate honestly from the length of what you wrote, e.g. "5 min read".
 
 Return ONLY valid JSON — no preamble, no markdown fences:
-{"from":"…","to":"…","whats_changing":"…","why_now":"…","pull_quote":"…","stat_value":"25%","stat_text":"…","human_needs":{"unlocked":"…","threatened":"…"},"consumer_tension":"…","timeline":{"now":"…","next":"…","beyond":"…"},"industries":[{"name":"Beauty & Personal Care","text":"…"}],"opportunities":[{"name":"…","text":"…"}],"read_time":"5 min read"}
+{"from":"…","to":"…","whats_changing":"…","why_now":"…","pull_quote":"…","human_needs":{"unlocked":"…","threatened":"…"},"consumer_tension":"…","timeline":{"now":"…","next":"…","beyond":"…"},"industries":[{"name":"Beauty & Personal Care","text":"…"}],"opportunities":[{"name":"…","text":"…"}],"evidence_ids":[123,456],"read_time":"5 min read"}
 
 KEY TREND: {{kt_name}}
 FRAMING: {{kt_subtitle}}

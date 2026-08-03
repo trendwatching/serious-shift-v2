@@ -37,7 +37,7 @@ authority:
 |---|---|
 | Bottom scrim missing | The deck has a 40px `rgba(27,22,32,0→0.42)` wash at its foot so the dots and swipe hint hold against a light panel. Was absent; added to [Home.jsx](apps/frontend/src/shift/Home.jsx). |
 | Wrong mono face | The design specifies `ui-monospace, 'SF Mono', Menlo` for the mono labels (panel `01 / 04`, horizon, shift indices). We loaded JetBrains Mono. Now the platform stack — matches the design and drops a font request. |
-| Stat band showed prose | The band renders its value at 58px (99px desktop). `hero_stat.value` is prose lifted from a claim, and **0 of 53** staging values were short enough — every shift would have rendered a broken band. The editorial prompt now returns a `stat_value` figure, with a leading-figure fallback and the module dropped if neither yields one. |
+| Stat band showed prose | Statistics are now selected deterministically from claims marked as statistics with valid source URLs. The published value, explanatory claim text, source, date, and link all come from the database; model-authored figures cannot override them. |
 | Unreferenced assets | `tile-*-crop.png` ×4 and `serious-shift-logo-mark.png` were copied but never used (the tiles belong to a different concept variant and have a pink band baked in). Removed; `public/shift` 896K → 420K. |
 | Generated content unrendered | See below — `voices`, `evidence`, `related_shifts` modules and the domain-sheet synthesis block. |
 
@@ -93,8 +93,13 @@ if you want them. That is now a data + registry change, not a redesign.
   tracked at 390×844, 393×852, 768×1024, and 1440×900.
 - **The frontend reads route-scoped documents.** It fetches the index globally
   and only the current detail document, retains successful cached data during a
-  refresh, retries transient failures twice, and distinguishes offline, timeout,
+  refresh, revalidates with ETags, retries transient failures twice, and distinguishes offline, timeout,
   server-error, and unavailable states. It does not silently render an empty deck.
+- **Editorial provenance is a publication invariant.** The synthesis prompt keeps
+  source URL/date/type/confidence and exact quotes attached to each claim, each
+  sub-shift receives only its own evidence, and every editorial body cites 2–6
+  claims belonging to that route. Missing modules, unsourced statistics, thin
+  evidence, duplicated long prose, or overlong panels leave the last-good map live.
 
 ## Deliberately deferred or operationally blocked
 

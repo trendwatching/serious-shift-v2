@@ -6,14 +6,18 @@ name: backend
 
 on:
   push:
-    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", "security/audit-waivers.json", "railway.backend.json", ".github/workflows/backend.yml"]
+    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", "security/audit-waivers.json", "railway*.json", ".github/workflows/backend.yml"]
   pull_request:
-    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", "security/audit-waivers.json", "railway.backend.json", ".github/workflows/backend.yml"]
+    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", "security/audit-waivers.json", "railway*.json", ".github/workflows/backend.yml"]
   workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 jobs:
   build-and-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     services:
       postgres:
         image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
@@ -28,15 +32,15 @@ jobs:
     env:
       DATABASE_URL: postgres://serious:serious@localhost:5432/serious_shift?sslmode=disable
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # Rust 1.95.0
         with: { components: "rustfmt, clippy" }
 
       - name: Apply DB schema + seed
         run: |
-          sudo curl -fsSL -o /usr/local/bin/dbmate \
-            https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
-          sudo chmod +x /usr/local/bin/dbmate
+          mkdir -p /tmp/dbmate-bin
+          GOBIN=/tmp/dbmate-bin go install github.com/amacneil/dbmate/v2@v2.34.1
+          sudo install -m 0755 /tmp/dbmate-bin/dbmate /usr/local/bin/dbmate
           ( cd packages/db && DBMATE_MIGRATIONS_DIR=./migrations dbmate up )
           psql "$DATABASE_URL" -c "INSERT INTO thinkers (name, credibility_score) VALUES ('Smoke Test', 70);"
           psql "$DATABASE_URL" -c "INSERT INTO documents (key, body) VALUES ('map', '{\"updated\":\"2026-08-01\",\"domains\":[{\"id\":\"society\",\"name\":\"Society\",\"short_description\":\"Test domain\"}],\"key_trends\":[{\"id\":\"kt-1\",\"domain_id\":\"society\",\"slug\":\"test-shift\",\"name\":\"Test Shift\",\"subtitle\":\"Test\",\"modules\":[]}],\"sub_trends\":[{\"id\":\"st-1\",\"key_trend_id\":\"kt-1\",\"domain_id\":\"society\",\"slug\":\"test-shift/test-sub\",\"name\":\"Test Sub\",\"modules\":[]}],\"synthesis_insights\":[]}'::jsonb);"
@@ -53,7 +57,7 @@ jobs:
 
       - name: Dependency audit
         run: |
-          cargo install cargo-audit --locked
+          cargo install cargo-audit --version 0.22.2 --locked
           python3 scripts/audit.py
         working-directory: apps/backend
 
