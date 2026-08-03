@@ -1,4 +1,4 @@
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from '../src/router'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
@@ -24,11 +24,11 @@ describe('accessible modules and navigation', () => {
 
   it('exposes carousel position and accessible next/previous controls', async () => {
     const user = userEvent.setup()
-    render(<SubShiftList subs={subs} onOpen={() => {}} />)
+    render(<MemoryRouter><SubShiftList subs={subs} hrefFor={(item) => `/map/society/shift/${item.slug}`} /></MemoryRouter>)
     expect(screen.getByRole('status')).toHaveTextContent('1 of 5')
     await user.click(screen.getByRole('button', { name: 'Next sub-shift' }))
     expect(screen.getByRole('status')).toHaveTextContent('2 of 5')
-    expect(screen.getByRole('button', { name: /Open sub-shift 2 of 5/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open sub-shift 2 of 5/ })).toBeInTheDocument()
   })
 
   it('uses the exact six-item menu and restores focus when it closes', async () => {

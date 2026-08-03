@@ -44,7 +44,7 @@ def _contract() -> dict:
 # Representative editorial payloads: one with every field the prompts ask for, and
 # one empty, so we see both the full module set and the degenerate case.
 _FULL_KT = {
-    "from": "a", "to": "b", "whats_changing": "c", "why_now": "d", "stat_text": "e",
+    "from": "a", "to": "b", "whats_changing": "c", "why_now": "d", "evidence_ids": [1, 2], "stat_text": "e",
     "human_needs": {"unlocked": "f", "threatened": "g"},
     "consumer_tension": "h",
     "timeline": {"now": "i", "next": "j", "beyond": "k"},
@@ -55,7 +55,7 @@ _FULL_KT = {
 _FULL_ST = {
     "lede": "a", "from": "b", "to": "c", "quote": "d",
     "stat": {"value": "1%", "text": "e", "source": "f"},
-    "whats_changing": "g", "why_now": "h",
+    "whats_changing": "g", "why_now": "h", "evidence_ids": [1, 2],
     "human_needs": {"unlocked": "i", "threatened": "j"},
     "signals": ["k", "l"], "counter_signals": ["m"],
     "timeline": {"now": "n", "next": "o", "beyond": "p"},
@@ -134,9 +134,9 @@ def test_stat_band_rejects_prose_as_a_numeral():
     kt2 = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": "Boom Supersonic achieved flight"}}, {})
     assert "stat_band" not in {m["type"] for m in kt2}
 
-    # an explicit stat_value from the model always wins
+    # Model-authored figures never override the verified claim selected in SQL.
     kt3 = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": prose}}, {"stat_value": "2:1"})
-    assert next(m for m in kt3 if m["type"] == "stat_band")["data"]["value"] == "2:1"
+    assert next(m for m in kt3 if m["type"] == "stat_band")["data"]["value"] == "200"
 
 
 def test_short_figure_extraction():

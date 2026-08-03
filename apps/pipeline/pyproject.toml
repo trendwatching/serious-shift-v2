@@ -49,6 +49,7 @@ lint.ignore = ["E701", "E702"]
 [tool.mypy]
 python_version = "3.13"
 ignore_missing_imports = true
+check_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = [

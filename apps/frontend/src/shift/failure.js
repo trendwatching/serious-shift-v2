@@ -2,7 +2,7 @@ const STATES = {
   offline: {
     eyebrow: 'Offline',
     title: 'You’re offline.',
-    body: 'Reconnect to the internet, then try loading this week’s shifts again.',
+    body: 'Reconnect to the internet, then try loading the current map again.',
   },
   timeout: {
     eyebrow: 'Timed out',
@@ -16,12 +16,12 @@ const STATES = {
   },
   unavailable: {
     eyebrow: 'Unavailable',
-    title: 'This week’s map isn’t available.',
+    title: 'The current map isn’t available.',
     body: 'The service is temporarily unavailable. No empty or stale map has been substituted.',
   },
   request: {
     eyebrow: 'Couldn’t load',
-    title: 'This week’s map couldn’t be loaded.',
+    title: 'The current map couldn’t be loaded.',
     body: 'Check the address or try the request again.',
   },
 }

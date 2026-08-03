@@ -133,8 +133,8 @@ Only once the domain is live on the backend and verified. It has no other role
 
 ### 8. Refresh the content
 
-Production's map is from 26 July and carries **no editorial modules**, so shift
-pages will render from the projected fallback until this runs.
+Run a controlled synthesis after the application deployment so the newly
+enforced module and provenance contract is applied to the live candidate.
 
 ```bash
 # ingest is optional here — production's claims are already ahead of staging.
@@ -142,13 +142,12 @@ railway run --service synthesize --environment production -- \
   python -m serious_shift_pipeline.run synthesize
 ```
 
-~$5 of Sonnet, ~17 minutes. Publication is conditional: validate unique route
+Publication is conditional: validate unique route
 slugs/references, five sub-shifts, the ordered 16-industry contract, module
-shape/order, referential integrity, and evidence/voice URLs before promotion.
-One bounded targeted repair is permitted. Failure must leave the current map
-untouched and exit non-zero. This is also what applies the **quote
-misattribution fix** to production's pages: until it runs, the "Who is saying
-this" panel keeps showing paraphrases attributed to named people.
+shape/order, route-owned editorial citations, concise copy, duplicate prose,
+referential integrity, and evidence/voice/stat URLs before promotion. One
+bounded targeted repair is permitted. Failure must leave the current map
+untouched and exit non-zero.
 
 ## Rollback
 

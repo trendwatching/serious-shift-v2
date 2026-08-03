@@ -21,12 +21,17 @@ DOMAINS = ['society', 'economy', 'consumers', 'organisations']
 
 
 def valid_map() -> dict:
-    domains, shifts, subs = [], [], []
+    domains, shifts, subs, claims = [], [], [], []
     for domain_index, domain_id in enumerate(DOMAINS):
         shift_id = f'kt-{domain_index + 1}'
         shift_slug = f'shift-{domain_index + 1}'
         child_ids = []
         for sub_index in range(5):
+            claim_ids = [domain_index * 100 + sub_index * 2 + 1, domain_index * 100 + sub_index * 2 + 2]
+            claims.extend({
+                'id': f'c_{claim_id}', 'text': f'Evidence {claim_id}',
+                'source_url': f'https://example.com/{claim_id}',
+            } for claim_id in claim_ids)
             sub_id = f'st-{domain_index + 1}-{sub_index + 1}'
             child_ids.append(sub_id)
             subs.append({
@@ -35,12 +40,24 @@ def valid_map() -> dict:
                 'domain_id': domain_id,
                 'slug': f'{shift_slug}/sub-{sub_index + 1}',
                 'name': f'Sub {sub_index + 1}',
+                'claim_ids': [f'c_{claim_id}' for claim_id in claim_ids],
                 'modules': [
                     {'type': 'lede', 'data': {'text': 'Lede'}},
+                    {'type': 'from_to_solid', 'data': {'from': 'Old', 'to': 'New'}},
+                    {'type': 'tension_band', 'data': {'quote': 'A tension'}},
+                    {'type': 'peel_tabs', 'data': {'whats_changing': 'Change', 'why_now': 'Now', 'evidence_ids': claim_ids}},
+                    {'type': 'human_needs', 'data': {'unlocked': 'Agency', 'threatened': 'Trust'}},
+                    {'type': 'signals', 'data': {'items': ['Signal']}},
+                    {'type': 'counter_signals', 'data': {'items': ['Counter'] }},
                     {'type': 'evidence', 'data': {'items': [{
                         'text': 'Evidence', 'thinker': 'A',
                         'url': 'https://example.com/evidence',
+                    }, {
+                        'text': 'More evidence', 'thinker': 'B',
+                        'url': 'https://example.org/evidence',
                     }]}},
+                    {'type': 'timeline', 'data': {'steps': [{'label': 'Now', 'text': 'Move'}]}},
+                    {'type': 'territories', 'data': {'items': [{'name': 'Space', 'text': 'Build'}]}},
                 ],
             })
         domains.append({'id': domain_id, 'name': domain_id.title(),
@@ -53,9 +70,16 @@ def valid_map() -> dict:
             'sub_trend_ids': child_ids,
             'modules': [
                 {'type': 'dek', 'data': {'text': 'Dek'}},
+                {'type': 'from_to', 'data': {'from': 'Old', 'to': 'New'}},
+                {'type': 'pull_quote', 'data': {'quote': 'A verdict'}},
+                {'type': 'peel_tabs', 'data': {'whats_changing': 'Change', 'why_now': 'Now', 'evidence_ids': [domain_index * 100 + 1, domain_index * 100 + 2]}},
+                {'type': 'human_needs', 'data': {'unlocked': 'Agency', 'threatened': 'Trust'}},
+                {'type': 'tension_band', 'data': {'quote': 'A tension'}},
+                {'type': 'timeline', 'data': {'steps': [{'label': 'Now', 'text': 'Move'}]}},
                 {'type': 'industries', 'data': {
                     'items': [{'name': name, 'text': 'Impact'} for name in SECTORS],
                 }},
+                {'type': 'territories', 'data': {'items': [{'name': 'Space', 'text': 'Build'}]}},
                 {'type': 'voices', 'data': {
                     'proponents': [{
                         'name': 'A', 'quote': 'A real quote',
@@ -67,7 +91,7 @@ def valid_map() -> dict:
             ],
         })
     return {'updated': '2026-08-02', 'domains': domains, 'key_trends': shifts,
-            'sub_trends': subs, 'synthesis_insights': []}
+            'sub_trends': subs, 'claims': claims, 'synthesis_insights': []}
 
 
 def codes(document) -> set[str]:
@@ -94,7 +118,8 @@ def test_exactly_five_sub_shifts(count, valid):
 @pytest.mark.parametrize('mutation', ['missing', 'duplicate', 'reordered', 'unknown'])
 def test_industry_contract_is_exact(mutation):
     document = valid_map()
-    items = document['key_trends'][0]['modules'][1]['data']['items']
+    module = next(item for item in document['key_trends'][0]['modules'] if item['type'] == 'industries')
+    items = module['data']['items']
     if mutation == 'missing':
         items.pop()
     elif mutation == 'duplicate':
@@ -123,9 +148,11 @@ def test_duplicate_slugs_and_broken_related_links_are_rejected():
 def test_published_attribution_requires_http_source_urls(module_type):
     document = valid_map()
     if module_type == 'evidence':
-        document['sub_trends'][0]['modules'][1]['data']['items'][0]['url'] = 'javascript:alert(1)'
+        module = next(item for item in document['sub_trends'][0]['modules'] if item['type'] == 'evidence')
+        module['data']['items'][0]['url'] = 'javascript:alert(1)'
     else:
-        document['key_trends'][0]['modules'][2]['data']['proponents'][0]['url'] = '/relative'
+        module = next(item for item in document['key_trends'][0]['modules'] if item['type'] == 'voices')
+        module['data']['proponents'][0]['url'] = '/relative'
     assert 'source_url' in codes(document)
 
 
@@ -171,3 +198,50 @@ def test_targeted_repair_never_exceeds_parent_limit(monkeypatch):
     )
     assert repaired is False
     assert connection.statements == []
+
+
+def test_required_editorial_modules_cannot_silently_disappear():
+    document = valid_map()
+    document['sub_trends'][0]['modules'] = [
+        module for module in document['sub_trends'][0]['modules']
+        if module['type'] != 'counter_signals'
+    ]
+    assert 'required_module' in codes(document)
+
+
+def test_long_and_duplicated_editorial_is_rejected():
+    document = valid_map()
+    repeated = ' '.join(['specific mechanism'] * 50)
+    for shift in document['key_trends'][:2]:
+        module = next(item for item in shift['modules'] if item['type'] == 'peel_tabs')
+        module['data']['whats_changing'] = repeated
+    found = codes(document)
+    assert {'editorial_length', 'duplicate_editorial'} <= found
+
+
+def test_card_and_horizon_copy_has_enforced_reading_limits():
+    document = valid_map()
+    modules = document['sub_trends'][0]['modules']
+    needs = next(item for item in modules if item['type'] == 'human_needs')
+    timeline = next(item for item in modules if item['type'] == 'timeline')
+    needs['data']['unlocked'] = ' '.join(['word'] * 46)
+    timeline['data']['steps'][0]['text'] = ' '.join(['word'] * 46)
+    matching = [issue for issue in validate_map(document, CONTRACT)
+                if issue.code == 'editorial_length']
+    assert len(matching) == 2
+
+
+def test_statistics_require_clickable_provenance():
+    document = valid_map()
+    document['key_trends'][0]['modules'].insert(3, {
+        'type': 'stat_band',
+        'data': {'value': '25%', 'text': 'Measured result', 'source': 'Study'},
+    })
+    assert 'source_url' in codes(document)
+
+
+def test_editorial_citations_must_belong_to_the_current_route():
+    document = valid_map()
+    module = next(item for item in document['sub_trends'][0]['modules'] if item['type'] == 'peel_tabs')
+    module['data']['evidence_ids'] = document['sub_trends'][1]['claim_ids']
+    assert 'editorial_provenance' in codes(document)

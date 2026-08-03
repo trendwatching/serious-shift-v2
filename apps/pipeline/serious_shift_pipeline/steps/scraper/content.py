@@ -183,6 +183,8 @@ def fetch_article_text(url):
         import json as _json
         for script in soup.find_all('script', type='application/ld+json'):
             try:
+                if not isinstance(script.string, str):
+                    continue
                 ld = _json.loads(script.string)
                 dp = ld.get('datePublished', '')
                 if dp:
@@ -227,5 +229,4 @@ def fetch_article_text(url):
         return text, pub_date
     except Exception:
         return None, None
-
 

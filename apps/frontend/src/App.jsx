@@ -1,17 +1,19 @@
-import { Link, Routes, Route } from 'react-router-dom'
+import { Link, Routes, Route } from './router'
 import ScrollToTop from './components/ScrollToTop'
+import { useDocumentMeta } from './hooks/useDocumentMeta'
 import { TopBar } from './shift/chrome'
 import Home from './shift/Home'
 import { DomainSheet, ShiftDetail, SubShiftDetail } from './shift/pages'
 
 export function NotFound() {
+  useDocumentMeta('Page not found', undefined, { notFound: true })
   return (
     <section className="grid min-h-[70dvh] place-items-center px-6 text-center" aria-labelledby="not-found-title">
       <div className="flex max-w-[420px] flex-col items-center gap-4">
         <p className="t-eyebrow" style={{ color: 'var(--color-ink-dim)' }}>404 · Not found</p>
         <h1 id="not-found-title" className="t-display text-4xl">This shift has moved.</h1>
         <p className="t-body" style={{ color: 'var(--color-ink-mid)' }}>
-          The address does not match anything in this week’s map.
+          The address does not match anything in the current weekly map.
         </p>
         <Link to="/" className="pill-yellow">Back to the shifts</Link>
       </div>

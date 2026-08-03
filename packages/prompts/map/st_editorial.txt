@@ -7,46 +7,47 @@ The sub-trends below already have names and framings. Write the editorial body f
 RULES — GENERAL
 - Ground every field in the evidence. Never invent a statistic, a study, a percentage, or a source.
 - Journalist briefing a strategist: specific, declarative, no marketing register.
-- British/international English.
+- US English. No em dashes.
+- Each sub-trend has its own ALLOWED EVIDENCE block. Use only that block for that sub-trend. Never reuse evidence from a sibling.
+- Separate observation from inference. Do not turn one incident, forecast, or opinion into a universal claim.
 - Return one object per sub-trend, matching on `name` exactly as given. Do not add, drop, merge or rename sub-trends.
 
 PER SUB-TRENDS FIELDS
 
-`lede` — one sentence, the sharpest statement of what this sub-shift is. It is the first line the reader sees.
+`lede` — one sentence and at most 35 words, the sharpest statement of what this sub-shift is. It is the first line the reader sees.
 
 `from` / `to` — the assumption that is ending, and what replaces it. One clause each, 12–24 words, a genuine pair (the same variable, moved).
 
-`quote` — one short, quotable line that names the uncomfortable truth of this sub-shift. Not attributed to anyone; it is the editorial voice landing a point.
+`quote` — one short, quotable line of at most 18 words that names the uncomfortable truth of this sub-shift. Not attributed to anyone; it is the editorial voice landing a point.
   Right: "The floor was already falling. AI just removed the warning signs."
   Wrong: a summary sentence, or a statistic in prose form.
 
-`stat` — the single strongest statistic in the evidence for this sub-shift, as `{"value","text","source"}`.
+`stat` — the single strongest statistic in the evidence for this sub-shift, as `{"claim_id","value","text"}`.
   - `value`: the bare figure as displayed, short (e.g. "25%", "3×", "2:1", "18-34").
   - `text`: one or two sentences explaining what it measures and why it matters.
-  - `source`: who produced it, as specifically as the evidence allows.
+  - `claim_id`: the exact ID of the evidence record containing the statistic. Source metadata is attached by code, never by you.
   - If the evidence has no attributable statistic for this sub-shift, omit `stat` entirely rather than inventing one.
 
-`whats_changing` — 3–5 sentences on the mechanism: what is actually moving, and why the obvious reading is wrong.
-`why_now` — 3–4 sentences on why this lands in this window. Name the converging forces. Must not overlap `whats_changing`.
+`whats_changing` — 2–3 sentences, at most 75 words, on the mechanism: what is moving and why the obvious reading is incomplete.
+`why_now` — 2 sentences, at most 55 words, on why this lands in this window. Name only converging forces present in the allowed evidence. Must not overlap `whats_changing`.
 
-`human_needs` — `{"unlocked","threatened"}`. The need this genuinely satisfies (steelmanned) and the need it puts at risk. One or two sentences each, starting with the need itself.
+`human_needs` — `{"unlocked","threatened"}`. The need this genuinely satisfies (steelmanned) and the need it puts at risk. One or two sentences and at most 40 words each, starting with the need itself.
 
-`signals` — 3–5 strings. Each is one concrete, evidenced development that shows this sub-shift is real. A complete sentence. No numbering — the interface numbers them.
+`signals` — 3–5 strings. Each is one concrete, evidenced development that shows this sub-shift is real. A complete sentence of at most 30 words. No numbering — the interface numbers them.
 
-`counter_signals` — 2–3 strings. The honest case against: evidence that this sub-shift is weaker, slower, or more reversible than it appears. This section is what makes the analysis credible; do not straw-man it.
+`counter_signals` — 2–3 strings. The honest case against: evidence that this sub-shift is weaker, slower, or more reversible than it appears. Each is at most 30 words. This section is what makes the analysis credible; do not straw-man it.
 
-`timeline` — `{"now","next","beyond"}` for 0–12 months, 1–3 years, 3–10 years. One or two sentences each, each a different order of consequence.
+`timeline` — `{"now","next","beyond"}` for 0–12 months, 1–3 years, 3–10 years. One or two sentences and at most 40 words each, each a different order of consequence.
 
-`territories` — 2–3 entries of `{"name","text"}`: commercial spaces this sub-shift opens that do not yet exist at scale. `name` is 2–4 words.
+`territories` — 2–3 entries of `{"name","text"}`: commercial spaces this sub-shift opens that do not yet exist at scale. `name` is 2–4 words and `text` is one sentence of at most 35 words.
+
+`evidence_ids` — 2–6 exact claim IDs from this sub-trend's ALLOWED EVIDENCE that directly support the editorial. Do not cite a sibling's claim.
 
 Return ONLY valid JSON — no preamble, no markdown fences:
-{"sub_trends":[{"name":"exact name as given","lede":"…","from":"…","to":"…","quote":"…","stat":{"value":"…","text":"…","source":"…"},"whats_changing":"…","why_now":"…","human_needs":{"unlocked":"…","threatened":"…"},"signals":["…"],"counter_signals":["…"],"timeline":{"now":"…","next":"…","beyond":"…"},"territories":[{"name":"…","text":"…"}]}]}
+{"sub_trends":[{"name":"exact name as given","lede":"…","from":"…","to":"…","quote":"…","stat":{"claim_id":123,"value":"…","text":"…"},"whats_changing":"…","why_now":"…","human_needs":{"unlocked":"…","threatened":"…"},"signals":["…"],"counter_signals":["…"],"timeline":{"now":"…","next":"…","beyond":"…"},"territories":[{"name":"…","text":"…"}],"evidence_ids":[123,456]}]}
 
 PARENT KEY TREND: {{kt_name}}
 FRAMING: {{kt_subtitle}}
 
-SUB-TRENDS TO WRITE:
-{{sub_trends}}
-
-EVIDENCE ({{claim_count}} claims):
-{{evidence}}
+SUB-TRENDS AND THEIR ALLOWED EVIDENCE ({{claim_count}} routed claims):
+{{sub_trend_evidence}}

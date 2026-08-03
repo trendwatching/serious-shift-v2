@@ -333,8 +333,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             header::CONTENT_SECURITY_POLICY,
             HeaderValue::from_static(
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; \
-                 style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; \
+                 style-src 'self' 'unsafe-inline'; img-src 'self' data:; \
                  font-src 'self'; connect-src 'self'; frame-ancestors 'none'; \
+                 object-src 'none'; media-src 'none'; worker-src 'none'; \
                  base-uri 'self'; form-action 'self'",
             ),
         ))
@@ -612,6 +613,28 @@ fn domain_summary(domain: &Value, shift_count: usize) -> Value {
     })
 }
 
+fn domain_index_summary(
+    domain: &Value,
+    shifts: &[&Value],
+    subs_by_shift: &HashMap<&str, Vec<&Value>>,
+) -> Value {
+    let mut summary = domain_summary(domain, shifts.len());
+    let previews: Vec<Value> = shifts
+        .iter()
+        .take(4)
+        .map(|shift| {
+            key_shift_summary(
+                shift,
+                subs_by_shift
+                    .get(string_field(shift, "id"))
+                    .map_or(0, |items| items.len()),
+            )
+        })
+        .collect();
+    summary["key_shifts"] = Value::Array(previews);
+    summary
+}
+
 fn weak_etag(version: &str, identity: &str) -> HeaderValue {
     // Deterministic FNV-1a is sufficient here: this is a cache validator, not a
     // signature. Including route identity prevents two fragments from sharing
@@ -674,12 +697,11 @@ fn build_snapshot(body: String, version: &str) -> Result<MapSnapshot, serde_json
     let domain_summaries: Vec<Value> = domains
         .iter()
         .map(|domain| {
-            domain_summary(
-                domain,
-                shifts_by_domain
-                    .get(string_field(domain, "id"))
-                    .map_or(0, |items| items.len()),
-            )
+            let domain_shifts = shifts_by_domain
+                .get(string_field(domain, "id"))
+                .cloned()
+                .unwrap_or_default();
+            domain_index_summary(domain, &domain_shifts, &subs_by_shift)
         })
         .collect();
     let mut routes = HashMap::new();
@@ -1340,6 +1362,13 @@ mod tests {
         let sub_json: Value = serde_json::from_str(&sub.body).unwrap();
         assert!(index_json.get("totals").is_some());
         assert!(index_json.get("key_trends").is_none());
+        assert_eq!(
+            index_json["domains"][0]["key_shifts"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
         assert!(domain_json.get("key_shifts").is_some());
         assert!(shift_json.get("shift").is_some());
         assert!(shift_json.get("siblings").is_some());

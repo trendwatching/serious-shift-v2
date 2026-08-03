@@ -122,7 +122,7 @@ test('accessible 404 and explicit unavailable state', async ({ page }) => {
   await page.unroute('**/api/v1/map**')
   await mockMap(page, 503)
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1, name: 'This week’s map isn’t available.' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'The current map isn’t available.' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible()
 })
 

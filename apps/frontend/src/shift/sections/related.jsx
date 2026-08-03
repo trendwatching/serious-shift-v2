@@ -1,16 +1,17 @@
 /** Related shifts: typed edges from the interrelatedness phase. */
 import { SectionHead } from './primitives'
 import { quoteTitle } from '../theme'
+import { Link } from '../../router'
 
-export function RelatedShifts({ items, onOpen }) {
+export function RelatedShifts({ items }) {
   if (!items?.length) return null
   return (
     <div className="flex flex-col gap-2.5">
       <SectionHead title="Connected shifts" aside={`${items.length}`} />
       <div className="grid md:grid-cols-2 md:gap-x-8">
         {items.map((r, i) => (
-          <button
-            key={`${r.href}-${i}`} type="button" onClick={() => onOpen?.(r)}
+          <Link
+            key={`${r.href}-${i}`} to={r.href}
             className="flex gap-4 border-b py-4 text-left transition-colors hover:bg-[var(--color-paper)]"
             style={{ borderColor: 'var(--color-hairline-soft)' }}
           >
@@ -22,7 +23,7 @@ export function RelatedShifts({ items, onOpen }) {
               )}
             </span>
             <span className="pt-1 text-[15px]" style={{ color: 'var(--color-ink-dim)' }}>›</span>
-          </button>
+          </Link>
         ))}
       </div>
     </div>

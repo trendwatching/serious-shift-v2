@@ -84,7 +84,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
         PageMeta {
             title: format!("{SITE_NAME} — Everything that is about to change"),
             description: clamp(&format!(
-                "{} domains, {} shifts this week, told as stories. \
+                "{} domains and {} shifts in the current weekly map, told as stories. \
                  What is about to change, and who is saying so.",
                 domains.len(),
                 shift_count

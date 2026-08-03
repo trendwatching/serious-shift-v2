@@ -307,15 +307,18 @@ dialog::backdrop { background: rgba(13, 11, 16, 0.72); }
 .ss-logo--on-dark { filter: invert(1); }
 
 /* ── Keyframes (ported verbatim from the design) ───────────────────── */
-@keyframes ssRise  { from { opacity: 0; transform: translateY(26px) scale(0.985); } to { opacity: 1; transform: none; } }
-@keyframes ssFade  { from { opacity: 0; } to { opacity: 1; } }
+/* Keep readable text fully opaque throughout entrance motion. Fading foreground
+   text blends it with the page background and creates a real transient WCAG
+   contrast failure, even when the settled colour token passes. */
+@keyframes ssRise  { from { transform: translateY(26px) scale(0.985); } to { transform: none; } }
+@keyframes ssFade  { from { transform: translateY(-5px); } to { transform: none; } }
 @keyframes ssWord  { from { opacity: 0; transform: translateY(34px) rotate(1.5deg); } to { opacity: 1; transform: none; } }
 /* No scale(): this runs on the page's outermost <article>, and scaling that
    shrinks everything inside it — including the `.bleed` bands, which are sized
    against the viewport and so appeared inset by ~86px a side for the whole
    0.55s on desktop. Translate and fade read the same and leave geometry
    alone. */
-@keyframes ssExpand{ from { opacity: 0; transform: translateY(40px); border-radius: 26px; } to { opacity: 1; transform: none; border-radius: 0; } }
+@keyframes ssExpand{ from { transform: translateY(40px); border-radius: 26px; } to { transform: none; border-radius: 0; } }
 @keyframes ssSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes ssPop   { 0% { transform: scale(1); } 45% { transform: scale(1.22) rotate(-8deg); } 100% { transform: scale(1); } }
 @keyframes ssCue   { 0%, 100% { transform: translateY(0); opacity: 0.55; } 50% { transform: translateY(7px); opacity: 1; } }

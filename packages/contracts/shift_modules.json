@@ -5,8 +5,8 @@
     "contract between the pipeline (which emits them) and the front end (which",
     "renders them). Adding a type means: add it here, emit it from the pipeline's",
     "MODULE_TEMPLATE, and register a component in",
-    "apps/frontend/src/shift/modules.jsx. The front end skips unknown types, so a",
-    "new type can ship backend-first without breaking the page.",
+    "apps/frontend/src/shift/modules.jsx. Unknown types fail publication and the",
+    "front end also surfaces a defensive unavailable-section fallback.",
     "Guarded by apps/pipeline/tests/test_shift_modules_contract.py."
   ],
   "version": 2,
@@ -96,7 +96,8 @@
       "data": {
         "value": "string",
         "text": "string",
-        "source": "string"
+        "source": "string",
+        "url": "string?"
       },
       "required": [
         "value"
@@ -106,9 +107,14 @@
       "summary": "Two stacked cards the reader toggles: what's changing / why now.",
       "data": {
         "whats_changing": "string",
-        "why_now": "string"
+        "why_now": "string",
+        "evidence_ids": ["integer"]
       },
-      "required": []
+      "required": [
+        "whats_changing",
+        "why_now",
+        "evidence_ids"
+      ]
     },
     "sub_shift_list": {
       "summary": "Cards linking to this shift's sub-shifts. Resolved from context, not data.",

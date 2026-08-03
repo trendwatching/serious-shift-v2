@@ -1,5 +1,5 @@
 import { useLayoutEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation } from '../router'
 
 /**
  * Reset scroll to the top of the page on every route change.

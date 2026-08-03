@@ -7,10 +7,10 @@
  *
  * Three properties this file has to guarantee:
  *
- *  • Unknown types are SKIPPED, not fatal — so the pipeline can start emitting a
- *    new module type before the front end knows about it.
- *  • `data` is untrusted. It originates from an LLM and may be partial, so every
- *    module validates its own inputs and renders nothing rather than an empty box.
+ *  • Unknown types are isolated and surfaced as unavailable — publication
+ *    validation normally prevents them from reaching this defensive boundary.
+ *  • `data` is untrusted. It originates from an LLM, so adapters validate inputs
+ *    and the API response layer rejects malformed route documents.
  *  • One bad module can't take the page down — an error boundary isolates each.
  *
  * Canonical type list + data shapes: packages/contracts/shift_modules.json
@@ -77,12 +77,12 @@ export const SHIFT_MODULES = {
   from_to_solid: ({ data }) => <FromToSolid from={str(data?.from)} to={str(data?.to)} />,
   stat_band: ({ data, ctx }) => (
     <StatBand
-      stat={{ value: str(data?.value), text: str(data?.text), source: str(data?.source) }}
+      stat={{ value: str(data?.value), text: str(data?.text), source: str(data?.source), url: str(data?.url) }}
       size={ctx.scope === 'sub_shift' ? 52 : 58}
     />
   ),
   peel_tabs: ({ data }) => <PeelTabs whatChanging={str(data?.whats_changing)} whyNow={str(data?.why_now)} />,
-  sub_shift_list: ({ ctx }) => <SubShiftList subs={ctx.subs} onOpen={ctx.onOpenSub} />,
+  sub_shift_list: ({ ctx }) => <SubShiftList subs={ctx.subs} hrefFor={(item) => `${ctx.basePath}/${item.slug}`} />,
   human_needs: ({ data }) => (
     <HumanNeeds needs={{ unlocked: str(data?.unlocked), threatened: str(data?.threatened) }} />
   ),
@@ -103,12 +103,15 @@ export const SHIFT_MODULES = {
     />
   ),
   evidence: ({ data }) => <Evidence items={list(data?.items).filter((c) => c && str(c.text))} />,
-  related_shifts: ({ data, ctx }) => (
+  related_shifts: ({ data }) => (
     <RelatedShifts
       items={list(data?.items).filter((r) => r && str(r.title) && str(r.href))}
-      onOpen={ctx.onNavigate}
     />
   ),
+}
+
+function ModuleUnavailable({ type }) {
+  return <p role="status" className="rounded-xl bg-[var(--color-paper)] p-4 text-sm" style={{ color: 'var(--color-ink-soft)' }}>This section is temporarily unavailable<span className="sr-only"> ({type})</span>.</p>
 }
 
 /**
@@ -150,7 +153,7 @@ class ModuleBoundary extends Component {
   }
 
   render() {
-    return this.state.failed ? null : this.props.children
+    return this.state.failed ? <ModuleUnavailable type={this.props.type} /> : this.props.children
   }
 }
 
@@ -165,11 +168,8 @@ export function Modules({ modules, ctx }) {
     const type = str(m?.type)
     const Body = SHIFT_MODULES[type]
     if (!Body) {
-      if (process.env.NODE_ENV !== 'production' && type) {
-        console.warn(`[modules] no component for type "${type}" — skipping. ` +
-          'Add it to SHIFT_MODULES and packages/contracts/shift_modules.json.')
-      }
-      return null
+      if (type) console.error(`[modules] unsupported module type "${type}"`)
+      return type ? <div key={`unsupported-${i}`} className="w-prose"><ModuleUnavailable type={type} /></div> : null
     }
     // A type may legitimately repeat (two rich_text blocks), so the key pairs it
     // with its position rather than assuming uniqueness.

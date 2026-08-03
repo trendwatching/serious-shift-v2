@@ -17,10 +17,14 @@ import { useEffect } from 'react'
  */
 const SITE = 'Serious Shi(f)t'
 const DEFAULT_TITLE = `${SITE} — Everything that is about to change`
+const DEFAULT_DESCRIPTION = 'What is about to change, and who is saying so. An evidence-led trend map updated weekly.'
 
 function setMeta(selector, attr, value) {
-  if (!value) return
   let el = document.head.querySelector(selector)
+  if (!value) {
+    el?.remove()
+    return
+  }
   if (!el) {
     el = document.createElement(selector.startsWith('link') ? 'link' : 'meta')
     // `selector` is one of the fixed strings below, so this parse is safe.
@@ -35,18 +39,20 @@ function setMeta(selector, attr, value) {
  * @param {string} [title]  page title *without* the site suffix
  * @param {string} [description]
  */
-export function useDocumentMeta(title, description) {
+export function useDocumentMeta(title, description, { notFound = false } = {}) {
   useEffect(() => {
-    document.title = title ? `${title} — ${SITE}` : DEFAULT_TITLE
+    document.title = notFound
+      ? `Page not found · ${SITE}`
+      : title ? `${title} — ${SITE}` : DEFAULT_TITLE
 
-    if (description) {
-      setMeta('meta[name="description"]', 'content', description)
-      setMeta('meta[property="og:description"]', 'content', description)
-    }
+    const copy = notFound ? '' : (description || DEFAULT_DESCRIPTION)
+    setMeta('meta[name="description"]', 'content', copy)
+    setMeta('meta[property="og:description"]', 'content', copy)
     setMeta('meta[property="og:title"]', 'content', document.title)
+    setMeta('meta[name="robots"]', 'content', notFound ? 'noindex, nofollow' : '')
 
     const url = `${window.location.origin}${window.location.pathname}`
-    setMeta('link[rel="canonical"]', 'href', url)
-    setMeta('meta[property="og:url"]', 'content', url)
-  }, [title, description])
+    setMeta('link[rel="canonical"]', 'href', notFound ? '' : url)
+    setMeta('meta[property="og:url"]', 'content', notFound ? '' : url)
+  }, [title, description, notFound])
 }

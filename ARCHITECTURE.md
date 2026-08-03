@@ -55,7 +55,7 @@ version. It also serves `robots.txt` and `sitemap.xml` from that same snapshot.
 - **Change here → visible:** the `/api/*` responses the frontend consumes.
 
 ### `apps/frontend` — React + Tailwind, the UI
-The trend map. A react-router SPA, built to a **static export** (`next build` with
+The trend map. A small dependency-free path router wraps the React SPA, built to a **static export** (`next build` with
 `output: 'export'` — Next is a build tool here, not a server) and served by the
 Rust binary. Same origin as the API, so no CORS and no proxy hop; data is
 fetched from the backend via `useData` → `/api/<name>` (same origin).
@@ -153,6 +153,7 @@ Everything else is internal to one block.
   estimated cost are persisted in `pipeline_runs.detail`.
 - **Innovations are deliberately dormant.** Leave `INGEST_TOKEN` unset. The
   endpoint returns 404 and no matching/ingestion infrastructure is in this scope.
-- **Planned seams not yet built:** `packages/contracts` (a formal OpenAPI spec +
-  generated client) and `packages/design-tokens` (Figma → Tailwind). Until then the
-  contracts are the DB schema and the backend's JSON shapes.
+- **The module contract is checked in.** `packages/contracts/shift_modules.json`
+  owns module order, required fields, and the canonical industry list. A formal
+  OpenAPI schema and generated client remain optional future work; runtime route
+  validation already prevents malformed response documents reaching the UI.

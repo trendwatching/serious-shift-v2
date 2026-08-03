@@ -5,6 +5,7 @@ Each function loads a shared template from packages/prompts/map/ and renders it
 with values computed in code. Response parsing (parse_thinker_attribution, …)
 stays in the step — these functions only build requests.
 """
+import json
 import os
 
 from ._loader import load_and_render
@@ -25,11 +26,28 @@ def fmt_claims_block(claims: list, max_per: int | None = None) -> str:
         claims = claims[:max_per]
     lines = []
     for c in claims:
-        cred = f"{c['credibility_score']:.0f}" if c['credibility_score'] else '?'
-        text = (c['claim_text'] or '')[:220]
-        lines.append(f"[id:{c['id']}] [{c['thinker']}, cred:{cred}] [{c['signal_strength']}] {text}")
-        if c.get('consumer_implication'):
-            lines.append(f"  → implication: {c['consumer_implication'][:120]}")
+        # JSON Lines keeps attribution attached to the exact claim. The previous
+        # prose formatter discarded URL, date, quote, claim type and confidence,
+        # then asked the model for dated sourced prose it could not verify.
+        item = {
+            'id': c.get('id'),
+            'claim': str(c.get('claim_text') or '')[:500],
+            'claim_type': c.get('claim_type') or '',
+            'signal': c.get('signal_strength') or '',
+            'specificity': c.get('specificity'),
+            'thinker': c.get('thinker') or '',
+            'thinker_credibility': c.get('credibility_score'),
+            'implication': str(c.get('consumer_implication') or '')[:300],
+            'quote': str(c.get('quote') or '')[:600],
+            'has_statistic': bool(c.get('has_statistic')),
+            'statistic': str(c.get('statistic') or '')[:240],
+            'source_title': str(c.get('source_title') or '')[:240],
+            'source_date': str(c.get('date_published') or '')[:10],
+            'source_url': c.get('source_url') or '',
+            'source_type': c.get('source_type') or '',
+            'source_confidence': c.get('source_confidence') or '',
+        }
+        lines.append(json.dumps(item, ensure_ascii=False, separators=(',', ':')))
     return '\n'.join(lines)
 
 
@@ -79,19 +97,25 @@ def prompt_kt_editorial(kt_name: str, kt_subtitle: str, domain_name: str, claims
     )
 
 
-def prompt_st_editorial(kt_name: str, kt_subtitle: str, sub_trends: list, claims: list) -> str:
-    listing = '\n'.join(
-        f"- {st['name']}: {st.get('subtitle') or st.get('description', '')}"
-        for st in sub_trends
-    )
+def prompt_st_editorial(kt_name: str, kt_subtitle: str, sub_trends: list,
+                        claims_by_sub: dict) -> str:
+    sections = []
+    total = 0
+    for st in sub_trends:
+        claims = claims_by_sub.get(st['id'], [])
+        total += len(claims)
+        sections.append(
+            f"SUB-TREND: {st['name']}\n"
+            f"FRAMING: {st.get('subtitle') or st.get('description', '')}\n"
+            f"ALLOWED EVIDENCE:\n{fmt_claims_block(claims, max_per=20) or '(none)'}"
+        )
     return load_and_render(
         "map/st_editorial.txt",
         voice=VOICE,
         kt_name=kt_name,
         kt_subtitle=kt_subtitle,
-        sub_trends=listing,
-        claim_count=len(claims),
-        evidence=fmt_claims_block(claims, max_per=90),
+        sub_trend_evidence='\n\n'.join(sections),
+        claim_count=total,
     )
 
 

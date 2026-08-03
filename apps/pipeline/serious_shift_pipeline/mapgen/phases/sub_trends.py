@@ -8,6 +8,34 @@ from ..dbutil import _slugger
 from ..llm import generate_json
 
 
+def _validated_sub_trends(result: object, allowed_claim_ids: set[int]) -> list[dict]:
+    """Keep model taxonomy only when it satisfies the publication contract.
+
+    Claim assignment is single-owner within a parent. Unknown IDs and repeated
+    IDs are dropped instead of being over-routed into generic sibling pages.
+    Structural defects remain visible to the publication validator, which can
+    trigger the one bounded repair pass.
+    """
+    raw = result.get('sub_trends') if isinstance(result, dict) else None
+    if not isinstance(raw, list):
+        return []
+    seen: set[int] = set()
+    out = []
+    for item in raw:
+        if not isinstance(item, dict) or not all(item.get(k) for k in ('name', 'subtitle', 'description')):
+            continue
+        ids = []
+        for value in item.get('claim_ids') or []:
+            if not isinstance(value, (int, float)) or isinstance(value, bool):
+                continue
+            claim_id = int(value)
+            if claim_id in allowed_claim_ids and claim_id not in seen:
+                seen.add(claim_id)
+                ids.append(claim_id)
+        out.append({**item, 'claim_ids': ids[:8]})
+    return out
+
+
 def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict):
     """Writes to domain_sub_trends + domain_sub_trend_claims."""
     print('\nPhase 4 — Clustering sub-trends per Key Trend (parallel)…')
@@ -37,10 +65,10 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
 
     # Serial: write sub-trends + claim links, refine KT velocity.
     slug = _slugger()
-    for (d_id, kt, _), result in zip(work, results):
+    for (d_id, kt, claims), result in zip(work, results):
         velocity = result.get('key_trend_velocity', kt.get('velocity', 'rising'))
         conn.execute('UPDATE domain_key_trends SET velocity=%s WHERE id=%s', (velocity, kt['_db_id']))
-        sub_trends = result.get('sub_trends', [])
+        sub_trends = _validated_sub_trends(result, {claim['id'] for claim in claims})
         for i, st in enumerate(sub_trends, start=1):
             st_db_id = conn.execute("""
                 INSERT INTO domain_sub_trends

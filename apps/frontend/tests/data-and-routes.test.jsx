@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from '../src/router'
 import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ApiError, load } from '../src/hooks/useData'
 import { failureState } from '../src/shift/failure'
 import { useResolved } from '../src/shift/useDomains'
 import { SubShiftDetail } from '../src/shift/pages'
+import App from '../src/App'
 import { indexFixture, response, shiftFixture, subFixture } from './fixtures'
 
 describe('route-scoped data', () => {
@@ -30,6 +31,30 @@ describe('route-scoped data', () => {
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 
+  it('revalidates cached responses with ETags and reuses a 304 body', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true, status: 200, headers: new Headers({ ETag: 'W/"index-a"' }),
+        json: () => Promise.resolve(indexFixture),
+      })
+      .mockResolvedValueOnce({ ok: false, status: 304, headers: new Headers() })
+    await expect(load('/api/v1/map')).resolves.toEqual(indexFixture)
+    await expect(load('/api/v1/map', { force: true })).resolves.toEqual(indexFixture)
+    expect(fetch.mock.calls[1][1].headers['If-None-Match']).toBe('W/"index-a"')
+  })
+
+  it('rejects malformed route documents before rendering them', async () => {
+    vi.useFakeTimers()
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true, status: 200, headers: new Headers(),
+      json: () => Promise.resolve({ domain: { id: 'society' }, shift: {} }),
+    })
+    const pending = load('/api/v1/map/society/trust-machines')
+    const assertion = expect(pending).rejects.toMatchObject({ status: 502, code: 'invalid_response' })
+    await vi.runAllTimersAsync()
+    await assertion
+  })
+
   it('stops timed-out requests and presents distinct recovery states', async () => {
     vi.useFakeTimers()
     global.fetch = vi.fn((_url, { signal }) => new Promise((_resolve, reject) => {
@@ -48,7 +73,7 @@ describe('route-scoped data', () => {
       'You’re offline.',
       'The map took too long to respond.',
       'The map service hit an error.',
-      'This week’s map isn’t available.',
+      'The current map isn’t available.',
     ])
   })
 
@@ -76,5 +101,19 @@ describe('route-scoped data', () => {
     )
     expect(await screen.findByRole('link', { name: /Sub-shift of “Trust Machines”/i })).toHaveAttribute('href', '/map/society/trust-machines')
     expect(screen.getByRole('navigation', { name: 'Adjacent sub-shifts' })).toHaveTextContent('Sub Shift 2')
+  })
+
+  it('clears stale canonical metadata and marks client-side unknown routes noindex', async () => {
+    document.head.innerHTML = '<link rel="canonical" href="https://example.test/old"><meta property="og:url" content="https://example.test/old">'
+    render(<MemoryRouter initialEntries={['/not-real']}><App /></MemoryRouter>)
+    await waitFor(() => expect(document.title).toBe('Page not found · Serious Shi(f)t'))
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
+    expect(document.querySelector('link[rel="canonical"]')).toBeNull()
+    expect(document.querySelector('meta[property="og:url"]')).toBeNull()
+  })
+
+  it('treats malformed percent-encoded paths as not found instead of crashing', async () => {
+    render(<MemoryRouter initialEntries={['/map/%E0%A4%A']}><App /></MemoryRouter>)
+    expect(await screen.findByRole('heading', { name: 'This shift has moved.' })).toBeInTheDocument()
   })
 })
