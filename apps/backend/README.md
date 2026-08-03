@@ -13,12 +13,19 @@ Stack: Rust · axum · sqlx (Postgres).
 ## Endpoints
 
 The inspection endpoints (`/api/thinkers`, `/api/sources`, `/api/claims`,
-`/api/predictions`, and `/api/stats`) require `Authorization: Bearer
-<INSPECTION_TOKEN>`. List routes take `?limit=` — default 500,
-ceiling 5000. Unbounded they
+`/api/predictions`, `/api/stats`, **and the deprecated full `/api/map`**) require
+`Authorization: Bearer <INSPECTION_TOKEN>`. List routes take `?limit=` — default
+500, ceiling 5000. Unbounded they
 answered ~7-8 MB each, which on a public URL is a denial of service a handful
 of concurrent requests wide. They have no UI contract; the app reads only the
 route-scoped v1 map documents.
+
+`/api/map` is on that list because the publication it serves *embeds the rows the
+other endpoints gate*: unauthenticated it answered 4.4 MB carrying 193 thinkers
+with `credibility_score`, `prediction_accuracy` and bios, plus 452 claims with
+per-claim `thinker_credibility` and `consumer_implication`. Gating `/api/claims`
+while leaving that open meant the token bought nothing — the same data was one
+different URL away.
 
 | Route | Returns |
 |---|---|
@@ -32,7 +39,7 @@ route-scoped v1 map documents.
 | `GET /api/v1/map/{domain}` | domain metadata, key-shift summaries, and insights |
 | `GET /api/v1/map/{domain}/{shift}` | one full key shift, key-shift siblings, and five sub-shift summaries |
 | `GET /api/v1/map/{domain}/{shift}/{subshift}` | one full sub-shift, parent context, and sibling summaries |
-| `GET /api/map` | deprecated full trend map compatibility endpoint; rate and concurrency limited |
+| `GET /api/map` | deprecated full trend map; **operator-gated** (`INSPECTION_TOKEN`), rate and concurrency limited. No client reads it — the SPA uses the v1 fragments |
 | `POST /api/innovations/ingest` | ingests one innovation → `innovations` table (idempotent on `source_innovation_id`). Requires `X-Ingest-Token`; **404 while `INGEST_TOKEN` is unset** |
 | `GET /*` | canonical SPA routes deep-link; unknown routes and unmatched `/api/*` paths return real 404 responses |
 
@@ -45,7 +52,8 @@ route-scoped v1 map documents.
 | `FRONTEND_ORIGIN` | **yes in release** | CORS allowlist (comma-separated). Release builds panic without it; debug builds allow any origin |
 | `STATIC_DIR` | no | SPA bundle to serve, default `static` (the image sets `/srv/static`) |
 | `INGEST_TOKEN` | only for `/api/innovations/ingest` | shared secret; route 404s while unset |
-| `INSPECTION_TOKEN` | only for inspection endpoints | bearer token; endpoints 404 while unset |
+| `INSPECTION_TOKEN` | only for inspection endpoints | bearer token; endpoints (incl. `/api/map`) 404 while unset |
+| `PUBLIC_ORIGIN` | no | absolute origin for canonical URLs and the sitemap; defaults to the first `FRONTEND_ORIGIN` entry |
 | `RAILWAY_ENVIRONMENT_ID` | Railway-provided | when present, trust Railway `X-Forwarded-For`; otherwise use the socket peer |
 
 ## Run locally

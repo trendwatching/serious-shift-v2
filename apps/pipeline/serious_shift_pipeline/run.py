@@ -243,10 +243,17 @@ def check_escalation(
             f"{failed_sources} sources in 'failed' state "
             f"(threshold: {FAILED_SOURCES_THRESHOLD})")
 
-    if new_claims == 0 and previous_runs:
-        if (previous_runs[0].get('files_processed') or 0) == 0:
+    # Compared against the previous run *of this stage*. Synthesis never
+    # processes files and never adds claims, so measuring it against "whatever
+    # ran last" made every back-to-back `synthesize` report silent breakage —
+    # an alert that cries wolf is worse than no alert. Only ingest-shaped stages
+    # carry the signal, so only they are judged on it.
+    stage = (run_row or {}).get('stage')
+    if new_claims == 0 and stage in ('ingest', 'full'):
+        same_stage = [r for r in previous_runs if r.get('stage') == stage]
+        if same_stage and (same_stage[0].get('files_processed') or 0) == 0:
             alerts.append(
-                "Zero new claims this run AND the previous run — possible silent breakage")
+                f"Zero new claims this {stage} run AND the previous one — possible silent breakage")
 
     if alerts and not no_notify:
         urgency = 'critical' if len(alerts) > 1 else 'warning'

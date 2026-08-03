@@ -145,6 +145,7 @@ export ANTHROPIC_API_KEY=sk-...
 
 pytest                                            # SQL-validation + unit + (DB-gated) integration
 python -m serious_shift_pipeline.tools.status            # health snapshot
+python -m serious_shift_pipeline.tools.verify_publication # does the LIVE map still satisfy the contract?
 python -m serious_shift_pipeline.run all --dry-run       # plan, no changes
 python -m serious_shift_pipeline.run ingest              # scrape → … → evaluate
 python -m serious_shift_pipeline.run synthesize          # rebuild the map
@@ -157,6 +158,29 @@ python -m serious_shift_pipeline.tools.ingest --url URL --thinker "Sam Altman"
 python -m serious_shift_pipeline.steps.deduplicate --execute [--use-api]
 python -m serious_shift_pipeline.steps.evaluate
 ```
+
+### Re-validating an already-published map
+
+`mapgen` validates a candidate before promoting it, so a document can only be
+published if it passed the contract **as it stood at publication time**. Tightening
+the contract therefore leaves every already-published document silently
+non-conformant, with nothing re-checking it and the site still serving it.
+
+`tools.verify_publication` closes that gap. It is read-only and free — run it after
+any change to `mapgen/validation.py` or `packages/contracts/shift_modules.json`,
+and against staging before a cutover:
+
+```bash
+# the live document in Postgres (what the backend reads)
+python -m serious_shift_pipeline.tools.verify_publication
+
+# a deployed origin, via the operator-gated full-map endpoint
+python -m serious_shift_pipeline.tools.verify_publication \
+    --url https://backend-staging-1c16.up.railway.app --token "$INSPECTION_TOKEN"
+```
+
+Exit 0 = conformant, 1 = issues (grouped by code, with a sample per code), 2 =
+unreadable. Issues are remediated by a synthesis run, not by editing the document.
 
 Lint/type: `ruff check` · `mypy serious_shift_pipeline`. CI: `.github/workflows/pipeline.yml`.
 Production dependencies are in `requirements.lock`; development/test tooling is

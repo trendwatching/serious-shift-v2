@@ -1,8 +1,9 @@
 //! Serious Shift read API. Replaces the ~53 MB of static JSON the frontend used
 //! to download: each endpoint serves the same shape, sourced from Postgres.
 //!
-//! Env: DATABASE_URL (required), ANTHROPIC_API_KEY (for /api/personalize),
-//!      PORT (default 8080), FRONTEND_ORIGIN (CORS allowlist, comma-separated).
+//! Env: DATABASE_URL (required), PORT (default 8080),
+//!      FRONTEND_ORIGIN (CORS allowlist, comma-separated),
+//!      INSPECTION_TOKEN (gates the operator-only reads, including /api/map).
 
 mod seo;
 mod sql;
@@ -602,15 +603,49 @@ fn sub_shift_summary(sub: &Value) -> Value {
 }
 
 fn domain_summary(domain: &Value, shift_count: usize) -> Value {
+    // `description` is deliberately absent. It is a ~900-character paragraph per
+    // domain that no view renders — the deck and the domain sheet both read
+    // `short_description` — so including it added ~3.6 KB of dead weight to the
+    // index fragment every visitor fetches on first paint. The SEO layer reads
+    // the long copy straight off the publication (see seo.rs), not from here.
     json!({
         "id": domain.get("id").cloned().unwrap_or(Value::Null),
         "name": domain.get("name").cloned().unwrap_or(Value::Null),
         "label": domain.get("label").cloned().unwrap_or(Value::Null),
         "short_description": domain.get("short_description").cloned().unwrap_or(Value::Null),
-        "description": domain.get("description").cloned().unwrap_or(Value::Null),
         "horizon": domain.get("horizon").cloned().unwrap_or(Value::Null),
         "key_shift_count": shift_count,
     })
+}
+
+/// Fields on a published shift/sub-shift row that exist only for the generator
+/// and the validator, and which no view reads.
+///
+/// `db_id` is the Postgres primary key — recycled weekly by `reset_v2_tables`
+/// and meaningless to a client, so publishing it leaks an internal identifier
+/// for nothing. `proponents*`/`skeptics*` are the raw attribution columns the
+/// `voices` module is *built from*: shipping both sent every thinker quote
+/// twice. `sub_trend_ids` restates the `sub_shifts` array that accompanies it.
+const INTERNAL_SHIFT_FIELDS: [&str; 6] = [
+    "db_id",
+    "proponents",
+    "proponents_detail",
+    "skeptics",
+    "skeptics_detail",
+    "sub_trend_ids",
+];
+
+/// The published row minus the generator-only fields above. Everything a view
+/// actually reads — including the whole `modules` list — is passed through
+/// untouched, so this narrows the payload without narrowing the contract.
+fn shift_detail(row: &Value) -> Value {
+    let mut out = row.clone();
+    if let Some(object) = out.as_object_mut() {
+        for field in INTERNAL_SHIFT_FIELDS {
+            object.remove(field);
+        }
+    }
+    out
 }
 
 fn domain_index_summary(
@@ -779,7 +814,7 @@ fn build_snapshot(body: String, version: &str) -> Result<MapSnapshot, serde_json
                     json!({
                         "updated": updated,
                         "domain": domain_summary(domain, domain_shift_count),
-                        "shift": shift,
+                        "shift": shift_detail(shift),
                         "siblings": summaries.clone(),
                         "sub_shifts": sub_summaries,
                     }),
@@ -806,7 +841,7 @@ fn build_snapshot(body: String, version: &str) -> Result<MapSnapshot, serde_json
                             "updated": updated,
                             "domain": domain_summary(domain, domain_shift_count),
                             "parent_shift": key_shift_summary(shift, shift_subs.len()),
-                            "sub_shift": sub,
+                            "sub_shift": shift_detail(sub),
                             "siblings": siblings,
                         }),
                     ),
@@ -996,14 +1031,25 @@ fn insert_u64_header(headers: &mut HeaderMap, name: &'static str, value: u64) {
     );
 }
 
-/// The legacy full trend map. New clients use the route-scoped v1 API; this
-/// compatibility surface is cached but deliberately rate and concurrency
-/// limited because every response is large and expensive to compress.
+/// The legacy full trend map — an operator surface, not a public one.
+///
+/// It requires INSPECTION_TOKEN for the same reason `/api/claims` and
+/// `/api/thinkers` do: the publication embeds the data those endpoints gate.
+/// Unauthenticated, this route answered 4.4 MB containing 193 thinkers with
+/// their `credibility_score`, `prediction_accuracy` and bios, and 452 claims
+/// with per-claim `thinker_credibility` and `consumer_implication` — so the
+/// token check on the inspection endpoints could be walked around by asking a
+/// different URL for the same rows. No client needs it: the SPA reads only the
+/// route-scoped `/api/v1/map/*` fragments.
+///
+/// Still rate and concurrency limited behind the token, because every response
+/// is large and expensive to compress.
 async fn map(
     State(s): State<AppState>,
     headers: HeaderMap,
     ConnectInfo(peer): ConnectInfo<SocketAddr>,
 ) -> Result<Response, AppError> {
+    require_inspection(&s, &headers)?;
     let remaining = s
         .legacy_map_limiter
         .check(client_ip(&headers, peer))
@@ -1329,6 +1375,9 @@ mod tests {
                 "id": "kt-1", "domain_id": "society", "slug": "trust-machines",
                 "name": "Trust Machines", "subtitle": "A shift", "velocity": "rising",
                 "read_time": "4 min read", "sub_trend_ids": ["st-1"],
+                "db_id": 4173, "proponents": "Ada Lovelace", "skeptics": "Alan Turing",
+                "proponents_detail": [{"name": "Ada Lovelace", "quote": "It holds."}],
+                "skeptics_detail": [{"name": "Alan Turing", "quote": "It does not."}],
                 "modules": [{"type": "dek", "data": {"text": "A shift"}}]
             }],
             "sub_trends": [{
@@ -1378,6 +1427,56 @@ mod tests {
         assert_ne!(index.etag, domain.etag);
         assert_ne!(domain.etag, shift.etag);
         assert_ne!(shift.etag, sub.etag);
+
+        // The shift fragment carries the module list the page renders...
+        assert!(shift_json["shift"]["modules"].is_array());
+        assert_eq!(shift_json["shift"]["slug"], "trust-machines");
+        // ...and none of the generator-only fields. `db_id` is an internal
+        // primary key; the `*_detail` columns are what the `voices` module is
+        // built from, so publishing both sent every quote twice.
+        for field in INTERNAL_SHIFT_FIELDS {
+            assert!(
+                shift_json["shift"].get(field).is_none(),
+                "shift fragment must not publish {field:?}"
+            );
+        }
+
+        // No view reads a domain's long `description`; only `short_description`.
+        for scope in [&index_json["domains"][0], &domain_json["domain"]] {
+            assert!(scope.get("short_description").is_some());
+            assert!(
+                scope.get("description").is_none(),
+                "domain summaries must not carry the unread long description"
+            );
+        }
+    }
+
+    #[test]
+    fn internal_fields_are_stripped_without_touching_anything_else() {
+        let row = json!({
+            "id": "kt-1", "slug": "s", "name": "N", "subtitle": "sub",
+            "description": "kept — it is the dek fallback",
+            "hero_stat": {"value": "24 months"},
+            "modules": [{"type": "dek", "data": {"text": "t"}}],
+            "db_id": 99, "sub_trend_ids": ["st-1"],
+            "proponents": "a", "skeptics": "b",
+            "proponents_detail": [], "skeptics_detail": [],
+        });
+        let out = shift_detail(&row);
+        for field in INTERNAL_SHIFT_FIELDS {
+            assert!(out.get(field).is_none(), "{field} should be stripped");
+        }
+        for field in [
+            "id",
+            "slug",
+            "name",
+            "subtitle",
+            "description",
+            "hero_stat",
+            "modules",
+        ] {
+            assert_eq!(out.get(field), row.get(field), "{field} must pass through");
+        }
     }
 
     #[test]
