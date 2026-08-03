@@ -445,6 +445,10 @@ _BLOCK_SIGNS = (
     'too many requests', 'http error 429', 'cookies are no longer valid',
 )
 
+#: Substrings that identify an exception as coming from the YouTube path. Used
+#: only in combination with a timeout — see `is_ip_block`.
+_YOUTUBE_MARKS = ('yt_dlp', 'yt-dlp', 'youtube')
+
 
 def is_ip_block(exc) -> bool:
     """True when the host is refusing this IP rather than the source being broken.
@@ -452,11 +456,28 @@ def is_ip_block(exc) -> bool:
     YouTube blocks datacenter IPs, which is what any cloud host runs on. That is
     a configuration gap (no proxy credential), not a fault in the source, and
     conflating the two meant the failed-source alert fired every run forever.
+
+    The signal list above catches YouTube refusing us *in words* — an HTTP 429,
+    a "sign in to confirm you're not a bot" interstitial. But that is not the
+    only shape the refusal takes, and on staging it was not the shape we got:
+    all six YouTube sources were failing as `subprocess.TimeoutExpired`, because
+    throttling a datacenter IP makes the yt-dlp listing hang rather than answer.
+    None of them matched, so every one landed in `failed` and re-armed the alert
+    the `blocked` status was introduced to silence.
+
+    A timeout alone is not enough to call it a block — a blog that times out is
+    genuinely broken, and mapping every hang to "needs a proxy" would hide real
+    breakage in the other direction. So the timeout has to *also* come from the
+    YouTube path, which its command line identifies.
     """
-    if type(exc).__name__ in ('RequestBlocked', 'IpBlocked'):
+    name = type(exc).__name__
+    if name in ('RequestBlocked', 'IpBlocked'):
         return True
     msg = str(exc).lower()
-    return any(sign in msg for sign in _BLOCK_SIGNS)
+    if any(sign in msg for sign in _BLOCK_SIGNS):
+        return True
+    timed_out = name in ('TimeoutExpired', 'ReadTimeout', 'ConnectTimeout', 'Timeout')
+    return timed_out and any(mark in msg for mark in _YOUTUBE_MARKS)
 
 
 
