@@ -117,3 +117,42 @@ describe('route-scoped data', () => {
     expect(await screen.findByRole('heading', { name: 'This shift has moved.' })).toBeInTheDocument()
   })
 })
+
+describe('sub-shift response validation', () => {
+  // Every sub-shift page rendered "temporarily unavailable" because the backend
+  // served `sub_shift.slug` as the compound `parent/child` while this check
+  // compared it to the bare URL segment. A rejected response is retried and then
+  // surfaced as unavailable, so all 281 pages answered 200 and showed an error.
+  const body = (slug) => ({
+    updated: '2026-08-02',
+    domain: { id: 'society', name: 'Society', short_description: 'x', key_shift_count: 1 },
+    parent_shift: { id: 'kt-1', slug: 'sovereign-machines', name: 'Sovereign Machines' },
+    sub_shift: { id: 'st-1', slug, name: 'Sovereign Labs', modules: [{ type: 'lede', data: { text: 'x' } }] },
+    siblings: [{ id: 'st-1', slug: 'sovereign-labs', name: 'Sovereign Labs' }],
+  })
+
+  it('accepts the bare route segment the backend now sends', async () => {
+    const { load, __resetDataCacheForTests } = await import('../src/hooks/useData')
+    __resetDataCacheForTests()
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(body('sovereign-labs')),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    await expect(load('/api/v1/map/society/sovereign-machines/sovereign-labs')).resolves.toBeTruthy()
+  })
+
+  it('also accepts the compound parent/child form, so a version skew cannot break the page', async () => {
+    const { load, __resetDataCacheForTests } = await import('../src/hooks/useData')
+    __resetDataCacheForTests()
+    global.fetch = vi.fn(async () => new Response(
+      JSON.stringify(body('sovereign-machines/sovereign-labs')),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    await expect(load('/api/v1/map/society/sovereign-machines/sovereign-labs')).resolves.toBeTruthy()
+  })
+
+  it('still rejects a response for a different sub-shift', async () => {
+    const { load, __resetDataCacheForTests } = await import('../src/hooks/useData')
+    __resetDataCacheForTests()
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(body('some-other-sub')),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    await expect(load('/api/v1/map/society/sovereign-machines/sovereign-labs')).rejects.toThrow()
+  })
+})

@@ -12,12 +12,22 @@ EXTRACTION_MODEL = os.environ.get("EXTRACTION_MODEL", "claude-haiku-4-5")
 #
 # Costing previously assumed every call was Haiku, which silently under-reported
 # the Sonnet and Opus spend that is most of a run.
+#
+# Every model this pipeline can be pointed at must appear here. EXTRACTION_MODEL
+# and INSIGHTS_MODEL are env-overridable, so an operator upgrading a stage to a
+# newer model would otherwise silently fall through to the Sonnet fallback — and
+# for an Opus- or Fable-tier model that under-reports the bill by 1.7x-3.3x,
+# which is exactly the reporting error the per-model table was added to fix.
 _RATES_PER_M = {
     "claude-haiku-4-5":  (1.0, 5.0),
     "claude-sonnet-4-6": (3.0, 15.0),
+    "claude-sonnet-5":   (3.0, 15.0),
     "claude-opus-4-6":   (5.0, 25.0),
     "claude-opus-4-7":   (5.0, 25.0),
     "claude-opus-4-8":   (5.0, 25.0),
+    "claude-opus-5":     (5.0, 25.0),
+    "claude-fable-5":    (10.0, 50.0),
+    "claude-mythos-5":   (10.0, 50.0),
 }
 _FALLBACK_PER_M = (3.0, 15.0)  # unknown model: assume Sonnet rather than free
 

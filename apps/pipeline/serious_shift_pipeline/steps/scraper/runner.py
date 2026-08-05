@@ -8,7 +8,6 @@ one place to be wrong rather than eight.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 import threading
@@ -23,10 +22,19 @@ from .watermark import (
     FALLBACK_SINCE, get_since_for_source, get_thinker_id, update_source_state,
 )
 
-LOG_PATH = os.path.join(os.getcwd(), 'scrape_log.json')
-
 
 class Log:
+    """In-run scrape tally. Printed as it goes, persisted at the end to
+    `pipeline_runs.detail['scrape']` by the caller.
+
+    It used to also write a `scrape_log.json` next to the working directory,
+    carrying the same stats/sources/proxy figures. That was the pre-Postgres
+    mechanism and it survived the migration by accident: on Railway the file is
+    written to a container filesystem that is discarded when the cron job ends,
+    so the only copy anyone could actually read was already the database row.
+    Two sinks for one fact, one of them unreadable in production.
+    """
+
     def __init__(self):
         self.stats = {'found': 0, 'fetched': 0, 'skipped': 0, 'failed': 0}
         self.entries = []
@@ -66,18 +74,6 @@ class Log:
                 'duration_seconds': round(duration_seconds, 3),
                 'proxied': bool(proxied),
             })
-
-    def save(self):
-        with open(LOG_PATH, 'w') as f:
-            json.dump(
-                {'run_at': datetime.now().isoformat(),
-                 'stats': self.stats,
-                 'sources': self.source_results,
-                 'proxy': {'requests': self.proxy_requests,
-                           'estimated_cost_usd': round(self.proxy_cost_usd, 6)},
-                 'entries': self.entries},
-                f, indent=2,
-            )
 
     def summary(self):
         print(f"\n{'='*50}\nSCRAPE SUMMARY\n{'='*50}")
@@ -303,7 +299,6 @@ def main():
     parallel.pmap(scrape_one, thinkers)
 
     conn.close()
-    log.save()
     log.summary()
 
     source_total = len(log.source_results)

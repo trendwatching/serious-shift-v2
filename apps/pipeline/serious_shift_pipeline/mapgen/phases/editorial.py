@@ -16,9 +16,128 @@ ST_REQUIRED = {
     'human_needs', 'signals', 'counter_signals', 'timeline', 'territories',
 }
 
+#: How many times to ask for one body. A model that omits a field or overruns a
+#: word cap usually gets it right on a second look, and re-requesting only the
+#: failures is a handful of calls rather than another full phase.
+MAX_EDITORIAL_ATTEMPTS = 3
 
 def _complete_editorial(value: object, required: set[str]) -> bool:
+    """Whether a body has everything the page needs.
+
+    Length is deliberately *not* checked here. It was, briefly, and it made
+    things worse: a shift carries sixteen sector notes, so judging the whole body
+    on the longest of them failed 46 of 49 shifts on the first pass and still 41
+    after three attempts — the retries could not converge because the thing being
+    retried was not the thing that was wrong. Overruns are now trimmed per field
+    in `modules.clamp_words`, where one long note is one note's problem, and this
+    predicate is back to asking only what it can usefully re-request: are the
+    fields there, and are the citations real.
+    """
     return isinstance(value, dict) and all(value.get(field) for field in required)
+
+
+def _cited(editorial: object, key: str = 'evidence_ids') -> set[int]:
+    """The claim ids an editorial body cites, ignoring anything non-numeric."""
+    raw = editorial.get(key) if isinstance(editorial, dict) else []
+    return {
+        int(value) for value in raw or []
+        if isinstance(value, (int, float)) and not isinstance(value, bool)
+    }
+
+
+def _generate_until_complete(items, prompt_of, is_complete, *, describe, label):
+    """Generate one body per item, then re-request only the ones that failed.
+
+    Incomplete or overlong bodies used to be written as a NULL module list, which
+    turned one absent field into nine missing modules and a publication the gate
+    could never accept. Retrying the failures costs a few calls; not retrying
+    them cost the entire run.
+    """
+    results = generate_json(items, prompt_of, default=dict, describe=describe)
+    for attempt in range(2, MAX_EDITORIAL_ATTEMPTS + 1):
+        pending = [i for i, (item, r) in enumerate(zip(items, results))
+                   if not is_complete(item, r)]
+        if not pending:
+            break
+        print(f'    {label}: {len(pending)} incomplete or overlong — '
+              f'attempt {attempt}/{MAX_EDITORIAL_ATTEMPTS}')
+        retried = generate_json([items[i] for i in pending], prompt_of,
+                                default=dict, describe=describe)
+        for index, result in zip(pending, retried):
+            if is_complete(items[index], result):
+                results[index] = result
+    still = sum(1 for item, r in zip(items, results) if not is_complete(item, r))
+    if still:
+        print(f'    {label}: {still} still incomplete after '
+              f'{MAX_EDITORIAL_ATTEMPTS} attempts')
+    return results
+
+
+def _sub_is_complete(sub, editorial, claims_by_sub) -> bool:
+    allowed = {claim['id'] for claim in claims_by_sub.get(sub['id'], [])}
+    cited = _cited(editorial)
+    return (_complete_editorial(editorial, ST_REQUIRED)
+            and len(cited) >= 2 and cited <= allowed)
+
+
+def _generate_sub_editorial(items, *, describe):
+    """One call per shift covering all five of its sub-shifts, retried per sub.
+
+    A shift's response covers five sub-shifts at once, and asking for five
+    eleven-field bodies inside one response means a partial answer is the normal
+    case, not the exception. So the retry has to merge: keep the sub-shifts that
+    came back usable, re-ask only for the shift's remaining ones, and fold each
+    new arrival in.
+
+    Judging the *shift* pass/fail instead — which is what a naive predicate
+    does — makes every shift fail while any one of its five is short, so nothing
+    is ever kept and the retries are three batches of pure waste. That is not
+    hypothetical: it is what the first version of this did.
+    """
+    accumulated: list[dict] = [{'sub_trends': []} for _ in items]
+
+    def missing(index: int) -> list:
+        item = items[index]
+        have = {
+            str(se.get('name', '')).strip().lower()
+            for se in accumulated[index]['sub_trends'] if isinstance(se, dict)
+        }
+        return [sub for sub in item[3] if sub['name'].strip().lower() not in have]
+
+    for attempt in range(1, MAX_EDITORIAL_ATTEMPTS + 1):
+        pending = [i for i in range(len(items)) if missing(i)]
+        if not pending:
+            break
+        if attempt > 1:
+            short = sum(len(missing(i)) for i in pending)
+            print(f'    sub-shift editorial: {short} sub-shift(s) across '
+                  f'{len(pending)} shift(s) short — attempt {attempt}/{MAX_EDITORIAL_ATTEMPTS}')
+        # Ask only for the sub-shifts still outstanding, so a retry is a smaller
+        # request as well as a rarer one. Each request carries its own shortfall
+        # rather than being looked up by identity later.
+        requests = [(items[i], missing(i)) for i in pending]
+        results = generate_json(
+            requests,
+            lambda pair: prompt_st_editorial(
+                pair[0][1]['name'], pair[0][1].get('subtitle', ''), pair[1], pair[0][4]),
+            default=dict, describe=lambda pair: describe(pair[0]),
+        )
+        for index, result in zip(pending, results):
+            item = items[index]
+            by_name = {
+                str(se.get('name', '')).strip().lower(): se
+                for se in ((result or {}).get('sub_trends') or []) if isinstance(se, dict)
+            }
+            for sub in missing(index):
+                se = by_name.get(sub['name'].strip().lower())
+                if _sub_is_complete(sub, se, item[4]):
+                    accumulated[index]['sub_trends'].append(se)
+
+    short = sum(len(missing(i)) for i in range(len(items)))
+    if short:
+        print(f'    sub-shift editorial: {short} sub-shift(s) still incomplete '
+              f'after {MAX_EDITORIAL_ATTEMPTS} attempts')
+    return accumulated
 
 
 def _verified_stat(editorial: dict, claims: list[dict]) -> dict | None:
@@ -85,21 +204,32 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
                 for sub in subs
             }
             # Parent editorial may cite only evidence that is actually published
-            # on one of its children.  Earlier selection pools can contain claims
+            # on one of its children. Earlier selection pools can contain claims
             # discarded during single-owner routing; exposing those to the model
             # creates citations readers cannot inspect anywhere on the shift.
-            routed_ids = {
-                claim['id'] for claims in claims_by_sub.values() for claim in claims
-            }
+            #
+            # The shift's citable pool is exactly the union of its children's
+            # routed claims — because that is precisely what the publication gate
+            # checks it against ("2–6 citations from its routed child evidence").
+            #
+            # It used to fall back to the whole domain pool when a shift had no
+            # `_claim_ids`, which let the model cite perfectly real claims that
+            # belonged to no child of this shift. Those bodies passed the phase's
+            # own completeness check and then failed the gate — 46 of 49 shifts on
+            # one run — because the prompt was offered a wider set than the
+            # validator would accept. Offer the narrower one and the two agree.
             claims = [
-                pool[cid] for cid in kt.get('_claim_ids', [])
-                if cid in routed_ids and cid in pool
-            ]
+                claim for claim in (
+                    pool[cid] for sub in subs
+                    for cid in claim_ids_by_sub.get(sub['id'], []) if cid in pool
+                )
+            ][:CLAIMS_PER_KT]
             if not claims:
-                claims = [
-                    claim for claim in domain_claims[d['id']]
-                    if claim['id'] in routed_ids
-                ][:CLAIMS_PER_KT]
+                # No child evidence at all: nothing citable exists, so the shift
+                # cannot carry an editorial body. Skip rather than prompt for one
+                # that is guaranteed to be rejected.
+                print(f'  ⚠  {kt["name"][:40]}: no routed child evidence — skipping editorial')
+                continue
             work.append((d['id'], kt, claims, subs, claims_by_sub))
 
     if not work:
@@ -111,19 +241,20 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     def describe(item):
         return item[1]['name'][:30]
 
-    kt_results = generate_json(
+    def kt_is_complete(item, result):
+        allowed = {claim['id'] for claim in item[2]}
+        cited = _cited(result)
+        return (_complete_editorial(result, KT_REQUIRED)
+                and len(cited) >= 2 and cited <= allowed)
+
+    kt_results = _generate_until_complete(
         work,
         lambda item: prompt_kt_editorial(
             item[1]['name'], item[1].get('subtitle', ''), str(by_id[item[0]]['name']), item[2]),
-        default=dict, describe=describe,
+        kt_is_complete, describe=describe, label='shift editorial',
     )
     with_subs = [item for item in work if item[3]]
-    st_results = generate_json(
-        with_subs,
-        lambda item: prompt_st_editorial(
-            item[1]['name'], item[1].get('subtitle', ''), item[3], item[4]),
-        default=dict, describe=describe,
-    )
+    st_results = _generate_sub_editorial(with_subs, describe=describe)
     st_by_kt = {id(item): r for item, r in zip(with_subs, st_results)}
     results = [
         {'kt': kt_r or {}, 'st': st_by_kt.get(id(item)) or {}}
@@ -135,9 +266,9 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         e = result.get('kt') or {}
         kt_row = kt_rows.get(kt['_db_id'], {'subtitle': kt.get('subtitle', ''), 'hero_stat': None})
         kt_ids = {claim['id'] for claim in _claims}
-        raw_kt_citations = e.get('evidence_ids') if isinstance(e, dict) else []
-        kt_citations = {int(value) for value in raw_kt_citations or [] if isinstance(value, (int, float)) and not isinstance(value, bool)}
-        complete_kt = _complete_editorial(e, KT_REQUIRED) and len(kt_citations) >= 2 and kt_citations <= kt_ids
+        kt_citations = _cited(e)
+        complete_kt = (_complete_editorial(e, KT_REQUIRED)
+                       and len(kt_citations) >= 2 and kt_citations <= kt_ids)
         modules = kt_modules(kt_row, e) if complete_kt else []
         conn.execute(
             'UPDATE domain_key_trends SET modules=%s::jsonb, read_time=%s WHERE id=%s',
@@ -158,9 +289,9 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
             se = editorial_by_name.get(sub['name'].strip().lower()) or {}
             allowed = claims_by_sub.get(sub['id'], [])
             allowed_ids = {claim['id'] for claim in allowed}
-            evidence_ids = se.get('evidence_ids') if isinstance(se, dict) else []
-            cited = {int(value) for value in evidence_ids or [] if isinstance(value, (int, float)) and not isinstance(value, bool)}
-            complete_st = _complete_editorial(se, ST_REQUIRED) and len(cited) >= 2 and cited <= allowed_ids
+            cited = _cited(se)
+            complete_st = (_complete_editorial(se, ST_REQUIRED)
+                           and len(cited) >= 2 and cited <= allowed_ids)
             if complete_st:
                 se = dict(se)
                 se['stat'] = _verified_stat(se, allowed)

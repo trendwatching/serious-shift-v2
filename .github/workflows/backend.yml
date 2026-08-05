@@ -136,11 +136,13 @@ jobs:
 
           check_auth /api/thinkers "Smoke Test"
           check_auth /api/stats '"thinkers":[1-9][0-9]*'
-          # Document endpoints serve raw jsonb text from Postgres (see the doc
-          # cache in main.rs), which renders `{"ok": true}` with a space after
-          # the colon — so tolerate optional whitespace rather than assuming
-          # serde's compact form.
-          check /api/map '"updated": *"2026-08-01"'
+          # /api/map is operator-gated: the publication it serves embeds the same
+          # thinkers and claims that /api/thinkers and /api/claims gate, so it must
+          # require the token too. Document endpoints serve raw jsonb text from
+          # Postgres (see the doc cache in main.rs), which renders `{"ok": true}`
+          # with a space after the colon — so tolerate optional whitespace rather
+          # than assuming serde's compact form.
+          check_auth /api/map '"updated": *"2026-08-01"'
           check /api/v1/map '"key_shifts":1'
           check /api/v1/map/society '"key_shifts"'
           check /api/v1/map/society/test-shift '"sub_shifts"'
@@ -161,9 +163,22 @@ jobs:
           expect_code GET  /this-route-does-not-exist 404
           expect_code GET  /map/society/test-shift  200
           expect_code GET  /api/thinkers             401
-          # The first map request above consumed one burst token.
-          expect_code GET  /api/map                  200
-          expect_code GET  /api/map                  429
+          # The deprecated full map must not be a way around the inspection token:
+          # unauthenticated it used to answer the whole publication, including the
+          # thinkers and claims the endpoints above gate.
+          expect_code GET  /api/map                  401
+
+          expect_code_auth() {  # expect_code_auth <path> <code>
+            local code
+            code=$(curl -sS -o /dev/null --max-time 5 -H 'Authorization: Bearer smoke-secret' \
+              -w '%{http_code}' "$BASE$1")
+            echo "== GET $1 (authorised) -> HTTP $code (expected $2) =="
+            [ "$code" = "$2" ] || { echo "::error::$1 returned $code, expected $2"; fail=1; }
+          }
+          # Rate limiting still applies behind the token. The check_auth above
+          # consumed one of the two burst tokens.
+          expect_code_auth /api/map                  200
+          expect_code_auth /api/map                  429
           # Write endpoint stays disabled while INGEST_TOKEN is unset.
           expect_code POST /api/innovations/ingest   404
 

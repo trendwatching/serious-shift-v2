@@ -3,8 +3,8 @@
 #
 # BUILD CONTEXT IS THE REPO ROOT:  docker build -f apps/backend/Dockerfile .
 # The runtime image carries apps/frontend's static export, so the frontend must
-# be in the context. The crate no longer embeds any prompt text — /api/personalize
-# was the only consumer and it had no callers.
+# be in the context. The crate embeds no prompt text: the backend is read-only
+# and makes no model calls, so it needs no ANTHROPIC_API_KEY.
 
 # ── 1. Frontend: static export ───────────────────────────────────────────────
 FROM node:22-slim@sha256:f32b81066cde10a75dbac96646099533316d94bac4150c55da1636e1f0ffdc46 AS web

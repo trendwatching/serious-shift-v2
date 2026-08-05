@@ -194,6 +194,41 @@ def test_request_blocked_exception_type_is_recognised():
     assert is_ip_block(type("RequestBlocked", (Exception,), {})())
 
 
+def test_a_youtube_listing_timeout_is_classified_as_blocked():
+    """The shape the block actually took on staging.
+
+    Throttling a datacenter IP makes the yt-dlp listing hang rather than answer,
+    so all six YouTube sources were failing as TimeoutExpired — matching none of
+    the worded refusals and landing in `failed`, which re-armed the alert the
+    `blocked` status exists to silence.
+    """
+    import subprocess
+
+    from serious_shift_pipeline.steps.scraper.handlers import is_ip_block
+
+    exc = subprocess.TimeoutExpired(
+        ["/usr/local/bin/python", "-m", "yt_dlp", "--skip-download",
+         "https://www.youtube.com/@reidhoffman/videos"],
+        120,
+    )
+    assert is_ip_block(exc)
+
+
+@pytest.mark.parametrize("cmd", [
+    ["curl", "https://example.com/feed"],
+    ["python", "-m", "trafilatura"],
+])
+def test_a_timeout_from_any_other_source_is_still_a_real_failure(cmd):
+    """A blog that hangs is genuinely broken. Mapping every timeout to "needs a
+    proxy" would hide real breakage in the other direction, so the YouTube path
+    has to be identifiable in the exception itself."""
+    import subprocess
+
+    from serious_shift_pipeline.steps.scraper.handlers import is_ip_block
+
+    assert not is_ip_block(subprocess.TimeoutExpired(cmd, 30))
+
+
 @pytest.mark.parametrize("exc", [
     _Blocked("HTTP Error 404: Not Found"),
     _Blocked("Connection timed out"),

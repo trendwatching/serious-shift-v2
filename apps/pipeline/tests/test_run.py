@@ -126,14 +126,40 @@ def test_high_extraction_failure_rate_alerts():
     assert any('failure rate' in a for a in alerts)
 
 
-def test_two_consecutive_empty_runs_alert():
-    alerts, _ = _alerts(new_claims=0, previous_runs=[{'files_processed': 0}])
+def test_two_consecutive_empty_ingest_runs_alert():
+    alerts, _ = _alerts(
+        new_claims=0,
+        run_row={'run_id': 'r', 'stage': 'ingest', 'files_processed': 0},
+        previous_runs=[{'stage': 'ingest', 'files_processed': 0}])
     assert any('silent breakage' in a for a in alerts)
 
 
 def test_one_empty_run_after_a_productive_one_is_quiet():
-    alerts, _ = _alerts(new_claims=0, previous_runs=[{'files_processed': 40}])
+    alerts, _ = _alerts(
+        new_claims=0,
+        run_row={'run_id': 'r', 'stage': 'ingest', 'files_processed': 0},
+        previous_runs=[{'stage': 'ingest', 'files_processed': 40}])
     assert alerts == []
+
+
+def test_back_to_back_synthesis_is_not_reported_as_silent_breakage():
+    """Synthesis adds no claims and processes no files by definition, so judging
+    it on those counters made every second `synthesize` cry wolf."""
+    alerts, _ = _alerts(
+        new_claims=0,
+        run_row={'run_id': 'r', 'stage': 'synthesize', 'files_processed': 0},
+        previous_runs=[{'stage': 'synthesize', 'files_processed': 0}])
+    assert alerts == []
+
+
+def test_an_empty_ingest_is_not_excused_by_an_intervening_synthesis():
+    """The previous *ingest* is the comparison, even when a synthesize ran since."""
+    alerts, _ = _alerts(
+        new_claims=0,
+        run_row={'run_id': 'r', 'stage': 'ingest', 'files_processed': 0},
+        previous_runs=[{'stage': 'synthesize', 'files_processed': 0},
+                       {'stage': 'ingest', 'files_processed': 0}])
+    assert any('silent breakage' in a for a in alerts)
 
 
 def test_multiple_conditions_escalate_to_critical():
