@@ -1,6 +1,8 @@
 """Phase 4b — editorial prose for Key Trends and their sub-trends."""
 from __future__ import annotations
 
+import re
+
 from ...prompts import prompt_kt_editorial, prompt_st_editorial
 from ..config import CLAIMS_PER_KT, DOMAINS
 from ..llm import generate_json
@@ -16,9 +18,100 @@ ST_REQUIRED = {
     'human_needs', 'signals', 'counter_signals', 'timeline', 'territories',
 }
 
+#: How many times to ask for one body. A model that omits a field or overruns a
+#: word cap usually gets it right on a second look, and re-requesting only the
+#: failures is a handful of calls rather than another full phase.
+MAX_EDITORIAL_ATTEMPTS = 3
+
+#: Word ceilings the *publication contract* enforces, mapped onto the editorial
+#: fields they are derived from. The prompt asks for less than every one of these
+#: (75 against 90 for `whats_changing`, and so on) — this is the hard bound that
+#: fails the publication, so it is the bound worth retrying against.
+#:
+#: Checking it here rather than only at the gate is what makes the difference
+#: between one extra call and a dead run: at the gate the whole candidate is
+#: already assembled, the repair budget is per-shift, and a fresh rebuild trips
+#: every shift at once — so the gate can only ever report the problem.
+_SCALAR_LIMITS = {
+    'lede': 40, 'from': 30, 'to': 30, 'pull_quote': 18, 'quote': 38,
+    'consumer_tension': 38, 'whats_changing': 90, 'why_now': 70,
+}
+_NESTED_LIMITS = {'human_needs': ('unlocked', 'threatened', 45), 'timeline': ('now', 'next', 45)}
+_ITEM_TEXT_LIMITS = {'industries': 40, 'opportunities': 50, 'territories': 50}
+_ITEM_STRING_LIMITS = {'signals': 35, 'counter_signals': 35}
+
+
+def _words(value) -> int:
+    return len(re.findall(r"\b[\w’'-]+\b", str(value or '')))
+
+
+def _within_limits(editorial: object) -> bool:
+    """True when every field is inside the ceiling the publication gate applies."""
+    if not isinstance(editorial, dict):
+        return False
+    for field, limit in _SCALAR_LIMITS.items():
+        if field in editorial and _words(editorial[field]) > limit:
+            return False
+    for field, (*keys, limit) in _NESTED_LIMITS.items():
+        nested = editorial.get(field)
+        if isinstance(nested, dict):
+            # `timeline` also carries `beyond`; check every value under the key
+            # rather than only the two named, so a new sibling is covered too.
+            if any(_words(value) > limit for value in nested.values()):
+                return False
+        del keys
+    for field, limit in _ITEM_TEXT_LIMITS.items():
+        for item in editorial.get(field) or []:
+            if isinstance(item, dict) and _words(item.get('text')) > limit:
+                return False
+    for field, limit in _ITEM_STRING_LIMITS.items():
+        for item in editorial.get(field) or []:
+            if _words(item) > limit:
+                return False
+    return True
+
 
 def _complete_editorial(value: object, required: set[str]) -> bool:
-    return isinstance(value, dict) and all(value.get(field) for field in required)
+    return (isinstance(value, dict)
+            and all(value.get(field) for field in required)
+            and _within_limits(value))
+
+
+def _cited(editorial: object, key: str = 'evidence_ids') -> set[int]:
+    """The claim ids an editorial body cites, ignoring anything non-numeric."""
+    raw = editorial.get(key) if isinstance(editorial, dict) else []
+    return {
+        int(value) for value in raw or []
+        if isinstance(value, (int, float)) and not isinstance(value, bool)
+    }
+
+
+def _generate_until_complete(items, prompt_of, is_complete, *, describe, label):
+    """Generate one body per item, then re-request only the ones that failed.
+
+    Incomplete or overlong bodies used to be written as a NULL module list, which
+    turned one absent field into nine missing modules and a publication the gate
+    could never accept. Retrying the failures costs a few calls; not retrying
+    them cost the entire run.
+    """
+    results = generate_json(items, prompt_of, default=dict, describe=describe)
+    for attempt in range(2, MAX_EDITORIAL_ATTEMPTS + 1):
+        pending = [i for i, (item, r) in enumerate(zip(items, results))
+                   if not is_complete(item, r)]
+        if not pending:
+            break
+        print(f'    {label}: {len(pending)} incomplete or overlong — '
+              f'attempt {attempt}/{MAX_EDITORIAL_ATTEMPTS}')
+        retried = generate_json([items[i] for i in pending], prompt_of,
+                                default=dict, describe=describe)
+        for index, result in zip(pending, retried):
+            if is_complete(items[index], result):
+                results[index] = result
+    still = sum(1 for item, r in zip(items, results) if not is_complete(item, r))
+    if still:
+        print(f'    {label}: {still} still incomplete after '
+              f'{MAX_EDITORIAL_ATTEMPTS} attempts')
+    return results
 
 
 def _verified_stat(editorial: dict, claims: list[dict]) -> dict | None:
@@ -111,18 +204,40 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     def describe(item):
         return item[1]['name'][:30]
 
-    kt_results = generate_json(
+    def kt_is_complete(item, result):
+        allowed = {claim['id'] for claim in item[2]}
+        cited = _cited(result)
+        return (_complete_editorial(result, KT_REQUIRED)
+                and len(cited) >= 2 and cited <= allowed)
+
+    def st_is_complete(item, result):
+        """Complete only when every one of this shift's sub-shifts got a usable
+        body — a partially-filled response leaves the rest with no modules."""
+        by_name = {
+            str(se.get('name', '')).strip().lower(): se
+            for se in ((result or {}).get('sub_trends') or []) if isinstance(se, dict)
+        }
+        for sub in item[3]:
+            se = by_name.get(sub['name'].strip().lower())
+            allowed = {claim['id'] for claim in item[4].get(sub['id'], [])}
+            cited = _cited(se)
+            if not (_complete_editorial(se, ST_REQUIRED)
+                    and len(cited) >= 2 and cited <= allowed):
+                return False
+        return True
+
+    kt_results = _generate_until_complete(
         work,
         lambda item: prompt_kt_editorial(
             item[1]['name'], item[1].get('subtitle', ''), str(by_id[item[0]]['name']), item[2]),
-        default=dict, describe=describe,
+        kt_is_complete, describe=describe, label='shift editorial',
     )
     with_subs = [item for item in work if item[3]]
-    st_results = generate_json(
+    st_results = _generate_until_complete(
         with_subs,
         lambda item: prompt_st_editorial(
             item[1]['name'], item[1].get('subtitle', ''), item[3], item[4]),
-        default=dict, describe=describe,
+        st_is_complete, describe=describe, label='sub-shift editorial',
     )
     st_by_kt = {id(item): r for item, r in zip(with_subs, st_results)}
     results = [
@@ -135,9 +250,9 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         e = result.get('kt') or {}
         kt_row = kt_rows.get(kt['_db_id'], {'subtitle': kt.get('subtitle', ''), 'hero_stat': None})
         kt_ids = {claim['id'] for claim in _claims}
-        raw_kt_citations = e.get('evidence_ids') if isinstance(e, dict) else []
-        kt_citations = {int(value) for value in raw_kt_citations or [] if isinstance(value, (int, float)) and not isinstance(value, bool)}
-        complete_kt = _complete_editorial(e, KT_REQUIRED) and len(kt_citations) >= 2 and kt_citations <= kt_ids
+        kt_citations = _cited(e)
+        complete_kt = (_complete_editorial(e, KT_REQUIRED)
+                       and len(kt_citations) >= 2 and kt_citations <= kt_ids)
         modules = kt_modules(kt_row, e) if complete_kt else []
         conn.execute(
             'UPDATE domain_key_trends SET modules=%s::jsonb, read_time=%s WHERE id=%s',
@@ -158,9 +273,9 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
             se = editorial_by_name.get(sub['name'].strip().lower()) or {}
             allowed = claims_by_sub.get(sub['id'], [])
             allowed_ids = {claim['id'] for claim in allowed}
-            evidence_ids = se.get('evidence_ids') if isinstance(se, dict) else []
-            cited = {int(value) for value in evidence_ids or [] if isinstance(value, (int, float)) and not isinstance(value, bool)}
-            complete_st = _complete_editorial(se, ST_REQUIRED) and len(cited) >= 2 and cited <= allowed_ids
+            cited = _cited(se)
+            complete_st = (_complete_editorial(se, ST_REQUIRED)
+                           and len(cited) >= 2 and cited <= allowed_ids)
             if complete_st:
                 se = dict(se)
                 se['stat'] = _verified_stat(se, allowed)

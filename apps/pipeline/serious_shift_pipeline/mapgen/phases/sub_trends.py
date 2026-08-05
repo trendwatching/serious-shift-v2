@@ -7,6 +7,15 @@ from ..config import CLAIMS_PER_KT, DOMAINS
 from ..dbutil import _slugger
 from ..llm import generate_json
 
+#: The publication contract requires exactly this many sub-shifts per shift.
+#: Fewer means missing pages and a failed gate; more is truncated deterministically
+#: rather than left for the validator to reject.
+REQUIRED_SUB_TRENDS = 5
+
+#: Re-asks for a shift whose taxonomy came back short. Cheap — it is one call per
+#: shift, and only the shortfall is retried.
+MAX_CLUSTER_ATTEMPTS = 3
+
 
 def _validated_sub_trends(result: object, allowed_claim_ids: set[int]) -> list[dict]:
     """Keep model taxonomy only when it satisfies the publication contract.
@@ -55,20 +64,41 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
             if preferred:
                 work.append((d['id'], kt, preferred))
 
-    # One call per Key Trend.
-    results = generate_json(
-        work,
-        lambda item: prompt_sub_trends(item[1]['name'], item[1].get('subtitle', ''), item[2]),
-        default=lambda: {'sub_trends': []},
-        describe=lambda item: item[1]['name'][:30],
-    )
+    # One call per Key Trend, re-requesting any that did not come back with a
+    # publishable taxonomy. The contract is *exactly* five sub-shifts per shift;
+    # a shift that gets none has no sub-shift pages at all and fails the gate for
+    # the whole run, so it is worth a second and third ask.
+    prompt_of = lambda item: prompt_sub_trends(  # noqa: E731 — matches the call below
+        item[1]['name'], item[1].get('subtitle', ''), item[2])
+    describe = lambda item: item[1]['name'][:30]  # noqa: E731
+
+    def usable(item, result) -> bool:
+        return len(_validated_sub_trends(result, {c['id'] for c in item[2]})) >= REQUIRED_SUB_TRENDS
+
+    results = generate_json(work, prompt_of, default=lambda: {'sub_trends': []},
+                            describe=describe)
+    for attempt in range(2, MAX_CLUSTER_ATTEMPTS + 1):
+        pending = [i for i, (item, r) in enumerate(zip(work, results)) if not usable(item, r)]
+        if not pending:
+            break
+        print(f'    {len(pending)} shift(s) short of {REQUIRED_SUB_TRENDS} sub-trends — '
+              f'attempt {attempt}/{MAX_CLUSTER_ATTEMPTS}')
+        retried = generate_json([work[i] for i in pending], prompt_of,
+                                default=lambda: {'sub_trends': []}, describe=describe)
+        for index, result in zip(pending, retried):
+            if usable(work[index], result):
+                results[index] = result
 
     # Serial: write sub-trends + claim links, refine KT velocity.
     slug = _slugger()
     for (d_id, kt, claims), result in zip(work, results):
         velocity = result.get('key_trend_velocity', kt.get('velocity', 'rising'))
         conn.execute('UPDATE domain_key_trends SET velocity=%s WHERE id=%s', (velocity, kt['_db_id']))
-        sub_trends = _validated_sub_trends(result, {claim['id'] for claim in claims})
+        # Truncate rather than publish a sixth: the contract is exact, and a
+        # deterministic cut here beats a validation failure the repair pass then
+        # has to spend a call undoing.
+        sub_trends = _validated_sub_trends(
+            result, {claim['id'] for claim in claims})[:REQUIRED_SUB_TRENDS]
         for i, st in enumerate(sub_trends, start=1):
             st_db_id = conn.execute("""
                 INSERT INTO domain_sub_trends
