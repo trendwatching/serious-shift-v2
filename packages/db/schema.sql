@@ -914,10 +914,45 @@ CREATE INDEX idx_dkt_domain ON public.domain_key_trends USING btree (domain_id);
 
 
 --
+-- Name: idx_domain_flows_target; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_domain_flows_target ON public.domain_flows USING btree (target_id);
+
+
+--
+-- Name: idx_dsi_domain; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dsi_domain ON public.domain_synthesis_insights USING btree (domain_id);
+
+
+--
+-- Name: idx_dsic_claim; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dsic_claim ON public.domain_synthesis_insight_claims USING btree (claim_id);
+
+
+--
+-- Name: idx_dst_domain; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dst_domain ON public.domain_sub_trends USING btree (domain_id);
+
+
+--
 -- Name: idx_dst_kt; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_dst_kt ON public.domain_sub_trends USING btree (kt_id);
+
+
+--
+-- Name: idx_dstc_claim; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dstc_claim ON public.domain_sub_trend_claims USING btree (claim_id);
 
 
 --
@@ -963,10 +998,24 @@ CREATE INDEX idx_pipeline_runs_started ON public.pipeline_runs USING btree (star
 
 
 --
+-- Name: idx_predictions_claim; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_predictions_claim ON public.predictions USING btree (claim_id);
+
+
+--
 -- Name: idx_predictions_domain; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_predictions_domain ON public.predictions USING btree (domain);
+
+
+--
+-- Name: idx_predictions_source; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_predictions_source ON public.predictions USING btree (source_id);
 
 
 --
@@ -1016,6 +1065,13 @@ CREATE INDEX idx_sources_external_id ON public.sources USING btree (external_id)
 --
 
 CREATE INDEX idx_sources_thinker ON public.sources USING btree (thinker_id);
+
+
+--
+-- Name: idx_sources_url_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_sources_url_unique ON public.sources USING btree (url) WHERE ((url IS NOT NULL) AND (url <> ''::text));
 
 
 --
@@ -1191,4 +1247,5 @@ ALTER TABLE ONLY public.sources
 INSERT INTO public.schema_migrations (version) VALUES
     ('20250101000000'),
     ('20260801175040'),
-    ('20260801182059');
+    ('20260801182059'),
+    ('20260803180000');
