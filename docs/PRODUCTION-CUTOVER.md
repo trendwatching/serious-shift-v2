@@ -127,6 +127,11 @@ this point. Check:
   set and no `X-Ingest-Token`
 - `PUT /api/innovations/1/shifts` → 404 while `CURATION_TOKEN` is absent
 - `GET /api/v1/innovations` → `{"items": [...], "limit": 24, "next_cursor": …}`
+- `SELECT count(*) FROM shift_refs` → the map's key shifts plus sub-shifts, **not
+  zero**. Publication writes that registry, so a database migrated after its last
+  publication has none, and every innovation link silently lands in `unknown`.
+  Back-fill it before enabling ingest — see
+  [`INNOVATIONS-API.md`](INNOVATIONS-API.md#first-time-setup-back-fill-shift_refs).
 
 ### 6. Move the domain  ← the visible flip
 

@@ -425,6 +425,32 @@ Re-point them with `PUT /api/innovations/{id}/shifts` using the new slug.
 Both tokens should be long random strings, set per environment, and never shared
 between staging and production. Rotating one takes effect on the next deploy.
 
+### First-time setup: back-fill `shift_refs`
+
+**On a database migrated *after* its last publication, `shift_refs` is empty and
+no innovation can be linked to anything.** Every `shifts[]` entry comes back in
+`unknown`, the ingest still returns 200, and nothing looks broken — it just never
+reaches a page. Observed on staging the first time this was enabled.
+
+The registry is written by publication, so the next synthesize run fixes it by
+itself. To avoid waiting a week, back-fill it from the document already published:
+
+```bash
+python3 - <<'PY'
+import json, os, psycopg
+from psycopg.rows import dict_row
+from serious_shift_pipeline.mapgen.export import _publish_shift_refs
+conn = psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row)
+doc = json.loads(conn.execute("SELECT body::text AS b FROM documents WHERE key='map'").fetchone()["b"])
+_publish_shift_refs(conn, doc); conn.commit()
+PY
+```
+
+That calls the same function publication does, against the live document. It does
+not regenerate anything and does not touch `documents`. Confirm with
+`SELECT count(*) FROM shift_refs` — it should equal the map's key shifts plus
+sub-shifts.
+
 **Enable staging first.** `POST` the real payload, confirm `result` and
 `cover_image.state`, curate a link, and load the shift page with the browser
 console open — a CSP violation there means an image is being served from the wrong
