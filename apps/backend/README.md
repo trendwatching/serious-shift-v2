@@ -40,8 +40,16 @@ different URL away.
 | `GET /api/v1/map/{domain}/{shift}` | one full key shift, key-shift siblings, and five sub-shift summaries |
 | `GET /api/v1/map/{domain}/{shift}/{subshift}` | one full sub-shift, parent context, and sibling summaries |
 | `GET /api/map` | deprecated full trend map; **operator-gated** (`INSPECTION_TOKEN`), rate and concurrency limited. No client reads it — the SPA uses the v1 fragments |
-| `POST /api/innovations/ingest` | ingests one innovation → `innovations` table (idempotent on `source_innovation_id`). Requires `X-Ingest-Token`; **404 while `INGEST_TOKEN` is unset** |
+| `GET /api/v1/innovations` | the ingested corpus, newest first; keyset-paginated, filterable by `shift`/`tag`/`brand` |
+| `GET /api/v1/innovations/{id}` | one full innovation record |
+| `GET /api/innovations/{id}/cover-image` | the mirrored cover bytes, same-origin so the page's `img-src 'self'` allows them |
+| `POST /api/innovations/ingest` | ingests one innovation (idempotent on `source_innovation_id`). Requires `X-Ingest-Token`; **404 while `INGEST_TOKEN` is unset** |
+| `PUT /api/innovations/{id}/shifts` | replace the editor-curated innovation↔shift links. Requires `CURATION_TOKEN`; **404 while unset** |
+| `DELETE /api/innovations/{id}/shifts/{scope}/{slug}` | remove one link |
 | `GET /*` | canonical SPA routes deep-link; unknown routes and unmatched `/api/*` paths return real 404 responses |
+
+The full contract for the innovations routes — request, responses, error codes,
+idempotency — is [`docs/INNOVATIONS-API.md`](../../docs/INNOVATIONS-API.md).
 
 ## Configuration (env)
 
@@ -51,7 +59,9 @@ different URL away.
 | `PORT` | no | default `8080` |
 | `FRONTEND_ORIGIN` | **yes in release** | CORS allowlist (comma-separated). Release builds panic without it; debug builds allow any origin |
 | `STATIC_DIR` | no | SPA bundle to serve, default `static` (the image sets `/srv/static`) |
-| `INGEST_TOKEN` | only for `/api/innovations/ingest` | shared secret; route 404s while unset |
+| `INGEST_TOKEN` | only for `/api/innovations/ingest` | shared secret (`X-Ingest-Token`); route 404s while unset |
+| `CURATION_TOKEN` | only for innovation↔shift curation | bearer token; routes 404 while unset. Separate from `INGEST_TOKEN` so the upstream credential cannot change a page |
+| `INNOVATION_ASSET_HOSTS` | no | comma-separated hosts a cover image may be mirrored from; defaults to `tw-the-engine.up.railway.app` |
 | `INSPECTION_TOKEN` | only for inspection endpoints | bearer token; endpoints (incl. `/api/map`) 404 while unset |
 | `PUBLIC_ORIGIN` | no | absolute origin for canonical URLs and the sitemap; defaults to the first `FRONTEND_ORIGIN` entry |
 | `RAILWAY_ENVIRONMENT_ID` | Railway-provided | when present, trust Railway `X-Forwarded-For`; otherwise use the socket peer |
@@ -93,8 +103,15 @@ docker build -f apps/backend/Dockerfile .     # from the repo root, not this dir
   any origin so `cargo run` works.
 - **Inspection auth** is constant-time and never logs credentials. Disabled
   inspection routes return 404; missing/invalid bearer credentials return 401.
-- **`POST /api/innovations/ingest`** remains dormant: production and staging must
-  leave `INGEST_TOKEN` unset, so the route returns 404.
+- **The innovations write path** is the only place this service writes, and it is
+  gated three ways: a constant-time shared-secret check before the body is parsed
+  at all, a 60/min rate limit, and a 1 MB body cap. A route whose secret is unset
+  returns 404 rather than 401, so it does not advertise itself.
+- **Cover images are mirrored, never proxied on demand.** The fetcher accepts
+  `https://` only, only hosts on `INNOVATION_ASSET_HOSTS`, with redirects
+  disabled, a 10s timeout and a 5 MiB cap — a URL out of a request body is
+  otherwise a request-forgery primitive aimed at Railway's private network.
+  Serving the bytes from our own origin is also what satisfies `img-src 'self'`.
 - **Security middleware** wraps the complete router, including static assets,
   SPA deep links and fallbacks. Valid routes return 200; unknown app paths render
   the accessible shell with HTTP 404 and noindex; unknown API/assets are ordinary

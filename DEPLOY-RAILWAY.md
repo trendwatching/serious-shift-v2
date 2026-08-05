@@ -99,8 +99,16 @@ New service → **Deploy from repo**.
     refuses to start without it rather than allowing every origin.
   - `INSPECTION_TOKEN = <random secret>` — bearer token for thinkers, sources,
     claims, predictions, and stats. Leave it unset to disable those routes.
-  - **Do not set `INGEST_TOKEN`.** Innovations are deferred; the dormant route
-    must remain a 404 in staging and production.
+  - `INGEST_TOKEN = <random secret>` — shared secret the upstream Innovation
+    database sends as `X-Ingest-Token`. Unset ⇒ the ingest route is a 404.
+  - `CURATION_TOKEN = <a different random secret>` — bearer token for editing
+    innovation↔shift links. Unset ⇒ those routes are 404s. Deliberately separate
+    from `INGEST_TOKEN`, so the upstream credential cannot change what a page
+    shows. See [`docs/INNOVATIONS-API.md`](docs/INNOVATIONS-API.md).
+  - `INNOVATION_ASSET_HOSTS` (optional) — comma-separated hosts a cover image may
+    be mirrored from. Defaults to `tw-the-engine.up.railway.app`. Move where
+    upstream serves cover images and this has to change first, or every mirror
+    reports `host not allowed`.
   - `PUBLIC_ORIGIN` (optional) — absolute origin used for canonical URLs and
     the sitemap. Defaults to the first `FRONTEND_ORIGIN` entry.
   - `PORT = 8080` (optional; the image defaults to it)

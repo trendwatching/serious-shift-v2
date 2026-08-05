@@ -107,7 +107,19 @@ bookkeeping table and isn't listed.)
 |---|---|
 | `documents` | whole-JSON blobs. Only `map` exists and only `map` has a reader — the backend serves it at `/api/map`. Written by the synthesize stage. |
 | `shift_module_overrides` | editor-authored module lists, keyed by slug; survives the weekly truncate |
-| `innovations` | rows pushed by `POST /api/innovations/ingest` |
+
+### Innovations — real branded examples of a shift
+Written by `POST /api/innovations/ingest` and the curation API, never by the
+pipeline. Full contract: [`docs/INNOVATIONS-API.md`](../../docs/INNOVATIONS-API.md).
+
+| Table | Purpose |
+|---|---|
+| `innovations` | one row per upstream innovation; `source_innovation_id` is the NOT NULL unique idempotency key. Keeps the verbatim `payload` and a `payload_hash` so an unchanged re-POST writes nothing |
+| `innovation_tags` | the upstream taxonomy interned as `(facet, slug)` — eight closed facets |
+| `innovation_tag_links` | innovations ↔ tags |
+| `shift_refs` | **durable shift identity**, `(scope, slug)`. Upserted by publication, never deleted. Exists because `domain_key_trends.id` is recycled by the weekly `TRUNCATE … RESTART IDENTITY`, so a foreign key into it would be cascade-deleted every Monday |
+| `innovation_shift_links` | the many-to-many mapping, `PRIMARY KEY (innovation_id, shift_ref_id)`. `source` records whether a link came from the payload (`ingest`), an editor (`editor`) or a future suggester (`auto`); each writer only manages its own rows |
+| `innovation_assets` | the mirrored cover image bytes. Its own table so the row every list query reads stays skinny |
 
 ## Deploy a free Postgres — Neon
 

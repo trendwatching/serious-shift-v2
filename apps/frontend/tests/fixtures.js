@@ -38,6 +38,23 @@ export const subFixture = {
   siblings: subs.map(({ modules, ...summary }) => summary),
 }
 
+/**
+ * What the backend hydrates into an `innovations` module: one complete example,
+ * and one with everything optional missing. Only `title` is guaranteed — an
+ * innovation can arrive from upstream with no cover image, brand or trendbite.
+ */
+export const innovationItems = [
+  {
+    title: 'Proof-of-human badge',
+    brand: 'Acme',
+    description: 'Verification sold as a product.',
+    url: 'https://example.com/acme',
+    image: '/api/innovations/7/cover-image?v=0123456789ab',
+    tags: ['food-beverage', 'product-launch'],
+  },
+  { title: 'Bare minimum innovation' },
+]
+
 export const response = (data, status = 200) => Promise.resolve({
   ok: status >= 200 && status < 300,
   status,

@@ -165,6 +165,13 @@ class RecordingConnection:
         self.statements.append((' '.join(statement.split()), params))
         return self
 
+    def fetchall(self):
+        # Promotion also records shift identities and then asks which curated
+        # innovation links point at a shift that is no longer published. With no
+        # database there are none, which is the answer that keeps this test about
+        # statement *ordering*.
+        return []
+
     def commit(self):
         self.commits += 1
 
@@ -184,7 +191,30 @@ def test_successful_promotion_rotates_previous_then_current():
     _write_map_document(connection, valid_map())
     assert "'map:previous'" in connection.statements[0][0]
     assert "'map'" in connection.statements[1][0]
+    # The identities an innovation's foreign key points at are recorded in the
+    # same transaction as the document they came from, so the two cannot disagree.
+    assert 'INSERT INTO shift_refs' in connection.statements[2][0]
     assert connection.commits == 1
+
+
+def test_promotion_records_an_identity_for_every_addressable_shift():
+    """`shift_refs` is what innovation_shift_links FKs into. If publication stops
+    recording a shift, every innovation curated onto it silently disappears."""
+    connection = RecordingConnection()
+    document = valid_map()
+    _write_map_document(connection, document)
+    statement, params = next(
+        item for item in connection.statements if 'INSERT INTO shift_refs' in item[0]
+    )
+    scopes, slugs, _domains, _titles = params
+    expected = [kt['slug'] for kt in document['key_trends']] + [
+        st['slug'] for st in document['sub_trends']
+    ]
+    assert slugs == expected
+    assert set(scopes) == {'key_trend', 'sub_trend'}
+    # A sub-shift's identity keeps the parent segment; that two-part slug is what
+    # makes it unique across the document.
+    assert any('/' in slug for slug in slugs)
 
 
 def test_targeted_repair_never_exceeds_parent_limit(monkeypatch):

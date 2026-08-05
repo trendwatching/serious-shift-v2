@@ -103,6 +103,20 @@ def test_canonical_order_is_the_contract_not_the_generator():
         assert got == want, f"{scope}: {got} != {want}"
 
 
+def test_innovations_is_orderable_on_both_scopes():
+    """`innovations` is the one type no generator emits — the backend hydrates it
+    into a shift row at request time from innovation_shift_links. It still has to
+    appear in both scope orders, for two reasons: the order list is what tells the
+    backend where to insert it, and `_validate_modules` order-checks a
+    hand-authored override that contains one."""
+    order = _contract()["order"]
+    for scope in ("key_trend", "sub_trend"):
+        assert "innovations" in order[scope], scope
+    # Real examples of the shift read after the analysis of it, never before.
+    assert order["key_trend"].index("territories") < order["key_trend"].index("innovations")
+    assert order["key_trend"].index("innovations") < order["key_trend"].index("sub_shift_list")
+
+
 def test_sub_shift_carousel_sits_at_the_bottom_of_a_shift_page():
     """The Miro mockup puts the five sub-shifts last, as a carousel — not mid-page."""
     order = _contract()["order"]["key_trend"]

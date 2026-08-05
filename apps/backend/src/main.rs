@@ -3,8 +3,12 @@
 //!
 //! Env: DATABASE_URL (required), PORT (default 8080),
 //!      FRONTEND_ORIGIN (CORS allowlist, comma-separated),
-//!      INSPECTION_TOKEN (gates the operator-only reads, including /api/map).
+//!      INSPECTION_TOKEN (gates the operator-only reads, including /api/map),
+//!      INGEST_TOKEN (gates the innovations write endpoint),
+//!      CURATION_TOKEN (gates editing innovation↔shift links),
+//!      INNOVATION_ASSET_HOSTS (hosts a cover image may be mirrored from).
 
+mod innovations;
 mod seo;
 mod sql;
 
@@ -20,13 +24,11 @@ use axum::{
     extract::{ConnectInfo, DefaultBodyLimit, Path as AxumPath, Query, State},
     http::{header, HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::{IntoResponse, Response},
-    routing::{any, get, post},
+    routing::{any, delete, get, post, put},
     Json, Router,
 };
-use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::postgres::PgPoolOptions;
-use sqlx::types::Json as SqlxJson;
 use sqlx::PgPool;
 use tower::ServiceBuilder;
 use tower_http::compression::CompressionLayer;
@@ -42,7 +44,7 @@ use tower_http::timeout::TimeoutLayer;
 /// builds still fall back to "any origin" so `cargo run` works locally.
 fn cors_layer() -> CorsLayer {
     let base = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST])
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
     match env::var("FRONTEND_ORIGIN") {
         Ok(v) if !v.trim().is_empty() => {
@@ -151,8 +153,16 @@ struct AppState {
     pool: PgPool,
     /// Shared secret for POST /api/innovations/ingest. None disables the route.
     ingest_token: Option<String>,
+    /// Shared secret for editing innovation↔shift links. Separate from
+    /// `ingest_token` on purpose: the upstream database's credential should not
+    /// be able to change what appears on a page.
+    curation_token: Option<String>,
     /// Shared secret for the operator-only inspection endpoints.
     inspection_token: Option<String>,
+    /// Only ever used to mirror an innovation's cover image, and only to the
+    /// hosts `INNOVATION_ASSET_HOSTS` allows. Built once: a fresh client per
+    /// request would discard the connection pool and the TLS session cache.
+    http: reqwest::Client,
     /// Current immutable publication. Reads are concurrent; only the process
     /// that refreshes after the TTL takes the separate refresh mutex.
     snapshot: Arc<tokio::sync::RwLock<Option<Arc<MapSnapshot>>>>,
@@ -168,6 +178,9 @@ struct AppState {
     /// Public route fragments are intentionally generous for normal browsing,
     /// while still bounded against abusive crawlers.
     public_v1_limiter: Arc<RateLimiter>,
+    /// The write path. Authenticated, but a bounded one: a runaway upstream
+    /// loop should be slowed here rather than in the database.
+    ingest_limiter: Arc<RateLimiter>,
 }
 
 #[derive(Debug)]
@@ -235,6 +248,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if ingest_token.is_none() {
         tracing::warn!("INGEST_TOKEN not set — POST /api/innovations/ingest is disabled");
     }
+    let curation_token = env::var("CURATION_TOKEN")
+        .ok()
+        .filter(|t| !t.trim().is_empty());
+    if curation_token.is_none() {
+        tracing::info!("CURATION_TOKEN not set — innovation↔shift curation is disabled");
+    }
     let inspection_token = env::var("INSPECTION_TOKEN")
         .ok()
         .filter(|t| !t.trim().is_empty());
@@ -242,10 +261,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("INSPECTION_TOKEN not set — inspection endpoints are disabled");
     }
 
+    // Redirects are off deliberately: the SSRF gate checks the host of the URL we
+    // were given, and following a 302 would let an allowlisted host hand us any
+    // other one.
+    let http = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .connect_timeout(Duration::from_secs(5))
+        .timeout(Duration::from_secs(15))
+        .user_agent("serious-shift-backend/1 (+innovation cover mirror)")
+        .build()
+        .expect("HTTP client must build");
+
     let state = AppState {
         pool,
         ingest_token,
+        curation_token,
         inspection_token,
+        http,
         snapshot: Arc::new(tokio::sync::RwLock::new(None)),
         refresh_lock: Arc::new(tokio::sync::Mutex::new(())),
         shell: Arc::from(read_shell()),
@@ -253,6 +285,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         legacy_map_limiter: Arc::new(RateLimiter::per_minute(10, 2)),
         legacy_map_concurrency: Arc::new(tokio::sync::Semaphore::new(2)),
         public_v1_limiter: Arc::new(RateLimiter::per_minute(120, 30)),
+        ingest_limiter: Arc::new(RateLimiter::per_minute(60, 20)),
     };
 
     // The fallback service needs its own handle: `with_state` below consumes
@@ -282,9 +315,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(spa))
         .route("/robots.txt", get(robots_txt))
         .route("/sitemap.xml", get(sitemap_xml))
+        .route("/api/v1/innovations", get(innovations::list))
+        .route("/api/v1/innovations/:id", get(innovations::detail))
+        // Same origin as the page that renders it, which is what makes the
+        // mirrored bytes legal under `img-src 'self'`.
+        .route(
+            "/api/innovations/:id/cover-image",
+            get(innovations::cover_image),
+        )
         .route(
             "/api/innovations/ingest",
-            post(ingest_innovation).layer(DefaultBodyLimit::max(1024 * 1024)),
+            post(innovations::ingest).layer(DefaultBodyLimit::max(1024 * 1024)),
+        )
+        .route(
+            "/api/innovations/:id/shifts",
+            put(innovations::put_shifts).layer(DefaultBodyLimit::max(64 * 1024)),
+        )
+        // A sub-shift slug is `parent/child`, so the tail is a wildcard rather
+        // than a single segment.
+        .route(
+            "/api/innovations/:id/shifts/:scope/*slug",
+            delete(innovations::delete_shift_link),
         )
         // Unknown /api/* paths must 404 as JSON. Without this they reach the SPA
         // fallback below and a mistyped endpoint answers 200 text/html, which an
@@ -382,6 +433,13 @@ struct AppError {
     request_id: String,
     retry_after: Option<u64>,
     rate_limit: Option<u64>,
+    /// Per-field detail, emitted only for 422. Absent everywhere else, so the
+    /// envelope every existing client parses is unchanged.
+    ///
+    /// Boxed because this type is the `Err` of nearly every handler: inline, the
+    /// extra `Value` pushed `AppError` past 128 bytes and every `Result` in the
+    /// crate got wider to carry a field only one status code sets.
+    details: Option<Box<Value>>,
 }
 
 impl AppError {
@@ -393,6 +451,7 @@ impl AppError {
             request_id: next_error_id(),
             retry_after: None,
             rate_limit: None,
+            details: None,
         }
     }
 
@@ -406,6 +465,7 @@ impl AppError {
             request_id,
             retry_after: None,
             rate_limit: None,
+            details: None,
         }
     }
 
@@ -417,6 +477,7 @@ impl AppError {
             request_id: next_error_id(),
             retry_after: Some(retry_after),
             rate_limit: Some(10),
+            details: None,
         }
     }
 
@@ -428,6 +489,22 @@ impl AppError {
             request_id: next_error_id(),
             retry_after: Some(retry_after),
             rate_limit: Some(limit),
+            details: None,
+        }
+    }
+
+    /// A body that parsed but doesn't make sense, with the offending fields
+    /// named. 422 rather than 400 so a caller can tell "I sent malformed JSON"
+    /// from "I sent JSON you disagree with" — the two need different fixes.
+    fn validation(details: Vec<Value>) -> Self {
+        Self {
+            status: StatusCode::UNPROCESSABLE_ENTITY,
+            code: "validation_failed",
+            message: "The payload could not be accepted.".into(),
+            request_id: next_error_id(),
+            retry_after: None,
+            rate_limit: None,
+            details: Some(Box::new(Value::Array(details))),
         }
     }
 }
@@ -443,17 +520,15 @@ fn next_error_id() -> String {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let request_id = self.request_id;
-        let mut response = (
-            self.status,
-            Json(json!({
-                "error": {
-                    "code": self.code,
-                    "message": self.message,
-                    "request_id": request_id.clone(),
-                }
-            })),
-        )
-            .into_response();
+        let mut error = json!({
+            "code": self.code,
+            "message": self.message,
+            "request_id": request_id.clone(),
+        });
+        if let Some(details) = self.details {
+            error["details"] = *details;
+        }
+        let mut response = (self.status, Json(json!({ "error": error }))).into_response();
         response.headers_mut().insert(
             HeaderName::from_static("x-request-id"),
             HeaderValue::from_str(&request_id).unwrap(),
@@ -719,23 +794,64 @@ fn route_fragment(version: &str, identity: &str, value: Value) -> RouteFragment 
 }
 
 /// Parse one publication and derive every public response exactly once.
-fn build_snapshot(body: String, version: &str) -> Result<MapSnapshot, serde_json::Error> {
+///
+/// `innovations` is the one part of a shift page that does not come from the
+/// publication: it is joined in here, so an example pushed by the upstream
+/// database appears on its shifts within `DOC_CACHE_TTL` instead of waiting for
+/// the next weekly run. `version` must already carry the innovations revision —
+/// see `fetch_snapshot` — or the ETags derived below would not change when they
+/// do.
+fn build_snapshot(
+    body: String,
+    version: &str,
+    innovations: &innovations::ByShift,
+) -> Result<MapSnapshot, serde_json::Error> {
     let document: Value = serde_json::from_str(&body)?;
     let domains = document
         .get("domains")
         .and_then(Value::as_array)
         .cloned()
         .unwrap_or_default();
-    let shifts = document
+    let mut shifts = document
         .get("key_trends")
         .and_then(Value::as_array)
         .cloned()
         .unwrap_or_default();
-    let subs = document
+    let mut subs = document
         .get("sub_trends")
         .and_then(Value::as_array)
         .cloned()
         .unwrap_or_default();
+
+    // Composed before any fragment is built, so every response that carries a
+    // shift row carries the same module list. `full_body` and the SEO index are
+    // deliberately left alone: both read the raw publication, and neither
+    // describes examples of a shift.
+    for (rows, scope) in [
+        (&mut shifts, innovations::Scope::KeyTrend),
+        (&mut subs, innovations::Scope::SubTrend),
+    ] {
+        for row in rows.iter_mut() {
+            let key = format!("{}:{}", scope.as_str(), string_field(row, "slug"));
+            let items = innovations.get(&key);
+            let modules = row
+                .get_mut("modules")
+                .and_then(Value::as_array_mut)
+                .map(std::mem::take);
+            // A row with no `modules` list at all only gains one if there is
+            // something to put in it — the front end projects a minimal page
+            // from the other fields when the key is absent.
+            if let Some(mut modules) = modules {
+                innovations::hydrate(&mut modules, scope, items);
+                row["modules"] = Value::Array(modules);
+            } else if items.is_some() {
+                let mut modules = Vec::new();
+                innovations::hydrate(&mut modules, scope, items);
+                row["modules"] = Value::Array(modules);
+            }
+        }
+    }
+    let (shifts, subs) = (shifts, subs);
     let insights = document
         .get("synthesis_insights")
         .and_then(Value::as_array)
@@ -892,14 +1008,20 @@ async fn fetch_snapshot(s: &AppState) -> Result<Arc<MapSnapshot>, AppError> {
         sqlx::query_as("SELECT body::text, updated_at::text FROM documents WHERE key = 'map'")
             .fetch_optional(&s.pool)
             .await?;
-    let (body, version) = row.ok_or_else(|| {
+    let (body, published) = row.ok_or_else(|| {
         AppError::public(
             StatusCode::NOT_FOUND,
             "not_found",
             "Map document not found.",
         )
     })?;
-    build_snapshot(body, &version)
+    // The publication's timestamp alone is not the identity of a response any
+    // more: two snapshots of the same document can differ in their innovations.
+    // Folding the innovations revision in is what keeps `weak_etag` honest, so a
+    // client holding `If-None-Match` is told when a page has changed.
+    let innovations = innovations::load(&s.pool).await;
+    let version = format!("{published}|i{:016x}", innovations.revision);
+    build_snapshot(body, &version, &innovations.by_shift)
         .map(Arc::new)
         .map_err(|error| AppError::internal(format!("invalid published map JSON: {error}")))
 }
@@ -1188,7 +1310,7 @@ async fn sitemap_xml(State(s): State<AppState>) -> Response {
         .into_response()
 }
 
-// ── /api/innovations/ingest (write endpoint) ───────────────────────────────────
+// ── shared secret comparison ─────────────────────────────────────────────────
 
 /// Constant-time byte comparison, so token checks don't leak length or prefix
 /// via timing. Avoids pulling in a crate for ~10 lines.
@@ -1198,107 +1320,6 @@ fn secret_eq(a: &str, b: &str) -> bool {
         return false;
     }
     a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
-}
-
-/// One innovation pushed by the upstream Innovation database. Scalars we
-/// query/join on become columns; the variable-shape nested fields stay as JSON.
-/// Everything is optional so a partial payload still ingests (nulls, not 400s).
-#[derive(Deserialize)]
-struct IngestInnovationReq {
-    #[serde(default)]
-    source_innovation_id: Option<i64>,
-    #[serde(default)]
-    article_url: Option<String>,
-    #[serde(default)]
-    source_urls: Value,
-    #[serde(default)]
-    title: Option<String>,
-    #[serde(default)]
-    body: Option<String>,
-    #[serde(default)]
-    trendbite: Option<String>,
-    #[serde(default)]
-    brands: Value,
-    #[serde(default)]
-    tags: Value,
-    #[serde(default)]
-    cover_image: Option<Value>,
-}
-
-/// Ingest one innovation into the `innovations` table. Idempotent on
-/// `source_innovation_id` (re-POSTing updates in place). Returns 200 `ok` on
-/// success; any DB error becomes a 500 via `From<sqlx::Error> for AppError`.
-/// Takes the raw body rather than `Json<T>` so the shared secret is checked
-/// *before* anything untrusted is deserialised. With the extractor, axum runs it
-/// ahead of the handler — so an unauthenticated caller could make the server
-/// parse up to 1 MB of JSON, and a wrong content-type answered 415 instead of
-/// the 404 the route is supposed to present while disabled.
-async fn ingest_innovation(
-    State(s): State<AppState>,
-    headers: HeaderMap,
-    body: axum::body::Bytes,
-) -> Result<Response, AppError> {
-    // With INGEST_TOKEN unset the route reports 404 rather than staying open — an
-    // unauthenticated write endpoint should not exist by default, and 404 leaks
-    // less about what is deployed here than 401 does.
-    let Some(expected) = s.ingest_token.as_deref() else {
-        return Err(AppError::public(
-            StatusCode::NOT_FOUND,
-            "not_found",
-            "Not found.",
-        ));
-    };
-    let presented = headers
-        .get("x-ingest-token")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or_default();
-    if !secret_eq(presented, expected) {
-        return Err(AppError::public(
-            StatusCode::UNAUTHORIZED,
-            "unauthorized",
-            "Unauthorized.",
-        ));
-    }
-
-    let req: IngestInnovationReq = serde_json::from_slice(&body).map_err(|_| {
-        AppError::public(
-            StatusCode::BAD_REQUEST,
-            "invalid_request",
-            "Request body is not valid JSON.",
-        )
-    })?;
-
-    sqlx::query(
-        r#"
-        INSERT INTO innovations
-          (source_innovation_id, article_url, source_urls, title, body,
-           trendbite, brands, tags, cover_image)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        ON CONFLICT (source_innovation_id) DO UPDATE SET
-          article_url = EXCLUDED.article_url,
-          source_urls = EXCLUDED.source_urls,
-          title       = EXCLUDED.title,
-          body        = EXCLUDED.body,
-          trendbite   = EXCLUDED.trendbite,
-          brands      = EXCLUDED.brands,
-          tags        = EXCLUDED.tags,
-          cover_image = EXCLUDED.cover_image,
-          updated_at  = now()
-        "#,
-    )
-    .bind(req.source_innovation_id)
-    .bind(req.article_url)
-    .bind(SqlxJson(req.source_urls))
-    .bind(req.title)
-    .bind(req.body)
-    .bind(req.trendbite)
-    .bind(SqlxJson(req.brands))
-    .bind(SqlxJson(req.tags))
-    .bind(req.cover_image.map(SqlxJson))
-    .execute(&s.pool)
-    .await?;
-
-    Ok((StatusCode::OK, "ok").into_response())
 }
 
 #[cfg(test)]
@@ -1423,9 +1444,16 @@ mod tests {
         .to_string()
     }
 
+    /// A publication with nothing linked to it — the state of every page before
+    /// the first innovation is curated onto one.
+    fn no_innovations() -> innovations::ByShift {
+        innovations::ByShift::new()
+    }
+
     #[test]
     fn route_snapshot_has_distinct_scoped_documents_and_etags() {
-        let snapshot = build_snapshot(sample_map(), "2026-08-02 14:00:00+00").unwrap();
+        let snapshot =
+            build_snapshot(sample_map(), "2026-08-02 14:00:00+00", &no_innovations()).unwrap();
         let index = snapshot.routes.get("").unwrap();
         let domain = snapshot.routes.get("society").unwrap();
         let shift = snapshot.routes.get("society/trust-machines").unwrap();
@@ -1516,9 +1544,82 @@ mod tests {
         }
     }
 
+    /// One innovation linked to the sample publication's key shift.
+    fn one_innovation() -> innovations::ByShift {
+        let mut by_shift = innovations::ByShift::new();
+        by_shift.insert(
+            "key_trend:trust-machines".into(),
+            json!([{
+                "title": "Proof-of-human badge",
+                "brand": "Acme",
+                "description": "A verification product.",
+                "url": "https://example.com/acme",
+                "image": "/api/innovations/7/cover-image?v=0123456789ab"
+            }]),
+        );
+        by_shift
+    }
+
+    #[test]
+    fn a_linked_innovation_reaches_the_shift_fragment() {
+        let snapshot =
+            build_snapshot(sample_map(), "2026-08-02 14:00:00+00|i0", &one_innovation()).unwrap();
+        let shift: Value =
+            serde_json::from_str(&snapshot.routes.get("society/trust-machines").unwrap().body)
+                .unwrap();
+        let modules = shift["shift"]["modules"].as_array().unwrap();
+        let module = modules
+            .iter()
+            .find(|m| m["type"] == "innovations")
+            .expect("the linked innovation must appear as a module");
+        assert_eq!(module["data"]["items"][0]["title"], "Proof-of-human badge");
+        // Same-origin, so `img-src 'self'` allows it. An upstream URL would not
+        // render at all.
+        assert!(module["data"]["items"][0]["image"]
+            .as_str()
+            .unwrap()
+            .starts_with("/api/innovations/"));
+
+        // The sub-shift was not linked, so its page is untouched.
+        let sub: Value = serde_json::from_str(
+            &snapshot
+                .routes
+                .get("society/trust-machines/proof-of-human")
+                .unwrap()
+                .body,
+        )
+        .unwrap();
+        assert!(!sub["sub_shift"]["modules"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|m| m["type"] == "innovations"));
+    }
+
+    /// The failure this guards is silent: a reader holding `If-None-Match` from
+    /// before an innovation was linked would be told `304` and keep the old page
+    /// indefinitely, because the publication's own timestamp had not moved.
+    #[test]
+    fn linking_an_innovation_changes_every_affected_etag() {
+        let published = "2026-08-02 14:00:00+00";
+        let before =
+            build_snapshot(sample_map(), &format!("{published}|i0"), &no_innovations()).unwrap();
+        let after = build_snapshot(
+            sample_map(),
+            &format!("{published}|i1cf2"),
+            &one_innovation(),
+        )
+        .unwrap();
+        let route = "society/trust-machines";
+        assert_ne!(
+            before.routes.get(route).unwrap().etag,
+            after.routes.get(route).unwrap().etag
+        );
+    }
+
     #[test]
     fn matching_etag_returns_304_without_a_body() {
-        let snapshot = build_snapshot(sample_map(), "version").unwrap();
+        let snapshot = build_snapshot(sample_map(), "version", &no_innovations()).unwrap();
         let fragment = snapshot.routes.get("society").unwrap();
         let mut headers = HeaderMap::new();
         headers.insert(header::IF_NONE_MATCH, fragment.etag.clone());
@@ -1531,7 +1632,7 @@ mod tests {
     fn route_fragments_fit_compressed_response_budgets() {
         use std::io::Write;
 
-        let snapshot = build_snapshot(sample_map(), "version").unwrap();
+        let snapshot = build_snapshot(sample_map(), "version", &no_innovations()).unwrap();
         for (route, budget) in [
             ("", 25 * 1024),
             ("society", 75 * 1024),
@@ -1565,7 +1666,9 @@ mod tests {
         let state = AppState {
             pool,
             ingest_token: None,
+            curation_token: None,
             inspection_token: None,
+            http: reqwest::Client::new(),
             snapshot: Arc::new(tokio::sync::RwLock::new(None)),
             refresh_lock: Arc::new(tokio::sync::Mutex::new(())),
             shell: Arc::from(""),
@@ -1573,6 +1676,7 @@ mod tests {
             legacy_map_limiter: Arc::new(RateLimiter::per_minute(10, 2)),
             legacy_map_concurrency: Arc::new(tokio::sync::Semaphore::new(2)),
             public_v1_limiter: Arc::new(RateLimiter::per_minute(120, 30)),
+            ingest_limiter: Arc::new(RateLimiter::per_minute(60, 20)),
         };
 
         let mut tasks = tokio::task::JoinSet::new();

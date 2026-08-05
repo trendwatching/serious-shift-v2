@@ -484,7 +484,78 @@ def _write_map_document(conn, out):
     conn.execute("""INSERT INTO documents (key, body) VALUES ('map', %s::jsonb)
         ON CONFLICT (key) DO UPDATE SET body = EXCLUDED.body, updated_at = now()""",
         (encoded,))
+    _publish_shift_refs(conn, out)
     conn.commit()
+
+
+def _publish_shift_refs(conn, out: dict) -> None:
+    """Record the identity of every shift this document publishes.
+
+    `shift_refs` is what an innovation's mapping points at, and it exists because
+    `domain_key_trends.id` cannot be pointed at: `reset_v2_tables` TRUNCATEs the
+    v2 taxonomy with RESTART IDENTITY on every run, so those keys are recycled
+    weekly. The durable identity is the URL slug — the same key
+    `shift_module_overrides` uses, and for the same reason.
+
+    Rows are upserted, never deleted. A shift that leaves the map keeps its row
+    with a now-stale `last_published_at`, so a link survives a shift being renamed
+    and renamed back, and that staleness is what the warning below detects. Runs
+    in the same transaction as the document promotion above: the identities and
+    the document they came from must not be able to disagree.
+    """
+    rows = [
+        ('key_trend', kt.get('slug'), kt.get('domain_id'), kt.get('name'))
+        for kt in out.get('key_trends') or []
+    ] + [
+        ('sub_trend', st.get('slug'), st.get('domain_id'), st.get('name'))
+        for st in out.get('sub_trends') or []
+    ]
+    rows = [r for r in rows if r[1]]
+    if not rows:
+        return
+
+    scopes, slugs, domains, titles = (list(column) for column in zip(*rows))
+    # statement_timestamp(), not now() and not clock_timestamp(). now() is the
+    # *transaction* timestamp, so two publications sharing a transaction would
+    # each look current to the other and the staleness check below would find
+    # nothing. clock_timestamp() is volatile and can be re-evaluated per row,
+    # which would spread this publication's shifts across several stamps.
+    # statement_timestamp() is fixed for this one statement and advances for the
+    # next — exactly one stamp per publication.
+    conn.execute("""
+        INSERT INTO shift_refs (scope, slug, domain_id, title, last_published_at)
+        SELECT scope, slug, domain_id, title, statement_timestamp()
+          FROM unnest(%s::text[], %s::text[], %s::text[], %s::text[])
+               AS t(scope, slug, domain_id, title)
+        ON CONFLICT (scope, slug) DO UPDATE SET
+          domain_id = EXCLUDED.domain_id,
+          title = EXCLUDED.title,
+          last_published_at = EXCLUDED.last_published_at
+    """, (scopes, slugs, domains, titles))
+    print(f'  ✓  {len(rows)} shift identities published.')
+
+    # A curated innovation whose shift was renamed is the one failure here that
+    # is otherwise silent: the link is still in the DB, the page just stops
+    # showing it. Reported the same way an unmatched module override is.
+    #
+    # "Not in this publication" is `last_published_at` older than the newest one
+    # in the table — which is the stamp the statement above just wrote.
+    stranded = conn.execute("""
+        SELECT sr.scope, sr.slug, count(*) AS links
+          FROM innovation_shift_links l
+          JOIN shift_refs sr ON sr.id = l.shift_ref_id
+         WHERE l.enabled
+           AND (sr.last_published_at IS NULL
+                OR sr.last_published_at < (SELECT max(last_published_at) FROM shift_refs))
+         GROUP BY sr.scope, sr.slug
+         ORDER BY sr.scope, sr.slug
+    """).fetchall()
+    if stranded:
+        names = [f'{r["scope"]}:{r["slug"]}' for r in stranded]
+        total = sum(r['links'] for r in stranded)
+        print(f'  ⚠  {total} innovation link(s) point at {len(names)} shift(s) not in '
+              f'this publication (renamed?): {", ".join(names[:5])}'
+              + (' …' if len(names) > 5 else ''))
 
 
 def load_kts_from_db(conn) -> dict:

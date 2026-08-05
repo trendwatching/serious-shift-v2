@@ -7,9 +7,15 @@
     "MODULE_TEMPLATE, and register a component in",
     "apps/frontend/src/shift/modules.jsx. Unknown types fail publication and the",
     "front end also surfaces a defensive unavailable-section fallback.",
-    "Guarded by apps/pipeline/tests/test_shift_modules_contract.py."
+    "Guarded by apps/pipeline/tests/test_shift_modules_contract.py.",
+    "One type breaks that pattern: `innovations` is not generated at all. The",
+    "backend hydrates it into each shift row when it builds a route fragment, so",
+    "an innovation pushed by the upstream database appears within the response",
+    "cache TTL instead of waiting for the next weekly publication. The order",
+    "below is still what decides where it lands — apps/backend/src/innovations.rs",
+    "mirrors these two lists as consts and a test fails if they drift."
   ],
-  "version": 2,
+  "version": 3,
   "$order_comment": [
     "Canonical reading order, from the Miro content mockup (SERIOUS SHIFT 2026 →",
     "Content Mockup- July'26). The export sorts every module list by this, so",
@@ -29,6 +35,7 @@
       "timeline",
       "industries",
       "territories",
+      "innovations",
       "voices",
       "sub_shift_list",
       "related_shifts",
@@ -149,7 +156,7 @@
       ]
     },
     "innovations": {
-      "summary": "\"Innovations in the wild\" — real branded examples of the shift, from the innovations table.",
+      "summary": "\"Innovations in the wild\" — real branded examples of the shift, from the innovations table. Not generated: the backend hydrates this module's items from innovation_shift_links when it builds a route fragment, so a newly-ingested example appears without a publication run. `image` is always a same-origin /api/innovations/{id}/cover-image path, because the CSP is img-src 'self'.",
       "data": {
         "items": [
           {
@@ -157,7 +164,8 @@
             "brand": "string?",
             "description": "string?",
             "url": "string?",
-            "image": "string?"
+            "image": "string?",
+            "tags": ["string"]
           }
         ]
       },

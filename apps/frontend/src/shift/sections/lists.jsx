@@ -126,6 +126,18 @@ export function HumanNeeds({ needs }) {
   )
 }
 
+/**
+ * Real branded examples of the shift.
+ *
+ * The only module whose items are not written by the pipeline: the backend joins
+ * them in from the innovations the upstream database pushed and an editor mapped
+ * onto this shift. Every field but `title` is optional, because an innovation can
+ * arrive with no cover image, no brand and no trendbite — the card has to read
+ * correctly with any of them missing.
+ *
+ * `image` is always a same-origin `/api/innovations/…` path. The CSP is
+ * `img-src 'self' data:`, so an upstream URL would not render at all.
+ */
 export function Innovations({ items }) {
   if (!items?.length) return null
   return (
@@ -134,14 +146,19 @@ export function Innovations({ items }) {
       <div className="grid gap-2.5 md:grid-cols-2 lg:gap-4 xl:grid-cols-3">
         {items.map((n, i) => {
           const Card = n.url ? 'a' : 'div'
+          const tags = Array.isArray(n.tags) ? n.tags.filter((t) => typeof t === 'string' && t).slice(0, 3) : []
           return (
             <Card
               key={i}
               {...(n.url ? { href: n.url, target: '_blank', rel: 'noopener noreferrer' } : {})}
               className="card card-lift flex flex-col gap-2 overflow-hidden p-4 lg:p-5"
             >
+              {/* width/height alongside the fixed height: the mirrored image is
+                  fetched from our own origin but still asynchronously, and
+                  without intrinsic dimensions the card reflows as each one
+                  lands. */}
               {n.image && (
-                <img src={n.image} alt="" loading="lazy" decoding="async"
+                <img src={n.image} alt="" loading="lazy" decoding="async" width={480} height={320}
                      className="mb-1 h-[132px] w-full rounded-xl object-cover lg:h-[160px]" />
               )}
               {n.brand && (
@@ -152,6 +169,25 @@ export function Innovations({ items }) {
               <span className="t-display text-[15px] leading-[1.25] lg:text-[17px]" style={{ letterSpacing: '-0.01em' }}>{n.title}</span>
               {n.description && (
                 <span className="t-body text-pretty" style={{ color: 'var(--color-ink-mid)' }}>{n.description}</span>
+              )}
+              {/* Sector and innovation-type, from the upstream taxonomy — enough
+                  to place an example at a glance without turning the card into a
+                  tag cloud. */}
+              {tags.length > 0 && (
+                <span className="mt-auto flex flex-wrap gap-1.5 pt-1">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="t-eyebrow rounded-full px-2 py-0.5"
+                      style={{
+                        fontSize: 9,
+                        letterSpacing: '0.1em',
+                        background: 'var(--color-paper)',
+                        color: 'var(--color-ink-soft)',
+                      }}
+                    >{tag}</span>
+                  ))}
+                </span>
               )}
             </Card>
           )

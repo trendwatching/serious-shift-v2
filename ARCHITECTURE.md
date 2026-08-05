@@ -52,6 +52,14 @@ version. It also serves `robots.txt` and `sitemap.xml` from that same snapshot.
 - **Why:** the API surface is essentially "dump these rows as JSON," so letting
   Postgres assemble the JSON keeps it tiny and obviously-correct (no ORM, no
   per-table structs). Replaces the old ~53 MB of static JSON the browser used to download.
+- **The one exception to "the pipeline writes, the backend reads":**
+  `src/innovations.rs` owns the innovations write path, the innovation↔shift
+  mapping, and mirrored cover images. Innovations arrive by push at any time, so
+  they are joined into each shift's module list when a route fragment is built
+  rather than baked into the weekly document — an ingest or a curation edit is on
+  the page within the 60s response cache TTL. The snapshot's cache version carries
+  an innovations revision so the ETags stay honest.
+  See [`docs/INNOVATIONS-API.md`](docs/INNOVATIONS-API.md).
 - **Change here → visible:** the `/api/*` responses the frontend consumes.
 
 ### `apps/frontend` — React + Tailwind, the UI
@@ -81,8 +89,10 @@ SQLite→Postgres import.
 |---|---|---|---|
 | **DB schema** | `packages/db/migrations/*.sql` | pipeline writes → backend reads | add a migration; update the writer (pipeline) and reader (backend SQL) |
 | **API shapes** | `apps/backend/src/main.rs` + `packages/contracts` | backend serves → frontend reads | keep route-scoped v1 shapes stable, or update `useDomains` and its fixtures |
+| **Innovations ingest** | [`docs/INNOVATIONS-API.md`](docs/INNOVATIONS-API.md) + `apps/backend/src/innovations.rs` | upstream Innovation database writes → backend stores | it is someone else's client: keep `source_innovation_id` idempotency and the error codes stable |
 
-Everything else is internal to one block.
+Everything else is internal to one block. The third contract is the only one with a
+producer outside this repo.
 
 ---
 
@@ -95,6 +105,7 @@ Everything else is internal to one block.
 | Tune the extraction (what claims get pulled) | `process_raw.py` prompt | newly-processed sources' claims |
 | Change claim ranking | `scoring.py` (depth/freshness/weight formula) | ordering across the map and claim lists |
 | Add/modify an API endpoint | `apps/backend/src/sql.rs` + `src/main.rs` | new `/api/*` route |
+| Put an innovation on a shift page | `PUT /api/innovations/{id}/shifts` (or send `shifts[]` at ingest) | that shift's page, within 60s |
 | Change the database schema | `dbmate new <name>` in `packages/db/migrations` (+ writer/reader) | everywhere downstream |
 | Change UI / layout / styling | `apps/frontend/src/` (views, components, Tailwind) | the rendered page |
 | Change what env/secrets are used | per-block README "Configuration" + the platform's secret store | runtime behaviour |
@@ -151,8 +162,12 @@ Everything else is internal to one block.
   sources only after listing/transcript metrics are healthy. Credentials are
   redacted and source success, item count, latency, proxy request count, and
   estimated cost are persisted in `pipeline_runs.detail`.
-- **Innovations are deliberately dormant.** Leave `INGEST_TOKEN` unset. The
-  endpoint returns 404 and no matching/ingestion infrastructure is in this scope.
+- **Innovations have no automatic shift matching.** Ingestion, the mapping and the
+  page rendering are all live (see [`docs/INNOVATIONS-API.md`](docs/INNOVATIONS-API.md)),
+  but *which* shifts an innovation is an example of is decided by upstream sending
+  `shifts[]` or by an editor calling the curation API. A tag-overlap suggester is
+  the obvious next step — `innovation_shift_links.source` already reserves
+  `'auto'` and carries a `confidence` column for it.
 - **The module contract is checked in.** `packages/contracts/shift_modules.json`
   owns module order, required fields, and the canonical industry list. A formal
   OpenAPI schema and generated client remain optional future work; runtime route

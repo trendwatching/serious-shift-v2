@@ -103,8 +103,12 @@ if you want them. That is now a data + registry change, not a redesign.
 
 ## Deliberately deferred or operationally blocked
 
-- **Innovations stay dormant.** The module contract remains, but `INGEST_TOKEN`
-  is unset and no ingestion/matching infrastructure is being invented.
+- **Innovations ship without automatic matching.** Ingestion, the many-to-many
+  shift mapping, the curation API and the rendered module are all in place
+  ([`INNOVATIONS-API.md`](INNOVATIONS-API.md)); what is deferred is inferring
+  *which* shifts an innovation exemplifies. Links come from the payload or an
+  editor, and `innovation_shift_links.source`/`confidence` already reserve room
+  for an `'auto'` suggester.
 - **YouTube requires a managed proxy canary.** Code supports credential-redacted
   proxying and records source success, count, latency, requests, and estimated
   cost. Railway must provide `YOUTUBE_PROXY_URL` before one channel can be

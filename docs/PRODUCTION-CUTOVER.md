@@ -43,10 +43,18 @@ railway variables --set FRONTEND_ORIGIN=https://www.seriousshift.ai \
 
 `PUBLIC_ORIGIN` is what canonical URLs and `sitemap.xml` are built from. Without
 it they fall back to the first `FRONTEND_ORIGIN` entry, which is the same here.
-Set a strong `INSPECTION_TOKEN` separately. Leave `INGEST_TOKEN` absent: the
-innovations feature is deferred and must stay disabled. Before enabling YouTube,
-provision managed `YOUTUBE_PROXY_URL` on the pipeline service; never put the
-credential in this runbook or a command transcript.
+Set a strong `INSPECTION_TOKEN` separately.
+
+`INGEST_TOKEN` and `CURATION_TOKEN` gate the innovations write and curation
+routes; each route is a 404 while its token is absent. Leave both absent for the
+cutover itself — nothing about moving the domain depends on them — and set them
+afterwards, once staging has accepted a real payload end to end
+([`INNOVATIONS-API.md`](INNOVATIONS-API.md#7-operating-it)). They must be
+different values from each other and from staging's: the upstream database's
+credential should not be able to change what appears on a page.
+
+Before enabling YouTube, provision managed `YOUTUBE_PROXY_URL` on the pipeline
+service; never put the credential in this runbook or a command transcript.
 
 ### 2. Reconcile the schema
 
@@ -115,7 +123,10 @@ this point. Check:
 - `/api/nonsense` → JSON 404 with stable `not_found` code
 - an invalid content path → accessible HTML, HTTP 404, and noindex
 - inspection routes → 401 without a bearer token; 404 if disabled
-- `POST /api/innovations/ingest` → 404 while `INGEST_TOKEN` is absent
+- `POST /api/innovations/ingest` → 404 while `INGEST_TOKEN` is absent, 401 with it
+  set and no `X-Ingest-Token`
+- `PUT /api/innovations/1/shifts` → 404 while `CURATION_TOKEN` is absent
+- `GET /api/v1/innovations` → `{"items": [...], "limit": 24, "next_cursor": …}`
 
 ### 6. Move the domain  ← the visible flip
 

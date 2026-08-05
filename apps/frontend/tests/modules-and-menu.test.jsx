@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { TopBar } from '../src/shift/chrome'
 import { HumanNeeds, PeelTabs, SubShiftList } from '../src/shift/sections'
-import { subs } from './fixtures'
+import { Modules } from '../src/shift/modules'
+import { innovationItems, subs } from './fixtures'
 
 describe('accessible modules and navigation', () => {
   it('operates tabs and disclosures with accurate state', async () => {
@@ -29,6 +30,45 @@ describe('accessible modules and navigation', () => {
     await user.click(screen.getByRole('button', { name: 'Next sub-shift' }))
     expect(screen.getByRole('status')).toHaveTextContent('2 of 5')
     expect(screen.getByRole('link', { name: /Open sub-shift 2 of 5/ })).toBeInTheDocument()
+  })
+
+  it('renders innovations hydrated onto a key shift, tolerating missing fields', () => {
+    // The module reaches the page through the registry, not through a prop — the
+    // backend injects it into the shift's `modules` list, so this is the real
+    // path from a curated link to a rendered card.
+    render(
+      <MemoryRouter>
+        <Modules
+          modules={[{ type: 'innovations', data: { items: innovationItems } }]}
+          ctx={{ scope: 'key_trend' }}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('heading', { name: /Innovations in the wild/i })).toBeInTheDocument()
+
+    // A complete example links out to the article and shows its own origin.
+    const link = screen.getByRole('link', { name: /Proof-of-human badge/i })
+    expect(link).toHaveAttribute('href', 'https://example.com/acme')
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    expect(screen.getByText('Acme')).toBeInTheDocument()
+    expect(screen.getByText('food-beverage')).toBeInTheDocument()
+
+    // Same-origin image, which is what the CSP (`img-src 'self'`) permits. An
+    // upstream URL here would silently fail to load in a browser.
+    const image = document.querySelector('img')
+    expect(image.getAttribute('src')).toMatch(/^\/api\/innovations\/\d+\/cover-image/)
+    expect(image).toHaveAttribute('alt', '')
+
+    // The minimal example still renders, and is not a link.
+    expect(screen.getByText('Bare minimum innovation')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Bare minimum/i })).not.toBeInTheDocument()
+    expect(document.querySelectorAll('img')).toHaveLength(1)
+  })
+
+  it('drops an innovations module with nothing in it rather than rendering an empty band', () => {
+    render(<Modules modules={[{ type: 'innovations', data: { items: [] } }]} ctx={{}} />)
+    expect(screen.queryByText(/Innovations in the wild/i)).not.toBeInTheDocument()
   })
 
   it('uses the exact six-item menu and restores focus when it closes', async () => {
