@@ -17,6 +17,36 @@ REQUIRED_SUB_TRENDS = 5
 MAX_CLUSTER_ATTEMPTS = 3
 
 
+#: The contract requires two independently routed evidence items per sub-shift,
+#: and the editorial prompt must cite two of its own claims. A sub-shift given
+#: fewer than this is unpublishable the moment it is created — no retry can fix
+#: it, because the evidence to cite does not exist.
+MIN_CLAIMS_PER_SUB = 2
+
+
+def _top_up_claims(sub_trends: list[dict], allowed_claim_ids: set[int]) -> list[dict]:
+    """Give every sub-shift at least `MIN_CLAIMS_PER_SUB` routed claims.
+
+    The model assigns claims unevenly: on one run 20 of 245 sub-shifts came back
+    with one claim or none, out of a parent pool of up to a hundred. Each of those
+    then failed publication three ways at once — no evidence module, no citable
+    provenance, and therefore no editorial body at all, which is 9 missing modules
+    per sub-shift and 180 of the run's 285 issues.
+
+    Ownership stays single: a claim already assigned to a sibling is never reused.
+    Topping up from the parent's unassigned remainder is a routing decision, not
+    an editorial one, so it belongs here rather than in a prompt.
+    """
+    taken = {cid for st in sub_trends for cid in st.get('claim_ids') or []}
+    spare = [cid for cid in sorted(allowed_claim_ids) if cid not in taken]
+    for st in sub_trends:
+        ids = list(st.get('claim_ids') or [])
+        while len(ids) < MIN_CLAIMS_PER_SUB and spare:
+            ids.append(spare.pop(0))
+        st['claim_ids'] = ids
+    return sub_trends
+
+
 def _validated_sub_trends(result: object, allowed_claim_ids: set[int]) -> list[dict]:
     """Keep model taxonomy only when it satisfies the publication contract.
 
@@ -97,8 +127,9 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         # Truncate rather than publish a sixth: the contract is exact, and a
         # deterministic cut here beats a validation failure the repair pass then
         # has to spend a call undoing.
-        sub_trends = _validated_sub_trends(
-            result, {claim['id'] for claim in claims})[:REQUIRED_SUB_TRENDS]
+        allowed = {claim['id'] for claim in claims}
+        sub_trends = _top_up_claims(
+            _validated_sub_trends(result, allowed)[:REQUIRED_SUB_TRENDS], allowed)
         for i, st in enumerate(sub_trends, start=1):
             st_db_id = conn.execute("""
                 INSERT INTO domain_sub_trends

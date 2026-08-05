@@ -1,8 +1,6 @@
 """Phase 4b — editorial prose for Key Trends and their sub-trends."""
 from __future__ import annotations
 
-import re
-
 from ...prompts import prompt_kt_editorial, prompt_st_editorial
 from ..config import CLAIMS_PER_KT, DOMAINS
 from ..llm import generate_json
@@ -23,58 +21,19 @@ ST_REQUIRED = {
 #: failures is a handful of calls rather than another full phase.
 MAX_EDITORIAL_ATTEMPTS = 3
 
-#: Word ceilings the *publication contract* enforces, mapped onto the editorial
-#: fields they are derived from. The prompt asks for less than every one of these
-#: (75 against 90 for `whats_changing`, and so on) — this is the hard bound that
-#: fails the publication, so it is the bound worth retrying against.
-#:
-#: Checking it here rather than only at the gate is what makes the difference
-#: between one extra call and a dead run: at the gate the whole candidate is
-#: already assembled, the repair budget is per-shift, and a fresh rebuild trips
-#: every shift at once — so the gate can only ever report the problem.
-_SCALAR_LIMITS = {
-    'lede': 40, 'from': 30, 'to': 30, 'pull_quote': 18, 'quote': 38,
-    'consumer_tension': 38, 'whats_changing': 90, 'why_now': 70,
-}
-_NESTED_LIMITS = {'human_needs': ('unlocked', 'threatened', 45), 'timeline': ('now', 'next', 45)}
-_ITEM_TEXT_LIMITS = {'industries': 40, 'opportunities': 50, 'territories': 50}
-_ITEM_STRING_LIMITS = {'signals': 35, 'counter_signals': 35}
-
-
-def _words(value) -> int:
-    return len(re.findall(r"\b[\w’'-]+\b", str(value or '')))
-
-
-def _within_limits(editorial: object) -> bool:
-    """True when every field is inside the ceiling the publication gate applies."""
-    if not isinstance(editorial, dict):
-        return False
-    for field, limit in _SCALAR_LIMITS.items():
-        if field in editorial and _words(editorial[field]) > limit:
-            return False
-    for field, (*keys, limit) in _NESTED_LIMITS.items():
-        nested = editorial.get(field)
-        if isinstance(nested, dict):
-            # `timeline` also carries `beyond`; check every value under the key
-            # rather than only the two named, so a new sibling is covered too.
-            if any(_words(value) > limit for value in nested.values()):
-                return False
-        del keys
-    for field, limit in _ITEM_TEXT_LIMITS.items():
-        for item in editorial.get(field) or []:
-            if isinstance(item, dict) and _words(item.get('text')) > limit:
-                return False
-    for field, limit in _ITEM_STRING_LIMITS.items():
-        for item in editorial.get(field) or []:
-            if _words(item) > limit:
-                return False
-    return True
-
-
 def _complete_editorial(value: object, required: set[str]) -> bool:
-    return (isinstance(value, dict)
-            and all(value.get(field) for field in required)
-            and _within_limits(value))
+    """Whether a body has everything the page needs.
+
+    Length is deliberately *not* checked here. It was, briefly, and it made
+    things worse: a shift carries sixteen sector notes, so judging the whole body
+    on the longest of them failed 46 of 49 shifts on the first pass and still 41
+    after three attempts — the retries could not converge because the thing being
+    retried was not the thing that was wrong. Overruns are now trimmed per field
+    in `modules.clamp_words`, where one long note is one note's problem, and this
+    predicate is back to asking only what it can usefully re-request: are the
+    fields there, and are the citations real.
+    """
+    return isinstance(value, dict) and all(value.get(field) for field in required)
 
 
 def _cited(editorial: object, key: str = 'evidence_ids') -> set[int]:
@@ -112,6 +71,73 @@ def _generate_until_complete(items, prompt_of, is_complete, *, describe, label):
         print(f'    {label}: {still} still incomplete after '
               f'{MAX_EDITORIAL_ATTEMPTS} attempts')
     return results
+
+
+def _sub_is_complete(sub, editorial, claims_by_sub) -> bool:
+    allowed = {claim['id'] for claim in claims_by_sub.get(sub['id'], [])}
+    cited = _cited(editorial)
+    return (_complete_editorial(editorial, ST_REQUIRED)
+            and len(cited) >= 2 and cited <= allowed)
+
+
+def _generate_sub_editorial(items, *, describe):
+    """One call per shift covering all five of its sub-shifts, retried per sub.
+
+    A shift's response covers five sub-shifts at once, and asking for five
+    eleven-field bodies inside one response means a partial answer is the normal
+    case, not the exception. So the retry has to merge: keep the sub-shifts that
+    came back usable, re-ask only for the shift's remaining ones, and fold each
+    new arrival in.
+
+    Judging the *shift* pass/fail instead — which is what a naive predicate
+    does — makes every shift fail while any one of its five is short, so nothing
+    is ever kept and the retries are three batches of pure waste. That is not
+    hypothetical: it is what the first version of this did.
+    """
+    accumulated: list[dict] = [{'sub_trends': []} for _ in items]
+
+    def missing(index: int) -> list:
+        item = items[index]
+        have = {
+            str(se.get('name', '')).strip().lower()
+            for se in accumulated[index]['sub_trends'] if isinstance(se, dict)
+        }
+        return [sub for sub in item[3] if sub['name'].strip().lower() not in have]
+
+    for attempt in range(1, MAX_EDITORIAL_ATTEMPTS + 1):
+        pending = [i for i in range(len(items)) if missing(i)]
+        if not pending:
+            break
+        if attempt > 1:
+            short = sum(len(missing(i)) for i in pending)
+            print(f'    sub-shift editorial: {short} sub-shift(s) across '
+                  f'{len(pending)} shift(s) short — attempt {attempt}/{MAX_EDITORIAL_ATTEMPTS}')
+        # Ask only for the sub-shifts still outstanding, so a retry is a smaller
+        # request as well as a rarer one. Each request carries its own shortfall
+        # rather than being looked up by identity later.
+        requests = [(items[i], missing(i)) for i in pending]
+        results = generate_json(
+            requests,
+            lambda pair: prompt_st_editorial(
+                pair[0][1]['name'], pair[0][1].get('subtitle', ''), pair[1], pair[0][4]),
+            default=dict, describe=lambda pair: describe(pair[0]),
+        )
+        for index, result in zip(pending, results):
+            item = items[index]
+            by_name = {
+                str(se.get('name', '')).strip().lower(): se
+                for se in ((result or {}).get('sub_trends') or []) if isinstance(se, dict)
+            }
+            for sub in missing(index):
+                se = by_name.get(sub['name'].strip().lower())
+                if _sub_is_complete(sub, se, item[4]):
+                    accumulated[index]['sub_trends'].append(se)
+
+    short = sum(len(missing(i)) for i in range(len(items)))
+    if short:
+        print(f'    sub-shift editorial: {short} sub-shift(s) still incomplete '
+              f'after {MAX_EDITORIAL_ATTEMPTS} attempts')
+    return accumulated
 
 
 def _verified_stat(editorial: dict, claims: list[dict]) -> dict | None:
@@ -178,21 +204,32 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
                 for sub in subs
             }
             # Parent editorial may cite only evidence that is actually published
-            # on one of its children.  Earlier selection pools can contain claims
+            # on one of its children. Earlier selection pools can contain claims
             # discarded during single-owner routing; exposing those to the model
             # creates citations readers cannot inspect anywhere on the shift.
-            routed_ids = {
-                claim['id'] for claims in claims_by_sub.values() for claim in claims
-            }
+            #
+            # The shift's citable pool is exactly the union of its children's
+            # routed claims — because that is precisely what the publication gate
+            # checks it against ("2–6 citations from its routed child evidence").
+            #
+            # It used to fall back to the whole domain pool when a shift had no
+            # `_claim_ids`, which let the model cite perfectly real claims that
+            # belonged to no child of this shift. Those bodies passed the phase's
+            # own completeness check and then failed the gate — 46 of 49 shifts on
+            # one run — because the prompt was offered a wider set than the
+            # validator would accept. Offer the narrower one and the two agree.
             claims = [
-                pool[cid] for cid in kt.get('_claim_ids', [])
-                if cid in routed_ids and cid in pool
-            ]
+                claim for claim in (
+                    pool[cid] for sub in subs
+                    for cid in claim_ids_by_sub.get(sub['id'], []) if cid in pool
+                )
+            ][:CLAIMS_PER_KT]
             if not claims:
-                claims = [
-                    claim for claim in domain_claims[d['id']]
-                    if claim['id'] in routed_ids
-                ][:CLAIMS_PER_KT]
+                # No child evidence at all: nothing citable exists, so the shift
+                # cannot carry an editorial body. Skip rather than prompt for one
+                # that is guaranteed to be rejected.
+                print(f'  ⚠  {kt["name"][:40]}: no routed child evidence — skipping editorial')
+                continue
             work.append((d['id'], kt, claims, subs, claims_by_sub))
 
     if not work:
@@ -210,22 +247,6 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         return (_complete_editorial(result, KT_REQUIRED)
                 and len(cited) >= 2 and cited <= allowed)
 
-    def st_is_complete(item, result):
-        """Complete only when every one of this shift's sub-shifts got a usable
-        body — a partially-filled response leaves the rest with no modules."""
-        by_name = {
-            str(se.get('name', '')).strip().lower(): se
-            for se in ((result or {}).get('sub_trends') or []) if isinstance(se, dict)
-        }
-        for sub in item[3]:
-            se = by_name.get(sub['name'].strip().lower())
-            allowed = {claim['id'] for claim in item[4].get(sub['id'], [])}
-            cited = _cited(se)
-            if not (_complete_editorial(se, ST_REQUIRED)
-                    and len(cited) >= 2 and cited <= allowed):
-                return False
-        return True
-
     kt_results = _generate_until_complete(
         work,
         lambda item: prompt_kt_editorial(
@@ -233,12 +254,7 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         kt_is_complete, describe=describe, label='shift editorial',
     )
     with_subs = [item for item in work if item[3]]
-    st_results = _generate_until_complete(
-        with_subs,
-        lambda item: prompt_st_editorial(
-            item[1]['name'], item[1].get('subtitle', ''), item[3], item[4]),
-        st_is_complete, describe=describe, label='sub-shift editorial',
-    )
+    st_results = _generate_sub_editorial(with_subs, describe=describe)
     st_by_kt = {id(item): r for item, r in zip(with_subs, st_results)}
     results = [
         {'kt': kt_r or {}, 'st': st_by_kt.get(id(item)) or {}}

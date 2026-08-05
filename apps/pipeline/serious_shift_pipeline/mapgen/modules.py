@@ -58,6 +58,55 @@ _FIGURE_RE = re.compile(
 )
 
 
+def clamp_words(text, limit: int) -> str:
+    """Trim prose to `limit` words, preferring a sentence boundary.
+
+    The publication contract caps each editorial field because the design has a
+    fixed amount of room for it; a body that overruns fails the gate. The model
+    overruns some of these routinely — 53 of one run's 144 length failures were
+    a single sector note running past 40 words — and asking again is a poor
+    remedy, because a shift carries sixteen sector notes and any one of them
+    being long would discard the other fifteen.
+
+    So the cap is applied here instead, where it is one item's problem. Cutting
+    at the last full sentence inside the limit keeps the note readable; only when
+    there is no sentence break do we fall back to a word cut with an ellipsis.
+    """
+    words = str(text or '').split()
+    if len(words) <= limit:
+        return str(text or '')
+    head = ' '.join(words[:limit])
+    # Prefer the last sentence end, but only if it keeps most of the allowance —
+    # cutting a 40-word note down to 6 to land on a full stop loses more than the
+    # ellipsis does.
+    cut = max(head.rfind('. '), head.rfind('! '), head.rfind('? '))
+    if cut > 0 and len(head[:cut].split()) >= limit * 0.6:
+        return head[:cut + 1]
+    return head.rstrip(' ,;:—-') + '…'
+
+
+def _clamp_items(items, limit: int) -> list | None:
+    """Clamp the `text` of each {name, text} pair. One long sector note is that
+    note's problem, not the whole list's."""
+    if not items:
+        return None
+    return [{**item, 'text': clamp_words(item.get('text'), limit)} for item in items]
+
+
+def _clamp_steps(steps, limit: int) -> list | None:
+    """Clamp each timeline step's prose."""
+    if not steps:
+        return None
+    return [{**step, 'text': clamp_words(step.get('text'), limit)} for step in steps]
+
+
+def _clamp_strings(items, limit: int) -> list | None:
+    """Clamp each entry of a plain string list (signals, counter-signals)."""
+    if not items:
+        return None
+    return [clamp_words(item, limit) for item in items]
+
+
 def _short_figure(text, limit: int = 14) -> str | None:
     """A numeral fit for the stat band, or None.
 
@@ -129,9 +178,10 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
     hero: dict = kt_row.get('hero_stat') or {}
 
     candidates = [
-        _module('dek', {'text': kt_row.get('subtitle') or ''}, ('text',)),
-        _module('from_to', {'from': e.get('from') or '', 'to': e.get('to') or ''}, ('from', 'to')),
-        _module('pull_quote', {'quote': e.get('pull_quote') or ''}, ('quote',)),
+        _module('dek', {'text': clamp_words(kt_row.get('subtitle'), 45)}, ('text',)),
+        _module('from_to', {'from': clamp_words(e.get('from'), 30),
+                            'to': clamp_words(e.get('to'), 30)}, ('from', 'to')),
+        _module('pull_quote', {'quote': clamp_words(e.get('pull_quote'), 18)}, ('quote',)),
         _module('stat_band', {
             # The model is asked for a display figure; hero_stat.value is a
             # fallback and is usually prose, so it has to be reduced first.
@@ -141,21 +191,21 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
             'url': hero.get('url') or '',
         }, ('value',)),
         _module('peel_tabs', {
-            'whats_changing': e.get('whats_changing') or '',
-            'why_now': e.get('why_now') or '',
+            'whats_changing': clamp_words(e.get('whats_changing'), 90),
+            'why_now': clamp_words(e.get('why_now'), 70),
             'evidence_ids': e.get('evidence_ids') or [],
         }),
         # Resolved from the shift's sub-shifts at render time, so it carries no
         # data of its own — but it still has to sit in the order.
         {'type': 'sub_shift_list', 'data': {}},
         _module('human_needs', {
-            'unlocked': needs.get('unlocked') or '',
-            'threatened': needs.get('threatened') or '',
+            'unlocked': clamp_words(needs.get('unlocked'), 45),
+            'threatened': clamp_words(needs.get('threatened'), 45),
         }),
-        _module('tension_band', {'quote': e.get('consumer_tension') or ''}, ('quote',)),
-        _module('timeline', {'steps': _as_steps(e.get('timeline')) or []}, ('steps',)),
-        _module('industries', {'items': _as_pairs(e.get('industries')) or []}, ('items',)),
-        _module('territories', {'items': _as_pairs(e.get('opportunities')) or []}, ('items',)),
+        _module('tension_band', {'quote': clamp_words(e.get('consumer_tension'), 38)}, ('quote',)),
+        _module('timeline', {'steps': _clamp_steps(_as_steps(e.get('timeline')), 45)}, ('steps',)),
+        _module('industries', {'items': _clamp_items(_as_pairs(e.get('industries')), 40)}, ('items',)),
+        _module('territories', {'items': _clamp_items(_as_pairs(e.get('opportunities')), 50)}, ('items',)),
     ]
     return [m for m in candidates if m]
 
@@ -168,9 +218,11 @@ def st_modules(st_row: dict, editorial: dict) -> list:
     stat: dict = raw_stat if isinstance(raw_stat, dict) else {}
 
     candidates = [
-        _module('lede', {'text': e.get('lede') or st_row.get('description') or ''}, ('text',)),
-        _module('from_to_solid', {'from': e.get('from') or '', 'to': e.get('to') or ''}, ('from', 'to')),
-        _module('tension_band', {'quote': e.get('quote') or '', 'label': 'The tension'}, ('quote',)),
+        _module('lede', {'text': clamp_words(e.get('lede') or st_row.get('description'), 40)}, ('text',)),
+        _module('from_to_solid', {'from': clamp_words(e.get('from'), 30),
+                                  'to': clamp_words(e.get('to'), 30)}, ('from', 'to')),
+        _module('tension_band', {'quote': clamp_words(e.get('quote'), 38),
+                                 'label': 'The tension'}, ('quote',)),
         _module('stat_band', {
             'value': stat.get('value') or '',
             'text': stat.get('text') or '',
@@ -178,17 +230,18 @@ def st_modules(st_row: dict, editorial: dict) -> list:
             'url': stat.get('url') or '',
         }, ('value',)),
         _module('peel_tabs', {
-            'whats_changing': e.get('whats_changing') or '',
-            'why_now': e.get('why_now') or '',
+            'whats_changing': clamp_words(e.get('whats_changing'), 90),
+            'why_now': clamp_words(e.get('why_now'), 70),
             'evidence_ids': e.get('evidence_ids') or [],
         }),
         _module('human_needs', {
-            'unlocked': needs.get('unlocked') or '',
-            'threatened': needs.get('threatened') or '',
+            'unlocked': clamp_words(needs.get('unlocked'), 45),
+            'threatened': clamp_words(needs.get('threatened'), 45),
         }),
-        _module('signals', {'items': _as_strings(e.get('signals')) or []}, ('items',)),
-        _module('counter_signals', {'items': _as_strings(e.get('counter_signals')) or []}, ('items',)),
-        _module('timeline', {'steps': _as_steps(e.get('timeline')) or []}, ('steps',)),
-        _module('territories', {'items': _as_pairs(e.get('territories')) or []}, ('items',)),
+        _module('signals', {'items': _clamp_strings(_as_strings(e.get('signals')), 35)}, ('items',)),
+        _module('counter_signals',
+                {'items': _clamp_strings(_as_strings(e.get('counter_signals')), 35)}, ('items',)),
+        _module('timeline', {'steps': _clamp_steps(_as_steps(e.get('timeline')), 45)}, ('steps',)),
+        _module('territories', {'items': _clamp_items(_as_pairs(e.get('territories')), 50)}, ('items',)),
     ]
     return [m for m in candidates if m]
