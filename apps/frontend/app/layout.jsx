@@ -70,11 +70,55 @@ const LEGACY_HASH_REDIRECT = `(function(){try{
   window.history.replaceState(null, '', p + window.location.search);
 }catch(e){}})();`
 
+// Recover a tab that was open across a deploy.
+//
+// The whole app is one lazily-imported chunk (`dynamic(() => import('./Spa'))`),
+// and every chunk filename carries a content hash. A deploy therefore replaces
+// `958.<hash>.js` with a new name and deletes the old one. index.html is
+// `no-cache`, so a *fresh* load always gets the current names — but a tab that
+// was already open keeps the previous webpack runtime in memory, and the first
+// client-side navigation asks for a chunk that now 404s. The import rejects,
+// nothing renders, and the page the reader was on goes blank. It looks exactly
+// like the site breaking, which is how it was reported.
+//
+// A chunk 404 has one correct response: fetch the current index.html and start
+// again. The reload is guarded by a sessionStorage key so a genuinely missing
+// chunk — a bad build, rather than a superseded one — cannot loop.
+const RELOAD_ON_STALE_CHUNK = `(function(){try{
+  var KEY = 'ss:chunk-reloaded';
+  var stale = function(m){
+    m = String(m || '');
+    return m.indexOf('ChunkLoadError') > -1
+        || m.indexOf('Loading chunk') > -1
+        || m.indexOf('Importing a module script failed') > -1
+        || m.indexOf('error loading dynamically imported module') > -1;
+  };
+  var recover = function(){
+    if (sessionStorage.getItem(KEY)) return;      // already tried — let it fail visibly
+    sessionStorage.setItem(KEY, '1');
+    window.location.reload();
+  };
+  window.addEventListener('error', function(e){
+    if (e && e.target && e.target.tagName === 'SCRIPT') return recover();  // 404 on a chunk
+    if (e && stale(e.message)) recover();
+  }, true);
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e && e.reason;
+    if (stale(r && (r.message || r))) recover();
+  });
+  // A load that got all the way through is proof the bundle is current, so the
+  // guard is cleared and the next deploy gets its own single retry.
+  window.addEventListener('load', function(){
+    setTimeout(function(){ sessionStorage.removeItem(KEY); }, 5000);
+  });
+}catch(e){}})();`
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${urbanist.variable} ${suez.variable} ${nunito.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: LEGACY_HASH_REDIRECT }} />
+        <script dangerouslySetInnerHTML={{ __html: RELOAD_ON_STALE_CHUNK }} />
       </head>
       <body>{children}</body>
     </html>
