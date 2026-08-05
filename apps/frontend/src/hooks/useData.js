@@ -39,6 +39,11 @@ function validObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
+/** The addressable path segment of a slug — `a/b` and `b` both give `b`. */
+function lastSegment(value) {
+  return typeof value === 'string' ? value.split('/').filter(Boolean).at(-1) : undefined
+}
+
 function validModules(value) {
   return Array.isArray(value) && value.every((module) => (
     validObject(module) && typeof module.type === 'string' && validObject(module.data)
@@ -59,8 +64,15 @@ function validateMapResponse(url, data) {
     return validObject(data.shift) && data.shift.slug === parts[1] && validModules(data.shift.modules)
       && Array.isArray(data.siblings) && Array.isArray(data.sub_shifts)
   }
+  // Compare the last path segment, not the whole slug. A published sub-shift's
+  // slug is `parent/child`, and the backend used to serve that compound form
+  // here while serving the bare segment on `siblings` in the same response — so
+  // this check could never pass, every sub-shift response was rejected as
+  // invalid, retried, and rendered as "temporarily unavailable". The backend now
+  // sends the segment; matching on the segment either way means a version skew
+  // between the two deploys cannot take the pages down again.
   return validObject(data.parent_shift) && validObject(data.sub_shift)
-    && data.sub_shift.slug === parts[2] && validModules(data.sub_shift.modules)
+    && lastSegment(data.sub_shift.slug) === parts[2] && validModules(data.sub_shift.modules)
     && Array.isArray(data.siblings)
 }
 

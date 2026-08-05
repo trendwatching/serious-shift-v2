@@ -648,6 +648,35 @@ fn shift_detail(row: &Value) -> Value {
     out
 }
 
+/// A published sub-shift, with `slug` reduced to the single path segment that
+/// addresses it.
+///
+/// The publication stores a sub-shift's slug as `parent/child`, because that is
+/// what makes it unique across the document. But every other place a slug
+/// reaches a client it is the bare segment — `sub_shift_summary` strips it, and
+/// the route that served this response is `…/{shift}/{subshift}`, where the
+/// parent is already a separate segment.
+///
+/// Serving the compound form on `sub_shift` while serving the bare form on
+/// `siblings` in the *same response* is what broke every sub-shift page: the
+/// client checks `sub_shift.slug` against the last URL segment before it will
+/// render, that check could never pass, and a rejected response is retried and
+/// then shown as "temporarily unavailable". All 281 sub-shift pages answered
+/// HTTP 200 and rendered an error.
+fn sub_shift_detail(row: &Value) -> Value {
+    let mut out = shift_detail(row);
+    let segment = {
+        let full = string_field(row, "slug");
+        full.rsplit('/').next().unwrap_or(full).to_owned()
+    };
+    if let Some(object) = out.as_object_mut() {
+        if !segment.is_empty() {
+            object.insert("slug".into(), Value::String(segment));
+        }
+    }
+    out
+}
+
 fn domain_index_summary(
     domain: &Value,
     shifts: &[&Value],
@@ -841,7 +870,7 @@ fn build_snapshot(body: String, version: &str) -> Result<MapSnapshot, serde_json
                             "updated": updated,
                             "domain": domain_summary(domain, domain_shift_count),
                             "parent_shift": key_shift_summary(shift, shift_subs.len()),
-                            "sub_shift": shift_detail(sub),
+                            "sub_shift": sub_shift_detail(sub),
                             "siblings": siblings,
                         }),
                     ),
@@ -1424,6 +1453,14 @@ mod tests {
         assert!(shift_json.get("sub_shifts").is_some());
         assert!(sub_json.get("parent_shift").is_some());
         assert!(sub_json.get("siblings").is_some());
+
+        // The client will not render a sub-shift whose slug does not match the
+        // last URL segment. The publication stores `parent/child`; the fragment
+        // must serve `child`, exactly as the sibling summaries do. Serving the
+        // compound form here rendered all 281 sub-shift pages "unavailable".
+        assert_eq!(sub_json["sub_shift"]["slug"], "proof-of-human");
+        assert_eq!(sub_json["siblings"][0]["slug"], "proof-of-human");
+        assert!(sub_json["sub_shift"]["modules"].is_array());
         assert_ne!(index.etag, domain.etag);
         assert_ne!(domain.etag, shift.etag);
         assert_ne!(shift.etag, sub.etag);
