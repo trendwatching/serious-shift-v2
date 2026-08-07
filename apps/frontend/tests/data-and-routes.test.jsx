@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
-import { MemoryRouter, Route, Routes } from '../src/router'
+import { MemoryRouter, Route, Routes } from '../src/lib/router'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { ApiError, load } from '../src/hooks/useData'
-import { failureState } from '../src/shift/failure'
-import { useResolved } from '../src/shift/useDomains'
-import { SubShiftDetail } from '../src/shift/pages'
+import { ApiError, load } from '../src/lib/useData'
+import { failureState } from '../src/lib/failure'
+import { useResolved } from '../src/lib/useDomains'
+import SubShiftPage from '../src/pages/SubShiftPage'
 import App from '../src/App'
 import { indexFixture, response, shiftFixture, subFixture } from './fixtures'
 
@@ -92,15 +93,21 @@ describe('route-scoped data', () => {
     expect(fetch).not.toHaveBeenCalledWith('/api/map', expect.anything())
   })
 
-  it('renders parent identity and adjacent sub-shift navigation from the route API', async () => {
+  it('gives a terminal sub-shift page its only way out: the breadcrumb menu', async () => {
+    // The design deliberately strips every other route off this page — no
+    // eyebrow link to the parent, no sibling rail, no next pager. The
+    // breadcrumb menu carries all of it, which is why it lists the whole
+    // domain rather than just the ancestors.
     global.fetch = vi.fn((url) => response(url === '/api/v1/map' ? indexFixture : subFixture))
     render(
       <MemoryRouter initialEntries={['/map/society/trust-machines/sub-1']}>
-        <Routes><Route path="/map/:domainSlug/:ktSlug/:subSlug" element={<SubShiftDetail />} /></Routes>
+        <Routes><Route path="/map/:domainSlug/:ktSlug/:subSlug" element={<SubShiftPage />} /></Routes>
       </MemoryRouter>,
     )
-    expect(await screen.findByRole('link', { name: /Sub-shift of “Trust Machines”/i })).toHaveAttribute('href', '/map/society/trust-machines')
-    expect(screen.getByRole('navigation', { name: 'Adjacent sub-shifts' })).toHaveTextContent('Sub Shift 2')
+    const trigger = await screen.findByRole('button', { expanded: false })
+    await userEvent.click(trigger)
+    expect(screen.getByRole('button', { name: /Society/ })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Adjacent sub-shifts' })).not.toBeInTheDocument()
   })
 
   it('clears stale canonical metadata and marks client-side unknown routes noindex', async () => {
@@ -132,7 +139,7 @@ describe('sub-shift response validation', () => {
   })
 
   it('accepts the bare route segment the backend now sends', async () => {
-    const { load, __resetDataCacheForTests } = await import('../src/hooks/useData')
+    const { load, __resetDataCacheForTests } = await import('../src/lib/useData')
     __resetDataCacheForTests()
     global.fetch = vi.fn(async () => new Response(JSON.stringify(body('sovereign-labs')),
       { status: 200, headers: { 'Content-Type': 'application/json' } }))
@@ -140,7 +147,7 @@ describe('sub-shift response validation', () => {
   })
 
   it('also accepts the compound parent/child form, so a version skew cannot break the page', async () => {
-    const { load, __resetDataCacheForTests } = await import('../src/hooks/useData')
+    const { load, __resetDataCacheForTests } = await import('../src/lib/useData')
     __resetDataCacheForTests()
     global.fetch = vi.fn(async () => new Response(
       JSON.stringify(body('sovereign-machines/sovereign-labs')),
@@ -149,7 +156,7 @@ describe('sub-shift response validation', () => {
   })
 
   it('still rejects a response for a different sub-shift', async () => {
-    const { load, __resetDataCacheForTests } = await import('../src/hooks/useData')
+    const { load, __resetDataCacheForTests } = await import('../src/lib/useData')
     __resetDataCacheForTests()
     global.fetch = vi.fn(async () => new Response(JSON.stringify(body('some-other-sub')),
       { status: 200, headers: { 'Content-Type': 'application/json' } }))

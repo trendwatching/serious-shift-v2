@@ -5,7 +5,7 @@
 // Deliberately dependency-free (node, no test runner): it is one assertion, and
 // the frontend has no other reason to carry a test framework yet.
 import { readFileSync } from 'node:fs'
-import { slugify } from '../src/shift/theme.js'
+import { slugify } from '../src/lib/theme.js'
 
 const fixture = JSON.parse(
   readFileSync(new URL('../../../packages/contracts/slug_fixtures.json', import.meta.url)),

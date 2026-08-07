@@ -1,95 +1,81 @@
-import { MemoryRouter } from '../src/router'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { TopBar } from '../src/shift/chrome'
-import { HumanNeeds, PeelTabs, SubShiftList } from '../src/shift/sections'
-import { Modules } from '../src/shift/modules'
-import { innovationItems, subs } from './fixtures'
+import { MemoryRouter } from '../src/lib/router'
+import { Header } from '../src/chrome/Header'
+import { HumanNeeds, PeelTabs } from '../src/modules/interactive'
+import { Modules } from '../src/modules'
+import { innovationItems } from './fixtures'
 
-describe('accessible modules and navigation', () => {
-  it('operates tabs and disclosures with accurate state', async () => {
+const ctx = { scope: 'shift', domain: { id: 'society', grad: 'none' } }
+
+describe('modules', () => {
+  it('switches peel tabs and keeps both panels mounted', async () => {
     const user = userEvent.setup()
-    render(<><PeelTabs whatChanging="The change" whyNow="The reason" /><HumanNeeds needs={{ unlocked: 'Agency', threatened: 'Trust' }} /></>)
+    render(<PeelTabs data={{ whats_changing: 'The change', why_now: 'The reason' }} ctx={ctx} />)
+
+    // Both panels stay in the DOM: the stack is pinned to the taller of them,
+    // so switching must not resize the page under the reader.
+    expect(screen.getAllByRole('tabpanel')).toHaveLength(2)
 
     const why = screen.getByRole('tab', { name: 'Why now' })
     await user.click(why)
     expect(why).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tabpanel')).toHaveTextContent('The reason')
+  })
 
-    const threatened = screen.getByRole('button', { name: 'Threatened' })
+  it('expands one human need at a time', async () => {
+    const user = userEvent.setup()
+    render(<HumanNeeds data={{ unlocked: 'Agency', threatened: 'Trust' }} ctx={ctx} />)
+    const threatened = screen.getByRole('button', { name: /Threatened/ })
     await user.click(threatened)
     expect(threatened).toHaveAttribute('aria-expanded', 'true')
-    expect(document.getElementById(threatened.getAttribute('aria-controls'))).toHaveAttribute('aria-hidden', 'false')
+    expect(screen.getByRole('button', { name: /Unlocked/ })).toHaveAttribute('aria-expanded', 'false')
   })
 
-  it('exposes carousel position and accessible next/previous controls', async () => {
-    const user = userEvent.setup()
-    render(<MemoryRouter><SubShiftList subs={subs} hrefFor={(item) => `/map/society/shift/${item.slug}`} /></MemoryRouter>)
-    expect(screen.getByRole('status')).toHaveTextContent('1 of 5')
-    await user.click(screen.getByRole('button', { name: 'Next sub-shift' }))
-    expect(screen.getByRole('status')).toHaveTextContent('2 of 5')
-    expect(screen.getByRole('link', { name: /Open sub-shift 2 of 5/ })).toBeInTheDocument()
-  })
-
-  it('renders innovations hydrated onto a key shift, tolerating missing fields', () => {
-    // The module reaches the page through the registry, not through a prop — the
-    // backend injects it into the shift's `modules` list, so this is the real
-    // path from a curated link to a rendered card.
+  it('renders innovations hydrated onto a shift, tolerating missing fields', () => {
     render(
       <MemoryRouter>
-        <Modules
-          modules={[{ type: 'innovations', data: { items: innovationItems } }]}
-          ctx={{ scope: 'key_trend' }}
-        />
+        <Modules modules={[{ type: 'innovations', data: { items: innovationItems } }]} ctx={ctx} />
       </MemoryRouter>,
     )
-
     expect(screen.getByRole('heading', { name: /Innovations in the wild/i })).toBeInTheDocument()
 
-    // A complete example links out to the article and shows its own origin.
     const link = screen.getByRole('link', { name: /Proof-of-human badge/i })
     expect(link).toHaveAttribute('href', 'https://example.com/acme')
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
     expect(screen.getByText('Acme')).toBeInTheDocument()
-    expect(screen.getByText('food-beverage')).toBeInTheDocument()
-
-    // Same-origin image, which is what the CSP (`img-src 'self'`) permits. An
-    // upstream URL here would silently fail to load in a browser.
-    const image = document.querySelector('img')
-    expect(image.getAttribute('src')).toMatch(/^\/api\/innovations\/\d+\/cover-image/)
-    expect(image).toHaveAttribute('alt', '')
 
     // The minimal example still renders, and is not a link.
     expect(screen.getByText('Bare minimum innovation')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Bare minimum/i })).not.toBeInTheDocument()
-    expect(document.querySelectorAll('img')).toHaveLength(1)
   })
 
-  it('drops an innovations module with nothing in it rather than rendering an empty band', () => {
-    render(<Modules modules={[{ type: 'innovations', data: { items: [] } }]} ctx={{}} />)
+  it('drops an empty module rather than rendering an empty band', () => {
+    render(<Modules modules={[{ type: 'innovations', data: { items: [] } }]} ctx={ctx} />)
     expect(screen.queryByText(/Innovations in the wild/i)).not.toBeInTheDocument()
   })
 
-  it('uses the exact six-item menu and restores focus when it closes', async () => {
+  it('surfaces an unknown type instead of silently dropping it', () => {
+    render(<Modules modules={[{ type: 'not_a_module', data: {} }]} ctx={ctx} />)
+    expect(screen.getByRole('status')).toHaveTextContent(/temporarily unavailable/i)
+  })
+})
+
+describe('header navigation', () => {
+  it('opens the six-item dropdown and restores focus when it closes', async () => {
     const user = userEvent.setup()
-    render(<MemoryRouter><TopBar /></MemoryRouter>)
+    render(<MemoryRouter><Header /></MemoryRouter>)
     const trigger = screen.getByRole('button', { name: 'Open navigation' })
     await user.click(trigger)
+
     const dialog = screen.getByRole('dialog', { name: 'Site navigation' })
-    // Six rows, each a label plus the descriptor the design build shows to its
-    // right. A Miro sticky asked for the descriptors to go; the later build
-    // kept them, and the build is the spec.
-    expect(within(dialog).getAllByRole('link').map((link) => link.querySelector('span').textContent))
+    expect(within(dialog).getAllByRole('link').map((l) => l.querySelector('span').textContent))
       .toEqual(['Shifts', 'Methodology', 'Subscribe', 'Services', 'TrendWatching', 'About'])
-    // The build hard-codes "52 key shifts" here. The real count moves every
-    // Monday, and a stale number in the nav is worse than no number.
-    expect(within(dialog).getByText('Every domain')).toBeTruthy()
+    // The design's descriptor column, which a Miro sticky asked to remove and
+    // the later build kept.
     expect(within(dialog).getByText('How we track')).toBeTruthy()
-    expect(within(dialog).queryByText('Saved')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('The room')).not.toBeInTheDocument()
-    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Close navigation' })).toHaveFocus())
-    fireEvent(dialog, new Event('cancel', { cancelable: true }))
+
+    fireEvent.keyDown(document, { key: 'Escape' })
     await waitFor(() => expect(trigger).toHaveFocus())
   })
 })

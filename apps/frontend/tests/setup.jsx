@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
-import { __resetDataCacheForTests } from '../src/hooks/useData'
+import { __resetDataCacheForTests } from '../src/lib/useData'
 
 afterEach(() => {
   cleanup()

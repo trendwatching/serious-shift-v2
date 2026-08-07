@@ -27,11 +27,8 @@ export function Header() {
   const triggerRef = useRef(null)
 
   useEffect(() => {
-    const dialog = dialogRef.current
-    if (!dialog) return undefined
-    if (open && !dialog.open) dialog.show()
-    if (!open && dialog.open) dialog.close()
     if (!open) return undefined
+    const dialog = dialogRef.current
     const onKey = (e) => { if (e.key === 'Escape') close() }
     const onPointer = (e) => {
       if (!dialog.contains(e.target) && !triggerRef.current?.contains(e.target)) setOpen(false)
@@ -86,13 +83,16 @@ export function Header() {
         </button>
       </header>
 
+      {/* `open` as an attribute, not `showModal()`: this is a dropdown, so it
+          must not take the top layer or dim the page behind it. */}
       <dialog
         ref={dialogRef}
         id="site-nav"
+        open={open}
         aria-label="Site navigation"
         onClose={() => setOpen(false)}
         className="fixed inset-x-0 z-[49] m-0 w-full max-w-none border-0 bg-black p-0 text-white"
-        style={{ top: 'var(--topbar)', display: open ? 'block' : 'none' }}
+        style={{ top: 'var(--topbar)' }}
       >
         <nav aria-label="Primary" style={{ padding: '8px 22px 26px', animation: 'ssRise 0.42s var(--ease-out) both' }}>
           {MENU_LINKS.map((link) => {

@@ -10,11 +10,10 @@
  * Six image-led sections, one full-bleed statement band, two service cards.
  * Ported from the delivered design build.
  */
-import { Link } from '../router'
-import { useDocumentMeta } from '../hooks/useDocumentMeta'
-import { ShiftFooter } from './chrome'
-import { Frame } from './sections'
-import { ABOUT_URL, CONTACT_URL, METHODOLOGY_URL, SUBSCRIBE_URL, TRENDWATCHING_URL, WHATSAPP_URL } from './site'
+import { Link } from '../lib/router'
+import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { Footer } from '../chrome/Footer'
+import { ABOUT_URL, CONTACT_URL, METHODOLOGY_URL, SUBSCRIBE_URL, TRENDWATCHING_URL, WHATSAPP_URL } from '../lib/site'
 
 /** Inline link: black text, magenta underline. The design's own treatment. */
 const A = ({ href, children }) => (
@@ -30,8 +29,8 @@ const A = ({ href, children }) => (
 )
 
 const Section = ({ id, image, alt, eyebrow, children }) => (
-  <section id={id} className="scroll-mt-24 py-9 lg:py-12">
-    <Frame>
+  <section id={id} className="canvas gutter scroll-mt-24" style={{ padding: '36px 22px 40px' }}>
+    <>
       <div className="w-prose flex flex-col gap-[22px]">
         {image && (
           <div className="overflow-hidden rounded-[20px]">
@@ -43,7 +42,7 @@ const Section = ({ id, image, alt, eyebrow, children }) => (
           {children}
         </div>
       </div>
-    </Frame>
+      </>
   </section>
 )
 
@@ -68,8 +67,8 @@ export default function About() {
   useDocumentMeta('About', 'Why Serious Shift exists, how we build it, and who is behind it.')
 
   return (
-    <article className="a-expand min-h-dvh bg-white">
-      <Frame>
+    <article className="min-h-dvh bg-white" style={{ animation: 'abRise 0.45s var(--ease-out) both' }}>
+      <>
         <div className="w-prose pt-8">
           <Link
             to="/"
@@ -89,7 +88,7 @@ export default function About() {
             Why Serious Shift exists, how we build it, and who is behind it.
           </p>
         </div>
-      </Frame>
+      </>
 
       <Section image="/shift/about-crowd.jpg" alt="AI and society, as a collage of cut-out photographs" eyebrow="Why & who & what">
         <P>Everything predicted three years ago is now unfolding: AI is becoming the organizational engine and orchestrating layer. Agents are here. You can just feel the systems building.</P>
@@ -101,14 +100,14 @@ export default function About() {
       {/* The one full-bleed band on the page. It is the argument the whole site
           rests on, so it gets the site's only black statement surface. */}
       <div className="bleed py-[30px]" style={{ background: 'var(--color-ink)' }}>
-        <Frame>
+        <>
           <div className="w-prose flex flex-col gap-3 text-white">
             <span className="t-eyebrow" style={{ color: 'var(--color-yellow)' }}>The point</span>
             <span className="t-display text-2xl font-semibold leading-[1.28]" style={{ letterSpacing: '-0.018em' }}>
               Seriously, if not now, then when?
             </span>
           </div>
-        </Frame>
+      </>
       </div>
 
       <Section id="methodology" image="/shift/about-thinkers.jpg" alt="The network of thinkers Serious Shift tracks" eyebrow="Methodology">
@@ -136,8 +135,8 @@ export default function About() {
         <P>The systems get smarter every week, so will Serious Shift, and so then will you.</P>
       </Section>
 
-      <section id="subscribe" className="scroll-mt-24 py-9 lg:py-12">
-        <Frame>
+      <section id="subscribe" className="canvas gutter scroll-mt-24" style={{ padding: '36px 22px 40px' }}>
+        <>
           <div className="w-prose flex flex-col gap-5">
             <h2 className="t-eyebrow">Subscribe / follow</h2>
             <div className="overflow-hidden rounded-[20px]">
@@ -148,16 +147,16 @@ export default function About() {
             <a
               href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
               className="inline-flex h-12 items-center gap-[9px] self-start rounded-full px-[22px] text-[15px] !text-white transition-transform duration-300 hover:-translate-y-0.5"
-              style={{ background: '#25D366', fontFamily: 'var(--font-display)', fontWeight: 650 }}
+              style={{ background: 'var(--color-orange)', fontFamily: 'var(--font-display)', fontWeight: 650 }}
             >
               <img src="/shift/whatsapp-logo.png" alt="" width={22} height={22} className="block size-[22px] object-contain" />
               Join us on WhatsApp
             </a>
           </div>
-        </Frame>
+      </>
       </section>
 
-      <ShiftFooter />
+      <Footer />
     </article>
   )
 }

@@ -42,6 +42,6 @@ jobs:
       - name: Browser, axe, and visual regression tests
         run: npm run test:e2e
       - name: Assert a static export was produced
-        # `output: 'export'` silently degrades to a server build if the app grows
+        # A broken Vite build still exits 0 if the entry is missing, so assert the artefacts
         # a server-only feature; the backend image would then ship nothing.
-        run: test -f out/index.html && test -d out/_next
+        run: test -f out/index.html && test -d out/assets

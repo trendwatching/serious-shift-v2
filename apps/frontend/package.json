@@ -6,9 +6,9 @@
     "node": "22.x"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
@@ -16,13 +16,9 @@
     "audit:prod": "node scripts/audit-production.mjs",
     "check:slugs": "node scripts/check-slug-fixture.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "check:layers": "node scripts/check-layers.mjs",
-    "dev:vite": "vite",
-    "build:vite": "vite build",
-    "preview:vite": "vite preview"
+    "check:layers": "node scripts/check-layers.mjs"
   },
   "dependencies": {
-    "next": "15.5.22",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
