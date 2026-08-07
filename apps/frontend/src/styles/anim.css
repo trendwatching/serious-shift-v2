@@ -47,7 +47,20 @@
 @keyframes ssDot3  { 0%, 65% { background: #fff; } 67%, 99% { background: var(--dot-lit, var(--a)); } 100% { background: #fff; } }
 
 @layer components {
-  .a-rise   { animation: ssRise 0.7s var(--ease-out) both; }
-  .a-fade   { animation: ssFade 0.5s ease both; }
-  .a-expand { animation: ssExpand 0.55s var(--ease-out) both; }
+  /* No `fill-mode: both`.
+   *
+   * `both` holds the FROM state until the animation starts, so anything that
+   * stops these from running — a throttled background tab, a blocked
+   * compositor, an extension — leaves the page permanently at
+   * `scale(0.88) translateY(180px)` with the content displaced off its own
+   * layout. That is not a degraded entrance, it is a broken page.
+   *
+   * With no fill mode the resting state IS the correct state: the animation
+   * plays if it can and is simply absent if it cannot. The cost is at most one
+   * frame at the settled position before the first keyframe, which nobody
+   * sees; the alternative failure mode is unmissable.
+   */
+  .a-rise   { animation: ssRise 0.7s var(--ease-out); }
+  .a-fade   { animation: ssFade 0.5s ease; }
+  .a-expand { animation: ssExpand 0.55s var(--ease-out); }
 }

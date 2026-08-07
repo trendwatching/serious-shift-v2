@@ -87,7 +87,7 @@ export default function ShiftPage() {
             />
           </>
         )}
-        <div className="canvas relative z-[2] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.16s both' }}>
+        <div className="canvas relative z-[2] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.16s' }}>
           <h1
             className="t-title"
             style={{ margin: 0, fontSize: `var(--hero-fs, ${image ? 46 : 32}px)`, lineHeight: 1.1, letterSpacing: '0.005em' }}
@@ -99,7 +99,7 @@ export default function ShiftPage() {
 
       <div
         className="canvas gutter flex flex-col"
-        style={{ paddingTop: 26, gap: 'var(--module-gap)', animation: 'ssRise 0.6s var(--ease-out) 0.24s both' }}
+        style={{ paddingTop: 26, gap: 'var(--module-gap)', animation: 'ssRise 0.6s var(--ease-out) 0.24s' }}
       >
         <Modules
           modules={shift.modules}

@@ -94,7 +94,7 @@ export function Header() {
         className="fixed inset-x-0 z-[49] m-0 w-full max-w-none border-0 bg-black p-0 text-white"
         style={{ top: 'var(--topbar)' }}
       >
-        <nav aria-label="Primary" style={{ padding: '8px 22px 26px', animation: 'ssRise 0.42s var(--ease-out) both' }}>
+        <nav aria-label="Primary" style={{ padding: '8px 22px 26px', animation: 'ssRise 0.42s var(--ease-out)' }}>
           {MENU_LINKS.map((link) => {
             const body = (
               <>

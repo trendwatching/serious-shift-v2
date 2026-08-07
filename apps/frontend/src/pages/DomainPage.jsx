@@ -64,7 +64,7 @@ export default function DomainPage() {
               className="flex"
               style={{
                 gap: 16, padding: '22px 0', borderBottom: '1px solid var(--color-line-row)',
-                animation: `ssRise 0.7s var(--ease-out) ${(0.06 + i * 0.07).toFixed(2)}s both`,
+                animation: `ssRise 0.7s var(--ease-out) ${(0.06 + i * 0.07).toFixed(2)}s`,
               }}
             >
               <span className="t-mono" style={{ fontSize: 12, color: 'var(--color-ink-num)', paddingTop: 4 }}>{s.num}</span>

@@ -198,7 +198,7 @@ export function Industries({ data }) {
       </div>
       <div
         key={current.name} role="tabpanel" className="card flex flex-col"
-        style={{ padding: 18, gap: 8, animation: 'ssRise 0.42s var(--ease-out) both' }}
+        style={{ padding: 18, gap: 8, animation: 'ssRise 0.42s var(--ease-out)' }}
       >
         <span className="t-display" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>{current.name}</span>
         <span className="text-pretty" style={{ fontSize: 14.5, lineHeight: 1.55, color: 'var(--color-ink-sector)' }}>{current.text}</span>
@@ -223,7 +223,7 @@ export function Territories({ data, ctx }) {
             className={`card box-border flex shrink-0 flex-col${still ? '' : ' card-lift'}`}
             style={{
               width: 236, padding: 16, gap: 9, scrollSnapAlign: 'center',
-              animation: still ? undefined : `ssRise 0.6s var(--ease-out) ${(0.05 + i * 0.07).toFixed(2)}s both`,
+              animation: still ? undefined : `ssRise 0.6s var(--ease-out) ${(0.05 + i * 0.07).toFixed(2)}s`,
             }}
           >
             <span
@@ -242,7 +242,7 @@ export function Territories({ data, ctx }) {
           style={{
             width: 250, padding: '20px 18px', gap: 10, borderRadius: 18, scrollSnapAlign: 'center',
             backgroundImage: 'var(--grad-sunset)', boxShadow: '0 12px 26px rgba(94,0,51,0.24)',
-            animation: still ? undefined : 'ssRise 0.6s var(--ease-out) 0.34s both',
+            animation: still ? undefined : 'ssRise 0.6s var(--ease-out) 0.34s',
           }}
         >
           <span className="t-eyebrow" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--color-yellow)' }}>Work with us</span>
@@ -282,7 +282,7 @@ export function SubShiftList({ ctx }) {
               <Link
                 key={s.id} to={to}
                 className="ss-tile flex items-stretch overflow-hidden bg-white"
-                style={{ minHeight: 148, borderRadius: 20, boxShadow: '0 6px 18px rgba(27,22,32,0.13)', animation: `ssRise 0.6s var(--ease-out) ${delay} both` }}
+                style={{ minHeight: 148, borderRadius: 20, boxShadow: '0 6px 18px rgba(27,22,32,0.13)', animation: `ssRise 0.6s var(--ease-out) ${delay}` }}
               >
                 <span
                   className="block shrink-0 self-stretch"
@@ -299,7 +299,7 @@ export function SubShiftList({ ctx }) {
             <Link
               key={s.id} to={to}
               className="card card-lift relative flex flex-col overflow-hidden"
-              style={{ padding: '15px 16px 15px 17px', gap: 9, animation: `ssRise 0.6s var(--ease-out) ${delay} both` }}
+              style={{ padding: '15px 16px 15px 17px', gap: 9, animation: `ssRise 0.6s var(--ease-out) ${delay}` }}
             >
               {/* Sunset, because this rule points one level down. */}
               <span className="absolute inset-y-0 left-0" style={{ width: 4, backgroundImage: 'var(--grad-sunset)' }} />
