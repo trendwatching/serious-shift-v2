@@ -67,7 +67,7 @@ export default function About() {
   useDocumentMeta('About', 'Why Serious Shift exists, how we build it, and who is behind it.')
 
   return (
-    <article className="min-h-dvh bg-white" style={{ animation: 'abRise 0.45s var(--ease-out) both' }}>
+    <article className="min-h-dvh bg-white" style={{ animation: 'abRise 0.45s var(--ease-out)' }}>
       <>
         <div className="w-prose pt-8">
           <Link
