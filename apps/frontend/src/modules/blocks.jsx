@@ -86,7 +86,7 @@ export const StatBand = ({ data, ctx }) => {
       className="bleed box-border flex items-center text-white"
       style={{
         gap: 18,
-        margin: ctx.scope === 'sub_shift' ? undefined : '10px auto',
+        marginBlock: ctx.scope === 'sub_shift' ? 0 : 10,
         paddingBlock: ctx.scope === 'sub_shift' ? 32 : 34,
         backgroundImage: "url('/shift/stat-band-gradient.jpg')",
         backgroundSize: 'cover', backgroundPosition: 'center',

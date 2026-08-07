@@ -54,11 +54,15 @@
     padding-inline: var(--gutter);
   }
 
-  /* Full-bleed band inside a guttered column: escapes to the viewport and
-     pulls its own content back to the gutter. */
+  /* Full-bleed band inside a guttered column: escapes the gutter and pulls
+     its own content back in.
+     Expressed against the gutter rather than `50vw`, because `vw` counts the
+     scrollbar — a band sized that way is wider than the viewport and sits a
+     half-scrollbar off-centre. It also does the right thing on desktop, where
+     "full bleed" means the edge of the centred canvas, not of the window. */
   .bleed {
-    margin-inline: calc(50% - 50vw);
-    padding-inline: calc(50vw - 50%);
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: var(--gutter);
   }
 
   /* Escape only — for rails that want to run to the screen edge and set
