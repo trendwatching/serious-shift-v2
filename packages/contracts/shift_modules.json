@@ -15,7 +15,7 @@
     "below is still what decides where it lands — apps/backend/src/innovations.rs",
     "mirrors these two lists as consts and a test fails if they drift."
   ],
-  "version": 3,
+  "version": 4,
   "$order_comment": [
     "Canonical reading order, from the Miro content mockup (SERIOUS SHIFT 2026 →",
     "Content Mockup- July'26). The export sorts every module list by this, so",
@@ -56,6 +56,51 @@
       "innovations",
       "rich_text"
     ]
+  },
+  "$visibility_comment": [
+    "Which of the generated modules a page actually shows, by scope and sphere.",
+    "",
+    "Presentation only. The publication always carries every module it generated",
+    "and validate_map() still requires them, so hiding a section can never make a",
+    "run unpublishable and un-hiding one never needs a republication. The filter is",
+    "applied by the backend when it builds a route fragment, which is what lets an",
+    "editor flip a row in shift_module_visibility and see the change within",
+    "DOC_CACHE_TTL instead of at the next weekly run.",
+    "",
+    "This block is the DEFAULT, taken from the delivered design build. A row in",
+    "shift_module_visibility overrides it for one (scope, domain_id, module_type);",
+    "domain_id '*' overrides it for every sphere at once. A page composed from a",
+    "shift_module_overrides row skips the filter entirely — an editor who authored",
+    "the whole module list has already decided what appears.",
+    "apps/backend/src/module_policy.rs mirrors this as a const and",
+    "default_visibility_matches_the_contract fails if the two drift.",
+    "",
+    "Two groups are hidden here. The first is per-sphere: the design gates",
+    "industries and territories to Consumers on a key shift, and human_needs and",
+    "territories to Consumers on a sub-shift. The second is everywhere: pull_quote,",
+    "tension_band, voices and related_shifts on key shifts, and signals,",
+    "counter_signals and evidence on sub-shifts, are all still generated but the",
+    "design build renders none of them. They are kept rather than cut so that",
+    "turning one on later is one row and no model spend.",
+    "",
+    "domain_id is the database id, so Organisations is spelled with an s here and",
+    "only here. Everything a reader sees is US spelling."
+  ],
+  "visibility": {
+    "hidden": {
+      "key_trend": {
+        "society":       ["pull_quote", "tension_band", "voices", "related_shifts", "industries", "territories"],
+        "economy":       ["pull_quote", "tension_band", "voices", "related_shifts", "industries", "territories"],
+        "organisations": ["pull_quote", "tension_band", "voices", "related_shifts", "industries", "territories"],
+        "consumers":     ["pull_quote", "tension_band", "voices", "related_shifts"]
+      },
+      "sub_trend": {
+        "society":       ["signals", "counter_signals", "evidence", "human_needs", "territories"],
+        "economy":       ["signals", "counter_signals", "evidence", "human_needs", "territories"],
+        "organisations": ["signals", "counter_signals", "evidence", "human_needs", "territories"],
+        "consumers":     ["signals", "counter_signals", "evidence"]
+      }
+    }
   },
   "types": {
     "dek": {
@@ -129,12 +174,15 @@
       "required": []
     },
     "human_needs": {
-      "summary": "Two expanding cards: the need unlocked and the need threatened.",
+      "summary": "A card pair set side by side: the need unlocked and the need threatened. Both halves are required — the design shows them at once rather than behind a toggle, so a missing side is a coloured rectangle with a label and no copy.",
       "data": {
         "unlocked": "string",
         "threatened": "string"
       },
-      "required": []
+      "required": [
+        "unlocked",
+        "threatened"
+      ]
     },
     "tension_band": {
       "summary": "Dark full-bleed band carrying the consumer tension, in the consumer's own voice.",

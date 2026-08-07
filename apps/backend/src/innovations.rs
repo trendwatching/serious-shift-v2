@@ -191,7 +191,7 @@ pub async fn load(pool: &sqlx::PgPool) -> Hydration {
     Hydration { by_shift, revision }
 }
 
-fn fnv1a(text: &str) -> u64 {
+pub(crate) fn fnv1a(text: &str) -> u64 {
     let mut hash = 0xcbf29ce484222325u64;
     for byte in text.bytes() {
         hash ^= u64::from(byte);

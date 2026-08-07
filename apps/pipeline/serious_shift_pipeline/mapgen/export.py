@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 from ..core.text import url_slug as slugify
 from .config import DOMAINS, MODULE_ORDER
+from .modules import scrub_module_tree
 from .validation import require_valid_map
 
 
@@ -64,6 +65,11 @@ def build_map_json_v2(conn) -> dict:
             'name':              d['name'],
             'label':             d['label'],
             'short_description': d['short_description'],
+            # The "what's shifting right now" paragraph on the sphere panel.
+            # Carried on every domain row, but only the per-sphere fragment
+            # serves it — the index fragment every visitor fetches on first
+            # paint stays deliberately lean.
+            'intro':             d['intro'],
             'description':       d['description'],
             'horizon':           d['horizon'],
             'key_trend_ids':     [f'kt-{r["id"]}' for r in kt_rows],
@@ -174,27 +180,41 @@ def build_map_json_v2(conn) -> dict:
         return out
 
     def _ordered(modules: list, scope: str) -> list:
-        """Sort a module list into the canonical reading order.
+        """Sort a module list into the canonical reading order, and scrub it.
 
         The order lives in packages/contracts/shift_modules.json, so a change to
         the page composition re-composes on the next --export-only rather than
         needing every shift regenerated. Unknown types keep their relative
         position at the end rather than being dropped.
+
+        This is also the one point every module list passes through — generated,
+        derived and override-authored alike, after the derived ones have been
+        inserted — so it is where the identifier scrub belongs. Doing it here
+        rather than at generation is what lets an --export-only run clean copy
+        that was published before the scrub existed.
         """
         order = MODULE_ORDER.get(scope) or []
         rank = {t: i for i, t in enumerate(order)}
         fallback = len(rank)
         return sorted(
-            modules or [],
+            scrub_module_tree(modules or []),
             key=lambda m: (rank.get(m.get('type'), fallback), 0),
         )
 
     def resolve_modules(scope: str, slug: str, generated):
+        """(modules, authored). `authored` marks a hand-written override.
+
+        The backend needs to know, because it filters modules by sphere when it
+        builds a route fragment and an authored list is exempt from that filter.
+        Publishing the fact beside the list is cheaper and more honest than
+        having the backend re-query `shift_module_overrides`: the flag then
+        cannot disagree with the composition it describes.
+        """
         key = (scope, slug)
         if key in overrides:
             used_overrides.add(key)
-            return overrides[key]
-        return generated or []
+            return overrides[key], True
+        return (generated or []), False
 
     # ---- child-id lookups, pre-grouped (one query each, not one per parent) ----
     st_ids_by_kt: dict = {}
@@ -232,6 +252,7 @@ def build_map_json_v2(conn) -> dict:
     key_trends_j = []
     for kt in kt_rows_all:
         url_slug = kt_slug_by_id[kt['id']]
+        kt_modules, kt_authored = resolve_modules('key_trend', url_slug, kt['modules'])
         key_trends_j.append({
             'id':          f'kt-{kt["id"]}',
             'db_id':       kt['id'],
@@ -251,7 +272,11 @@ def build_map_json_v2(conn) -> dict:
             # which case the front end projects a minimal list from the fields
             # above so the page still renders.
             'slug':    url_slug,
-            'modules': resolve_modules('key_trend', url_slug, kt['modules']),
+            'modules': kt_modules,
+            # Stripped from every response by INTERNAL_SHIFT_FIELDS; read only by
+            # the backend's snapshot builder, to exempt this page from the
+            # per-sphere module visibility filter.
+            'authored': kt_authored,
             '_kt_row': kt,   # dropped below; used to compose derived modules
         })
 
@@ -301,6 +326,7 @@ def build_map_json_v2(conn) -> dict:
         n = _seen_st.get((st['kt_id'], base), 0) + 1
         _seen_st[(st['kt_id'], base)] = n
         url_slug = f'{kt_slug_by_id.get(st["kt_id"], "")}/{base if n == 1 else f"{base}-{n}"}'
+        st_modules, st_authored = resolve_modules('sub_trend', url_slug, st['modules'])
         sub_trends_j.append({
             'id':          f'st-{st["id"]}',
             'db_id':       st['id'],
@@ -311,7 +337,8 @@ def build_map_json_v2(conn) -> dict:
             'description': st['description'],
             'claim_ids':   [f'c_{i}' for i in claim_ids_by_st.get(st['id'], [])],
             'slug':    url_slug,
-            'modules': resolve_modules('sub_trend', url_slug, st['modules']),
+            'modules': st_modules,
+            'authored': st_authored,   # see the key-shift note above
         })
         # The sourced claims behind this sub-shift, beside the written signals.
         if ('sub_trend', url_slug) not in used_overrides:

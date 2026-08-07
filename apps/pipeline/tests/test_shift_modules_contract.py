@@ -161,6 +161,11 @@ def test_short_figure_extraction():
         ("195 references verified in 30 minutes with zero errors", "195"),
         ("Boom Supersonic achieved supersonic flight in 2025", None),
         ("", None), (None, None),
+        # A short string is only a figure if it contains one. "multi-hop"
+        # shipped as a page's headline statistic at ~99px because the short
+        # path only checked length.
+        ("multi-hop", None), ("majority", None), ("several", None),
+        ("a handful", None), ("2026", "2026"), ("2:1", "2:1"),
     ]:
         assert gm._short_figure(raw) == want, f"{raw!r} -> {gm._short_figure(raw)!r}, want {want!r}"
 
@@ -177,3 +182,49 @@ def test_module_order_is_actually_loaded():
     assert MODULE_ORDER.get("key_trend"), "module order failed to load"
     order = MODULE_ORDER["key_trend"]
     assert order.index("sub_shift_list") > order.index("industries")
+
+
+# ── The design's renames and the both-sides rule ────────────────────────────
+#
+# These four pin decisions the Miro content mockup made, each of which is a
+# one-word change that a later edit could silently undo.
+
+def test_timeline_first_step_is_today():
+    """The page carries a WHY NOW panel directly above this module, so the first
+    horizon is `Today`. Two sections competing for the word read as one section
+    printed twice."""
+    steps = gm._as_steps({"today": "a", "next": "b", "beyond": "c"})
+    assert [s["label"] for s in steps] == ["Today", "Next", "Beyond"]
+    assert [s["text"] for s in steps] == ["a", "b", "c"]
+
+
+def test_timeline_still_accepts_the_pre_rename_key():
+    """A cached or retried response may predate the rename. Losing a third of the
+    module over a spelling would be a worse outcome than accepting both."""
+    steps = gm._as_steps({"now": "a", "next": "b", "beyond": "c"})
+    assert [s["label"] for s in steps] == ["Today", "Next", "Beyond"]
+    assert steps[0]["text"] == "a"
+
+
+def test_tension_band_always_carries_its_label():
+    """The module is "The tension" on every sphere, not only Consumers, and the
+    label comes from us rather than a frontend default."""
+    for editorial in ({"tension": "I want it and I don't"},
+                      {"consumer_tension": "I want it and I don't"}):
+        kt = gm.kt_modules({"subtitle": "d", "hero_stat": None}, editorial)
+        band = next(m for m in kt if m["type"] == "tension_band")
+        assert band["data"]["label"] == "The tension"
+        assert band["data"]["quote"] == "I want it and I don't"
+
+
+def test_human_needs_requires_both_sides():
+    """The design sets the pair side by side rather than behind a toggle, so a
+    one-sided pair renders as a coloured rectangle with a label and no copy."""
+    one_sided = {"human_needs": {"unlocked": "Cognitive relief: it does the work."}}
+    kt = gm.kt_modules({"subtitle": "d", "hero_stat": None}, one_sided)
+    assert "human_needs" not in {m["type"] for m in kt}
+
+    both = {"human_needs": {"unlocked": "Relief: it does the work.",
+                            "threatened": "Judgement: you stop checking."}}
+    kt = gm.kt_modules({"subtitle": "d", "hero_stat": None}, both)
+    assert "human_needs" in {m["type"] for m in kt}

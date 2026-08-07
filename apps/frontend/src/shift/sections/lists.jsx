@@ -207,7 +207,11 @@ export function Timeline({ steps }) {
 
   return (
     <div className="flex flex-col gap-2.5">
-      <Eyebrow as="h2">Now / next / beyond</Eyebrow>
+      {/* Built from the steps rather than hard-coded, so the heading can never
+          disagree with the cards under it. The pipeline renamed the first step
+          from "Now" to "Today" precisely because the page already has a WHY NOW
+          panel, and a fixed string here would have kept printing the old word. */}
+      <Eyebrow as="h2">{steps.map((s) => s.label).filter(Boolean).join(' / ') || 'Today / next / beyond'}</Eyebrow>
       {/* A rail down the left on mobile; across the top on desktop, where
           "now → next → beyond" reads as the horizontal thing it is and three
           stacked cards become one row. */}

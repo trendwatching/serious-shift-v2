@@ -93,6 +93,13 @@ STEPS: list[Step] = [
          'Evaluate predictions + thinker credibility'),
     Step('mapgen', 'synthesize', ['mapgen.cli'],
          'Rebuild the trend map (Claude API clustering)', gated=True),
+    # After mapgen, so it classifies against the map that was just published
+    # rather than last week's. Also runs standalone on an hourly cron with
+    # SS_CLASSIFY_MODEL=0, where it is pure SQL and costs nothing on a quiet
+    # hour — that is what keeps a newly ingested innovation from waiting a week
+    # for its shift links.
+    Step('classify', 'synthesize', ['steps.classify'],
+         'Map innovations onto the shifts they exemplify'),
 ]
 
 STAGES = ('ingest', 'synthesize')

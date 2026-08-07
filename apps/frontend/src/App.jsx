@@ -3,6 +3,7 @@ import ScrollToTop from './components/ScrollToTop'
 import { useDocumentMeta } from './hooks/useDocumentMeta'
 import { TopBar } from './shift/chrome'
 import Home from './shift/Home'
+import About from './shift/About'
 import { DomainSheet, ShiftDetail, SubShiftDetail } from './shift/pages'
 
 export function NotFound() {
@@ -35,6 +36,7 @@ export default function App() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="/map/:domainSlug" element={<DomainSheet />} />
           <Route path="/map/:domainSlug/:ktSlug" element={<ShiftDetail />} />
           <Route path="/map/:domainSlug/:ktSlug/:subSlug" element={<SubShiftDetail />} />

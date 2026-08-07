@@ -77,8 +77,15 @@ describe('accessible modules and navigation', () => {
     const trigger = screen.getByRole('button', { name: 'Open navigation' })
     await user.click(trigger)
     const dialog = screen.getByRole('dialog', { name: 'Site navigation' })
-    expect(within(dialog).getAllByRole('link').map((link) => link.textContent.replace(/^\d+/, '').trim()))
+    // Six rows, each a label plus the descriptor the design build shows to its
+    // right. A Miro sticky asked for the descriptors to go; the later build
+    // kept them, and the build is the spec.
+    expect(within(dialog).getAllByRole('link').map((link) => link.querySelector('span').textContent))
       .toEqual(['Shifts', 'Methodology', 'Subscribe', 'Services', 'TrendWatching', 'About'])
+    // The build hard-codes "52 key shifts" here. The real count moves every
+    // Monday, and a stale number in the nav is worse than no number.
+    expect(within(dialog).getByText('Every domain')).toBeTruthy()
+    expect(within(dialog).getByText('How we track')).toBeTruthy()
     expect(within(dialog).queryByText('Saved')).not.toBeInTheDocument()
     expect(within(dialog).queryByText('The room')).not.toBeInTheDocument()
     await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Close navigation' })).toHaveFocus())

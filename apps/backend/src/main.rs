@@ -9,6 +9,7 @@
 //!      INNOVATION_ASSET_HOSTS (hosts a cover image may be mirrored from).
 
 mod innovations;
+mod module_policy;
 mod seo;
 mod sql;
 
@@ -693,6 +694,19 @@ fn domain_summary(domain: &Value, shift_count: usize) -> Value {
     })
 }
 
+/// A sphere as its own page needs it: the summary plus the "what's shifting
+/// right now" paragraph.
+///
+/// Kept separate from `domain_summary` for the same reason `description` is
+/// excluded there. `intro` is four paragraphs across the whole document, and
+/// the index fragment carries all four domains on first paint. The sphere
+/// fragment carries one, for the page that actually prints it.
+fn domain_detail(domain: &Value, shift_count: usize) -> Value {
+    let mut out = domain_summary(domain, shift_count);
+    out["intro"] = domain.get("intro").cloned().unwrap_or(Value::Null);
+    out
+}
+
 /// Fields on a published shift/sub-shift row that exist only for the generator
 /// and the validator, and which no view reads.
 ///
@@ -701,7 +715,10 @@ fn domain_summary(domain: &Value, shift_count: usize) -> Value {
 /// for nothing. `proponents*`/`skeptics*` are the raw attribution columns the
 /// `voices` module is *built from*: shipping both sent every thinker quote
 /// twice. `sub_trend_ids` restates the `sub_shifts` array that accompanies it.
-const INTERNAL_SHIFT_FIELDS: [&str; 6] = [
+/// `authored` tells `build_snapshot` the page came from a module override and is
+/// exempt from the visibility filter; it is a publication detail, not content.
+const INTERNAL_SHIFT_FIELDS: [&str; 7] = [
+    "authored",
     "db_id",
     "proponents",
     "proponents_detail",
@@ -805,6 +822,7 @@ fn build_snapshot(
     body: String,
     version: &str,
     innovations: &innovations::ByShift,
+    policy: &module_policy::Policy,
 ) -> Result<MapSnapshot, serde_json::Error> {
     let document: Value = serde_json::from_str(&body)?;
     let domains = document
@@ -834,6 +852,16 @@ fn build_snapshot(
         for row in rows.iter_mut() {
             let key = format!("{}:{}", scope.as_str(), string_field(row, "slug"));
             let items = innovations.get(&key);
+            // A page composed from a `shift_module_overrides` row is exempt from
+            // the visibility filter. `export.py` flags it, and the rule is
+            // most-specific-wins: an editor who authored the whole list has
+            // already decided what appears, and a sphere-wide flag must not
+            // silently delete a section they placed on purpose.
+            let authored = row
+                .get("authored")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+            let domain = string_field(row, "domain_id").to_owned();
             let modules = row
                 .get_mut("modules")
                 .and_then(Value::as_array_mut)
@@ -843,10 +871,16 @@ fn build_snapshot(
             // from the other fields when the key is absent.
             if let Some(mut modules) = modules {
                 innovations::hydrate(&mut modules, scope, items);
+                if !authored {
+                    policy.apply(&mut modules, scope, &domain);
+                }
                 row["modules"] = Value::Array(modules);
             } else if items.is_some() {
                 let mut modules = Vec::new();
                 innovations::hydrate(&mut modules, scope, items);
+                if !authored {
+                    policy.apply(&mut modules, scope, &domain);
+                }
                 row["modules"] = Value::Array(modules);
             }
         }
@@ -932,7 +966,9 @@ fn build_snapshot(
                 domain_id,
                 json!({
                     "updated": updated,
-                    "domain": domain_summary(domain, domain_shift_count),
+                    // The one fragment that renders the sphere's intro
+                    // paragraph, so the only one that carries it.
+                    "domain": domain_detail(domain, domain_shift_count),
                     "key_shifts": summaries.clone(),
                     "insights": domain_insights,
                 }),
@@ -1019,9 +1055,16 @@ async fn fetch_snapshot(s: &AppState) -> Result<Arc<MapSnapshot>, AppError> {
     // more: two snapshots of the same document can differ in their innovations.
     // Folding the innovations revision in is what keeps `weak_etag` honest, so a
     // client holding `If-None-Match` is told when a page has changed.
+    // …and in which modules a sphere shows. Flipping a visibility flag has to
+    // move every affected ETag too, or a client holding `If-None-Match` keeps a
+    // page whose composition has changed.
     let innovations = innovations::load(&s.pool).await;
-    let version = format!("{published}|i{:016x}", innovations.revision);
-    build_snapshot(body, &version, &innovations.by_shift)
+    let policy = module_policy::load(&s.pool).await;
+    let version = format!(
+        "{published}|i{:016x}|p{:016x}",
+        innovations.revision, policy.revision
+    );
+    build_snapshot(body, &version, &innovations.by_shift, &policy)
         .map(Arc::new)
         .map_err(|error| AppError::internal(format!("invalid published map JSON: {error}")))
 }
@@ -1450,10 +1493,19 @@ mod tests {
         innovations::ByShift::new()
     }
 
+    /// No editor rows, so the contract default governs — the production state.
+    /// `sample_map` only carries `dek` and `lede`, which the default shows on
+    /// every sphere, so this changes nothing for the tests that just need a
+    /// snapshot. `a_non_consumer_key_shift_loses_its_commercial_modules` is the
+    /// one that exercises the filter.
+    fn default_policy() -> module_policy::Policy {
+        module_policy::Policy::default()
+    }
+
     #[test]
     fn route_snapshot_has_distinct_scoped_documents_and_etags() {
         let snapshot =
-            build_snapshot(sample_map(), "2026-08-02 14:00:00+00", &no_innovations()).unwrap();
+            build_snapshot(sample_map(), "2026-08-02 14:00:00+00", &no_innovations(), &default_policy()).unwrap();
         let index = snapshot.routes.get("").unwrap();
         let domain = snapshot.routes.get("society").unwrap();
         let shift = snapshot.routes.get("society/trust-machines").unwrap();
@@ -1563,7 +1615,7 @@ mod tests {
     #[test]
     fn a_linked_innovation_reaches_the_shift_fragment() {
         let snapshot =
-            build_snapshot(sample_map(), "2026-08-02 14:00:00+00|i0", &one_innovation()).unwrap();
+            build_snapshot(sample_map(), "2026-08-02 14:00:00+00|i0", &one_innovation(), &default_policy()).unwrap();
         let shift: Value =
             serde_json::from_str(&snapshot.routes.get("society/trust-machines").unwrap().body)
                 .unwrap();
@@ -1603,11 +1655,12 @@ mod tests {
     fn linking_an_innovation_changes_every_affected_etag() {
         let published = "2026-08-02 14:00:00+00";
         let before =
-            build_snapshot(sample_map(), &format!("{published}|i0"), &no_innovations()).unwrap();
+            build_snapshot(sample_map(), &format!("{published}|i0"), &no_innovations(), &default_policy()).unwrap();
         let after = build_snapshot(
             sample_map(),
             &format!("{published}|i1cf2"),
             &one_innovation(),
+            &default_policy(),
         )
         .unwrap();
         let route = "society/trust-machines";
@@ -1617,9 +1670,118 @@ mod tests {
         );
     }
 
+    /// A publication carries every module; the sphere decides which are shown.
+    /// This is the end-to-end proof, through `build_snapshot`, that the filter
+    /// runs and that `authored` exempts a page from it.
+    #[test]
+    fn a_non_consumer_key_shift_loses_its_commercial_modules() {
+        let map = json!({
+            "updated": "2026-08-02",
+            "domains": [{ "id": "society", "name": "Society", "label": "AI × Society",
+                          "short_description": "d", "description": "D",
+                          "horizon": "2028", "key_trend_ids": ["kt-1"] }],
+            "key_trends": [{
+                "id": "kt-1", "domain_id": "society", "slug": "trust-machines",
+                "name": "Trust Machines", "subtitle": "A shift", "velocity": "rising",
+                "read_time": "4 min read", "sub_trend_ids": [],
+                "modules": [
+                    { "type": "dek", "data": { "text": "A shift" } },
+                    { "type": "pull_quote", "data": { "quote": "A line" } },
+                    { "type": "industries", "data": { "items": [] } },
+                    { "type": "territories", "data": { "items": [] } },
+                ],
+            }],
+            "sub_trends": [],
+            "synthesis_insights": [],
+        })
+        .to_string();
+
+        let snapshot =
+            build_snapshot(map.clone(), "v", &no_innovations(), &default_policy()).unwrap();
+        let body: Value =
+            serde_json::from_str(&snapshot.routes.get("society/trust-machines").unwrap().body)
+                .unwrap();
+        let types: Vec<&str> = body["shift"]["modules"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|m| m["type"].as_str().unwrap())
+            .collect();
+        assert_eq!(types, ["dek"], "society keeps only the modules the design renders");
+
+        // `authored` is stripped from the response, not merely ignored.
+        assert!(body["shift"].get("authored").is_none());
+    }
+
+    #[test]
+    fn an_authored_page_is_never_filtered() {
+        let map = json!({
+            "updated": "2026-08-02",
+            "domains": [{ "id": "society", "name": "Society", "label": "AI × Society",
+                          "short_description": "d", "description": "D",
+                          "horizon": "2028", "key_trend_ids": ["kt-1"] }],
+            "key_trends": [{
+                "id": "kt-1", "domain_id": "society", "slug": "trust-machines",
+                "name": "Trust Machines", "subtitle": "A shift", "velocity": "rising",
+                "read_time": "4 min read", "sub_trend_ids": [],
+                // An editor placed these deliberately, via shift_module_overrides.
+                "authored": true,
+                "modules": [
+                    { "type": "dek", "data": { "text": "A shift" } },
+                    { "type": "industries", "data": { "items": [] } },
+                ],
+            }],
+            "sub_trends": [],
+            "synthesis_insights": [],
+        })
+        .to_string();
+
+        let snapshot = build_snapshot(map, "v", &no_innovations(), &default_policy()).unwrap();
+        let body: Value =
+            serde_json::from_str(&snapshot.routes.get("society/trust-machines").unwrap().body)
+                .unwrap();
+        let types: Vec<&str> = body["shift"]["modules"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|m| m["type"].as_str().unwrap())
+            .collect();
+        assert_eq!(types, ["dek", "industries"], "an override outranks the sphere rule");
+    }
+
+    /// Mirrors `linking_an_innovation_changes_every_affected_etag`. The version
+    /// string is built in `fetch_snapshot`; this pins that the policy revision is
+    /// part of it, so flipping a flag is visible to a conditional request
+    /// immediately rather than at the next weekly publication.
+    #[test]
+    fn flipping_a_visibility_flag_changes_every_affected_etag() {
+        let published = "2026-08-02 14:00:00+00";
+        let before = build_snapshot(
+            sample_map(),
+            &format!("{published}|i0|p{:016x}", 0),
+            &no_innovations(),
+            &module_policy::Policy::with_revision(0),
+        )
+        .unwrap();
+        let after = build_snapshot(
+            sample_map(),
+            &format!("{published}|i0|p{:016x}", 0x9e37_79b9_u64),
+            &no_innovations(),
+            &module_policy::Policy::with_revision(0x9e37_79b9),
+        )
+        .unwrap();
+        for route in ["", "society", "society/trust-machines"] {
+            assert_ne!(
+                before.routes.get(route).unwrap().etag,
+                after.routes.get(route).unwrap().etag,
+                "{route} kept its etag across a policy change",
+            );
+        }
+    }
+
     #[test]
     fn matching_etag_returns_304_without_a_body() {
-        let snapshot = build_snapshot(sample_map(), "version", &no_innovations()).unwrap();
+        let snapshot = build_snapshot(sample_map(), "version", &no_innovations(), &default_policy()).unwrap();
         let fragment = snapshot.routes.get("society").unwrap();
         let mut headers = HeaderMap::new();
         headers.insert(header::IF_NONE_MATCH, fragment.etag.clone());
@@ -1632,7 +1794,7 @@ mod tests {
     fn route_fragments_fit_compressed_response_budgets() {
         use std::io::Write;
 
-        let snapshot = build_snapshot(sample_map(), "version", &no_innovations()).unwrap();
+        let snapshot = build_snapshot(sample_map(), "version", &no_innovations(), &default_policy()).unwrap();
         for (route, budget) in [
             ("", 25 * 1024),
             ("society", 75 * 1024),

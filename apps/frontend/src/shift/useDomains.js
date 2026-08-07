@@ -37,6 +37,22 @@ function projectStModules(row) {
   return text ? [{ type: 'lede', data: { text } }] : []
 }
 
+/**
+ * Hand-made hero art, by slug.
+ *
+ * Two shifts were art-directed by hand for the design build. Every other shift
+ * gets its art from the pipeline (`hero_image` on the row), and these two are
+ * the quality bar that generation is judged against — so they are pinned here
+ * rather than overwritten by a generated substitute.
+ */
+const HERO_ART = {
+  'cognitive-erosion': '/shift/hero-cognitive-erosion.jpg',
+}
+
+const SUB_HERO_ART = {
+  'capacity-collapse': '/shift/hero-capacity-collapse-graded.jpg',
+}
+
 function toSubShift(src, i) {
   const title = src.name || ''
   const routeSlug = typeof src.slug === 'string' ? src.slug.split('/').filter(Boolean).at(-1) : ''
@@ -48,6 +64,7 @@ function toSubShift(src, i) {
     context: src.context,
     dek: src.description || src.subtitle || '',
     modules: nonEmpty(src.modules) || projectStModules(src),
+    heroImage: src.hero_image || SUB_HERO_ART[first(routeSlug, slugify(title))] || null,
   }
 }
 
@@ -67,6 +84,10 @@ function toShift(src, i, domain) {
     velocity: src.velocity,
     read: first(src.read_time, readTimeOf(dek)),
     modules: nonEmpty(src.modules) || projectKtModules(src),
+    // Same-origin path served by the backend once art exists for this shift.
+    // Absent is the normal case and the hero falls back to its gradient, which
+    // is a finished design rather than a placeholder.
+    heroImage: src.hero_image || HERO_ART[src.slug] || null,
     subshifts: subs.map((s, k) => toSubShift(s, k)),
   }
 }
@@ -97,7 +118,11 @@ export function useDomains() {
       const current = detail?.domain?.id === id ? detail.domain : null
       const live = current || summary
       const theme = themeFor(id)
-      const domainRef = { id, name: first(live?.name, deck.name), grad: theme.grad, dot: theme.dot }
+      // The four domain names are fixed information architecture, not editorial
+      // output, so the local list wins over the document. That is what keeps the
+      // US spelling ("Organizations") correct on a publication that predates the
+      // rename, instead of waiting a week for the next synthesize run.
+      const domainRef = { id, name: first(deck.name, live?.name), grad: theme.grad, dot: theme.dot }
 
       let rows = []
       if (detail?.domain?.id === id && Array.isArray(detail.key_shifts)) {
@@ -128,6 +153,12 @@ export function useDomains() {
         dot: theme.dot,
         horizon: first(live?.horizon, deck.horizon) || '',
         blurb: first(live?.short_description, deck.blurb) || '',
+        // The "what's shifting right now" paragraph. Served only on the
+        // per-sphere fragment, so on the deck (which reads the index) this
+        // falls back to the authored copy in site.js.
+        intro: first(live?.intro, deck.intro) || '',
+        crumb: theme.crumb,
+        eyebrow: theme.eyebrow,
         count: first(live?.key_shift_count, keyShifts.length),
         keyShifts,
         insights: (detail?.domain?.id === id ? detail.insights || [] : [])

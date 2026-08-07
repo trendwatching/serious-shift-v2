@@ -147,6 +147,33 @@ producer outside this repo.
 
 ---
 
+## 6b. Innovation → shift classification
+
+`steps/classify` maps innovations onto the shifts they exemplify, writing
+`innovation_shift_links` with `source='auto'` and a confidence.
+
+Deterministic first: TF-IDF cosine over the *shift corpus itself* (0.55), a
+structured-tag facet channel (0.30) and an exact brand-name match (0.15),
+renormalised over the channels an innovation can actually be judged on. Only
+genuinely ambiguous cases — a top pick between the floor and accept, or three
+candidates inside the tie margin — cost one Haiku call.
+
+It runs last in `synthesize`, after `mapgen`, so it classifies against the map
+that was just published. It is also safe to run standalone on an hourly cron
+with `SS_CLASSIFY_MODEL=0`, where it is pure SQL and returns zero rows on a
+quiet hour — that is what stops a newly ingested innovation waiting a week for
+its links.
+
+Two invariants, both enforced in SQL rather than in Python:
+
+* a link whose `source` is `'ingest'` or `'editor'` is never overwritten (the
+  `ON CONFLICT DO UPDATE … WHERE source = 'auto'` makes the row a no-op);
+* a *disabled* auto link is an editor's veto and is never resurrected (the
+  retraction `DELETE` carries `AND enabled`, so the tombstone survives).
+
+A sub-shift link is only ever written beneath an accepted parent, so an
+innovation cannot appear on a child page whose parent page does not show it.
+
 ## 7. Known gaps / follow-ups
 
 - **`documents['daily']`** has no generator (it was a static seed); it lives in the
@@ -162,12 +189,11 @@ producer outside this repo.
   sources only after listing/transcript metrics are healthy. Credentials are
   redacted and source success, item count, latency, proxy request count, and
   estimated cost are persisted in `pipeline_runs.detail`.
-- **Innovations have no automatic shift matching.** Ingestion, the mapping and the
-  page rendering are all live (see [`docs/INNOVATIONS-API.md`](docs/INNOVATIONS-API.md)),
-  but *which* shifts an innovation is an example of is decided by upstream sending
-  `shifts[]` or by an editor calling the curation API. A tag-overlap suggester is
-  the obvious next step — `innovation_shift_links.source` already reserves
-  `'auto'` and carries a `confidence` column for it.
+- **Hero art is generated for key shifts only, and is opt-in.** `steps/imagegen`
+  is not built yet; two hand-made heroes ship as static assets
+  (`hero-cognitive-erosion`, `hero-capacity-collapse-graded`) and every other
+  shift falls back to its gradient hero, which is a finished design rather than
+  a placeholder.
 - **The module contract is checked in.** `packages/contracts/shift_modules.json`
   owns module order, required fields, and the canonical industry list. A formal
   OpenAPI schema and generated client remain optional future work; runtime route

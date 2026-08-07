@@ -253,7 +253,8 @@ CREATE TABLE public.domains_v2 (
     short_description text NOT NULL,
     description text NOT NULL,
     sort_order integer NOT NULL,
-    horizon text
+    horizon text,
+    intro text DEFAULT ''::text NOT NULL
 );
 
 
@@ -356,6 +357,8 @@ CREATE TABLE public.innovations (
     state text DEFAULT 'active'::text NOT NULL,
     cover_state text DEFAULT 'none'::text NOT NULL,
     cover_error text,
+    classified_at timestamp with time zone,
+    classified_corpus_hash text,
     CONSTRAINT innovations_article_url_check CHECK (((article_url = ''::text) OR (article_url ~ '^https?://'::text))),
     CONSTRAINT innovations_cover_state_check CHECK ((cover_state = ANY (ARRAY['none'::text, 'stored'::text, 'failed'::text]))),
     CONSTRAINT innovations_state_check CHECK ((state = ANY (ARRAY['active'::text, 'withdrawn'::text])))
@@ -567,6 +570,23 @@ CREATE TABLE public.shift_module_overrides (
     enabled boolean DEFAULT true NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT shift_module_overrides_scope_check CHECK ((scope = ANY (ARRAY['key_trend'::text, 'sub_trend'::text])))
+);
+
+
+--
+-- Name: shift_module_visibility; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.shift_module_visibility (
+    scope text NOT NULL,
+    domain_id text NOT NULL,
+    module_type text NOT NULL,
+    visible boolean NOT NULL,
+    note text,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT shift_module_visibility_domain_check CHECK (((domain_id <> ''::text) AND (domain_id = lower(domain_id)))),
+    CONSTRAINT shift_module_visibility_scope_check CHECK ((scope = ANY (ARRAY['key_trend'::text, 'sub_trend'::text]))),
+    CONSTRAINT shift_module_visibility_type_check CHECK (((module_type <> ''::text) AND (module_type ~ '^[a-z][a-z0-9_]*$'::text)))
 );
 
 
@@ -980,6 +1000,14 @@ ALTER TABLE ONLY public.shift_module_overrides
 
 
 --
+-- Name: shift_module_visibility shift_module_visibility_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shift_module_visibility
+    ADD CONSTRAINT shift_module_visibility_pkey PRIMARY KEY (scope, domain_id, module_type);
+
+
+--
 -- Name: shift_refs shift_refs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1130,7 +1158,7 @@ CREATE INDEX idx_dstc_claim ON public.domain_sub_trend_claims USING btree (claim
 -- Name: idx_innovation_tags_external; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_innovation_tags_external ON public.innovation_tags USING btree (external_uuid) WHERE (external_uuid IS NOT NULL);
+CREATE INDEX idx_innovation_tags_external ON public.innovation_tags USING btree (external_uuid) WHERE (external_uuid IS NOT NULL);
 
 
 --
@@ -1138,6 +1166,13 @@ CREATE UNIQUE INDEX idx_innovation_tags_external ON public.innovation_tags USING
 --
 
 CREATE INDEX idx_innovations_brands ON public.innovations USING gin (brands_list);
+
+
+--
+-- Name: idx_innovations_classified_corpus; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_innovations_classified_corpus ON public.innovations USING btree (classified_corpus_hash) WHERE (state = 'active'::text);
 
 
 --
@@ -1159,6 +1194,13 @@ CREATE INDEX idx_innovations_feed ON public.innovations USING btree (created_at 
 --
 
 CREATE INDEX idx_innovations_source_id ON public.innovations USING btree (source_innovation_id);
+
+
+--
+-- Name: idx_innovations_unclassified; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_innovations_unclassified ON public.innovations USING btree (id) WHERE ((state = 'active'::text) AND (classified_at IS NULL));
 
 
 --
@@ -1250,6 +1292,13 @@ CREATE INDEX idx_predictions_thinker ON public.predictions USING btree (thinker_
 --
 
 CREATE INDEX idx_scrape_sources_thinker ON public.scrape_sources USING btree (thinker_id);
+
+
+--
+-- Name: idx_smv_updated; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_smv_updated ON public.shift_module_visibility USING btree (updated_at DESC);
 
 
 --
@@ -1502,4 +1551,6 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260801175040'),
     ('20260801182059'),
     ('20260803180000'),
-    ('20260805094500');
+    ('20260805094500'),
+    ('20260807100000'),
+    ('20260807100100');

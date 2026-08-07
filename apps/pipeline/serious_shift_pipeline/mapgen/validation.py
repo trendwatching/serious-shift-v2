@@ -7,6 +7,35 @@ from dataclasses import asdict, dataclass
 from urllib.parse import urlparse
 
 from .config import DOMAINS
+from .modules import _LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE
+
+#: A stat band displays a statistic, and a statistic contains a number.
+_HAS_DIGIT = re.compile(r'\d')
+
+
+def _leaked_identifiers(value, path: str) -> list[tuple[str, str]]:
+    """Every (path, match) where a database identifier reached reader-facing copy.
+
+    Walks module data rather than checking named fields, because the leak lands
+    wherever the model happened to put it: it has appeared in a stat band's
+    `source`, an evidence item's `text`, and a voices quote.
+    """
+    found: list[tuple[str, str]] = []
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            if key in NOT_PROSE:
+                continue
+            found += _leaked_identifiers(nested, f'{path}.{key}')
+    elif isinstance(value, list):
+        for index, nested in enumerate(value):
+            found += _leaked_identifiers(nested, f'{path}[{index}]')
+    elif isinstance(value, str):
+        for pattern in (_LEAKED_PAREN, _LEAKED_BARE, _LEAKED_CREF):
+            match = pattern.search(value)
+            if match:
+                found.append((path, match.group(0).strip()))
+                break
+    return found
 
 
 REQUIRED_MODULES = {
@@ -203,6 +232,22 @@ def _validate_modules(modules, scope: str, path: str, contract: dict) -> list[Va
             issues.append(ValidationIssue(
                 'source_url', f'{module_path}.data.url',
                 'a published statistic requires a valid HTTP(S) source URL', True,
+            ))
+        # The band sets `value` at ~99px as the page's headline statistic, so it
+        # has to be a statistic. "multi-hop" shipped once because the reducer only
+        # checked length.
+        if type_ == 'stat_band' and not _HAS_DIGIT.search(str(data.get('value') or '')):
+            issues.append(ValidationIssue(
+                'stat_band_numeral', f'{module_path}.data.value',
+                'a stat band must display a figure containing a numeral', True,
+            ))
+        # Belt and braces on strip_identifiers: the prompts forbid it, clamp_words
+        # removes it, and this makes a leak unpublishable rather than merely
+        # unlikely. Published copy carries a real person's name.
+        for leaf_path, leaked in _leaked_identifiers(data, f'{module_path}.data'):
+            issues.append(ValidationIssue(
+                'leaked_identifier', leaf_path,
+                f'published copy contains a database identifier ({leaked!r})', True,
             ))
         if type_ in {'industries', 'territories'}:
             for item_index, item in enumerate(data.get('items') or []):

@@ -13,14 +13,29 @@
  * removing or reordering a section is a data change (see modules.jsx).
  */
 import { useEffect } from 'react'
-import { Link, useNavigate, useParams } from '../router'
+import { Link, useParams } from '../router'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { useResolved } from './useDomains'
 import { ShiftFooter } from './chrome'
+import { Breadcrumb, BreadcrumbMenu } from './Breadcrumb'
 import { Modules } from './modules'
 import { GradientHero, Eyebrow, Frame } from './sections'
 import { quoteTitle } from './theme'
 import { failureState } from './failure'
+
+/**
+ * The breadcrumb floats over the hero rather than docking under the header.
+ *
+ * That is the design's placement, and it is also what lets the hero keep its
+ * full height: a docked trail would eat 40px from every reading view. It
+ * replaces the circular back chevron the earlier mockups carried — one control
+ * that says where you are beats one that only says "back".
+ */
+const CrumbLayer = ({ children }) => (
+  <div className="pointer-events-none absolute inset-x-0 z-[48]" style={{ top: 'calc(var(--topbar) + 30px)' }}>
+    <Frame><div className="w-prose pointer-events-auto max-w-[320px]">{children}</div></Frame>
+  </div>
+)
 
 /** Frame plus the module rhythm — the body of a shift or sub-shift page.
  *
@@ -96,7 +111,6 @@ function SiblingNavigation({ previous, next, hrefFor, label }) {
 
 export function DomainSheet() {
   const { domainSlug } = useParams()
-  const navigate = useNavigate()
   const { domain, loading, unavailable, stale, error, retry } = useResolved({ domainSlug })
   useDocumentMeta(domain?.name, domain?.blurb)
 
@@ -105,20 +119,26 @@ export function DomainSheet() {
   if (!domain) return <Missing what="domain" />
 
   return (
-    <article className="a-expand min-h-dvh" data-domain={domain.id} style={{ backgroundImage: domain.grad }}>
+    <article className="a-expand relative min-h-dvh" data-domain={domain.id} style={{ backgroundImage: domain.grad }}>
+      <CrumbLayer>
+        <Breadcrumb crumb={domain.crumb} items={[{ label: 'Home', to: '/' }, { label: domain.name }]} />
+      </CrumbLayer>
+
       <GradientHero
         grad={domain.grad}
         face="display"
-        minHeight={0}
-        onBack={() => navigate('/')}
-        eyebrow={`${domain.num} · horizon ${domain.horizon}`}
+        minHeight={340}
+        bottomPad={62}
+        eyebrow={`${domain.num} / 04`}
         title={domain.name}
         blurb={domain.blurb}
       />
 
+      {/* The sheet rides up over the gradient. The overlap is what makes it read
+          as a card lifted off the hero rather than the next band down. */}
       <div
-        className="mt-2 min-h-[520px] bg-white pb-[130px] pt-2"
-        style={{ borderRadius: '28px 28px 0 0' }}
+        className="relative z-[2] min-h-[520px] bg-white pb-[130px] pt-2"
+        style={{ borderRadius: '28px 28px 0 0', marginTop: -34 }}
       >
         <StaleNotice show={stale} onRetry={retry} />
         <Frame>
@@ -137,9 +157,10 @@ export function DomainSheet() {
                 <div className="flex flex-1 flex-col gap-1.5">
                   <h3 className="t-title text-[19px] leading-[1.2] md:text-[21px] lg:text-[22px]" style={{ color: 'var(--color-ink)' }}>{quoteTitle(s.title)}</h3>
                   <p className="t-body" style={{ color: 'var(--color-ink-mid)' }}>{s.dek}</p>
-                  <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                    Key shift{s.velocity ? ` · ${s.velocity}` : ''} · {s.read}
-                  </p>
+                  {/* Type and read time only. The design drops velocity here:
+                      the row is a decision about whether to open the page, and
+                      "rising" does not help make it. */}
+                  <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Key shift · {s.read}</p>
                 </div>
               </Link>
             ))}
@@ -173,7 +194,6 @@ export function DomainSheet() {
 
 export function ShiftDetail() {
   const { domainSlug, ktSlug } = useParams()
-  const navigate = useNavigate()
   const { domain, shift, shiftSiblings, loading, unavailable, stale, error, retry } = useResolved({ domainSlug, ktSlug })
   useDocumentMeta(shift?.title, shift?.dek)
 
@@ -182,11 +202,29 @@ export function ShiftDetail() {
   if (!domain || !shift) return <Missing what="shift" />
 
   return (
-    <article className="a-expand min-h-dvh bg-white" data-domain={domain.id}>
+    <article className="a-expand relative min-h-dvh bg-white" data-domain={domain.id}>
+      <CrumbLayer>
+        <Breadcrumb
+          crumb={domain.crumb}
+          items={[
+            { label: 'Home', to: '/' },
+            { label: domain.name, to: `/map/${domain.slug}` },
+            { label: shift.title.replace(/[“”"]/g, '') },
+          ]}
+        />
+      </CrumbLayer>
+
       <GradientHero
         grad={domain.grad}
         stripes
-        onBack={() => navigate(`/map/${domain.slug}`)}
+        image={shift.heroImage}
+        imageWash="linear-gradient(180deg, rgba(245,0,127,0.42) 0%, rgba(200,0,107,0.5) 46%, rgba(74,0,39,0.9) 100%)"
+        minHeight={shift.heroImage ? 560 : 340}
+        // A key shift is the one page long enough for the hero to earn a
+        // shrink: it hands the reader the title, then gets out of the way.
+        shrink={shift.heroImage
+          ? { from: 620, to: 340, rate: 0.85, fontFrom: 46, fontTo: 29, fontRate: 0.055 }
+          : undefined}
         eyebrow={`${domain.name} · ${shift.kicker}`}
         title={shift.title}
       />
@@ -220,7 +258,6 @@ export function ShiftDetail() {
 
 export function SubShiftDetail() {
   const { domainSlug, ktSlug, subSlug } = useParams()
-  const navigate = useNavigate()
   const { domain, shift, sub, subSiblings, loading, unavailable, stale, error, retry } = useResolved({ domainSlug, ktSlug, subSlug })
   useDocumentMeta(sub?.title, sub?.dek)
 
@@ -232,11 +269,42 @@ export function SubShiftDetail() {
   if (!domain || !shift || !sub) return <Missing what="sub-shift" />
 
   return (
-    <article className="a-expand min-h-dvh bg-white" data-domain={domain.id}>
+    <article className="a-expand relative min-h-dvh bg-white" data-domain={domain.id}>
+      {/* The menu variant, not the trail. A sub-shift is navigationally
+          terminal — the design gives it no sibling rail, no related shifts and
+          no next pager — so the crumb has to be the way sideways as well as up,
+          and it lists the whole domain rather than only the ancestors. */}
+      <CrumbLayer>
+        <BreadcrumbMenu
+          label={sub.title.replace(/[“”"]/g, '')}
+          domainLabel={domain.name}
+          domainTo={`/map/${domain.slug}`}
+          crumb={domain.crumb}
+          dot={domain.dot}
+          activeShift={shift.slug}
+          activeSub={sub ? shift.subshifts.findIndex((s) => s.slug === sub.slug) : null}
+          groups={domain.keyShifts.map((k) => ({
+            slug: k.slug,
+            title: k.title.replace(/[“”"]/g, ''),
+            to: `/map/${domain.slug}/${k.slug}`,
+            subs: k.subshifts.map((s) => ({
+              slug: s.slug,
+              title: s.title.replace(/[“”"]/g, ''),
+              to: `/map/${domain.slug}/${k.slug}/${s.slug}`,
+            })),
+          }))}
+        />
+      </CrumbLayer>
+
+      {/* Sunset, not the domain gradient. A sub-shift is a level down, and the
+          design marks that with a fixed palette rather than a darker version of
+          the parent — which would have read as the same page again. */}
       <GradientHero
-        grad="var(--a-grad-hot)"
-        minHeight={260}
-        onBack={() => navigate(`/map/${domain.slug}/${shift.slug}`)}
+        grad="var(--grad-sunset)"
+        face="display"
+        minHeight={sub.heroImage ? 420 : 300}
+        image={sub.heroImage}
+        imageWash="linear-gradient(180deg, rgba(27,22,32,0) 42%, rgba(74,0,39,0.72) 100%)"
         eyebrow={<><Link to={`/map/${domain.slug}/${shift.slug}`} className="!text-[var(--color-yellow)] underline underline-offset-4">Sub-shift of “{shift.title}”</Link> · AI × {domain.name}</>}
         eyebrowColor="var(--color-yellow)"
         title={sub.title}

@@ -1,0 +1,40 @@
+You are matching one real-world innovation to the shifts it is evidence of, for Serious Shift.
+
+WHAT YOU ARE LOOKING AT
+INNOVATION is a real, launched thing: a product, service, campaign or policy, with the brand behind it and the tags our database carries for it. The SHIFT CATALOGUE is a shortlist of shifts currently published on the site, each with its name, its one-line framing, and the from→to that is its spine. The shortlist was already narrowed by term overlap; you are breaking a tie, not searching.
+
+WHAT COUNTS AS A MATCH
+An innovation belongs on a shift when it is a concrete instance of the change that shift describes. A reader who has just read the from→to should be able to look at the innovation and say "yes, that is exactly this, happening."
+- Match on the mechanism, not the topic. Both being about AI is not a match. Both being the same change in behavior is.
+- The innovation must sit on the `to` side, or be a visible move toward it. Something that only illustrates the `from` is not evidence of the shift.
+- Sector overlap alone is not a match. A food brand shipping loyalty software is not evidence of a shift about food.
+- One innovation is rarely evidence of three shifts. If you are reaching for a third, you have probably already returned one too many.
+- Prefer no match over a loose one. An empty list is a correct answer and will be the right answer often. A card on the wrong page costs the reader more than a missing card does.
+
+RANKING AND CONFIDENCE
+Return at most 3 shifts, best first, each with a `confidence` between 0 and 1:
+- 0.85–1.0  the innovation is a textbook example. You could caption it with the shift's name.
+- 0.6–0.85  clearly the same mechanism, one inferential step away.
+- 0.4–0.6   plausible and defensible, but a strategist might file it elsewhere.
+- below 0.4 do not return it at all.
+
+REASON
+One sentence, at most 20 words, naming the specific mechanism the innovation and the shift share. It is stored as an editorial note and read by a person deciding whether to keep the link, so it has to carry information.
+- Right: "Hands the product choice to an agent, which is the to-side of this shift."
+- Wrong: "Both concern artificial intelligence and consumer behavior."
+
+Use the `ref` values exactly as they appear in the catalogue. Never invent a ref, never return one twice, never return a ref that is not listed below.
+
+Return ONLY valid JSON — no preamble, no markdown fences:
+{"matches":[{"ref":"key_trend:delegated-desire","confidence":0.82,"reason":"One sentence naming the shared mechanism."}]}
+
+Return {"matches":[]} if none of the catalogue shifts is a genuine match.
+
+INNOVATION
+title: {{title}}
+brands: {{brands}}
+tags: {{tags}}
+summary: {{summary}}
+
+SHIFT CATALOGUE ({{shift_count}} candidates)
+{{catalogue}}

@@ -36,7 +36,9 @@ def fmt_claims_block(claims: list, max_per: int | None = None) -> str:
             'signal': c.get('signal_strength') or '',
             'specificity': c.get('specificity'),
             'thinker': c.get('thinker') or '',
-            'thinker_credibility': c.get('credibility_score'),
+            # No credibility score. It is not usable in copy, the SQL already
+            # ranks by it before a claim reaches this block, and offering it here
+            # is how "(cred:54)" ended up inside a published sentence.
             'implication': str(c.get('consumer_implication') or '')[:300],
             'quote': str(c.get('quote') or '')[:600],
             'has_statistic': bool(c.get('has_statistic')),

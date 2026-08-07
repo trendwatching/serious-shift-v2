@@ -12,7 +12,7 @@ import re
 
 # Phases 3 and 4 name and cluster; this writes the prose the reader sees on the
 # shift and sub-shift pages (From→To, what's changing / why now, human needs,
-# consumer tension, horizon, industries, opportunity territories).
+# the tension, horizon, industries, opportunity territories).
 #
 # Kept as its own phase, one call per Key Trend, for two reasons: a long
 # editorial answer can never truncate the taxonomy it hangs off, and a parse
@@ -20,14 +20,28 @@ import re
 # because the front end renders each section only when its field is present.
 # ---------------------------------------------------------------------------
 
+#: The horizon steps and the labels the page prints, in order.
+#:
+#: The first step is `today`, not `now`: the page already has a WHY NOW tab
+#: immediately above this module, and two sections competing for the word read
+#: as the same section twice.
+_TIMELINE_STEPS = (('today', 'Today'), ('next', 'Next'), ('beyond', 'Beyond'))
+
+
 def _as_steps(timeline) -> list | None:
-    """Normalise a {now,next,beyond} object into the [{label,text}] the map
+    """Normalise a {today,next,beyond} object into the [{label,text}] the map
     document carries. Tolerates a model that already returned a list."""
     if isinstance(timeline, list):
         return [t for t in timeline if isinstance(t, dict) and t.get('text')] or None
     if isinstance(timeline, dict):
-        steps = [{'label': k.capitalize(), 'text': timeline[k]}
-                 for k in ('now', 'next', 'beyond') if timeline.get(k)]
+        steps = []
+        for key, label in _TIMELINE_STEPS:
+            # `now` is the pre-August-2026 key. Accept it rather than drop a
+            # third of the module when a cached or retried response predates the
+            # rename; the label is ours either way.
+            text = timeline.get(key) or (timeline.get('now') if key == 'today' else None)
+            if text:
+                steps.append({'label': label, 'text': text})
         return steps or None
     return None
 
@@ -58,6 +72,66 @@ _FIGURE_RE = re.compile(
 )
 
 
+#: Database identifiers a model copied out of the evidence block into prose.
+#:
+#: The evidence records carry an `id` so the model can cite it in `evidence_ids`
+#: and `claim_id`. Some runs put it in the sentence instead, and two such strings
+#: reached production: "Jack Clark, import AI newsletter (cred:54)" and
+#: "Jakob Nielsen (id:38735)". The prompts now forbid it, but published copy goes
+#: out under a real person's name, so the same reasoning as
+#: `parse_thinker_attribution` applies: "the model was told not to" is not a
+#: guarantee, and this is cheap to enforce.
+_LEAKED_PAREN = re.compile(
+    r'\s*[\(\[]\s*(?:id|ids|claim|claim_id|evidence_id|cred|credibility|'
+    r'conf|confidence|score|weight|specificity)\s*[:=]\s*[^)\]]{0,40}[\)\]]',
+    re.IGNORECASE,
+)
+#: The lookbehind keeps a URL's query string intact: "example.com/a?id=7" is a
+#: link the copy legitimately carries, not a leaked identifier.
+_LEAKED_BARE = re.compile(
+    r'(?<![?&/=])\b(?:id|claim_id|evidence_id|cred|credibility|specificity)\s*[:=]\s*\d+\b',
+    re.IGNORECASE,
+)
+_LEAKED_CREF = re.compile(r'\bc_\d{2,}\b')
+
+
+def strip_identifiers(text) -> str:
+    """Remove database identifiers a model copied into reader-facing prose.
+
+    Deliberately narrow: it only matches a known field name joined to a value by
+    `:` or `=`. A ratio ("a 2:1 split") and a plain year ("the 2026 id card
+    scheme") have to survive, because they are things the copy legitimately says.
+    """
+    out = str(text or '')
+    for pattern in (_LEAKED_PAREN, _LEAKED_BARE, _LEAKED_CREF):
+        out = pattern.sub('', out)
+    out = re.sub(r'\s{2,}', ' ', out)
+    return re.sub(r'\s+([,.;:!?])', r'\1', out).strip().rstrip(',;:')
+
+
+#: Keys whose values are machine strings, not prose. A URL is full of things that
+#: look like `id=…` by definition, and `evidence_ids` is a list of the very
+#: numbers the scrubber is looking for.
+NOT_PROSE = frozenset({'url', 'href', 'image', 'evidence_ids'})
+
+
+def scrub_module_tree(value):
+    """`value` with database identifiers removed from every prose leaf.
+
+    Applied at export rather than only at generation, which is what makes the fix
+    free: the offending strings are already baked into `domain_key_trends.modules`
+    from earlier runs, so an `--export-only` pass cleans the live pages without
+    paying to regenerate them.
+    """
+    if isinstance(value, dict):
+        return {k: v if k in NOT_PROSE else scrub_module_tree(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [scrub_module_tree(v) for v in value]
+    if isinstance(value, str):
+        return strip_identifiers(value)
+    return value
+
+
 def clamp_words(text, limit: int) -> str:
     """Trim prose to `limit` words, preferring a sentence boundary.
 
@@ -72,9 +146,12 @@ def clamp_words(text, limit: int) -> str:
     at the last full sentence inside the limit keeps the note readable; only when
     there is no sentence break do we fall back to a word cut with an ellipsis.
     """
-    words = str(text or '').split()
+    # Scrub before measuring: a stripped identifier should not cost the copy a
+    # word of its allowance, and every prose field already passes through here.
+    cleaned = strip_identifiers(text)
+    words = cleaned.split()
     if len(words) <= limit:
-        return str(text or '')
+        return cleaned
     head = ' '.join(words[:limit])
     # Prefer the last sentence end, but only if it keeps most of the allowance —
     # cutting a 40-word note down to 6 to land on a full stop loses more than the
@@ -107,6 +184,10 @@ def _clamp_strings(items, limit: int) -> list | None:
     return [clamp_words(item, limit) for item in items]
 
 
+#: A stat band displays a statistic, and a statistic contains a number.
+_HAS_DIGIT = re.compile(r'\d')
+
+
 def _short_figure(text, limit: int = 14) -> str | None:
     """A numeral fit for the stat band, or None.
 
@@ -119,7 +200,10 @@ def _short_figure(text, limit: int = 14) -> str | None:
     if not text:
         return None
     t = ' '.join(str(text).split())
-    if len(t) <= limit:
+    # A short string is only a figure if it contains one. Without the digit
+    # check a ten-character phrase like "multi-hop" passed straight through and
+    # rendered as the page's headline statistic at ~99px.
+    if len(t) <= limit and _HAS_DIGIT.search(t):
         return t
     m = _FIGURE_RE.match(t)
     if m:
@@ -152,9 +236,9 @@ def _module(type_: str, data, required: tuple = ()) -> dict | None:
     `required` names the keys the module cannot render without. A stat band with
     prose but no numeral, or a tension band with a label but no quote, is not a
     section — it is an empty box. With no `required` given the module survives as
-    long as any one value is set, which is what peel_tabs and human_needs want
-    (both render happily with only one side filled). Mirrors the `required` lists
-    in packages/contracts/shift_modules.json.
+    long as any one value is set, which is what peel_tabs wants: its two panes
+    are behind a tab, so one of them being absent costs the reader nothing.
+    Mirrors the `required` lists in packages/contracts/shift_modules.json.
     """
     if not data:
         return None
@@ -198,11 +282,20 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
         # Resolved from the shift's sub-shifts at render time, so it carries no
         # data of its own — but it still has to sit in the order.
         {'type': 'sub_shift_list', 'data': {}},
+        # Both sides or neither. A card pair with one half filled is not a
+        # section, and the design shows them side by side rather than as an
+        # accordion, so the empty half has nowhere to hide.
         _module('human_needs', {
             'unlocked': clamp_words(needs.get('unlocked'), 45),
             'threatened': clamp_words(needs.get('threatened'), 45),
-        }),
-        _module('tension_band', {'quote': clamp_words(e.get('consumer_tension'), 38)}, ('quote',)),
+        }, ('unlocked', 'threatened')),
+        # `consumer_tension` is the pre-August-2026 key, kept so a retried or
+        # cached response still lands. The label is always ours: the module is
+        # "The tension" on every sphere, not only Consumers.
+        _module('tension_band', {
+            'quote': clamp_words(e.get('tension') or e.get('consumer_tension'), 38),
+            'label': 'The tension',
+        }, ('quote',)),
         _module('timeline', {'steps': _clamp_steps(_as_steps(e.get('timeline')), 45)}, ('steps',)),
         _module('industries', {'items': _clamp_items(_as_pairs(e.get('industries')), 40)}, ('items',)),
         _module('territories', {'items': _clamp_items(_as_pairs(e.get('opportunities')), 50)}, ('items',)),
@@ -224,7 +317,10 @@ def st_modules(st_row: dict, editorial: dict) -> list:
         _module('tension_band', {'quote': clamp_words(e.get('quote'), 38),
                                  'label': 'The tension'}, ('quote',)),
         _module('stat_band', {
-            'value': stat.get('value') or '',
+            # Same reduction as the key shift's band, and for the same reason:
+            # the value is set at ~99px, and it has to be a figure. A sub-shift
+            # whose evidence carries no number simply has no stat band.
+            'value': _short_figure(stat.get('value')) or '',
             'text': stat.get('text') or '',
             'source': stat.get('source') or '',
             'url': stat.get('url') or '',
@@ -237,7 +333,7 @@ def st_modules(st_row: dict, editorial: dict) -> list:
         _module('human_needs', {
             'unlocked': clamp_words(needs.get('unlocked'), 45),
             'threatened': clamp_words(needs.get('threatened'), 45),
-        }),
+        }, ('unlocked', 'threatened')),
         _module('signals', {'items': _clamp_strings(_as_strings(e.get('signals')), 35)}, ('items',)),
         _module('counter_signals',
                 {'items': _clamp_strings(_as_strings(e.get('counter_signals')), 35)}, ('items',)),

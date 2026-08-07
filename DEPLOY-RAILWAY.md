@@ -256,3 +256,56 @@ three drift apart.
   limits — fine for a demo; upgrade for steady traffic.
 - CORS and `PORT` binding are already production-set
   (see `apps/backend`). Remaining follow-ups live in [ARCHITECTURE.md](ARCHITECTURE.md#7-known-gaps--follow-ups).
+
+## Module visibility, without a deploy
+
+Which modules a shift page shows is data. The default matrix lives in
+`packages/contracts/shift_modules.json` (mirrored as a const in
+`apps/backend/src/module_policy.rs`); a row in `shift_module_visibility`
+overrides it for one `(scope, domain_id, module_type)`, and `domain_id = '*'`
+overrides it for every sphere at once.
+
+The filter runs when the backend builds a route fragment, so a change is live
+within `DOC_CACHE_TTL` (60s) — no deploy, no pipeline run. Hiding is
+presentation only: the publication still carries every module and
+`validate_map()` still requires them, so a flag can never make a run
+unpublishable and un-hiding one never needs a republication.
+
+```sql
+-- show human_needs on Economy key shifts after all
+INSERT INTO shift_module_visibility (scope, domain_id, module_type, visible, note)
+VALUES ('key_trend', 'economy', 'human_needs', true, 'Q4 experiment')
+ON CONFLICT (scope, domain_id, module_type)
+DO UPDATE SET visible = EXCLUDED.visible, note = EXCLUDED.note, updated_at = now();
+
+-- turn a deferred module on everywhere in one row
+INSERT INTO shift_module_visibility (scope, domain_id, module_type, visible)
+VALUES ('key_trend', '*', 'voices', true)
+ON CONFLICT (scope, domain_id, module_type) DO UPDATE SET visible = true, updated_at = now();
+
+-- back to the contract default
+DELETE FROM shift_module_visibility
+ WHERE scope = 'key_trend' AND domain_id = 'economy' AND module_type = 'human_needs';
+```
+
+A page composed from a `shift_module_overrides` row is exempt from the filter
+entirely — an editor who hand-authored the whole module list has already decided
+what appears.
+
+## Classifier environment
+
+`steps/classify` runs last in `synthesize`. To also run it hourly, point a cron
+service at `python -m serious_shift_pipeline.steps.classify` with
+`SS_CLASSIFY_MODEL=0`, which makes it pure SQL and free on a quiet hour.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `SS_CLASSIFY_MODEL` | `1` | `0` disables escalation entirely — deterministic only |
+| `SS_CLASSIFY_MODEL_ID` | `claude-haiku-4-5` | the escalation model |
+| `SS_CLASSIFY_BUDGET_USD` | `2.00` | per-run spend ceiling; hitting it finishes deterministically rather than aborting |
+| `SS_CLASSIFY_MODEL_CALLS_MAX` | `200` | count guard, independent of price |
+| `SS_CLASSIFY_ACCEPT` | `0.72` | confidence at or above which a link is written |
+| `SS_CLASSIFY_FLOOR` | `0.45` | below this nothing is ever linked, not even the model's pick |
+
+First run on an existing corpus: `--dry-run` prints the ranking and writes
+nothing, so the thresholds can be sanity-checked before anything reaches a page.

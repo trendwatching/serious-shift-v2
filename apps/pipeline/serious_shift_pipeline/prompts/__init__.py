@@ -8,6 +8,7 @@ that request runs on; response parsing and orchestration live in the steps.
   extraction  — structured extraction from raw sources (process_raw)
   dedup       — DUPLICATE/UNIQUE judgement for claim pairs
   ingest      — ad-hoc single-URL extraction
+  classify    — innovation → shift matching, for the ties the scorer cannot call
 
 Import from the package root, e.g.:
   from ..prompts import VOICE, prompt_domain_key_trends, SYNTHESIS_MODEL
@@ -29,9 +30,13 @@ from .map_data import (
 from .extraction import extraction_prompt
 from .dedup import DEDUP_MODEL, dedup_prompt
 from .ingest import INGEST_MODEL, ingest_prompt
+from .classify import CLASSIFY_MODEL, classify_prompt, fmt_shift_catalogue
 
 __all__ = [
     "VOICE",
+    "CLASSIFY_MODEL",
+    "classify_prompt",
+    "fmt_shift_catalogue",
     "SYNTHESIS_MODEL",
     "INSIGHTS_MODEL",
     "MIN_KTS_PER_DOM",

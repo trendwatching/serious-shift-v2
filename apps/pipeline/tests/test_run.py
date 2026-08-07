@@ -41,10 +41,18 @@ def test_ingest_and_synthesize_do_not_overlap():
     assert not (ingest & synth)
 
 
-def test_synthesize_is_gated_and_ingest_is_not():
-    """Only the map regen is a flat cost on unchanged input, so only it is gated."""
-    synth = run.steps_for('synthesize', only=None, discover=False)
-    assert all(s.gated for s in synth)
+def test_only_the_map_regen_is_gated():
+    """The gate exists for one reason: mapgen is a flat ~$5 whether or not the
+    input changed, so it is skipped when no new claims landed.
+
+    `classify` deliberately is NOT gated. An innovation can arrive in a week
+    with no new claims at all, and it still needs its shift links — gating it
+    behind the claim counter would leave those cards missing until the next week
+    that happened to produce claims. It is free when there is nothing to do: the
+    sweep query returns zero rows."""
+    synth = {s.name: s.gated for s in run.steps_for('synthesize', only=None, discover=False)}
+    assert synth['mapgen'] is True
+    assert synth['classify'] is False
     assert not any(s.gated for s in run.steps_for('ingest', only=None, discover=False))
 
 

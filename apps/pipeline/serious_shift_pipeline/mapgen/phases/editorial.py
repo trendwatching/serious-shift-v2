@@ -9,19 +9,34 @@ from ..modules import _jsonb, _short_figure, kt_modules, st_modules
 
 KT_REQUIRED = {
     'from', 'to', 'pull_quote', 'whats_changing', 'why_now',
-    'human_needs', 'consumer_tension', 'timeline', 'industries', 'opportunities',
+    'human_needs', 'timeline', 'industries', 'opportunities',
 }
 ST_REQUIRED = {
     'lede', 'from', 'to', 'quote', 'whats_changing', 'why_now',
     'human_needs', 'signals', 'counter_signals', 'timeline', 'territories',
 }
 
+#: Fields where any one of several keys will do. `consumer_tension` is the
+#: pre-August-2026 name for `tension`; a body that used the old key is complete,
+#: and re-requesting it would spend a call to change a spelling.
+KT_REQUIRED_ANY: tuple[tuple[str, ...], ...] = (('tension', 'consumer_tension'),)
+ST_REQUIRED_ANY: tuple[tuple[str, ...], ...] = ()
+
+#: Sub-objects that have to be filled on both sides. `human_needs` is rendered as
+#: a card pair, so a body carrying only `unlocked` produces a coloured rectangle
+#: with a label and no copy — which is what shipped before this check existed.
+BOTH_SIDES = (('human_needs', ('unlocked', 'threatened')),)
+
 #: How many times to ask for one body. A model that omits a field or overruns a
 #: word cap usually gets it right on a second look, and re-requesting only the
 #: failures is a handful of calls rather than another full phase.
 MAX_EDITORIAL_ATTEMPTS = 3
 
-def _complete_editorial(value: object, required: set[str]) -> bool:
+def _complete_editorial(
+    value: object,
+    required: set[str],
+    any_of: tuple[tuple[str, ...], ...] = (),
+) -> bool:
     """Whether a body has everything the page needs.
 
     Length is deliberately *not* checked here. It was, briefly, and it made
@@ -33,7 +48,17 @@ def _complete_editorial(value: object, required: set[str]) -> bool:
     predicate is back to asking only what it can usefully re-request: are the
     fields there, and are the citations real.
     """
-    return isinstance(value, dict) and all(value.get(field) for field in required)
+    if not isinstance(value, dict):
+        return False
+    if not all(value.get(field) for field in required):
+        return False
+    if not all(any(value.get(field) for field in group) for group in any_of):
+        return False
+    for key, sides in BOTH_SIDES:
+        nested = value.get(key)
+        if not isinstance(nested, dict) or not all(nested.get(s) for s in sides):
+            return False
+    return True
 
 
 def _cited(editorial: object, key: str = 'evidence_ids') -> set[int]:
@@ -76,7 +101,7 @@ def _generate_until_complete(items, prompt_of, is_complete, *, describe, label):
 def _sub_is_complete(sub, editorial, claims_by_sub) -> bool:
     allowed = {claim['id'] for claim in claims_by_sub.get(sub['id'], [])}
     cited = _cited(editorial)
-    return (_complete_editorial(editorial, ST_REQUIRED)
+    return (_complete_editorial(editorial, ST_REQUIRED, ST_REQUIRED_ANY)
             and len(cited) >= 2 and cited <= allowed)
 
 
@@ -244,7 +269,7 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     def kt_is_complete(item, result):
         allowed = {claim['id'] for claim in item[2]}
         cited = _cited(result)
-        return (_complete_editorial(result, KT_REQUIRED)
+        return (_complete_editorial(result, KT_REQUIRED, KT_REQUIRED_ANY)
                 and len(cited) >= 2 and cited <= allowed)
 
     kt_results = _generate_until_complete(
@@ -267,7 +292,7 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         kt_row = kt_rows.get(kt['_db_id'], {'subtitle': kt.get('subtitle', ''), 'hero_stat': None})
         kt_ids = {claim['id'] for claim in _claims}
         kt_citations = _cited(e)
-        complete_kt = (_complete_editorial(e, KT_REQUIRED)
+        complete_kt = (_complete_editorial(e, KT_REQUIRED, KT_REQUIRED_ANY)
                        and len(kt_citations) >= 2 and kt_citations <= kt_ids)
         modules = kt_modules(kt_row, e) if complete_kt else []
         conn.execute(
@@ -290,7 +315,7 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
             allowed = claims_by_sub.get(sub['id'], [])
             allowed_ids = {claim['id'] for claim in allowed}
             cited = _cited(se)
-            complete_st = (_complete_editorial(se, ST_REQUIRED)
+            complete_st = (_complete_editorial(se, ST_REQUIRED, ST_REQUIRED_ANY)
                            and len(cited) >= 2 and cited <= allowed_ids)
             if complete_st:
                 se = dict(se)

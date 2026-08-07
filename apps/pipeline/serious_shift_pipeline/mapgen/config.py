@@ -2,6 +2,21 @@
 
 Domains are hardcoded rather than generated: they are the product's top-level
 information architecture, not something the model should be free to reshape.
+
+They are hardcoded *here*, and not in the database, for a second reason that is
+easy to trip over: `domains_v2` is inside `dbutil.DROP_V2_ORDER`, so every
+synthesize run TRUNCATEs it with RESTART IDENTITY CASCADE and re-upserts it from
+this table. Sphere copy authored directly in the DB would vanish the following
+Monday. If editor-authored sphere copy is ever wanted, it needs a durable side
+table keyed by domain_id, the way `shift_module_overrides` is.
+
+Three text fields, three jobs, all four spheres:
+  short_description  the one-line deck under the sphere title, on the deck panel
+                     and the listing page. Evergreen.
+  intro              the "WHAT'S SHIFTING RIGHT NOW" paragraph on the deck panel.
+                     A present-tense read on the current map, so it is the field
+                     that dates fastest and the one an editor will want to touch.
+  description        long-form framing. Read only by seo.rs, for meta tags.
 """
 from __future__ import annotations
 
@@ -30,10 +45,15 @@ DOMAINS = [
     {
         'id':    'society',
         'name':  'Society',
-        'label': 'AGI × Society / World',
+        'label': 'AI × Society',
         'short_description': (
-            'How AGI rewrites the social contract — from democratic governance '
-            'and cultural authority to what it means to be human.'
+            'Belonging, trust and truth when anything can be generated and '
+            'nobody has to be present.'
+        ),
+        'intro': (
+            'Reasoning itself is thinning. As AI mediates more of what people '
+            'read, judge and decide, the shared capacity democracy assumes is '
+            'quietly falling — and nobody is measuring it.'
         ),
         'description': (
             "AGI doesn't arrive into a neutral world — it arrives into one already "
@@ -58,10 +78,14 @@ DOMAINS = [
     {
         'id':    'economy',
         'name':  'Economy',
-        'label': 'AGI × Economy',
+        'label': 'AI × Economy',
         'short_description': (
-            'How AGI restructures who creates value, who captures it, and what happens '
-            'to the rest — the new K-shaped reality.'
+            'Where value, work and money move once capability stops being scarce.'
+        ),
+        'intro': (
+            'Capability has stopped being scarce and verification has started. '
+            'Value is migrating from producing work to proving a human judged '
+            'it — and pricing is following.'
         ),
         'description': (
             "The intelligence economy is not a better version of the knowledge economy — "
@@ -84,10 +108,14 @@ DOMAINS = [
     {
         'id':    'consumers',
         'name':  'Consumers',
-        'label': 'AGI × Consumer Behavior',
+        'label': 'AI × Consumers',
         'short_description': (
-            'How AGI transforms the way people make decisions, seek fulfilment, and '
-            'relate to brands — human needs, now AI-mediated.'
+            'Identity, taste and desire in a market where software does the shopping.'
+        ),
+        'intro': (
+            'Agents are entering the purchase. Brands are suddenly selling to '
+            'software with a human sponsor, and the impulse aisle has no surface '
+            'left to interrupt.'
         ),
         'description': (
             "The consumer isn't disappearing — they're delegating. As AI agents take over "
@@ -109,12 +137,18 @@ DOMAINS = [
                           'delegat', 'trust'],
     },
     {
+        # The id stays British: it is the URL segment, the shift_refs key and the
+        # domains_v2 primary key, so renaming it would 404 every published link.
+        # Everything the reader sees is US spelling, per the content spec.
         'id':    'organisations',
-        'name':  'Organisations',
-        'label': 'AGI × Organisations',
+        'name':  'Organizations',
+        'label': 'AI × Organizations',
         'short_description': (
-            'How firms and institutions adapt — or fail to — when AI can perform, '
-            'plan, and decide faster than any hierarchy was built to handle.'
+            'How institutions decide, hire and defend themselves when speed is free.'
+        ),
+        'intro': (
+            'Speed is free, so deliberation is the differentiator. The bottleneck '
+            'has moved from making the work to finding anyone qualified to review it.'
         ),
         'description': (
             "Most organizations were designed for a world of scarce intelligence and "
@@ -142,7 +176,7 @@ DOMAIN_FLOWS_PRESET = [
     {'source': 'society',       'target': 'economy',       'strength': 'high',   'description': 'Societal legitimacy crises and governance failures shape economic confidence and policy responses.'},
     {'source': 'society',       'target': 'consumers',     'strength': 'high',   'description': 'Cultural shifts in identity, trust, and meaning drive consumer expectations and behavioural norms.'},
     {'source': 'economy',       'target': 'consumers',     'strength': 'high',   'description': 'Economic disruption — displacement, inequality, new income models — redefines consumer purchasing power and priorities.'},
-    {'source': 'economy',       'target': 'organisations', 'strength': 'high',   'description': 'Macro-economic pressures, labour cost dynamics, and capital flows directly determine organisational strategy.'},
-    {'source': 'consumers',     'target': 'organisations', 'strength': 'high',   'description': 'Shifting consumer expectations and agent-mediated purchase patterns force organisational redesign.'},
+    {'source': 'economy',       'target': 'organisations', 'strength': 'high',   'description': 'Macro-economic pressures, labor cost dynamics, and capital flows directly determine organizational strategy.'},
+    {'source': 'consumers',     'target': 'organisations', 'strength': 'high',   'description': 'Shifting consumer expectations and agent-mediated purchase patterns force organizational redesign.'},
     {'source': 'organisations', 'target': 'economy',       'strength': 'medium', 'description': 'Corporate adoption of AI at scale drives productivity, employment patterns, and market concentration.'},
 ]

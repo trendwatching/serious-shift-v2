@@ -7,11 +7,20 @@
  */
 export const DOMAIN_ORDER = ['society', 'economy', 'organisations', 'consumers']
 
+/**
+ * `crumb` is the breadcrumb's current-page fill. It is a literal rather than
+ * `var(--a-crumb)` because the breadcrumb renders *above* the page root that
+ * sets `data-domain`, so the cascade has not reached it.
+ *
+ * `eyebrow` is the colour of an eyebrow set on the domain's own gradient. It is
+ * brand yellow everywhere except Organisations, where yellow on olive is barely
+ * a colour change; white is the design's own exception.
+ */
 export const DOMAIN_THEME = {
-  society:       { num: '01', dot: '#ED026B', grad: 'var(--grad-society)' },
-  economy:       { num: '02', dot: '#0A7FDA', grad: 'var(--grad-economy)' },
-  organisations: { num: '03', dot: '#9A9A43', grad: 'var(--grad-organisations)' },
-  consumers:     { num: '04', dot: '#E74707', grad: 'var(--grad-consumers)' },
+  society:       { num: '01', dot: '#ED026B', grad: 'var(--grad-society)',       crumb: '#7A0038', eyebrow: 'var(--color-yellow)' },
+  economy:       { num: '02', dot: '#0A7FDA', grad: 'var(--grad-economy)',       crumb: '#023F6C', eyebrow: 'var(--color-yellow)' },
+  organisations: { num: '03', dot: '#9A9A43', grad: 'var(--grad-organisations)', crumb: '#41500A', eyebrow: '#FFFFFF' },
+  consumers:     { num: '04', dot: '#E74707', grad: 'var(--grad-consumers)',     crumb: '#6E2202', eyebrow: 'var(--color-yellow)' },
 }
 
 export const themeFor = (id) => DOMAIN_THEME[id] || DOMAIN_THEME.society

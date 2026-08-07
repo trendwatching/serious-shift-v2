@@ -158,7 +158,11 @@ export default function Home() {
           transition: 'transform 0.55s cubic-bezier(0.22,1,0.28,1)',
         }}
       >
-        <Intro width={`${step}%`} meta={meta} active={index === 0} count={count} />
+        <Intro
+          width={`${step}%`} meta={meta} active={index === 0} count={count}
+          onJump={go}
+          names={Object.fromEntries(domains.map((d) => [d.id, d.name]))}
+        />
         {domains.map((d, i) => (
           <DomainPanel
             key={d.id}
@@ -236,7 +240,7 @@ function Arrow({ side, show, onClick, dark }) {
 
 /* ── Panel 0 — the editorial intro ───────────────────────────────────── */
 
-function Intro({ width, meta, active, count }) {
+function Intro({ width, meta, active, count, onJump, names }) {
   // Both lines are counted from the map document. Until it loads there is
   // nothing truthful to say, so the eyebrow renders the domain list alone and
   // the standfirst drops the counts rather than guessing at them.
@@ -245,14 +249,13 @@ function Intro({ width, meta, active, count }) {
     meta?.domainCount ? `${spell(meta.domainCount)} domains` : null,
   ].filter(Boolean).join(' · ')
 
-  // `spell` returns lower-case words for use mid-sentence; this is the one place
-  // a count opens a sentence, so capitalise here rather than carrying two lists.
-  const domainsWord = spell(meta?.domainCount ?? 0)
-  const standfirst = meta?.shiftCount
-    ? `${domainsWord[0].toUpperCase()}${domainsWord.slice(1)} domains, `
-      + `${meta.shiftCount.toLocaleString()} shifts in the current weekly map, told as stories. `
-      + 'Swipe and they come to you.'
-    : 'Everything that is about to change, told as stories. Swipe and they come to you.'
+  // The design's own standfirst, fixed. It says what the site is for, which no
+  // generated count can. The week and domain counts stay in the eyebrow above,
+  // where being empty until the map loads costs the reader nothing.
+  const standfirst =
+    'Understand how AI will transform society, the economy, consumers and '
+    + 'organizations — then turn those shifts into your own daring new '
+    + 'opportunities and futures.'
 
   return (
     <div
@@ -264,17 +267,7 @@ function Intro({ width, meta, active, count }) {
       aria-hidden={!active}
       inert={!active}
     >
-      {/* Ambient orb — transform-only animation, runs on the compositor. */}
-      <div
-        className="pointer-events-none absolute h-[300px] w-[300px] rounded-full"
-        style={{
-          bottom: -70, left: -90,
-          background: 'radial-gradient(circle at 42% 38%, rgba(253,255,133,0.95), rgba(253,255,133,0.5) 48%, rgba(253,255,133,0) 72%)',
-          filter: 'blur(14px)',
-          animation: 'ssFloat 30s ease-in-out infinite reverse',
-          willChange: 'transform',
-        }}
-      />
+      <Orbs />
       <div className="relative mx-auto w-full lg:max-w-[1060px]">
         <div className="flex items-center gap-2.5 a-fade" style={{ animationDelay: '0.15s', animationDuration: '0.7s' }}>
           <span className="h-[7px] w-[7px] rounded-full" style={{ background: 'var(--color-yellow)', border: '1px solid var(--color-ink)' }} />
@@ -298,30 +291,103 @@ function Intro({ width, meta, active, count }) {
           {standfirst}
         </p>
 
-        {/* Desktop: name the four domains up front, so a wide screen shows the
-            shape of the week instead of a single line of copy. */}
-        <ul className="mt-10 hidden gap-8 a-rise lg:flex" style={{ animationDelay: '0.5s' }}>
+        {/* Four gradient pills that jump the deck. On mobile this is the only
+            way in besides swiping; on desktop it doubles as the table of
+            contents the wide layout would otherwise be missing. */}
+        <div className="mt-6 flex flex-wrap items-center gap-[9px] lg:mt-10">
           {DOMAIN_ORDER.map((id, i) => (
-            <li key={id} className="flex items-center gap-2.5">
-              <span className="h-2 w-2 rounded-full" style={{ background: DOMAIN_THEME[id].dot }} />
-              <span className="t-eyebrow" style={{ color: 'var(--color-ink-soft)' }}>
-                {String(i + 1).padStart(2, '0')} {id}
-              </span>
-            </li>
+            <button
+              key={id}
+              type="button"
+              onClick={() => onJump(i + 1)}
+              tabIndex={active ? 0 : -1}
+              className="box-border inline-flex h-10 items-center gap-2.5 rounded-full px-4 text-white transition-transform duration-300 hover:-translate-y-0.5"
+              style={{
+                backgroundImage: DOMAIN_THEME[id].grad,
+                boxShadow: '0 6px 14px rgba(27,22,32,0.2), inset 0 1px 0 rgba(255,255,255,0.26)',
+                animation: `ssRise 0.7s var(--ease-out) ${(0.5 + i * 0.07).toFixed(2)}s both`,
+              }}
+            >
+              <span className="t-eyebrow text-[13.5px]" style={{ letterSpacing: '0.05em' }}>{names[id]}</span>
+              <span aria-hidden="true" className="text-base leading-none">→</span>
+            </button>
           ))}
-        </ul>
+        </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * The drifting colour field behind the homepage headline.
+ *
+ * One orb per domain plus the brand yellow, so the palette of the whole site is
+ * present before a single word about it is read. Five different paths and five
+ * different periods (29–41s) mean the composition never repeats within a visit.
+ *
+ * Purely decorative and `transform`-only, so it stays on the compositor and
+ * costs nothing on the main thread — and it disappears entirely under
+ * `prefers-reduced-motion`, which zeroes every animation.
+ */
+const ORBS = [
+  { size: 300, bottom: 60, left: -80, rgb: '237,2,107', peak: 0.6, blur: 24, anim: 'ssFloat 34s ease-in-out infinite' },
+  { size: 280, top: 150, right: -90, rgb: '15,145,238', peak: 0.52, blur: 26, anim: 'ssOrb1 29s ease-in-out infinite' },
+  { size: 260, bottom: -50, right: 10, rgb: '173,176,58', peak: 0.52, blur: 24, anim: 'ssOrb2 37s ease-in-out infinite' },
+  { size: 250, top: 60, left: 30, rgb: '246,85,16', peak: 0.46, blur: 28, anim: 'ssOrb3 32s ease-in-out infinite' },
+  { size: 220, bottom: 170, left: 140, rgb: '253,255,133', peak: 0.85, blur: 22, anim: 'ssFloat 41s ease-in-out infinite reverse' },
+]
+
+function Orbs() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+      {ORBS.map((orb, i) => {
+        const { size, blur, rgb, peak, anim, ...pos } = orb
+        return (
+          <div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              ...pos,
+              width: size,
+              height: size,
+              background: `radial-gradient(circle at 43% 39%, rgba(${rgb},${peak}), rgba(${rgb},${(peak * 0.42).toFixed(2)}) 48%, rgba(${rgb},0) 72%)`,
+              filter: `blur(${blur}px)`,
+              animation: anim,
+              willChange: 'transform',
+            }}
+          />
+        )
+      })}
     </div>
   )
 }
 
 /* ── Panels 1..N — one per domain ────────────────────────────────────── */
 
+/**
+ * Society is the only panel with photography behind it; the other three are
+ * their gradient alone.
+ *
+ * That is the design's call and it is a load-bearing one: Society is panel 01,
+ * the first thing anyone swipes to, so it carries the cost of proving the site
+ * has a visual register beyond colour. The remaining three stay flat rather
+ * than each waiting on their own commissioned image, and the panel reads the
+ * same either way because the scrim, not the artwork, is what the type sits on.
+ */
+const PANEL_IMAGE = { society: '/shift/domain-society-bg.jpg' }
+
+function panelBackground(domain) {
+  const image = PANEL_IMAGE[domain.id]
+  return image
+    ? `linear-gradient(180deg, rgba(27,22,32,0.12) 0%, rgba(27,22,32,0.52) 100%), url('${image}')`
+    : `linear-gradient(rgba(13,11,16,0.30), rgba(13,11,16,0.30)), ${domain.grad}`
+}
+
 function DomainPanel({ domain, width, active, total, position, count }) {
   return (
     <div
       className="box-border flex h-full shrink-0 flex-col px-6 pb-[74px] pt-[30px] text-white lg:justify-center lg:px-24"
-      style={{ width, backgroundImage: `linear-gradient(rgba(13,11,16,0.38), rgba(13,11,16,0.38)), ${domain.grad}` }}
+      style={{ width, backgroundImage: panelBackground(domain), backgroundSize: 'cover', backgroundPosition: 'center' }}
       role="group"
       aria-roledescription="slide"
       aria-label={`${domain.name}, ${position} of ${count}`}
@@ -331,23 +397,42 @@ function DomainPanel({ domain, width, active, total, position, count }) {
       <div className="mx-auto flex w-full flex-1 flex-col lg:max-w-[1180px] lg:flex-none lg:flex-row lg:items-center lg:gap-20">
         {/* Left — the headline block. This is the entire panel on mobile. */}
         <div className="flex flex-1 flex-col lg:min-w-0">
-          <div className="flex items-center justify-between font-mono text-[11px] opacity-90 lg:justify-start lg:gap-6" style={{ letterSpacing: '0.08em' }}>
-            <span>{domain.num} / {pad2(total)}</span>
-            <span>horizon {domain.horizon}</span>
+          <div className="font-mono text-[11px] opacity-90" style={{ letterSpacing: '0.08em' }}>
+            {domain.num} / {pad2(total)}
           </div>
 
-          <div className="mt-[26px] text-[15px] italic opacity-90 lg:text-[19px]">Everything that is about to change in</div>
           <h2
-            className="t-display mt-1.5 text-[clamp(40px,12vw,46px)] leading-[0.98] lg:text-[clamp(64px,6.4vw,112px)]"
-            style={{ letterSpacing: '-0.035em' }}
+            className="t-display mt-[30px] text-[clamp(40px,12vw,46px)] uppercase leading-[0.98] lg:text-[clamp(64px,6.4vw,112px)]"
+            style={{ letterSpacing: '-0.03em' }}
           >
             {domain.name}
           </h2>
           <p className="mt-3.5 max-w-[290px] text-[15px] leading-[1.5] opacity-95 lg:max-w-[520px] lg:text-[19px]">{domain.blurb}</p>
 
-          <div className="mt-auto flex flex-col border-t pt-5 lg:mt-9 lg:border-t-0 lg:pt-0" style={{ borderColor: 'rgba(255,255,255,0.3)' }}>
-            <Link to={`/map/${domain.slug}`} onClick={(event) => { if (!active) event.preventDefault() }} className="pill-yellow mt-5 self-start lg:mt-0 lg:h-12 lg:px-7 lg:text-[15px]" tabIndex={active ? 0 : -1}>
-              All {domain.count} shifts <span className="text-[15px]">›</span>
+          {/* Pinned to the bottom of the panel: what is moving in this domain
+              right now, as opposed to the evergreen line above. */}
+          <div className="mt-auto flex flex-col gap-2 pt-8">
+            <span className="t-eyebrow" style={{ color: domain.eyebrow }}>What’s shifting right now</span>
+            <p className="max-w-[300px] text-[14px] leading-[1.5] text-pretty opacity-95 lg:max-w-[520px] lg:text-[16px]">
+              {domain.intro}
+            </p>
+          </div>
+
+          <div
+            className="mb-[34px] mt-[26px] flex flex-col border-b pb-6"
+            style={{ borderColor: 'rgba(255,255,255,0.3)' }}
+          >
+            {/* The arrow points DOWN, not right: the shift list is the next
+                thing on this journey, and a right arrow read as "another site
+                over there". */}
+            <Link
+              to={`/map/${domain.slug}`}
+              onClick={(event) => { if (!active) event.preventDefault() }}
+              className="pill-yellow self-start lg:h-12 lg:px-7 lg:text-[15px]"
+              tabIndex={active ? 0 : -1}
+            >
+              All {domain.count} key shifts
+              <span aria-hidden="true" className="inline-block rotate-90 text-base leading-none">→</span>
             </Link>
           </div>
         </div>

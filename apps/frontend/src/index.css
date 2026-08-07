@@ -83,6 +83,26 @@
   --grad-organisations: linear-gradient(135deg, #ADB03A 0%, #9A9A43 42%, #5F6E13 100%);
   --grad-consumers:     linear-gradient(135deg, #F65510 0%, #E74707 46%, #922E03 100%);
 
+  /* ── Sunset ───────────────────────────────────────────────────────────
+   * The signature of the delivered build, and the one gradient that is not
+   * derived from a domain: pink through coral into the brand yellow. It marks
+   * everything one level *below* a key shift or one step outside the reading
+   * flow — the sub-shift hero and its To card, the sub-shift's active tab, the
+   * 4px rule on a sub-shift row, and the Work With Us card.
+   *
+   * It stays fixed across all four domains on purpose. A sub-shift is not a
+   * fifth domain, and colouring it by its parent would make the two levels
+   * indistinguishable, which is the exact confusion the design brief opened
+   * with ("I don't feel yet how I have now moved on to an individual Key
+   * Trend here").
+   * ------------------------------------------------------------------- */
+  --grad-sunset: linear-gradient(148deg, #FF007A 0%, #E8006F 42%, #F2734A 80%, #FDFF85 100%);
+
+  /* The "need threatened" fill. Distinct from --grad-pink: it has to sit
+     beside the green "unlocked" card and read as its opposite, so it keeps
+     more chroma at the top than the flatter editorial pink. */
+  --grad-threatened: linear-gradient(180deg, #FF007A 0%, #C8006B 55%, #8E0049 100%);
+
   --grad-pink:  linear-gradient(180deg, #C8006B 0%, #5E0033 100%);
   --grad-pink-hot: linear-gradient(180deg, #F5007F 0%, #C8006B 46%, #4A0027 100%);
   --grad-green: linear-gradient(180deg, #1F7A4D 0%, #10502F 100%);
@@ -111,6 +131,10 @@
   --a-ink:   #A3005A;   /* accent text on white — must stay readable      */
   --a-wash:  #FBEAF3;   /* pale accent fill behind small labels           */
   --a-shadow: rgba(94, 0, 51, 0.22);
+  /* Fill of the breadcrumb's "you are here" pill. Its own token rather than
+     `--a-deep`, because that pill carries white 650-weight text at 11px over a
+     photographic hero and needs a darker floor than the card gradients do. */
+  --a-crumb: #7A0038;
 
   --pos-lit:  #269A61;
   --pos:      #1F7A4D;
@@ -126,6 +150,7 @@
   --a-ink:   #0A5FA3;
   --a-wash:  #E8F3FC;
   --a-shadow: rgba(4, 82, 139, 0.22);
+  --a-crumb: #023F6C;
 }
 
 [data-domain='organisations'] {
@@ -136,6 +161,7 @@
   --a-ink:   #5F6120;
   --a-wash:  #F3F4E3;
   --a-shadow: rgba(95, 110, 19, 0.24);
+  --a-crumb: #41500A;
 
   /* Green beside olive reads as one muddy family, so the positive side
      shifts to teal — still unmistakably "the other side", but separable. */
@@ -153,6 +179,7 @@
   --a-ink:   #B03505;
   --a-wash:  #FDEDE6;
   --a-shadow: rgba(146, 46, 3, 0.22);
+  --a-crumb: #6E2202;
 }
 
 /* Derived from whichever accent is in scope. */
@@ -335,6 +362,13 @@ dialog::backdrop { background: rgba(13, 11, 16, 0.72); }
   88%  { transform: translate(30px, 44px) scale(0.96); }
   100% { transform: translate(0, 0) scale(1); }
 }
+
+/* Three more drift paths, so the five home-panel orbs never travel in step.
+   Different periods (29/37/32s) against ssFloat's 34/41s keep the composition
+   from ever repeating within a visit. */
+@keyframes ssOrb1 { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(84px,-58px) scale(1.14); } 66% { transform: translate(-46px,72px) scale(0.9); } }
+@keyframes ssOrb2 { 0%,100% { transform: translate(0,0) scale(1); } 30% { transform: translate(-72px,66px) scale(0.92); } 62% { transform: translate(58px,104px) scale(1.16); } }
+@keyframes ssOrb3 { 0%,100% { transform: translate(0,0) scale(1); } 40% { transform: translate(62px,88px) scale(1.1); } 72% { transform: translate(-88px,26px) scale(0.94); } }
 
 /* From/To card cross-fade. */
 @keyframes ssPanelA { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
