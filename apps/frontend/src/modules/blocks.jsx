@@ -96,7 +96,10 @@ export const StatBand = ({ data, ctx }) => {
       <span className="t-title" style={{ flex: '0 0 auto', fontSize: big, lineHeight: 0.9, letterSpacing: '-0.015em' }}>
         {data.value}
       </span>
-      <span className="flex flex-1 flex-col" style={{ gap: 8 }}>
+      {/* `min-w-0` is load-bearing: a flex item defaults to `min-width: auto`,
+          so this column refuses to shrink below its longest word and pushes the
+          band past the viewport. */}
+      <span className="flex min-w-0 flex-1 flex-col" style={{ gap: 8 }}>
         <span className="text-pretty" style={{ fontSize: 13.5, lineHeight: 1.45 }}>{data.text}</span>
         {data.source && <span style={{ fontSize: 11, lineHeight: 1.4, opacity: 0.75 }}>{data.source}</span>}
       </span>
