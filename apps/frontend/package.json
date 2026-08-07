@@ -16,7 +16,9 @@
     "audit:prod": "node scripts/audit-production.mjs",
     "check:slugs": "node scripts/check-slug-fixture.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "check:layers": "node scripts/check-layers.mjs"
+    "check:layers": "node scripts/check-layers.mjs",
+    "heroes": "node scripts/generate-heroes.mjs",
+    "check:heroes": "node scripts/check-heroes.mjs"
   },
   "dependencies": {
     "react": "19.2.8",

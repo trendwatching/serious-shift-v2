@@ -58,6 +58,17 @@ async function mockMap(page, failure) {
 }
 
 async function expectNoSeriousAxe(page) {
+  // Entrance animations fade opacity, and axe composites whatever alpha it
+  // finds at the instant it samples. Sampling mid-fade reported the nav's
+  // white-at-50% meta as #555555 on black — a frame that exists for 400ms and
+  // never rests. Settle first, then measure the page as a reader sees it.
+  await page.evaluate(() => Promise.all(
+    document.getAnimations().map((a) => {
+      try { a.finish() } catch { /* infinite loops (marquee, orbs) cannot finish */ }
+      return a.ready.catch(() => {})
+    }),
+  ))
+
   const results = await new AxeBuilder({ page }).analyze()
   expect(results.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([])
 }
@@ -88,13 +99,23 @@ test('navigation, keyboard modules, source safety, and axe', async ({ page }) =>
   await expect(why).toHaveAttribute('aria-selected', 'true')
   await page.getByRole('button', { name: 'Threatened' }).click()
   await expect(page.getByRole('button', { name: 'Threatened' })).toHaveAttribute('aria-expanded', 'true')
-  await expect(page.getByRole('status')).toHaveText('1 of 5')
-  await page.getByRole('button', { name: 'Next sub-shift' }).click()
-  await expect(page.getByRole('status')).toHaveText('2 of 5')
+
+  // The sub-shifts are a stack of links, not a carousel. The design deleted the
+  // counter and the next/previous pair, so paging affordances are what this
+  // asserts the ABSENCE of — every sub-shift is reachable in one tap.
+  await expect(page.getByRole('button', { name: /sub-shift/i })).toHaveCount(0)
+  const subLinks = page.getByRole('link', { name: /Sub Shift 1/i })
+  await expect(subLinks.first()).toBeVisible()
   await expectNoSeriousAxe(page)
 
   await clientNavigate(page, '/map/society/trust-machines/sub-1')
-  await expect(page.getByRole('link', { name: /Sub-shift of “Trust Machines”/i })).toBeVisible()
+  // A sub-shift page is deliberately terminal: the breadcrumb menu is the only
+  // way back up, which is why it is the thing under test rather than a
+  // sibling-nav card.
+  // The trigger is labelled with the sub-shift's own title, and the menu it
+  // opens is the route back to the sphere and to every sibling.
+  await page.getByRole('button', { name: /Sub Shift 1/i }).first().click()
+  await expect(page.getByRole('button', { name: 'Society' })).toBeVisible()
   const source = page.getByRole('link', { name: 'Read source: Study' })
   await expect(source).toHaveAttribute('target', '_blank')
   await expect(source).toHaveAttribute('rel', 'noopener noreferrer')

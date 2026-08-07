@@ -1,4 +1,5 @@
 /** Route-scoped map data → the view-model consumed by the UI. */
+import HERO_GENERATED from './heroes.json'
 import { useMemo } from 'react'
 import { useLocation } from './router'
 import { useData } from './useData'
@@ -49,6 +50,16 @@ const HERO_ART = {
   'cognitive-erosion': '/shift/hero-cognitive-erosion.jpg',
 }
 
+/**
+ * Generated poster art, one per published key shift, keyed by slug.
+ *
+ * It is a manifest rather than a path template on purpose: a shift published
+ * after the last `npm run heroes` has no file, and asking for one would give it
+ * a broken image instead of the gradient hero, which is itself a finished
+ * design. See scripts/generate-heroes.mjs.
+ */
+const HERO_GEN = HERO_GENERATED
+
 const SUB_HERO_ART = {
   'capacity-collapse': '/shift/hero-capacity-collapse-graded.jpg',
 }
@@ -87,7 +98,7 @@ function toShift(src, i, domain) {
     // Same-origin path served by the backend once art exists for this shift.
     // Absent is the normal case and the hero falls back to its gradient, which
     // is a finished design rather than a placeholder.
-    heroImage: src.hero_image || HERO_ART[src.slug] || null,
+    heroImage: src.hero_image || HERO_ART[src.slug] || HERO_GEN[src.slug] || null,
     subshifts: subs.map((s, k) => toSubShift(s, k)),
   }
 }

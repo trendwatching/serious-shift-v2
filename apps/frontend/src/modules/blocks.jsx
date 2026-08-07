@@ -145,7 +145,11 @@ export const Timeline = ({ data, ctx }) => {
       <Eyebrow>{steps.map((s) => s.label).filter(Boolean).join(' / ') || 'Today / next / beyond'}</Eyebrow>
       <div
         className="horizon relative flex flex-col"
-        style={{ paddingLeft: 26, gap: 12, '--dot-lit': ctx.scope === 'sub_shift' ? '#FF007A' : 'var(--a)' }}
+        /* A sub-shift's rail is lit by the hot end of the sphere's ramp, a key
+           shift's by the accent itself. On Society that hot end is #F5007F —
+           the #FF007A the mockup drew — and every other sphere now lights its
+           own rather than inheriting Society's pink. */
+        style={{ paddingLeft: 26, gap: 12, '--dot-lit': ctx.scope === 'sub_shift' ? 'var(--a-hot)' : 'var(--a)' }}
       >
         <span className="horizon-rail absolute" style={{ left: 6, top: 10, bottom: 10, width: 2, background: 'var(--color-line-rail)' }} />
         {steps.map((s, i) => (
@@ -162,7 +166,7 @@ export const Timeline = ({ data, ctx }) => {
               className="horizon-dot absolute rounded-full"
               style={{
                 left: -26, top: 18, width: 13, height: 13, boxSizing: 'border-box', background: '#fff',
-                border: `2.5px solid ${ctx.scope === 'sub_shift' ? '#FF007A' : 'var(--a)'}`,
+                border: `2.5px solid ${ctx.scope === 'sub_shift' ? 'var(--a-hot)' : 'var(--a)'}`,
                 animation: i < 3 ? `ssDot${i + 1} 12s linear infinite` : undefined,
               }}
             />

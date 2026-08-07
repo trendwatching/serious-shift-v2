@@ -43,7 +43,7 @@ export function PeelTabs({ data, ctx }) {
   if (!cards.length) return null
 
   const radius = sub ? 18 : 20
-  const front = sub ? 'var(--grad-sunset)' : 'linear-gradient(180deg, #C8006B 0%, #8E0049 100%)'
+  const front = sub ? 'var(--grad-sunset)' : 'var(--a-grad)'
   const back = 'linear-gradient(180deg, #F7F7F7 0%, #F1F1F3 100%)'
 
   const onKeyDown = (e) => {
@@ -55,56 +55,72 @@ export function PeelTabs({ data, ctx }) {
   return (
     <section className="relative" style={{ height: height || 246, marginTop: 2 }}>
       <h2 className="sr-only">What’s changing and why now</h2>
+      {/* Tabs and panels are siblings, not nested.
+          A `tabpanel` is not an allowed child of a `tablist`, so the earlier
+          shape — one wrapper per card holding both, with the wrappers inside the
+          tablist — was an `aria-required-children` violation that also left a
+          screen reader with two tabs it could not associate with anything.
+          Splitting them costs nothing visually: the peel is pure z-index, so the
+          tab and its panel just carry their own layer instead of sharing one. */}
       <div role="tablist" aria-label="Shift context" onKeyDown={onKeyDown}>
         {cards.map((card, i) => {
           const on = i === top
           const left = i === 0
           return (
-            <div key={card.label} className="absolute inset-0" style={{ zIndex: on ? 12 : 10, pointerEvents: 'none' }}>
-              <button
-                type="button" role="tab" aria-selected={on} aria-controls={`${id}-${i}`} tabIndex={on ? 0 : -1}
-                onClick={() => setTop(i)}
-                className="absolute box-border flex cursor-pointer items-center justify-center"
-                style={{
-                  top: 0, left: left ? 0 : '48%', right: left ? '52%' : 0, height: 54, padding: '0 12px',
-                  borderRadius: `${radius}px ${radius}px 0 0`,
-                  backgroundImage: on ? front : back,
-                  backgroundSize: sub && on ? '100% 250px' : undefined,
-                  backgroundRepeat: 'no-repeat',
-                  pointerEvents: 'auto',
-                  transition: 'background-image 0.35s ease, color 0.35s ease',
-                }}
+            <button
+              key={card.label}
+              id={`${id}-tab-${i}`}
+              type="button" role="tab" aria-selected={on} aria-controls={`${id}-${i}`} tabIndex={on ? 0 : -1}
+              onClick={() => setTop(i)}
+              className="absolute box-border flex cursor-pointer items-center justify-center"
+              style={{
+                zIndex: on ? 13 : 11,
+                top: 0, left: left ? 0 : '48%', right: left ? '52%' : 0, height: 54, padding: '0 12px',
+                borderRadius: `${radius}px ${radius}px 0 0`,
+                backgroundImage: on ? front : back,
+                backgroundSize: sub && on ? '100% 250px' : undefined,
+                backgroundRepeat: 'no-repeat',
+                transition: 'background-image 0.35s ease, color 0.35s ease',
+              }}
+            >
+              <span
+                className="t-display whitespace-nowrap uppercase"
+                style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.04em', color: on ? '#fff' : 'var(--color-ink)', transition: 'color 0.3s ease' }}
               >
-                <span
-                  className="t-display whitespace-nowrap uppercase"
-                  style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.04em', color: on ? '#fff' : 'var(--color-ink)', transition: 'color 0.3s ease' }}
-                >
-                  {card.label}
-                </span>
-              </button>
-              <div
-                id={`${id}-${i}`} role="tabpanel"
-                className="absolute box-border overflow-hidden"
-                style={{
-                  top: 50, left: 0, right: 0, bottom: 0, padding: '22px 20px', pointerEvents: 'auto',
-                  borderRadius: left ? `0 ${radius}px ${radius}px ${radius}px` : `${radius}px 0 ${radius}px ${radius}px`,
-                  backgroundImage: on ? front : back,
-                  boxShadow: '0 10px 26px rgba(27,22,32,0.14)',
-                  transition: 'background-image 0.35s ease',
-                }}
-              >
-                <div
-                  ref={(el) => { bodies.current[i] = el }}
-                  className="text-pretty"
-                  style={{ fontSize: 14.5, lineHeight: 1.58, color: on ? '#fff' : 'var(--color-ink)', opacity: on ? 1 : 0, transition: 'opacity 0.3s ease' }}
-                >
-                  {card.text}
-                </div>
-              </div>
-            </div>
+                {card.label}
+              </span>
+            </button>
           )
         })}
       </div>
+
+      {cards.map((card, i) => {
+        const on = i === top
+        const left = i === 0
+        return (
+          <div
+            key={card.label}
+            id={`${id}-${i}`} role="tabpanel" aria-labelledby={`${id}-tab-${i}`}
+            className="absolute box-border overflow-hidden"
+            style={{
+              zIndex: on ? 12 : 10,
+              top: 50, left: 0, right: 0, bottom: 0, padding: '22px 20px',
+              borderRadius: left ? `0 ${radius}px ${radius}px ${radius}px` : `${radius}px 0 ${radius}px ${radius}px`,
+              backgroundImage: on ? front : back,
+              boxShadow: '0 10px 26px rgba(27,22,32,0.14)',
+              transition: 'background-image 0.35s ease',
+            }}
+          >
+            <div
+              ref={(el) => { bodies.current[i] = el }}
+              className="text-pretty"
+              style={{ fontSize: 14.5, lineHeight: 1.58, color: on ? '#fff' : 'var(--color-ink)', opacity: on ? 1 : 0, transition: 'opacity 0.3s ease' }}
+            >
+              {card.text}
+            </div>
+          </div>
+        )
+      })}
     </section>
   )
 }
@@ -306,14 +322,14 @@ export function SubShiftList({ ctx }) {
               <span className="flex items-center" style={{ gap: 8 }}>
                 <span
                   className="t-display inline-flex items-center uppercase"
-                  style={{ height: 22, padding: '0 9px', gap: 6, borderRadius: 999, background: 'var(--color-pink-wash)', color: 'var(--color-pink-ink)', fontSize: 10, fontWeight: 800, letterSpacing: '0.14em' }}
+                  style={{ height: 22, padding: '0 9px', gap: 6, borderRadius: 999, background: 'var(--a-wash)', color: 'var(--a-ink)', fontSize: 10, fontWeight: 800, letterSpacing: '0.14em' }}
                 >
                   Sub-shift {s.num}
                 </span>
-                <span className="ml-auto" style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--color-pink-ink)' }}>Open</span>
+                <span className="ml-auto" style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--a-ink)' }}>Open</span>
                 <span
                   className="inline-flex items-center justify-center"
-                  style={{ width: 22, height: 22, borderRadius: 999, background: 'var(--color-pink-wash)', color: 'var(--color-pink-ink)', fontSize: 13 }}
+                  style={{ width: 22, height: 22, borderRadius: 999, background: 'var(--a-wash)', color: 'var(--a-ink)', fontSize: 13 }}
                 >↗</span>
               </span>
               <span className="t-display uppercase" style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.01em' }}>{s.title}</span>
@@ -357,7 +373,7 @@ export function Innovations({ data }) {
                 }}
               />
               <span className="box-border flex flex-1 flex-col" style={{ padding: 16, gap: 8 }}>
-                {item.brand && <span className="t-eyebrow" style={{ fontSize: 10, color: 'var(--color-pink-ink)' }}>{item.brand}</span>}
+                {item.brand && <span className="t-eyebrow" style={{ fontSize: 10, color: 'var(--a-ink)' }}>{item.brand}</span>}
                 <span className="t-display" style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.01em' }}>{item.title}</span>
                 {item.description && (
                   <span className="text-pretty" style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-mid)' }}>{item.description}</span>
@@ -367,7 +383,7 @@ export function Innovations({ data }) {
                     {item.tags.slice(0, 3).map((t) => (
                       <span
                         key={t} className="t-display"
-                        style={{ padding: '3px 9px', borderRadius: 999, background: 'var(--color-pink-wash)', color: 'var(--color-pink-ink)', fontSize: 10, fontWeight: 700 }}
+                        style={{ padding: '3px 9px', borderRadius: 999, background: 'var(--a-wash)', color: 'var(--a-ink)', fontSize: 10, fontWeight: 700 }}
                       >{t}</span>
                     ))}
                   </span>
@@ -447,7 +463,7 @@ export function Evidence({ data }) {
               {c.strength && (
                 <span
                   className="t-display uppercase"
-                  style={{ padding: '2px 8px', borderRadius: 999, background: 'var(--color-pink-wash)', color: 'var(--color-pink-ink)', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em' }}
+                  style={{ padding: '2px 8px', borderRadius: 999, background: 'var(--a-wash)', color: 'var(--a-ink)', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em' }}
                 >{c.strength.replace(/_/g, ' ')}</span>
               )}
               {c.date && <span className="t-mono ml-auto" style={{ fontSize: 11, color: 'var(--color-ink-meta)' }}>{c.date}</span>}
@@ -457,6 +473,20 @@ export function Evidence({ data }) {
               <span style={{ fontSize: 14.5, lineHeight: 1.5, color: 'var(--color-ink-mid)' }}>
                 <strong style={{ color: 'var(--color-ink)' }}>So what</strong> — {c.implication}
               </span>
+            )}
+            {/* The whole claim of this module is that the evidence is sourced, so
+                a claim that arrives with a URL has to be followable. The port
+                dropped the link and left the module asserting provenance it gave
+                the reader no way to check. */}
+            {c.url && (
+              <a
+                href={c.url} target="_blank" rel="noopener noreferrer"
+                className="t-display self-start"
+                style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '-0.005em', color: 'var(--a-ink)' }}
+              >
+                Read source: {c.source || 'link'}
+                <span aria-hidden="true" style={{ marginLeft: 5 }}>↗</span>
+              </a>
             )}
           </div>
         ))}

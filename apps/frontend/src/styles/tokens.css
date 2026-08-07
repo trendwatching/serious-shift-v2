@@ -27,7 +27,11 @@
   --color-ink-sector: #4E485C;  /* industries detail body            */
   --color-ink-mid:    #5C5768;  /* card deks                         */
   --color-ink-row:    #6B6577;  /* domain-page row dek               */
-  --color-ink-meta:   #9A94A8;  /* "Scroll ›", "1 of 15"             */
+  /* "Scroll ›", "1 of 15", "Tap to open". The mockup drew this #9A94A8, which
+     is 2.9:1 on white — at 11.5px, the smallest type on the site, that is the
+     one label a reader is most likely to lose. Darkened to the nearest value
+     that clears AA; the hue is unchanged. See scripts/check-contrast.mjs. */
+  --color-ink-meta:   #757085;
   --color-ink-tag:    #A9A3B8;  /* breadcrumb-menu "Domain" tag      */
   --color-ink-num:    #B3AEC0;  /* domain-page row number            */
   --color-ink-dot:    #8E88A0;  /* deck pager, inactive, slide 0     */
@@ -49,7 +53,10 @@
   /* ── Brand ───────────────────────────────────────────────────────────── */
   --color-yellow:      #FDFF85;
   --color-yellow-soft: #FEFFC6;
-  --color-orange:      #F04E09;  /* the WhatsApp / subscribe CTA     */
+  /* The WhatsApp / subscribe CTA. The mockup's #F04E09 carries white at 15px
+     bold at 3.6:1, short of AA for text that size. Deepened by the minimum that
+     passes — still unmistakably the same brand orange. */
+  --color-orange:      #D63F04;
   --color-whatsapp:    #25D366;
 
   /* ── Editorial accents ───────────────────────────────────────────────── */
@@ -92,20 +99,40 @@
   --grad-organisations: linear-gradient(135deg, #ADB03A 0%, #9A9A43 42%, #5F6E13 100%);
   --grad-consumers:     linear-gradient(135deg, #F65510 0%, #E74707 46%, #922E03 100%);
 
-  /* ── Sunset ───────────────────────────────────────────────────────────
-   * The build uses this in exactly five places and they are all one level
-   * BELOW a key shift, or one step outside the reading flow: the sub-shift
-   * hero, its To card, its peel-tab face, its "threatened" need, the
-   * sub-shift row rule, and the Work With Us card.
+  /* ── Sunset — one per sphere ──────────────────────────────────────────
+   * The build uses this in exactly five places, all of them one level BELOW
+   * a key shift or one step outside the reading flow: the sub-shift hero, its
+   * To card, its peel-tab face, its "threatened" need, the sub-shift row rule
+   * and the Work With Us card.
    *
-   * It is fixed across all four domains on purpose. A sub-shift is not a
-   * fifth domain, and tinting it with the parent's accent is what made the
-   * two levels indistinguishable in the previous build.
+   * The delivered mockup only drew Society, so its pink→coral→yellow ramp was
+   * the only one that existed and every sphere borrowed it. That defeats the
+   * point: a Consumers sub-shift rendered in Society's pink reads as the wrong
+   * section, not as a level down.
+   *
+   * So the ramp is a rule, not a literal. Society's is
+   * `hot accent → accent → a hue rotated toward warm light → a pale terminal`,
+   * which in hue terms is 335° → 18° → 60°. Each sphere walks the same short
+   * arc from its own accent toward warm light:
+   *
+   *   Society        335° pink   → 18° coral  → 60° brand yellow
+   *   Economy        205° blue   → 168° teal  → 74° pale chartreuse
+   *   Organizations   63° olive  → 130° green → 68° pale lime cream
+   *   Consumers       20° orange → 38° amber  → 60° brand yellow
+   *
+   * Organizations is the one that cannot end in brand yellow: it starts within
+   * a few degrees of it, so the ramp would have nowhere to travel. It gets its
+   * lift from lightness instead, going darker through green before opening to
+   * a pale cream — the same exception the design already makes for that
+   * sphere's eyebrow, which is white rather than yellow for the same reason.
+   *
+   * Within a sphere the ramp stays fixed across all its sub-shifts. A
+   * sub-shift is not a fifth domain.
    * ------------------------------------------------------------------- */
   --grad-sunset: linear-gradient(148deg, #FF007A 0%, #E8006F 42%, #F2734A 80%, #FDFF85 100%);
 
-  /* The key-shift "threatened" card. Distinct from the sub-shift one, which
-     is sunset — the build really does use two different fills. */
+  /* The key-shift "threatened" card. Distinct from the sub-shift one, which is
+     the sphere's sunset — the build really does use two different fills. */
   --grad-threatened: linear-gradient(180deg, #FF007A 0%, #C8006B 55%, #8E0049 100%);
 
   --grad-green:  linear-gradient(180deg, #1F7A4D 0%, #10502F 100%);
@@ -147,6 +174,8 @@
   --a-lit:   #D6E7F6;
   --a-lit-ink: #033D68;
   --a-crumb: #023F6C;
+  --grad-sunset: linear-gradient(148deg, #0FA6FF 0%, #0A7FDA 42%, #23B9A6 80%, #E6FF9C 100%);
+  --grad-threatened: linear-gradient(180deg, #0FA6FF 0%, #0A6FBF 55%, #04528B 100%);
   --a-shadow: rgba(4, 82, 139, 0.24);
 }
 
@@ -159,6 +188,8 @@
   --a-lit:   #E9EBCB;
   --a-lit-ink: #3A420A;
   --a-crumb: #41500A;
+  --grad-sunset: linear-gradient(148deg, #C2C64F 0%, #9A9A43 42%, #4E9A62 80%, #EFFAB4 100%);
+  --grad-threatened: linear-gradient(180deg, #C2C64F 0%, #737425 55%, #46520E 100%);
   --a-shadow: rgba(95, 110, 19, 0.24);
 
   /* Brand yellow on olive is barely a colour change. The build makes this
@@ -182,6 +213,8 @@
   --a-lit:   #FBDCCE;
   --a-lit-ink: #6E2202;
   --a-crumb: #6E2202;
+  --grad-sunset: linear-gradient(148deg, #FF6A1F 0%, #E74707 42%, #F2A03A 80%, #FDFF85 100%);
+  --grad-threatened: linear-gradient(180deg, #FF6A1F 0%, #C93B05 55%, #6E2202 100%);
   --a-shadow: rgba(146, 46, 3, 0.24);
 }
 

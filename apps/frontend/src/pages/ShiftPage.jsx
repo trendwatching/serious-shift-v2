@@ -83,7 +83,20 @@ export default function ShiftPage() {
             />
             <span
               aria-hidden="true" className="absolute inset-0 z-[1]"
-              style={{ backgroundImage: 'linear-gradient(180deg, rgba(245,0,127,0.42) 0%, rgba(200,0,107,0.5) 46%, rgba(74,0,39,0.9) 100%)' }}
+              /* Legibility for the white H1, and nothing more. The design's
+                 grade over the hand-made photograph was a literal Society ramp,
+                 which both washed the art out and repainted an Economy or
+                 Consumers hero pink. The generated posters are already lit by
+                 their own sphere, so this only needs to darken the foot of the
+                 frame — in that sphere's deep ink, not Society's. */
+              style={{
+                backgroundImage: [
+                  'linear-gradient(180deg,',
+                  'transparent 24%,',
+                  'color-mix(in srgb, var(--a-deep) 26%, transparent) 56%,',
+                  'color-mix(in srgb, var(--a-deep) 88%, transparent) 100%)',
+                ].join(' '),
+              }}
             />
           </>
         )}

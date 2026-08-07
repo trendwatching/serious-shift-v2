@@ -1,4 +1,28 @@
-/** WCAG 2.2 AA contrast contract for every token used as normal text. */
+/**
+ * WCAG 2.2 AA contrast contract for every token used as normal text.
+ *
+ * Each pair names the token it stands for, and the token's value is read out of
+ * styles/tokens.css rather than repeated here. The previous version hard-coded
+ * the hexes, and when the port moved the CTA orange to the design's #F04E09 the
+ * gate carried on checking the old #C63800 and passing — asserting a palette the
+ * site had stopped using. A gate that cannot notice drift is worse than none,
+ * because it is quoted as evidence.
+ */
+import { readFileSync } from 'node:fs'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const TOKENS = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), '../src/styles/tokens.css'),
+  'utf8',
+)
+
+/** The live value of a custom property, by name. */
+const token = (name) => {
+  const found = TOKENS.match(new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{6})`))
+  if (!found) throw new Error(`${name} is not a plain hex token in tokens.css`)
+  return found[1]
+}
 
 const rgb = (hex) => hex.match(/[0-9a-f]{2}/gi).map((part) => Number.parseInt(part, 16))
 const channel = (value) => {
@@ -20,20 +44,27 @@ const overlay = (foreground, background, opacity) => {
     .toString(16).padStart(2, '0')).join('')}`
 }
 
+const WHITE = '#FFFFFF'
+
 const normalTextPairs = [
-  ['ink-mid on white', '#6B6577', '#FFFFFF'],
-  ['ink-dim on white', '#655F70', '#FFFFFF'],
-  ['ink-faint on white', '#746E80', '#FFFFFF'],
-  ['link on white', '#341482', '#FFFFFF'],
-  ['link hover on white', '#8B1E63', '#FFFFFF'],
-  ['CTA white on orange', '#FFFFFF', '#C63800'],
-  ['Society surface', '#FFFFFF', '#C8006B'],
-  ['Economy surface', '#FFFFFF', '#0A6FBF'],
-  ['Organisations surface', '#FFFFFF', '#737425'],
-  ['Consumers surface', '#FFFFFF', '#C93B05'],
-  ['positive surface', '#FFFFFF', '#1F7A4D'],
-  ['teal positive surface', '#FFFFFF', '#126E63'],
-  ['yellow pill', '#1B1620', '#FDFF85'],
+  ['ink-mid on white', token('--color-ink-mid'), WHITE],
+  ['ink-row on white', token('--color-ink-row'), WHITE],
+  ['ink-sector on white', token('--color-ink-sector'), WHITE],
+  ['ink-body on white', token('--color-ink-body'), WHITE],
+  // The small right-hand meta label — "Tap to open", "Scroll ›", "1 of 15". At
+  // 11.5px it is the smallest text on the site, so it is also the one that can
+  // least afford to be the lightest.
+  ['ink-meta on white', token('--color-ink-meta'), WHITE],
+  ['link on white', '#341482', WHITE],
+  ['link hover on white', '#8B1E63', WHITE],
+  ['CTA white on orange', WHITE, token('--color-orange')],
+  ['Society surface', WHITE, token('--color-pink')],
+  ['Economy surface', WHITE, '#0A6FBF'],
+  ['Organisations surface', WHITE, '#737425'],
+  ['Consumers surface', WHITE, '#C93B05'],
+  ['positive surface', WHITE, token('--color-green')],
+  ['teal positive surface', WHITE, '#126E63'],
+  ['yellow pill', token('--color-ink'), token('--color-yellow')],
 ]
 
 const decorativeStarts = ['#FF0B85', '#0F91EE', '#ADB03A', '#F65510', '#F5007F']

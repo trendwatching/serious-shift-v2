@@ -63,7 +63,7 @@ export default function SubShiftPage() {
         )}
         <span
           aria-hidden="true" className="absolute inset-0 z-[2]"
-          style={{ backgroundImage: 'linear-gradient(180deg, rgba(27,22,32,0) 42%, rgba(74,0,39,0.72) 100%)' }}
+          style={{ backgroundImage: 'linear-gradient(180deg, rgba(27,22,32,0) 42%, color-mix(in srgb, var(--a-deep) 74%, transparent) 100%)' }}
         />
         <div className="canvas relative z-[3] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.14s' }}>
           <h1
