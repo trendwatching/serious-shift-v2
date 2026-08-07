@@ -33,7 +33,19 @@
        as a deliberate column on a large screen instead of a phone screenshot
        pasted onto one. Type and spacing are untouched. */
     .canvas { max-width: 480px; }
-    .widen  { max-width: 1120px; }
+
+    /* A list module has to BREAK OUT of the canvas, not just be allowed to be
+       wider than it: `max-width` alone can never exceed the parent's width, so
+       the previous rule left every rail at the canvas's 436px content box and
+       the widening silently did nothing.
+       `100%` here is the canvas content box, so the margins go negative by
+       exactly half the difference and the block stays centred on the page. */
+    .widen {
+      --widen-w: min(1120px, calc(100vw - 80px));
+      width: var(--widen-w);
+      max-width: none;
+      margin-inline: calc((100% - var(--widen-w)) / 2);
+    }
 
     /* Rails stop being rails and become grids. They keep their card widths,
        so a card is the same object at every viewport. */
