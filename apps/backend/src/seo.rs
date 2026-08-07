@@ -92,6 +92,20 @@ pub fn build_index(doc: &str) -> SiteIndex {
         },
     );
 
+    // The one route that is not a projection of the map document. It is still
+    // registered here, because the index is also what decides whether `spa`
+    // answers 200 or 404 — an authored page missing from it is served as a soft
+    // 404, which is what /about did before this line existed.
+    idx.add(
+        "/about".into(),
+        PageMeta {
+            title: format!("About — {SITE_NAME}"),
+            description: "Why Serious Shift exists, how we build it, and who is behind it. \
+                          Powered by TrendWatching."
+                .into(),
+        },
+    );
+
     for d in &domains {
         let id = s(d, "id");
         if id.is_empty() {
@@ -316,6 +330,17 @@ mod tests {
     }"#;
 
     const SHELL: &str = r#"<!DOCTYPE html><html><head><meta charSet="utf-8"/><title>Old Title</title><meta name="description" content="Four domains, eight shifts this week."/></head><body>x</body></html>"#;
+
+    /// `/about` is authored, not generated, so nothing in the map document
+    /// would ever put it in the index — and a route missing from the index is
+    /// served as a soft 404 with the shell, which is what it was.
+    #[test]
+    fn the_about_page_is_indexed_and_not_a_soft_404() {
+        let idx = build_index(DOC);
+        let meta = idx.pages.get("/about").expect("/about must be indexed");
+        assert!(meta.title.starts_with("About"));
+        assert!(!meta.description.is_empty());
+    }
 
     #[test]
     fn every_level_of_the_route_tree_gets_metadata() {
