@@ -30,7 +30,15 @@ export function FromTo({ from, to, grad }) {
   )
 }
 
-/** Solid-fill From/To pair used on sub-shift pages (green → pink). */
+/**
+ * Solid-fill From/To pair, sub-shift only: green "from", sunset "to".
+ *
+ * The "to" card takes the sunset gradient rather than the domain accent, and
+ * that is the point of it. A sub-shift's whole visual argument is that you have
+ * moved a level down; colouring its spine in the parent's pink would make the
+ * two pages read as the same page twice, which is the confusion the design
+ * brief opened with.
+ */
 export function FromToSolid({ from, to }) {
   if (!from || !to) return null
   const card = (label, text, grad) => (
@@ -42,5 +50,5 @@ export function FromToSolid({ from, to }) {
       <span className="t-body">{text}</span>
     </div>
   )
-  return <section className="flex gap-2.5 items-stretch lg:gap-4" aria-label="From and to"><h2 className="sr-only">From and to</h2>{card('From', from, 'var(--pos-grad)')}{card('To', to, 'var(--a-grad)')}</section>
+  return <section className="flex gap-2.5 items-stretch lg:gap-4" aria-label="From and to"><h2 className="sr-only">From and to</h2>{card('From', from, 'var(--pos-grad)')}{card('To', to, 'var(--grad-sunset)')}</section>
 }

@@ -47,7 +47,14 @@ export function PeelTabs({ whatChanging, whyNow }) {
   return (
     <div>
       <h2 className="sr-only">What’s changing and why now</h2>
-      <div role="tablist" aria-label="Shift context" className="grid h-[54px] grid-cols-2" onKeyDown={onKeyDown}>
+      {/* 48/52 rather than 50/50. The slight asymmetry is what makes these read
+          as folder tabs on a stack of cards instead of a segmented control —
+          it is the design's own split, and it is the whole character of the
+          module. */}
+      <div
+        role="tablist" aria-label="Shift context" onKeyDown={onKeyDown}
+        className="grid h-[54px]" style={{ gridTemplateColumns: '48% 52%' }}
+      >
         {cards.map((card, index) => {
           const selected = index === top
           return (
@@ -83,7 +90,11 @@ export function PeelTabs({ whatChanging, whyNow }) {
   )
 }
 
-export function TensionBand({ quote, label = 'Consumer tension' }) {
+// "The tension", not "Consumer tension": the module is sphere-neutral now, and
+// the voice on an Organizations page is an operator rather than a shopper. The
+// pipeline emits the label explicitly; this default only covers rows published
+// before it started doing so.
+export function TensionBand({ quote, label = 'The tension' }) {
   if (!quote) return null
   return (
     <div className="bleed py-8 text-white flex flex-col gap-3.5 md:py-10 lg:py-14" style={{ background: 'var(--color-dark)' }}>
