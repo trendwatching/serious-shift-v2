@@ -1,0 +1,192 @@
+/* ════════════════════════════════════════════════════════════════════════
+ * Tokens — every colour, gradient and face the design uses.
+ *
+ * Values are lifted verbatim from the delivered build
+ * (design/reference/*.dc.html). Nothing here is eyeballed; if a number is not
+ * in that build it does not belong in this file.
+ * ════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Type ─────────────────────────────────────────────────────────────
+   * The build asks for three families. `--font-mono` is the platform stack
+   * rather than a webfont, exactly as the build specifies, so the horizon
+   * ranges and the `01 / 04` counter match with nothing extra to download.
+   * ------------------------------------------------------------------- */
+  --font-display: 'Urbanist Variable', system-ui, sans-serif;
+  --font-sans:    'Nunito Sans Variable', system-ui, sans-serif;
+  --font-title:   'Suez One', Georgia, serif;
+  --font-mono:    ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ── Ink ─────────────────────────────────────────────────────────────
+   * Six greys, each earning its place from a specific element in the build.
+   * ------------------------------------------------------------------- */
+  --color-ink:        #1B1620;  /* headings, body default            */
+  --color-ink-strong: #2C2735;  /* horizon card + lede               */
+  --color-ink-soft:   #4A4459;  /* deck standfirst, chip label       */
+  --color-ink-body:   #3E3949;  /* About prose                       */
+  --color-ink-sector: #4E485C;  /* industries detail body            */
+  --color-ink-mid:    #5C5768;  /* card deks                         */
+  --color-ink-row:    #6B6577;  /* domain-page row dek               */
+  --color-ink-meta:   #9A94A8;  /* "Scroll ›", "1 of 15"             */
+  --color-ink-tag:    #A9A3B8;  /* breadcrumb-menu "Domain" tag      */
+  --color-ink-num:    #B3AEC0;  /* domain-page row number            */
+  --color-ink-dot:    #8E88A0;  /* deck pager, inactive, slide 0     */
+
+  /* ── Surfaces ────────────────────────────────────────────────────────── */
+  --color-paper:      #F7F6F9;
+  --color-surface:    #ffffff;
+  --color-card:       #FBFAFD;  /* horizon step card                 */
+  --color-black:      #000000;  /* header + nav panel                */
+  --color-darker:     #0D0B10;  /* footer band 3                     */
+
+  /* Hairlines. Four of them, and they are genuinely different in the build. */
+  --color-line:       #EDEAF2;  /* cards                             */
+  --color-line-row:   #F0EEF4;  /* domain-page rows                  */
+  --color-line-menu:  #F1EFF5;  /* breadcrumb-menu groups            */
+  --color-line-rail:  #E6E2EE;  /* horizon rail                      */
+  --color-line-chip:  #E7E3EF;  /* industry chips                    */
+
+  /* ── Brand ───────────────────────────────────────────────────────────── */
+  --color-yellow:      #FDFF85;
+  --color-yellow-soft: #FEFFC6;
+  --color-orange:      #F04E09;  /* the WhatsApp / subscribe CTA     */
+  --color-whatsapp:    #25D366;
+
+  /* ── Editorial accents ───────────────────────────────────────────────── */
+  --color-pink:      #C8006B;
+  --color-pink-hot:  #F5007F;
+  --color-pink-deep: #8E0049;   /* peel-tab foot — NOT #5E0033      */
+  --color-pink-ink:  #A3005A;
+  --color-pink-wash: #FBEAF3;   /* sub-shift pill fill              */
+  --color-pink-lit:  #F6D6E6;   /* horizon lit state                */
+  --color-pink-abyss:#4A0027;   /* horizon lit ink                  */
+  --color-green:     #1F7A4D;
+  --color-green-deep:#10502F;
+  --color-menu-on:   #FBF3F7;   /* breadcrumb-menu active row       */
+}
+
+:root {
+  /* ── Page geometry ────────────────────────────────────────────────────
+   * One gutter, one module gap, at every width. The design is a single
+   * 393px canvas; desktop centres it rather than re-spacing it, so these
+   * are constants and not a scale. See styles/desktop.css.
+   * ------------------------------------------------------------------- */
+  --gutter: 22px;
+  --module-gap: 30px;
+
+  /* Height of the black bar. The build fixes it at 140px, of which the top
+     56px is the iOS status bar. On the web that inset is real and variable,
+     so it is `safe-area + 84` — which equals 140 on a notched phone and
+     collapses gracefully everywhere else.
+
+     Anything positioned against the bar MUST read this token. The previous
+     build hard-coded a 62px token against an 82px bar and every hero and
+     breadcrumb on the site inherited the 20px error. */
+  --topbar: calc(max(0px, env(safe-area-inset-top)) + 84px);
+
+  /* ── Per-domain gradients ─────────────────────────────────────────────
+   * Verbatim from the build's DECK table.
+   * ------------------------------------------------------------------- */
+  --grad-society:       linear-gradient(135deg, #FF0B85 0%, #ED026B 46%, #9A0046 100%);
+  --grad-economy:       linear-gradient(135deg, #0F91EE 0%, #0A7FDA 46%, #04528B 100%);
+  --grad-organisations: linear-gradient(135deg, #ADB03A 0%, #9A9A43 42%, #5F6E13 100%);
+  --grad-consumers:     linear-gradient(135deg, #F65510 0%, #E74707 46%, #922E03 100%);
+
+  /* ── Sunset ───────────────────────────────────────────────────────────
+   * The build uses this in exactly five places and they are all one level
+   * BELOW a key shift, or one step outside the reading flow: the sub-shift
+   * hero, its To card, its peel-tab face, its "threatened" need, the
+   * sub-shift row rule, and the Work With Us card.
+   *
+   * It is fixed across all four domains on purpose. A sub-shift is not a
+   * fifth domain, and tinting it with the parent's accent is what made the
+   * two levels indistinguishable in the previous build.
+   * ------------------------------------------------------------------- */
+  --grad-sunset: linear-gradient(148deg, #FF007A 0%, #E8006F 42%, #F2734A 80%, #FDFF85 100%);
+
+  /* The key-shift "threatened" card. Distinct from the sub-shift one, which
+     is sunset — the build really does use two different fills. */
+  --grad-threatened: linear-gradient(180deg, #FF007A 0%, #C8006B 55%, #8E0049 100%);
+
+  --grad-green:  linear-gradient(180deg, #1F7A4D 0%, #10502F 100%);
+  --grad-grey:   linear-gradient(180deg, #F7F7F7 0%, #F1F1F3 100%);
+  --grad-yellow: linear-gradient(180deg, #FDFF85 0%, #FEFFC6 62%, #FFFFFF 100%);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-deck: cubic-bezier(0.22, 1, 0.28, 1);
+
+  /* ── Accent, inherited from the domain ────────────────────────────────
+   * A shift page is coloured by its parent domain. Components read `--a-*`
+   * and never name a hue, so the same component serves all four.
+   *
+   * Defaults are Society's. `--a-deep` is the peel-tab / panel foot and is
+   * #8E0049 in the build, not the darker #5E0033 the previous version used.
+   * ------------------------------------------------------------------- */
+  --a-hot:   #F5007F;
+  --a:       #C8006B;
+  --a-deep:  #8E0049;
+  --a-ink:   #A3005A;   /* accent text on white — must stay readable */
+  --a-wash:  #FBEAF3;
+  --a-lit:   #F6D6E6;   /* horizon lit fill  */
+  --a-lit-ink: #4A0027; /* horizon lit ink   */
+  --a-crumb: #7A0038;   /* breadcrumb "you are here" pill */
+  --a-shadow: rgba(94, 0, 51, 0.24);
+  --a-eyebrow: var(--color-yellow);
+
+  --pos:      #1F7A4D;
+  --pos-deep: #10502F;
+  --pos-shadow: rgba(16, 80, 47, 0.24);
+}
+
+[data-domain='economy'] {
+  --a-hot:   #0F91EE;
+  --a:       #0A6FBF;   /* readable on white; #0A7FDA is the decorative dot */
+  --a-deep:  #04528B;
+  --a-ink:   #0A5FA3;
+  --a-wash:  #E8F3FC;
+  --a-lit:   #D6E7F6;
+  --a-lit-ink: #033D68;
+  --a-crumb: #023F6C;
+  --a-shadow: rgba(4, 82, 139, 0.24);
+}
+
+[data-domain='organisations'] {
+  --a-hot:   #ADB03A;
+  --a:       #737425;   /* readable olive; bright olive stays decorative */
+  --a-deep:  #5F6E13;
+  --a-ink:   #5F6120;
+  --a-wash:  #F3F4E3;
+  --a-lit:   #E9EBCB;
+  --a-lit-ink: #3A420A;
+  --a-crumb: #41500A;
+  --a-shadow: rgba(95, 110, 19, 0.24);
+
+  /* Brand yellow on olive is barely a colour change. The build makes this
+     exact exception on the deck panel; it applies to every eyebrow that
+     sits on the domain's own gradient. */
+  --a-eyebrow: #FFFFFF;
+
+  /* Green beside olive reads as one muddy family, so the positive side
+     shifts to teal — still unmistakably "the other side", but separable. */
+  --pos:      #126E63;
+  --pos-deep: #0B4A42;
+  --pos-shadow: rgba(11, 74, 66, 0.24);
+}
+
+[data-domain='consumers'] {
+  --a-hot:   #F65510;
+  --a:       #C93B05;
+  --a-deep:  #922E03;
+  --a-ink:   #B03505;
+  --a-wash:  #FDEDE6;
+  --a-lit:   #FBDCCE;
+  --a-lit-ink: #6E2202;
+  --a-crumb: #6E2202;
+  --a-shadow: rgba(146, 46, 3, 0.24);
+}
+
+:root,
+[data-domain] {
+  --a-grad: linear-gradient(180deg, var(--a) 0%, var(--a-deep) 100%);
+  --pos-grad: linear-gradient(180deg, var(--pos) 0%, var(--pos-deep) 100%);
+}

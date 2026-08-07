@@ -1,0 +1,53 @@
+/* ════════════════════════════════════════════════════════════════════════
+ * Keyframes, verbatim from the delivered build.
+ *
+ * The previous version quietly rewrote three of these — it dropped the
+ * `opacity` component from `ssRise`, `ssFade` and `ssExpand`, so entrances
+ * slid without fading and `ssExpand` lost its scale. Copy them exactly; the
+ * reduced-motion guard in base.css is what handles the accessibility concern,
+ * not weakening the animation for everyone.
+ * ════════════════════════════════════════════════════════════════════════ */
+
+@keyframes ssRise   { from { opacity: 0; transform: translateY(26px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes ssFade   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ssWord   { from { opacity: 0; transform: translateY(34px) rotate(1.5deg); } to { opacity: 1; transform: none; } }
+@keyframes ssExpand { from { opacity: 0.4; transform: translateY(180px) scale(0.88); border-radius: 26px; } to { opacity: 1; transform: none; border-radius: 0; } }
+@keyframes abRise   { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@keyframes ssMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Home-panel orb drift. Five paths, five periods, so the field never repeats. */
+@keyframes ssFloat {
+  0%   { transform: translate(0, 0) scale(1); }
+  14%  { transform: translate(-118px, 96px) scale(1.1); }
+  30%  { transform: translate(-186px, 268px) scale(0.92); }
+  46%  { transform: translate(-40px, 402px) scale(1.16); }
+  60%  { transform: translate(72px, 250px) scale(1.02); }
+  76%  { transform: translate(-96px, 140px) scale(1.12); }
+  88%  { transform: translate(30px, 44px) scale(0.96); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes ssOrb1 { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(84px,-58px) scale(1.14); } 66% { transform: translate(-46px,72px) scale(0.9); } }
+@keyframes ssOrb2 { 0%,100% { transform: translate(0,0) scale(1); } 30% { transform: translate(-72px,66px) scale(0.92); } 62% { transform: translate(58px,104px) scale(1.16); } }
+@keyframes ssOrb3 { 0%,100% { transform: translate(0,0) scale(1); } 40% { transform: translate(62px,88px) scale(1.1); } 72% { transform: translate(-88px,26px) scale(0.94); } }
+
+/* From/To cross-fade: the two panels trade their gradient while the ink
+   inverts with it, on one shared 8s clock. */
+@keyframes ssPanelA { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes ssPanelB { 0%, 45% { opacity: 0; } 50%, 95% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes ssInkA   { 0%, 45% { color: #fff; } 50%, 95% { color: #1B1620; } 100% { color: #fff; } }
+@keyframes ssInkB   { 0%, 45% { color: #1B1620; } 50%, 95% { color: #fff; } 100% { color: #1B1620; } }
+
+/* Horizon sweep: the lit card walks Today → Next → Beyond on a 12s loop.
+   The lit colours read the accent in scope, so the sweep is the domain's. */
+@keyframes ssFill1 { 0%, 32% { background-color: var(--a-lit); color: var(--a-lit-ink); } 34%, 100% { background-color: var(--color-card); color: var(--color-ink-strong); } }
+@keyframes ssFill2 { 0%, 32% { background-color: var(--color-card); color: var(--color-ink-strong); } 34%, 65% { background-color: var(--a-lit); color: var(--a-lit-ink); } 67%, 100% { background-color: var(--color-card); color: var(--color-ink-strong); } }
+@keyframes ssFill3 { 0%, 65% { background-color: var(--color-card); color: var(--color-ink-strong); } 67%, 99% { background-color: var(--a-lit); color: var(--a-lit-ink); } 100% { background-color: var(--color-card); color: var(--color-ink-strong); } }
+@keyframes ssDot1  { 0%, 32% { background: var(--dot-lit, var(--a)); } 34%, 100% { background: #fff; } }
+@keyframes ssDot2  { 0%, 32% { background: #fff; } 34%, 65% { background: var(--dot-lit, var(--a)); } 67%, 100% { background: #fff; } }
+@keyframes ssDot3  { 0%, 65% { background: #fff; } 67%, 99% { background: var(--dot-lit, var(--a)); } 100% { background: #fff; } }
+
+@layer components {
+  .a-rise   { animation: ssRise 0.7s var(--ease-out) both; }
+  .a-fade   { animation: ssFade 0.5s ease both; }
+  .a-expand { animation: ssExpand 0.55s var(--ease-out) both; }
+}

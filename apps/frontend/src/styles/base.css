@@ -1,0 +1,67 @@
+/* Document-level rules. Element selectors only — no classes, so nothing here
+   can shadow a utility. */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Full-bleed bands break out with calc(50% - 50vw); clip stops the
+       horizontal scrollbar that would otherwise appear. */
+    overflow-x: clip;
+  }
+
+  /* The build hides scrollbars globally. Doing that everywhere takes away the
+     only affordance a mouse user has on a horizontal rail, so it is scoped to
+     the rails themselves (see .rail in components.css) and the page keeps its
+     native scrollbar. */
+
+  :focus-visible {
+    outline: 3px solid var(--color-yellow);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px rgba(27, 22, 32, 0.55);
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    text-align: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  dialog::backdrop {
+    background: rgba(13, 11, 16, 0.72);
+  }
+}
+
+/* Motion is decoration here: every animation in the design is an entrance, a
+   drift or a cross-fade, and none of them carry information. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

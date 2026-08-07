@@ -1,0 +1,88 @@
+/* ════════════════════════════════════════════════════════════════════════
+ * The desktop layer — the ONLY breakpoint in the codebase.
+ *
+ * The 393px design is canonical. Desktop is not a second design and does not
+ * get a second set of values; it centres the mobile canvas and lets the
+ * list-shaped modules — and only those — spread into the space.
+ *
+ * That is a constraint, not a shortcut. The previous build put `md:` and `lg:`
+ * variants inside every component, which meant no property anywhere held the
+ * design's value, and desktop drifted from mobile with nothing to stop it.
+ * Keeping the breakpoint in one file makes that drift impossible: there is
+ * exactly one place it could come from.
+ *
+ * scripts/check-layers.mjs fails the build if `md:` or `lg:` appears anywhere
+ * under src/ outside this file.
+ * ════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* The reading canvas. Every page wraps in this. */
+  .canvas {
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  /* Opt-in, for lists that read better wide. Nothing else may use it. */
+  .widen {
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  @media (min-width: 64rem) {
+    /* 480px rather than 393: a touch of air at the edges so the canvas reads
+       as a deliberate column on a large screen instead of a phone screenshot
+       pasted onto one. Type and spacing are untouched. */
+    .canvas { max-width: 480px; }
+    .widen  { max-width: 1120px; }
+
+    /* Rails stop being rails and become grids. They keep their card widths,
+       so a card is the same object at every viewport. */
+    .widen .rail {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+      gap: 12px;
+      overflow: visible;
+      margin-inline: 0;
+      padding-inline: 0;
+    }
+    .widen .rail > * {
+      width: auto !important;
+      scroll-snap-align: none;
+    }
+
+    /* The horizon rail turns from a vertical spine into a horizontal one. */
+    .widen .horizon {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: 20px;
+      padding-left: 0;
+      padding-top: 28px;
+    }
+    .widen .horizon-rail {
+      inset: 6px 10px auto 10px;
+      width: auto;
+      height: 2px;
+    }
+    .widen .horizon-dot {
+      inset: -22px auto auto 50%;
+      transform: translateX(-50%);
+    }
+
+    /* Industry chips wrap rather than scroll — there is room for all 16. */
+    .widen .chips {
+      flex-wrap: wrap;
+      overflow: visible;
+      margin-inline: 0;
+      padding-inline: 0;
+    }
+
+    /* The sub-shift list is a stack on mobile; two up is as wide as it should
+       ever get, because each card carries a paragraph. */
+    .widen .sub-stack {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+  }
+}

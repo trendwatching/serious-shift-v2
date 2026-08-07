@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+/* Self-hosted. The design's <link> to fonts.googleapis.com blocks first paint
+   on a third-party round trip and sends every visitor's IP to Google, on a
+   site that is otherwise deliberately same-origin. */
+@import '@fontsource/suez-one/400.css';
+@import '@fontsource-variable/urbanist';
+@import '@fontsource-variable/nunito-sans';
+
+@import './tokens.css';
+@import './base.css';
+@import './components.css';
+@import './anim.css';
+@import './desktop.css';

@@ -36,3 +36,8 @@ dist/
 
 # scraper run artifact (written to cwd)
 scrape_log.json
+
+# The delivered design build, kept locally as the fidelity ground truth.
+# Large binaries and not ours to redistribute; the screenshot-diff harness
+# expects it at this path.
+design/reference/
