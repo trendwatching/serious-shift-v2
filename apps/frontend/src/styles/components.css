@@ -159,7 +159,9 @@
      own orange, which is why it cannot be a generic utility. */
   .ss-cta:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(240, 78, 9, 0.4);
+    /* The CTA's own colour at 40%, so it tracks --color-orange rather than
+       keeping the retired #F04E09 alive in a shadow nobody would grep for. */
+    box-shadow: 0 12px 24px color-mix(in srgb, var(--color-orange) 40%, transparent);
   }
 }
 

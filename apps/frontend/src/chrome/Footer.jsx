@@ -2,7 +2,7 @@
  * Three bands: the trust line on a yellow fade, an auto-scrolling logo rail,
  * and the black block with the lock-up and the subscribe CTA.
  *
- * The CTA is `#F04E09`, the brand orange — not WhatsApp green. A Miro sticky
+ * The CTA is `--color-orange`, the brand orange — not WhatsApp green. A sticky
  * asked for green plus the WhatsApp mark; the later design build kept the
  * orange and no mark, and the build is the spec.
  */
