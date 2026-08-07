@@ -331,6 +331,50 @@ mod tests {
 
     const SHELL: &str = r#"<!DOCTYPE html><html><head><meta charSet="utf-8"/><title>Old Title</title><meta name="description" content="Four domains, eight shifts this week."/></head><body>x</body></html>"#;
 
+    /// Renders the REAL shipped shell, not a fixture.
+    ///
+    /// `render` swaps the first title tag in the document. If the shell ever
+    /// carries that literal inside an HTML comment, the swap lands there, the
+    /// comment never closes, and every tag after it — script and stylesheet
+    /// included — is swallowed into the comment. The page then ships as a
+    /// valid-looking 200 that renders absolutely nothing, which is exactly
+    /// what happened once.
+    #[test]
+    fn rendering_the_real_shell_keeps_the_bundle_reachable() {
+        // The BUILT shell, not the source one. Vite hoists the entry script
+        // from <body> into <head> during the build, so the source file cannot
+        // tell us whether a head rewrite would swallow it.
+        let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let shell_path = loop {
+            let candidate = path.join("apps/frontend/out/index.html");
+            if candidate.is_file() {
+                break candidate;
+            }
+            if !path.pop() {
+                return; // frontend not built in this checkout
+            }
+        };
+        let shell = std::fs::read_to_string(shell_path).unwrap();
+        let meta = PageMeta {
+            title: "T".into(),
+            description: "D".into(),
+        };
+        let out = render(&shell, "/", &meta, "https://example.com");
+
+        assert!(out.contains("<div id=\"root\""), "the mount point must survive");
+        let head = out.split("<body").next().unwrap();
+        assert!(
+            head.contains("<script") && head.contains("/assets/"),
+            "the entry script must survive the head rewrite: {head}",
+        );
+        // Every comment that opens must close before the body starts.
+        assert_eq!(
+            head.matches("<!--").count(),
+            head.matches("-->").count(),
+            "an unclosed comment in <head> swallows everything after it",
+        );
+    }
+
     /// `/about` is authored, not generated, so nothing in the map document
     /// would ever put it in the index — and a route missing from the index is
     /// served as a soft 404 with the shell, which is what it was.

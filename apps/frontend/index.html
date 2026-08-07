@@ -6,10 +6,15 @@
     <meta name="theme-color" content="#000000" />
 
     <!--
-      Build-time defaults only. The backend rewrites <title>, the description
-      and the social tags per route from the live map document
+      Build-time defaults only. The backend rewrites the page title, the
+      description and the social tags per route from the live map document
       (apps/backend/src/seo.rs) — a static bundle cannot know how many shifts
       there are this week.
+
+      Do NOT write a literal title tag inside this comment. seo::render swaps
+      the first one it finds in the document, and if that match lands in here
+      the comment never closes: the script and stylesheet below get swallowed
+      into it and the page ships as a blank document.
     -->
     <title>Serious Shi(f)t — Everything that is about to change</title>
     <meta name="description" content="What is about to change, and who is saying so. A weekly trend map built from sourced evidence." />
