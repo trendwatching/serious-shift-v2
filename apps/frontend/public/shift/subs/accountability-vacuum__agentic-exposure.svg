@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>accountability-vacuum/agentic-exposure</title>
+<defs>
+<linearGradient id="faccountabilityvacuumagenticexposure" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gaccountabilityvacuumagenticexposure" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="baccountabilityvacuumagenticexposure" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="saccountabilityvacuumagenticexposure" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vaccountabilityvacuumagenticexposure" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="naccountabilityvacuumagenticexposure" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#faccountabilityvacuumagenticexposure)"/>
+<rect width="640" height="640" fill="url(#gaccountabilityvacuumagenticexposure)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#baccountabilityvacuumagenticexposure)" filter="url(#saccountabilityvacuumagenticexposure)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="171.4" cy="-32" r="15"/><circle cx="420.3" cy="-20.8" r="14.8"/><circle cx="598.3" cy="-9.7" r="14.6"/><circle cx="380.2" cy="1.5" r="14.4"/><rect x="143" y="12.7" width="28.5" height="28.5" transform="rotate(13.5 143 12.7)"/><circle cx="552" cy="23.9" r="14"/><rect x="561.5" y="35" width="27.7" height="27.7" transform="rotate(54.4 561.5 35)"/><circle cx="178.1" cy="46.2" r="13.7"/><rect x="355.9" y="57.4" width="27" height="27" transform="rotate(82 355.9 57.4)"/><circle cx="435.6" cy="68.6" r="13.3"/><circle cx="432.2" cy="79.7" r="13.1"/><circle cx="307.5" cy="90.9" r="12.9"/><circle cx="555.5" cy="102.1" r="12.7"/><rect x="57.9" y="113.3" width="25" height="25" transform="rotate(44 57.9 113.3)"/><circle cx="400.8" cy="124.4" r="12.3"/><rect x="537.3" y="135.6" width="24.3" height="24.3" transform="rotate(84.6 537.3 135.6)"/><rect x="86.5" y="146.8" width="23.9" height="23.9" transform="rotate(27.9 86.5 146.8)"/><rect x="364.4" y="158" width="23.5" height="23.5" transform="rotate(3.4 364.4 158)"/><rect x="515.1" y="169.1" width="23.1" height="23.1" transform="rotate(68.7 515.1 169.1)"/><rect x="497.8" y="180.3" width="22.8" height="22.8" transform="rotate(23.1 497.8 180.3)"/><circle cx="578.6" cy="191.5" r="11.2"/><rect x="96" y="202.7" width="22" height="22" transform="rotate(51.4 96 202.7)"/><rect x="528.7" y="213.8" width="21.6" height="21.6" transform="rotate(8.3 528.7 213.8)"/><rect x="185.1" y="225" width="21.2" height="21.2" transform="rotate(32.9 185.1 225)"/><rect x="363.7" y="236.2" width="20.9" height="20.9" transform="rotate(39.5 363.7 236.2)"/><rect x="485.7" y="247.4" width="20.5" height="20.5" transform="rotate(48.6 485.7 247.4)"/><rect x="164.6" y="258.5" width="20.1" height="20.1" transform="rotate(7.5 164.6 258.5)"/><circle cx="439.9" cy="269.7" r="9.9"/><rect x="87.4" y="280.9" width="19.3" height="19.3" transform="rotate(57.8 87.4 280.9)"/><rect x="158.4" y="292.1" width="19" height="19" transform="rotate(59.7 158.4 292.1)"/><circle cx="253" cy="303.2" r="9.3"/><circle cx="493.9" cy="314.4" r="9.1"/><rect x="546.3" y="325.6" width="17.8" height="17.8" transform="rotate(49 546.3 325.6)"/><rect x="129.9" y="336.8" width="17.4" height="17.4" transform="rotate(58.9 129.9 336.8)"/><rect x="197.9" y="347.9" width="17" height="17" transform="rotate(51.9 197.9 347.9)"/><rect x="389.1" y="359.1" width="16.7" height="16.7" transform="rotate(12.9 389.1 359.1)"/><rect x="165.3" y="370.3" width="16.3" height="16.3" transform="rotate(46.5 165.3 370.3)"/><rect x="71.2" y="381.5" width="15.9" height="15.9" transform="rotate(11 71.2 381.5)"/><rect x="485.1" y="392.6" width="15.5" height="15.5" transform="rotate(10.9 485.1 392.6)"/><circle cx="97.4" cy="403.8" r="7.6"/><rect x="150.3" y="415" width="14.8" height="14.8" transform="rotate(30.6 150.3 415)"/><circle cx="277.1" cy="426.2" r="7.2"/><circle cx="485.6" cy="437.3" r="7"/><rect x="364.5" y="448.5" width="13.6" height="13.6" transform="rotate(72.7 364.5 448.5)"/><circle cx="170.3" cy="459.7" r="6.6"/><rect x="503.4" y="470.9" width="12.9" height="12.9" transform="rotate(63.8 503.4 470.9)"/><circle cx="81.1" cy="482" r="6.2"/><circle cx="495.1" cy="493.2" r="6"/><circle cx="69.7" cy="504.4" r="5.9"/><rect x="175.6" y="515.6" width="11.3" height="11.3" transform="rotate(5.6 175.6 515.6)"/><circle cx="459.1" cy="526.7" r="5.5"/><rect x="344.6" y="537.9" width="10.6" height="10.6" transform="rotate(4.1 344.6 537.9)"/><circle cx="152.1" cy="549.1" r="5.1"/><rect x="161.8" y="560.3" width="9.8" height="9.8" transform="rotate(67.3 161.8 560.3)"/><rect x="465.5" y="571.4" width="9.4" height="9.4" transform="rotate(26.1 465.5 571.4)"/><rect x="285.1" y="582.6" width="9" height="9" transform="rotate(54.9 285.1 582.6)"/><rect x="431.8" y="593.8" width="8.7" height="8.7" transform="rotate(85.6 431.8 593.8)"/><rect x="439.5" y="605" width="8.3" height="8.3" transform="rotate(43.2 439.5 605)"/><circle cx="305.6" cy="616.1" r="4"/><rect x="308.9" y="627.3" width="7.5" height="7.5" transform="rotate(70.6 308.9 627.3)"/><rect x="481.4" y="638.5" width="7.1" height="7.1" transform="rotate(63.3 481.4 638.5)"/><rect x="88" y="649.7" width="6.8" height="6.8" transform="rotate(72.3 88 649.7)"/><circle cx="358.7" cy="660.8" r="3.2"/><circle cx="494.6" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vaccountabilityvacuumagenticexposure)"/>
+<rect width="640" height="640" filter="url(#naccountabilityvacuumagenticexposure)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#naccountabilityvacuumagenticexposure)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

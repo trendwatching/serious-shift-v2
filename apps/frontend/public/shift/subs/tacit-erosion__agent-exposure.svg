@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>tacit-erosion/agent-exposure</title>
+<defs>
+<linearGradient id="ftaciterosionagentexposure" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gtaciterosionagentexposure" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="btaciterosionagentexposure" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="staciterosionagentexposure" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vtaciterosionagentexposure" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ntaciterosionagentexposure" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#ftaciterosionagentexposure)"/>
+<rect width="640" height="640" fill="url(#gtaciterosionagentexposure)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#btaciterosionagentexposure)" filter="url(#staciterosionagentexposure)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="139.2" rx="502.1" ry="180.8" fill="none" stroke-width="48"/><rect x="332.5" y="320" width="20" height="20" transform="rotate(86.6 332.5 320)"/><rect x="360.8" y="329.7" width="19.5" height="19.5" transform="rotate(61.9 360.8 329.7)"/><rect x="358" y="339.4" width="19.1" height="19.1" transform="rotate(22.6 358 339.4)"/><rect x="306.5" y="349.1" width="18.6" height="18.6" transform="rotate(26.7 306.5 349.1)"/><rect x="265.4" y="358.8" width="18.2" height="18.2" transform="rotate(78.2 265.4 358.8)"/><rect x="352.4" y="368.5" width="17.7" height="17.7" transform="rotate(83.3 352.4 368.5)"/><rect x="345.8" y="378.2" width="17.3" height="17.3" transform="rotate(44.1 345.8 378.2)"/><rect x="324.4" y="387.8" width="16.8" height="16.8" transform="rotate(40.4 324.4 387.8)"/><rect x="246.9" y="397.5" width="16.4" height="16.4" transform="rotate(31.8 246.9 397.5)"/><rect x="312.3" y="407.2" width="15.9" height="15.9" transform="rotate(26.2 312.3 407.2)"/><rect x="343.3" y="416.9" width="15.5" height="15.5" transform="rotate(86.2 343.3 416.9)"/><rect x="395.5" y="426.6" width="15" height="15" transform="rotate(61.6 395.5 426.6)"/><rect x="421.9" y="436.3" width="14.5" height="14.5" transform="rotate(80.9 421.9 436.3)"/><rect x="390.6" y="446" width="14.1" height="14.1" transform="rotate(2.4 390.6 446)"/><rect x="201.6" y="455.7" width="13.6" height="13.6" transform="rotate(19.1 201.6 455.7)"/><rect x="419.3" y="465.4" width="13.2" height="13.2" transform="rotate(13.9 419.3 465.4)"/><rect x="377.6" y="475.1" width="12.7" height="12.7" transform="rotate(36.3 377.6 475.1)"/><rect x="446" y="484.8" width="12.3" height="12.3" transform="rotate(5.2 446 484.8)"/><rect x="429.4" y="494.5" width="11.8" height="11.8" transform="rotate(66.2 429.4 494.5)"/><rect x="372.3" y="504.2" width="11.4" height="11.4" transform="rotate(12.3 372.3 504.2)"/><rect x="381.7" y="513.9" width="10.9" height="10.9" transform="rotate(13.1 381.7 513.9)"/><rect x="372.8" y="523.6" width="10.5" height="10.5" transform="rotate(4.4 372.8 523.6)"/><rect x="198.7" y="533.3" width="10" height="10" transform="rotate(88.8 198.7 533.3)"/><rect x="397" y="543" width="9.5" height="9.5" transform="rotate(36.4 397 543)"/><rect x="336.4" y="552.7" width="9.1" height="9.1" transform="rotate(37.6 336.4 552.7)"/><rect x="317.5" y="562.4" width="8.6" height="8.6" transform="rotate(82.7 317.5 562.4)"/><rect x="470.3" y="572.1" width="8.2" height="8.2" transform="rotate(6.7 470.3 572.1)"/><rect x="276.8" y="581.8" width="7.7" height="7.7" transform="rotate(1.3 276.8 581.8)"/><rect x="179.5" y="591.5" width="7.3" height="7.3" transform="rotate(32.8 179.5 591.5)"/><rect x="471.7" y="601.2" width="6.8" height="6.8" transform="rotate(75.9 471.7 601.2)"/><rect x="379.1" y="610.9" width="6.4" height="6.4" transform="rotate(78 379.1 610.9)"/><rect x="405.1" y="620.6" width="5.9" height="5.9" transform="rotate(75.3 405.1 620.6)"/><rect x="240.7" y="630.3" width="5.5" height="5.5" transform="rotate(83.9 240.7 630.3)"/><rect x="187.8" y="640" width="5" height="5" transform="rotate(29.6 187.8 640)"/></g>
+<rect width="640" height="640" fill="url(#vtaciterosionagentexposure)"/>
+<rect width="640" height="640" filter="url(#ntaciterosionagentexposure)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ntaciterosionagentexposure)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

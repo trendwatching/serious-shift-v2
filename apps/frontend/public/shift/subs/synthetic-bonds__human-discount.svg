@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>synthetic-bonds/human-discount</title>
+<defs>
+<linearGradient id="fsyntheticbondshumandiscount" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gsyntheticbondshumandiscount" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bsyntheticbondshumandiscount" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="ssyntheticbondshumandiscount" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vsyntheticbondshumandiscount" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nsyntheticbondshumandiscount" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fsyntheticbondshumandiscount)"/>
+<rect width="640" height="640" fill="url(#gsyntheticbondshumandiscount)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bsyntheticbondshumandiscount)" filter="url(#ssyntheticbondshumandiscount)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.92" stroke-opacity="0.92"><rect x="591.8" y="-32" width="30" height="30" transform="rotate(49.5 591.8 -32)"/><circle cx="303.4" cy="-20.8" r="14.8"/><rect x="154" y="-9.7" width="29.2" height="29.2" transform="rotate(19.8 154 -9.7)"/><rect x="475.4" y="1.5" width="28.9" height="28.9" transform="rotate(78.3 475.4 1.5)"/><rect x="505.6" y="12.7" width="28.5" height="28.5" transform="rotate(0.7 505.6 12.7)"/><rect x="585.7" y="23.9" width="28.1" height="28.1" transform="rotate(77.5 585.7 23.9)"/><rect x="420.4" y="35" width="27.7" height="27.7" transform="rotate(42.3 420.4 35)"/><circle cx="373.1" cy="46.2" r="13.7"/><circle cx="60" cy="57.4" r="13.5"/><rect x="392.8" y="68.6" width="26.6" height="26.6" transform="rotate(81.9 392.8 68.6)"/><rect x="341.1" y="79.7" width="26.2" height="26.2" transform="rotate(37.3 341.1 79.7)"/><circle cx="428.4" cy="90.9" r="12.9"/><rect x="106.1" y="102.1" width="25.4" height="25.4" transform="rotate(61.4 106.1 102.1)"/><circle cx="515.4" cy="113.3" r="12.5"/><rect x="406.1" y="124.4" width="24.7" height="24.7" transform="rotate(48.1 406.1 124.4)"/><circle cx="135.7" cy="135.6" r="12.1"/><rect x="507.4" y="146.8" width="23.9" height="23.9" transform="rotate(40.8 507.4 146.8)"/><circle cx="328.2" cy="158" r="11.8"/><rect x="231.6" y="169.1" width="23.1" height="23.1" transform="rotate(55 231.6 169.1)"/><circle cx="118" cy="180.3" r="11.4"/><rect x="125.1" y="191.5" width="22.4" height="22.4" transform="rotate(31.9 125.1 191.5)"/><circle cx="173.6" cy="202.7" r="11"/><rect x="593.8" y="213.8" width="21.6" height="21.6" transform="rotate(53.8 593.8 213.8)"/><rect x="244.1" y="225" width="21.2" height="21.2" transform="rotate(45.9 244.1 225)"/><circle cx="138.7" cy="236.2" r="10.4"/><rect x="340" y="247.4" width="20.5" height="20.5" transform="rotate(66.9 340 247.4)"/><circle cx="442.5" cy="258.5" r="10"/><circle cx="148.8" cy="269.7" r="9.9"/><rect x="234.5" y="280.9" width="19.3" height="19.3" transform="rotate(32.7 234.5 280.9)"/><circle cx="521.8" cy="292.1" r="9.5"/><rect x="55.7" y="303.2" width="18.6" height="18.6" transform="rotate(65.6 55.7 303.2)"/><rect x="471.4" y="314.4" width="18.2" height="18.2" transform="rotate(86.7 471.4 314.4)"/><rect x="165.6" y="325.6" width="17.8" height="17.8" transform="rotate(86.9 165.6 325.6)"/><rect x="500.5" y="336.8" width="17.4" height="17.4" transform="rotate(57.1 500.5 336.8)"/><circle cx="104.9" cy="347.9" r="8.5"/><rect x="251.3" y="359.1" width="16.7" height="16.7" transform="rotate(25.6 251.3 359.1)"/><circle cx="97" cy="370.3" r="8.1"/><rect x="455.8" y="381.5" width="15.9" height="15.9" transform="rotate(66.5 455.8 381.5)"/><rect x="504.9" y="392.6" width="15.5" height="15.5" transform="rotate(32.1 504.9 392.6)"/><rect x="49.4" y="403.8" width="15.1" height="15.1" transform="rotate(0.8 49.4 403.8)"/><rect x="368.9" y="415" width="14.8" height="14.8" transform="rotate(40.3 368.9 415)"/><rect x="566.1" y="426.2" width="14.4" height="14.4" transform="rotate(10.5 566.1 426.2)"/><circle cx="362.5" cy="437.3" r="7"/><rect x="76.3" y="448.5" width="13.6" height="13.6" transform="rotate(29.6 76.3 448.5)"/><circle cx="191.6" cy="459.7" r="6.6"/><rect x="529.1" y="470.9" width="12.9" height="12.9" transform="rotate(83.7 529.1 470.9)"/><rect x="148.8" y="482" width="12.5" height="12.5" transform="rotate(29.2 148.8 482)"/><rect x="81" y="493.2" width="12.1" height="12.1" transform="rotate(41.7 81 493.2)"/><circle cx="453.9" cy="504.4" r="5.9"/><rect x="437.2" y="515.6" width="11.3" height="11.3" transform="rotate(2.9 437.2 515.6)"/><circle cx="249.8" cy="526.7" r="5.5"/><rect x="133.5" y="537.9" width="10.6" height="10.6" transform="rotate(32.3 133.5 537.9)"/><rect x="461.8" y="549.1" width="10.2" height="10.2" transform="rotate(50 461.8 549.1)"/><rect x="335.7" y="560.3" width="9.8" height="9.8" transform="rotate(53.3 335.7 560.3)"/><circle cx="181.1" cy="571.4" r="4.7"/><rect x="518" y="582.6" width="9" height="9" transform="rotate(81.8 518 582.6)"/><rect x="389.1" y="593.8" width="8.7" height="8.7" transform="rotate(62.1 389.1 593.8)"/><rect x="316.7" y="605" width="8.3" height="8.3" transform="rotate(5.6 316.7 605)"/><circle cx="137.9" cy="616.1" r="4"/><rect x="265.3" y="627.3" width="7.5" height="7.5" transform="rotate(71.5 265.3 627.3)"/><rect x="245.3" y="638.5" width="7.1" height="7.1" transform="rotate(49.2 245.3 638.5)"/><circle cx="396.2" cy="649.7" r="3.4"/><rect x="543.6" y="660.8" width="6.4" height="6.4" transform="rotate(87.6 543.6 660.8)"/><rect x="105.4" y="672" width="6" height="6" transform="rotate(31.3 105.4 672)"/></g>
+<rect width="640" height="640" fill="url(#vsyntheticbondshumandiscount)"/>
+<rect width="640" height="640" filter="url(#nsyntheticbondshumandiscount)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nsyntheticbondshumandiscount)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

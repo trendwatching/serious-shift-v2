@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>scaling-illusion/narrative-arbitrage</title>
+<defs>
+<linearGradient id="fscalingillusionnarrativearbitrage" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gscalingillusionnarrativearbitrage" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bscalingillusionnarrativearbitrage" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sscalingillusionnarrativearbitrage" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vscalingillusionnarrativearbitrage" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nscalingillusionnarrativearbitrage" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fscalingillusionnarrativearbitrage)"/>
+<rect width="640" height="640" fill="url(#gscalingillusionnarrativearbitrage)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bscalingillusionnarrativearbitrage)" filter="url(#sscalingillusionnarrativearbitrage)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><rect x="509" y="-32" width="30" height="30" transform="rotate(77.3 509 -32)"/><rect x="513.8" y="-20.8" width="29.6" height="29.6" transform="rotate(83.6 513.8 -20.8)"/><rect x="105.3" y="-9.7" width="29.2" height="29.2" transform="rotate(87.9 105.3 -9.7)"/><rect x="297.5" y="1.5" width="28.9" height="28.9" transform="rotate(75.8 297.5 1.5)"/><rect x="222.7" y="12.7" width="28.5" height="28.5" transform="rotate(88.6 222.7 12.7)"/><circle cx="227.8" cy="23.9" r="14"/><circle cx="303" cy="35" r="13.9"/><rect x="280.3" y="46.2" width="27.3" height="27.3" transform="rotate(71.6 280.3 46.2)"/><rect x="597.4" y="57.4" width="27" height="27" transform="rotate(84.5 597.4 57.4)"/><rect x="126.8" y="68.6" width="26.6" height="26.6" transform="rotate(60.4 126.8 68.6)"/><rect x="333.6" y="79.7" width="26.2" height="26.2" transform="rotate(52.3 333.6 79.7)"/><rect x="475" y="90.9" width="25.8" height="25.8" transform="rotate(68.5 475 90.9)"/><rect x="351.4" y="102.1" width="25.4" height="25.4" transform="rotate(39.6 351.4 102.1)"/><rect x="335.3" y="113.3" width="25" height="25" transform="rotate(28.4 335.3 113.3)"/><circle cx="255.5" cy="124.4" r="12.3"/><rect x="168.8" y="135.6" width="24.3" height="24.3" transform="rotate(5.3 168.8 135.6)"/><circle cx="75.2" cy="146.8" r="12"/><circle cx="385.4" cy="158" r="11.8"/><rect x="341.2" y="169.1" width="23.1" height="23.1" transform="rotate(82.3 341.2 169.1)"/><rect x="563.3" y="180.3" width="22.8" height="22.8" transform="rotate(67.8 563.3 180.3)"/><rect x="261.2" y="191.5" width="22.4" height="22.4" transform="rotate(24.5 261.2 191.5)"/><circle cx="492.7" cy="202.7" r="11"/><rect x="273.8" y="213.8" width="21.6" height="21.6" transform="rotate(62.5 273.8 213.8)"/><circle cx="145.9" cy="225" r="10.6"/><rect x="352.6" y="236.2" width="20.9" height="20.9" transform="rotate(29.7 352.6 236.2)"/><rect x="254.3" y="247.4" width="20.5" height="20.5" transform="rotate(35.7 254.3 247.4)"/><rect x="158.6" y="258.5" width="20.1" height="20.1" transform="rotate(39.5 158.6 258.5)"/><rect x="75.4" y="269.7" width="19.7" height="19.7" transform="rotate(50.6 75.4 269.7)"/><rect x="499.3" y="280.9" width="19.3" height="19.3" transform="rotate(33.5 499.3 280.9)"/><rect x="276.2" y="292.1" width="19" height="19" transform="rotate(20.9 276.2 292.1)"/><circle cx="156.1" cy="303.2" r="9.3"/><rect x="252.6" y="314.4" width="18.2" height="18.2" transform="rotate(89.6 252.6 314.4)"/><circle cx="352.9" cy="325.6" r="8.9"/><circle cx="115.6" cy="336.8" r="8.7"/><circle cx="165.3" cy="347.9" r="8.5"/><circle cx="339.3" cy="359.1" r="8.3"/><rect x="521.3" y="370.3" width="16.3" height="16.3" transform="rotate(3.8 521.3 370.3)"/><rect x="405.7" y="381.5" width="15.9" height="15.9" transform="rotate(9.9 405.7 381.5)"/><rect x="49.4" y="392.6" width="15.5" height="15.5" transform="rotate(47.8 49.4 392.6)"/><rect x="259.9" y="403.8" width="15.1" height="15.1" transform="rotate(30.5 259.9 403.8)"/><rect x="470.1" y="415" width="14.8" height="14.8" transform="rotate(84.1 470.1 415)"/><rect x="79" y="426.2" width="14.4" height="14.4" transform="rotate(52.8 79 426.2)"/><circle cx="436.6" cy="437.3" r="7"/><circle cx="104.9" cy="448.5" r="6.8"/><rect x="545" y="459.7" width="13.2" height="13.2" transform="rotate(81.8 545 459.7)"/><circle cx="520.5" cy="470.9" r="6.4"/><circle cx="158.6" cy="482" r="6.2"/><circle cx="245.7" cy="493.2" r="6"/><circle cx="550.6" cy="504.4" r="5.9"/><circle cx="360" cy="515.6" r="5.7"/><circle cx="442" cy="526.7" r="5.5"/><circle cx="558.1" cy="537.9" r="5.3"/><circle cx="537.9" cy="549.1" r="5.1"/><circle cx="328.4" cy="560.3" r="4.9"/><rect x="355.6" y="571.4" width="9.4" height="9.4" transform="rotate(20.2 355.6 571.4)"/><rect x="493.2" y="582.6" width="9" height="9" transform="rotate(36.9 493.2 582.6)"/><circle cx="431.1" cy="593.8" r="4.3"/><rect x="413.4" y="605" width="8.3" height="8.3" transform="rotate(36.1 413.4 605)"/><rect x="377.8" y="616.1" width="7.9" height="7.9" transform="rotate(60.6 377.8 616.1)"/><rect x="203.5" y="627.3" width="7.5" height="7.5" transform="rotate(75.8 203.5 627.3)"/><circle cx="325.6" cy="638.5" r="3.6"/><rect x="570.8" y="649.7" width="6.8" height="6.8" transform="rotate(6.6 570.8 649.7)"/><rect x="77.3" y="660.8" width="6.4" height="6.4" transform="rotate(33.6 77.3 660.8)"/><rect x="402.7" y="672" width="6" height="6" transform="rotate(2.8 402.7 672)"/></g>
+<rect width="640" height="640" fill="url(#vscalingillusionnarrativearbitrage)"/>
+<rect width="640" height="640" filter="url(#nscalingillusionnarrativearbitrage)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nscalingillusionnarrativearbitrage)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

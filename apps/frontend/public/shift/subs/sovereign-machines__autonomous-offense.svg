@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>sovereign-machines/autonomous-offense</title>
+<defs>
+<linearGradient id="fsovereignmachinesautonomousoffense" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gsovereignmachinesautonomousoffense" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bsovereignmachinesautonomousoffense" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="ssovereignmachinesautonomousoffense" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vsovereignmachinesautonomousoffense" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nsovereignmachinesautonomousoffense" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fsovereignmachinesautonomousoffense)"/>
+<rect width="640" height="640" fill="url(#gsovereignmachinesautonomousoffense)"/>
+<polygon points="192,192 448,192 537.6,640 102.39999999999998,640" fill="url(#bsovereignmachinesautonomousoffense)" filter="url(#ssovereignmachinesautonomousoffense)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.97" stroke-opacity="0.97"><rect x="-64" y="131.5" width="768" height="83.2"/><rect x="-64" y="214.7" width="768" height="25"/><rect x="60.1" y="239.7" width="93.2" height="640"/><rect x="273.6" y="239.7" width="92.8" height="640"/><rect x="483.2" y="239.7" width="100.3" height="640"/></g>
+<rect width="640" height="640" fill="url(#vsovereignmachinesautonomousoffense)"/>
+<rect width="640" height="640" filter="url(#nsovereignmachinesautonomousoffense)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nsovereignmachinesautonomousoffense)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>attention-erosion/invisible-assembly</title>
+<defs>
+<linearGradient id="fattentionerosioninvisibleassembly" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gattentionerosioninvisibleassembly" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="battentionerosioninvisibleassembly" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sattentionerosioninvisibleassembly" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vattentionerosioninvisibleassembly" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nattentionerosioninvisibleassembly" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fattentionerosioninvisibleassembly)"/>
+<rect width="640" height="640" fill="url(#gattentionerosioninvisibleassembly)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#battentionerosioninvisibleassembly)" filter="url(#sattentionerosioninvisibleassembly)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="460.8" cy="-32" r="15"/><circle cx="546.8" cy="-20.8" r="14.8"/><circle cx="215.3" cy="-9.7" r="14.6"/><rect x="550" y="1.5" width="28.9" height="28.9" transform="rotate(45.9 550 1.5)"/><rect x="275.4" y="12.7" width="28.5" height="28.5" transform="rotate(82.7 275.4 12.7)"/><circle cx="301.6" cy="23.9" r="14"/><rect x="591" y="35" width="27.7" height="27.7" transform="rotate(50.1 591 35)"/><circle cx="282.1" cy="46.2" r="13.7"/><rect x="115.4" y="57.4" width="27" height="27" transform="rotate(15.9 115.4 57.4)"/><circle cx="71.2" cy="68.6" r="13.3"/><rect x="184.9" y="79.7" width="26.2" height="26.2" transform="rotate(28.1 184.9 79.7)"/><circle cx="340.8" cy="90.9" r="12.9"/><circle cx="351.5" cy="102.1" r="12.7"/><circle cx="141.5" cy="113.3" r="12.5"/><circle cx="153.7" cy="124.4" r="12.3"/><circle cx="501.1" cy="135.6" r="12.1"/><circle cx="281.3" cy="146.8" r="12"/><rect x="322.7" y="158" width="23.5" height="23.5" transform="rotate(46.9 322.7 158)"/><rect x="473.3" y="169.1" width="23.1" height="23.1" transform="rotate(40 473.3 169.1)"/><circle cx="88.2" cy="180.3" r="11.4"/><rect x="128.2" y="191.5" width="22.4" height="22.4" transform="rotate(47.5 128.2 191.5)"/><rect x="138.2" y="202.7" width="22" height="22" transform="rotate(68.6 138.2 202.7)"/><circle cx="486.7" cy="213.8" r="10.8"/><circle cx="147.9" cy="225" r="10.6"/><rect x="386.3" y="236.2" width="20.9" height="20.9" transform="rotate(38.9 386.3 236.2)"/><circle cx="490.4" cy="247.4" r="10.2"/><rect x="559.2" y="258.5" width="20.1" height="20.1" transform="rotate(30.8 559.2 258.5)"/><circle cx="282.9" cy="269.7" r="9.9"/><circle cx="337.6" cy="280.9" r="9.7"/><rect x="294.4" y="292.1" width="19" height="19" transform="rotate(44.4 294.4 292.1)"/><circle cx="239.7" cy="303.2" r="9.3"/><rect x="82.7" y="314.4" width="18.2" height="18.2" transform="rotate(23.5 82.7 314.4)"/><circle cx="442.8" cy="325.6" r="8.9"/><circle cx="563.9" cy="336.8" r="8.7"/><rect x="426.5" y="347.9" width="17" height="17" transform="rotate(2.7 426.5 347.9)"/><rect x="298.8" y="359.1" width="16.7" height="16.7" transform="rotate(56.3 298.8 359.1)"/><circle cx="208.1" cy="370.3" r="8.1"/><rect x="71.3" y="381.5" width="15.9" height="15.9" transform="rotate(72.5 71.3 381.5)"/><rect x="533.2" y="392.6" width="15.5" height="15.5" transform="rotate(69.6 533.2 392.6)"/><rect x="553.7" y="403.8" width="15.1" height="15.1" transform="rotate(9.2 553.7 403.8)"/><circle cx="240" cy="415" r="7.4"/><rect x="409.5" y="426.2" width="14.4" height="14.4" transform="rotate(18.2 409.5 426.2)"/><rect x="573.8" y="437.3" width="14" height="14" transform="rotate(29.2 573.8 437.3)"/><rect x="317" y="448.5" width="13.6" height="13.6" transform="rotate(29 317 448.5)"/><rect x="286.8" y="459.7" width="13.2" height="13.2" transform="rotate(9 286.8 459.7)"/><rect x="328.8" y="470.9" width="12.9" height="12.9" transform="rotate(17.4 328.8 470.9)"/><rect x="60.5" y="482" width="12.5" height="12.5" transform="rotate(81.2 60.5 482)"/><rect x="251" y="493.2" width="12.1" height="12.1" transform="rotate(20 251 493.2)"/><rect x="278.3" y="504.4" width="11.7" height="11.7" transform="rotate(0.1 278.3 504.4)"/><circle cx="343.8" cy="515.6" r="5.7"/><rect x="68.8" y="526.7" width="11" height="11" transform="rotate(69.9 68.8 526.7)"/><rect x="518.1" y="537.9" width="10.6" height="10.6" transform="rotate(68.9 518.1 537.9)"/><rect x="361.8" y="549.1" width="10.2" height="10.2" transform="rotate(61.4 361.8 549.1)"/><circle cx="461.4" cy="560.3" r="4.9"/><circle cx="246.6" cy="571.4" r="4.7"/><circle cx="450.7" cy="582.6" r="4.5"/><circle cx="54.2" cy="593.8" r="4.3"/><circle cx="54.4" cy="605" r="4.1"/><circle cx="276.4" cy="616.1" r="4"/><rect x="466.6" y="627.3" width="7.5" height="7.5" transform="rotate(57.5 466.6 627.3)"/><rect x="401" y="638.5" width="7.1" height="7.1" transform="rotate(69.4 401 638.5)"/><rect x="417.9" y="649.7" width="6.8" height="6.8" transform="rotate(47.1 417.9 649.7)"/><rect x="66.5" y="660.8" width="6.4" height="6.4" transform="rotate(22.3 66.5 660.8)"/><circle cx="148.2" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vattentionerosioninvisibleassembly)"/>
+<rect width="640" height="640" filter="url(#nattentionerosioninvisibleassembly)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nattentionerosioninvisibleassembly)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

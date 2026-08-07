@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>advisor-inflation/agent-opacity</title>
+<defs>
+<linearGradient id="fadvisorinflationagentopacity" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gadvisorinflationagentopacity" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="badvisorinflationagentopacity" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sadvisorinflationagentopacity" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vadvisorinflationagentopacity" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nadvisorinflationagentopacity" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fadvisorinflationagentopacity)"/>
+<rect width="640" height="640" fill="url(#gadvisorinflationagentopacity)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#badvisorinflationagentopacity)" filter="url(#sadvisorinflationagentopacity)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="144.7" cy="337.4" r="59.3"/><path d="M 0.2 680 L 0.2 417.5 C 58 374.9 97.3 359.6 144.7 359.6 C 192.2 359.6 231.4 374.9 289.3 417.5 L 289.3 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="390.6" cy="442.8" r="86.5"/><path d="M 179.9 680 L 179.9 559.6 C 264.2 497.4 321.4 475.3 390.6 475.3 C 459.8 475.3 517.1 497.4 601.4 559.6 L 601.4 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vadvisorinflationagentopacity)"/>
+<rect width="640" height="640" filter="url(#nadvisorinflationagentopacity)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nadvisorinflationagentopacity)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

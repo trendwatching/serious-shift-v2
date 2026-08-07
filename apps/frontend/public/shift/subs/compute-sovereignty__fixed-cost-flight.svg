@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>compute-sovereignty/fixed-cost-flight</title>
+<defs>
+<linearGradient id="fcomputesovereigntyfixedcostflight" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gcomputesovereigntyfixedcostflight" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bcomputesovereigntyfixedcostflight" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="scomputesovereigntyfixedcostflight" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vcomputesovereigntyfixedcostflight" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ncomputesovereigntyfixedcostflight" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fcomputesovereigntyfixedcostflight)"/>
+<rect width="640" height="640" fill="url(#gcomputesovereigntyfixedcostflight)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bcomputesovereigntyfixedcostflight)" filter="url(#scomputesovereigntyfixedcostflight)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><rect x="274.1" y="-32" width="30" height="30" transform="rotate(29.7 274.1 -32)"/><circle cx="393.5" cy="-20.8" r="14.8"/><rect x="595.7" y="-9.7" width="29.2" height="29.2" transform="rotate(32.1 595.7 -9.7)"/><rect x="118.8" y="1.5" width="28.9" height="28.9" transform="rotate(14.3 118.8 1.5)"/><rect x="348.7" y="12.7" width="28.5" height="28.5" transform="rotate(22.8 348.7 12.7)"/><rect x="295.1" y="23.9" width="28.1" height="28.1" transform="rotate(1.6 295.1 23.9)"/><rect x="343.3" y="35" width="27.7" height="27.7" transform="rotate(84.2 343.3 35)"/><circle cx="289.4" cy="46.2" r="13.7"/><rect x="543.9" y="57.4" width="27" height="27" transform="rotate(31.3 543.9 57.4)"/><rect x="113.2" y="68.6" width="26.6" height="26.6" transform="rotate(20.3 113.2 68.6)"/><circle cx="379.9" cy="79.7" r="13.1"/><rect x="423.8" y="90.9" width="25.8" height="25.8" transform="rotate(5.7 423.8 90.9)"/><circle cx="554.1" cy="102.1" r="12.7"/><circle cx="420.4" cy="113.3" r="12.5"/><rect x="418.8" y="124.4" width="24.7" height="24.7" transform="rotate(15.8 418.8 124.4)"/><rect x="92" y="135.6" width="24.3" height="24.3" transform="rotate(35.5 92 135.6)"/><circle cx="197.6" cy="146.8" r="12"/><circle cx="201.5" cy="158" r="11.8"/><rect x="429.4" y="169.1" width="23.1" height="23.1" transform="rotate(51.5 429.4 169.1)"/><rect x="290.7" y="180.3" width="22.8" height="22.8" transform="rotate(48.8 290.7 180.3)"/><circle cx="251.8" cy="191.5" r="11.2"/><rect x="71.2" y="202.7" width="22" height="22" transform="rotate(41.3 71.2 202.7)"/><rect x="115.5" y="213.8" width="21.6" height="21.6" transform="rotate(33.2 115.5 213.8)"/><rect x="411.8" y="225" width="21.2" height="21.2" transform="rotate(41.8 411.8 225)"/><circle cx="493.8" cy="236.2" r="10.4"/><rect x="342.4" y="247.4" width="20.5" height="20.5" transform="rotate(88.3 342.4 247.4)"/><rect x="155.9" y="258.5" width="20.1" height="20.1" transform="rotate(67.5 155.9 258.5)"/><rect x="326.5" y="269.7" width="19.7" height="19.7" transform="rotate(65.5 326.5 269.7)"/><rect x="337.4" y="280.9" width="19.3" height="19.3" transform="rotate(54.2 337.4 280.9)"/><circle cx="577.7" cy="292.1" r="9.5"/><circle cx="557.1" cy="303.2" r="9.3"/><rect x="261.8" y="314.4" width="18.2" height="18.2" transform="rotate(28.5 261.8 314.4)"/><circle cx="65.8" cy="325.6" r="8.9"/><rect x="100.7" y="336.8" width="17.4" height="17.4" transform="rotate(40.9 100.7 336.8)"/><rect x="409.2" y="347.9" width="17" height="17" transform="rotate(60.4 409.2 347.9)"/><circle cx="552.2" cy="359.1" r="8.3"/><rect x="163.2" y="370.3" width="16.3" height="16.3" transform="rotate(0.7 163.2 370.3)"/><rect x="549.5" y="381.5" width="15.9" height="15.9" transform="rotate(12.1 549.5 381.5)"/><rect x="469.2" y="392.6" width="15.5" height="15.5" transform="rotate(23.2 469.2 392.6)"/><circle cx="102.4" cy="403.8" r="7.6"/><circle cx="301.4" cy="415" r="7.4"/><rect x="482.2" y="426.2" width="14.4" height="14.4" transform="rotate(71 482.2 426.2)"/><rect x="267.8" y="437.3" width="14" height="14" transform="rotate(34.8 267.8 437.3)"/><rect x="222.6" y="448.5" width="13.6" height="13.6" transform="rotate(35.8 222.6 448.5)"/><rect x="517.7" y="459.7" width="13.2" height="13.2" transform="rotate(24.4 517.7 459.7)"/><rect x="155.1" y="470.9" width="12.9" height="12.9" transform="rotate(71.5 155.1 470.9)"/><rect x="319.5" y="482" width="12.5" height="12.5" transform="rotate(39.8 319.5 482)"/><rect x="226.2" y="493.2" width="12.1" height="12.1" transform="rotate(55.5 226.2 493.2)"/><rect x="216.9" y="504.4" width="11.7" height="11.7" transform="rotate(1.7 216.9 504.4)"/><rect x="104.4" y="515.6" width="11.3" height="11.3" transform="rotate(50.9 104.4 515.6)"/><rect x="401" y="526.7" width="11" height="11" transform="rotate(50.4 401 526.7)"/><rect x="493.9" y="537.9" width="10.6" height="10.6" transform="rotate(50.5 493.9 537.9)"/><rect x="186.4" y="549.1" width="10.2" height="10.2" transform="rotate(16.7 186.4 549.1)"/><circle cx="473.6" cy="560.3" r="4.9"/><rect x="317.2" y="571.4" width="9.4" height="9.4" transform="rotate(0.5 317.2 571.4)"/><rect x="419.7" y="582.6" width="9" height="9" transform="rotate(88.9 419.7 582.6)"/><circle cx="467.7" cy="593.8" r="4.3"/><circle cx="345.3" cy="605" r="4.1"/><circle cx="110.9" cy="616.1" r="4"/><circle cx="484.4" cy="627.3" r="3.8"/><rect x="59.6" y="638.5" width="7.1" height="7.1" transform="rotate(81.1 59.6 638.5)"/><rect x="445.2" y="649.7" width="6.8" height="6.8" transform="rotate(84.5 445.2 649.7)"/><rect x="56.9" y="660.8" width="6.4" height="6.4" transform="rotate(59.7 56.9 660.8)"/><circle cx="84.6" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vcomputesovereigntyfixedcostflight)"/>
+<rect width="640" height="640" filter="url(#ncomputesovereigntyfixedcostflight)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ncomputesovereigntyfixedcostflight)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

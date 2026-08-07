@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>benchmark-theater/capability-blur</title>
+<defs>
+<linearGradient id="fbenchmarktheatercapabilityblur" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gbenchmarktheatercapabilityblur" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bbenchmarktheatercapabilityblur" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sbenchmarktheatercapabilityblur" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vbenchmarktheatercapabilityblur" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nbenchmarktheatercapabilityblur" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fbenchmarktheatercapabilityblur)"/>
+<rect width="640" height="640" fill="url(#gbenchmarktheatercapabilityblur)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bbenchmarktheatercapabilityblur)" filter="url(#sbenchmarktheatercapabilityblur)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="144.5" rx="538.5" ry="193.9" fill="none" stroke-width="48"/><rect x="334.6" y="338.4" width="20" height="20" transform="rotate(62 334.6 338.4)"/><rect x="354.6" y="347.6" width="19.5" height="19.5" transform="rotate(67 354.6 347.6)"/><rect x="347.1" y="356.7" width="19.1" height="19.1" transform="rotate(39.3 347.1 356.7)"/><rect x="292.9" y="365.8" width="18.6" height="18.6" transform="rotate(30.2 292.9 365.8)"/><rect x="331.8" y="375" width="18.2" height="18.2" transform="rotate(62.3 331.8 375)"/><rect x="372.1" y="384.1" width="17.7" height="17.7" transform="rotate(61.2 372.1 384.1)"/><rect x="254.4" y="393.3" width="17.3" height="17.3" transform="rotate(71.8 254.4 393.3)"/><rect x="332.4" y="402.4" width="16.8" height="16.8" transform="rotate(30.8 332.4 402.4)"/><rect x="285.3" y="411.5" width="16.4" height="16.4" transform="rotate(21.5 285.3 411.5)"/><rect x="347.4" y="420.7" width="15.9" height="15.9" transform="rotate(64 347.4 420.7)"/><rect x="241.6" y="429.8" width="15.5" height="15.5" transform="rotate(89.5 241.6 429.8)"/><rect x="312.3" y="438.9" width="15" height="15" transform="rotate(38.2 312.3 438.9)"/><rect x="255.8" y="448.1" width="14.5" height="14.5" transform="rotate(80.6 255.8 448.1)"/><rect x="217.4" y="457.2" width="14.1" height="14.1" transform="rotate(65.7 217.4 457.2)"/><rect x="377" y="466.4" width="13.6" height="13.6" transform="rotate(51.8 377 466.4)"/><rect x="369.8" y="475.5" width="13.2" height="13.2" transform="rotate(6.7 369.8 475.5)"/><rect x="224.1" y="484.6" width="12.7" height="12.7" transform="rotate(37.9 224.1 484.6)"/><rect x="400.1" y="493.8" width="12.3" height="12.3" transform="rotate(25.2 400.1 493.8)"/><rect x="350.1" y="502.9" width="11.8" height="11.8" transform="rotate(80.5 350.1 502.9)"/><rect x="459.8" y="512.1" width="11.4" height="11.4" transform="rotate(56.2 459.8 512.1)"/><rect x="387.1" y="521.2" width="10.9" height="10.9" transform="rotate(59.6 387.1 521.2)"/><rect x="429.9" y="530.3" width="10.5" height="10.5" transform="rotate(87 429.9 530.3)"/><rect x="426.9" y="539.5" width="10" height="10" transform="rotate(2.3 426.9 539.5)"/><rect x="369.2" y="548.6" width="9.5" height="9.5" transform="rotate(6 369.2 548.6)"/><rect x="409.2" y="557.8" width="9.1" height="9.1" transform="rotate(55.1 409.2 557.8)"/><rect x="264.7" y="566.9" width="8.6" height="8.6" transform="rotate(58.4 264.7 566.9)"/><rect x="304.9" y="576" width="8.2" height="8.2" transform="rotate(24.6 304.9 576)"/><rect x="197.3" y="585.2" width="7.7" height="7.7" transform="rotate(88.4 197.3 585.2)"/><rect x="373.5" y="594.3" width="7.3" height="7.3" transform="rotate(74.7 373.5 594.3)"/><rect x="121.9" y="603.4" width="6.8" height="6.8" transform="rotate(46.2 121.9 603.4)"/><rect x="203.4" y="612.6" width="6.4" height="6.4" transform="rotate(7.8 203.4 612.6)"/><rect x="314.7" y="621.7" width="5.9" height="5.9" transform="rotate(12.9 314.7 621.7)"/><rect x="220.2" y="630.9" width="5.5" height="5.5" transform="rotate(79.1 220.2 630.9)"/><rect x="205.1" y="640" width="5" height="5" transform="rotate(1.9 205.1 640)"/></g>
+<rect width="640" height="640" fill="url(#vbenchmarktheatercapabilityblur)"/>
+<rect width="640" height="640" filter="url(#nbenchmarktheatercapabilityblur)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nbenchmarktheatercapabilityblur)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

@@ -1,5 +1,6 @@
 /** Route-scoped map data → the view-model consumed by the UI. */
 import HERO_GENERATED from './heroes.json'
+import SUB_GENERATED from './sub-art.json'
 import { useMemo } from 'react'
 import { useLocation } from './router'
 import { useData } from './useData'
@@ -64,18 +65,34 @@ const SUB_HERO_ART = {
   'capacity-collapse': '/shift/hero-capacity-collapse-graded.jpg',
 }
 
-function toSubShift(src, i) {
+/**
+ * Generated sub-shift tile art, keyed `<key shift>/<sub-shift>`.
+ *
+ * The composite key, not the sub's own slug: nothing guarantees a sub-shift slug
+ * is unique across all 58 key shifts, and two shifts quietly sharing one picture
+ * is a bug that only surfaces in a screenshot months later.
+ *
+ * Tile only. It is a close crop, sized to read in a 152px box, and the page it
+ * opens wants the opposite — both hand-made assets show a sub-shift under the
+ * same wide scene as its parent, differently graded. So a sub-shift page inherits
+ * the parent's poster and the tile carries the detail.
+ */
+const SUB_GEN = SUB_GENERATED
+
+function toSubShift(src, i, parentSlug) {
   const title = src.name || ''
   const routeSlug = typeof src.slug === 'string' ? src.slug.split('/').filter(Boolean).at(-1) : ''
+  const slug = first(routeSlug, slugify(title))
   return {
     id: first(src.id, `sub-${i}`),
     num: pad2(i + 1),
-    slug: first(routeSlug, slugify(title)),
+    slug,
     title,
     context: src.context,
     dek: src.description || src.subtitle || '',
     modules: nonEmpty(src.modules) || projectStModules(src),
-    heroImage: src.hero_image || SUB_HERO_ART[first(routeSlug, slugify(title))] || null,
+    heroImage: src.hero_image || SUB_HERO_ART[slug] || HERO_GEN[parentSlug] || null,
+    tileImage: SUB_GEN[`${parentSlug}/${slug}`] || null,
   }
 }
 
@@ -99,7 +116,7 @@ function toShift(src, i, domain) {
     // Absent is the normal case and the hero falls back to its gradient, which
     // is a finished design rather than a placeholder.
     heroImage: src.hero_image || HERO_ART[src.slug] || HERO_GEN[src.slug] || null,
-    subshifts: subs.map((s, k) => toSubShift(s, k)),
+    subshifts: subs.map((s, k) => toSubShift(s, k, first(src.slug, slugify(title)))),
   }
 }
 

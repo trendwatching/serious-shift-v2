@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>private-sovereignty/intelligence-commoditization</title>
+<defs>
+<linearGradient id="fprivatesovereigntyintelligencecommoditization" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gprivatesovereigntyintelligencecommoditization" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bprivatesovereigntyintelligencecommoditization" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sprivatesovereigntyintelligencecommoditization" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vprivatesovereigntyintelligencecommoditization" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nprivatesovereigntyintelligencecommoditization" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fprivatesovereigntyintelligencecommoditization)"/>
+<rect width="640" height="640" fill="url(#gprivatesovereigntyintelligencecommoditization)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bprivatesovereigntyintelligencecommoditization)" filter="url(#sprivatesovereigntyintelligencecommoditization)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="139.6" rx="467.3" ry="168.2" fill="none" stroke-width="48"/><rect x="348" y="307.8" width="20" height="20" transform="rotate(49.5 348 307.8)"/><rect x="286.6" y="317.9" width="19.5" height="19.5" transform="rotate(1.8 286.6 317.9)"/><rect x="353" y="328" width="19.1" height="19.1" transform="rotate(87.4 353 328)"/><rect x="284.6" y="338" width="18.6" height="18.6" transform="rotate(72 284.6 338)"/><rect x="282.7" y="348.1" width="18.2" height="18.2" transform="rotate(21.2 282.7 348.1)"/><rect x="298" y="358.1" width="17.7" height="17.7" transform="rotate(84.8 298 358.1)"/><rect x="283.2" y="368.2" width="17.3" height="17.3" transform="rotate(27.1 283.2 368.2)"/><rect x="392.9" y="378.3" width="16.8" height="16.8" transform="rotate(60.7 392.9 378.3)"/><rect x="368.3" y="388.3" width="16.4" height="16.4" transform="rotate(43.9 368.3 388.3)"/><rect x="282.3" y="398.4" width="15.9" height="15.9" transform="rotate(84.4 282.3 398.4)"/><rect x="330.5" y="408.5" width="15.5" height="15.5" transform="rotate(43.6 330.5 408.5)"/><rect x="349.2" y="418.5" width="15" height="15" transform="rotate(23.3 349.2 418.5)"/><rect x="357.3" y="428.6" width="14.5" height="14.5" transform="rotate(7.7 357.3 428.6)"/><rect x="355.5" y="438.7" width="14.1" height="14.1" transform="rotate(51.4 355.5 438.7)"/><rect x="356.6" y="448.7" width="13.6" height="13.6" transform="rotate(5 356.6 448.7)"/><rect x="386.9" y="458.8" width="13.2" height="13.2" transform="rotate(3.1 386.9 458.8)"/><rect x="443.6" y="468.9" width="12.7" height="12.7" transform="rotate(48.1 443.6 468.9)"/><rect x="312.8" y="478.9" width="12.3" height="12.3" transform="rotate(49.6 312.8 478.9)"/><rect x="229.7" y="489" width="11.8" height="11.8" transform="rotate(45.2 229.7 489)"/><rect x="187.2" y="499.1" width="11.4" height="11.4" transform="rotate(18.3 187.2 499.1)"/><rect x="368.3" y="509.1" width="10.9" height="10.9" transform="rotate(48.1 368.3 509.1)"/><rect x="164.6" y="519.2" width="10.5" height="10.5" transform="rotate(66.8 164.6 519.2)"/><rect x="349.1" y="529.3" width="10" height="10" transform="rotate(62.2 349.1 529.3)"/><rect x="323.3" y="539.3" width="9.5" height="9.5" transform="rotate(63.8 323.3 539.3)"/><rect x="492" y="549.4" width="9.1" height="9.1" transform="rotate(33.1 492 549.4)"/><rect x="499.6" y="559.5" width="8.6" height="8.6" transform="rotate(69.9 499.6 559.5)"/><rect x="404.8" y="569.5" width="8.2" height="8.2" transform="rotate(85.2 404.8 569.5)"/><rect x="264.4" y="579.6" width="7.7" height="7.7" transform="rotate(13.7 264.4 579.6)"/><rect x="412.4" y="589.7" width="7.3" height="7.3" transform="rotate(29.7 412.4 589.7)"/><rect x="332.2" y="599.7" width="6.8" height="6.8" transform="rotate(56.7 332.2 599.7)"/><rect x="295.6" y="609.8" width="6.4" height="6.4" transform="rotate(2.8 295.6 609.8)"/><rect x="244" y="619.9" width="5.9" height="5.9" transform="rotate(5.9 244 619.9)"/><rect x="435" y="629.9" width="5.5" height="5.5" transform="rotate(24.3 435 629.9)"/><rect x="159.7" y="640" width="5" height="5" transform="rotate(13.4 159.7 640)"/></g>
+<rect width="640" height="640" fill="url(#vprivatesovereigntyintelligencecommoditization)"/>
+<rect width="640" height="640" filter="url(#nprivatesovereigntyintelligencecommoditization)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nprivatesovereigntyintelligencecommoditization)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

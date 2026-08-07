@@ -16,9 +16,11 @@
  *
  *   node scripts/generate-heroes.mjs [--origin https://…]
  *
- * Writes public/shift/heroes/<slug>.svg and src/lib/heroes.json (the manifest
- * useDomains reads, so a shift with no art falls back to its gradient rather
- * than requesting a file that does not exist).
+ * Writes public/shift/heroes/<slug>.svg + src/lib/heroes.json for key shifts,
+ * and public/shift/subs/<key>__<sub>.svg + src/lib/sub-art.json for sub-shifts.
+ * Both are manifests rather than path templates, so a shift published since the
+ * last run falls back to its gradient rather than requesting a file that does
+ * not exist.
  * ════════════════════════════════════════════════════════════════════════ */
 
 import { mkdirSync, writeFileSync, readdirSync, rmSync, existsSync } from 'node:fs'
@@ -29,6 +31,8 @@ import { createHash } from 'node:crypto'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT_DIR = resolve(ROOT, 'public/shift/heroes')
 const MANIFEST = resolve(ROOT, 'src/lib/heroes.json')
+const SUB_DIR = resolve(ROOT, 'public/shift/subs')
+const SUB_MANIFEST = resolve(ROOT, 'src/lib/sub-art.json')
 
 const W = 800
 const H = 1000
@@ -434,6 +438,234 @@ ${people}
 `
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+ * Sub-shift art — the same world, seen close.
+ *
+ * A sub-shift tile shows its artwork in a 152×148 box, and the key-shift poster
+ * is unreadable at that size: a hoop, a skyline, a shaft and a crowd become
+ * mush. Shrinking it further would have been the wrong instinct anyway. The
+ * relationship between the two levels is already the answer — a key shift is
+ * the wide scene, so a sub-shift is a DETAIL cut out of it. One motif, drawn far
+ * too large for its frame and running off at least two edges, on the parent's
+ * sunset ramp.
+ *
+ * That reads at 152px, it is unmistakably the same world as the poster above it,
+ * and the crop is what says "you are one level in".
+ *
+ * The same square serves the sub-shift page's own hero, so the tile a reader
+ * taps and the page it opens carry the same image.
+ * ════════════════════════════════════════════════════════════════════════ */
+
+const F = 640
+
+/**
+ * Which fragments each sphere draws from, in the order it uses them.
+ *
+ * Five kinds, dealt round-robin down a key shift's sub-shifts rather than picked
+ * per slug. Picking independently is what the first pass did, and with a
+ * weighted list it put three near-identical colonnades in one five-card stack:
+ * every choice was defensible alone and the page was repetitive anyway. Five
+ * kinds covers the usual five sub-shifts with no repeat at all, and the sphere
+ * keeps its signature because the vocabulary itself differs — Society opens on
+ * the institution, Economy on the falling line.
+ */
+const FRAGMENTS = {
+  society:       ['cornice', 'rim', 'figures', 'fall', 'shaft'],
+  economy:       ['descent', 'shaft', 'fall', 'slabs', 'rim'],
+  organisations: ['slabs', 'shaft', 'rim', 'cornice', 'fall'],
+  consumers:     ['figures', 'fall', 'shaft', 'rim', 'descent'],
+}
+
+/** A cornice and two column shafts, cropped hard. Society, up close. */
+function fragCornice(r) {
+  const capY = F * between(r, 0.16, 0.24)
+  const capH = F * 0.13
+  let s = `<rect x="${n(-F * 0.1)}" y="${n(capY)}" width="${n(F * 1.2)}" height="${n(capH)}"/>`
+  s += `<rect x="${n(-F * 0.1)}" y="${n(capY + capH)}" width="${n(F * 1.2)}" height="${n(capH * 0.3)}"/>`
+  const cols = 3
+  const gap = F / cols
+  for (let i = 0; i < cols; i += 1) {
+    const w = gap * between(r, 0.4, 0.5)
+    s += `<rect x="${n(gap * i + (gap - w) / 2)}" y="${n(capY + capH * 1.3)}" width="${n(w)}" height="${n(F)}"/>`
+  }
+  return s
+}
+
+/** One arc of the hoop, big enough that only part of it fits. */
+function fragRim(r) {
+  const cy = F * between(r, 0.2, 0.3)
+  const rx = F * between(r, 0.7, 0.88)
+  const ry = rx * 0.36
+  const band = F * 0.075
+  let s = `<ellipse cx="${n(F / 2)}" cy="${n(cy)}" rx="${n(rx)}" ry="${n(ry)}" fill="none" stroke-width="${n(band)}"/>`
+  for (let i = 0; i < 34; i += 1) {
+    const t = i / 33
+    const y = cy + ry + t * (F - cy - ry)
+    const size = Math.max(4, 20 - t * 15)
+    const x = F / 2 + between(r, -1, 1) * (40 + t * 190)
+    s += `<rect x="${n(x)}" y="${n(y)}" width="${n(size)}" height="${n(size)}" transform="rotate(${n(between(r, 0, 90))} ${n(x)} ${n(y)})"/>`
+  }
+  return s
+}
+
+/** Two slab edges running off the top and bottom, with the gap between them. */
+function fragShaft(r) {
+  const leftW = F * between(r, 0.26, 0.36)
+  const rightX = F * between(r, 0.66, 0.76)
+  let s = `<rect x="${n(-F * 0.1)}" y="${n(-F * 0.1)}" width="${n(leftW + F * 0.1)}" height="${n(F * 1.2)}"/>`
+  s += `<rect x="${n(rightX)}" y="${n(F * between(r, -0.1, 0.12))}" width="${n(F * 1.2 - rightX)}" height="${n(F * 1.3)}"/>`
+  // A single setback on each side, so the two edges are not a mirror pair.
+  s += `<rect x="${n(leftW)}" y="${n(F * between(r, 0.3, 0.5))}" width="${n(F * 0.09)}" height="${n(F)}"/>`
+  return s
+}
+
+/** Overlapping slabs with a lit top edge each. Organisations, up close. */
+function fragSlabs(r) {
+  let s = ''
+  const count = 3
+  for (let i = 0; i < count; i += 1) {
+    const w = F * between(r, 0.34, 0.46)
+    const x = F * (0.02 + i * 0.3) + between(r, -18, 18)
+    const y = F * between(r, 0.18, 0.42)
+    s += `<rect x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(F)}"/>`
+    s += `<rect class="lit" x="${n(x)}" y="${n(y)}" width="${n(w)}" height="6"/>`
+  }
+  return s
+}
+
+/** A line that only goes one way, at the scale of the whole frame. */
+function fragDescent(r) {
+  const pts = []
+  const steps = 7
+  let v = between(r, 0.04, 0.3)
+  for (let i = 0; i <= steps; i += 1) {
+    v += between(r, -0.06, 0.2)
+    pts.push(`${n(F * 0.02 + (F * 0.96 * i) / steps)},${n(F * (0.08 + Math.min(0.76, v)) + between(r, -14, 14))}`)
+  }
+  let s = `<rect x="${n(-F * 0.1)}" y="${n(F * 0.86)}" width="${n(F * 1.2)}" height="${n(F * 0.3)}"/>`
+  s += `<polyline points="${pts.join(' ')}" fill="none" stroke-width="${n(F * 0.05)}" stroke-linejoin="round"/>`
+  for (let i = 1; i <= 4; i += 1) {
+    s += `<rect class="lit" x="0" y="${n((F * 0.86 * i) / 5)}" width="${F}" height="3"/>`
+  }
+  return s
+}
+
+/** Matter falling, close enough that the individual pieces have edges. */
+function fragFall(r) {
+  let s = ''
+  for (let i = 0; i < 64; i += 1) {
+    const t = i / 63
+    const y = -F * 0.05 + t * F * 1.1
+    const size = Math.max(5, 30 - t * 24)
+    const x = F * between(r, 0.05, 0.95) * (1 - t * 0.1) + t * 24
+    s += r() > 0.4
+      ? `<rect x="${n(x)}" y="${n(y)}" width="${n(size)}" height="${n(size)}" transform="rotate(${n(between(r, 0, 90))} ${n(x)} ${n(y)})"/>`
+      : `<circle cx="${n(x)}" cy="${n(y)}" r="${n(size / 2)}"/>`
+  }
+  return s
+}
+
+/** Two figures, cropped at the shoulder. The crowd from inside it. */
+function fragFigures(r) {
+  const one = (x, y, scale) => {
+    const hr = 78 * scale
+    const sw = 190 * scale
+    const sy = y
+    return (
+      `<circle cx="${n(x)}" cy="${n(sy - hr * 1.35)}" r="${n(hr)}"/>` +
+      `<path d="M ${n(x - sw)} ${F + 40} L ${n(x - sw)} ${n(sy)}` +
+      ` C ${n(x - sw * 0.6)} ${n(sy - 56 * scale)} ${n(x - hr * 0.8)} ${n(sy - 76 * scale)} ${n(x)} ${n(sy - 76 * scale)}` +
+      ` C ${n(x + hr * 0.8)} ${n(sy - 76 * scale)} ${n(x + sw * 0.6)} ${n(sy - 56 * scale)} ${n(x + sw)} ${n(sy)}` +
+      ` L ${n(x + sw)} ${F + 40} Z"/>`
+    )
+  }
+  return {
+    back: one(F * between(r, 0.16, 0.3), F * between(r, 0.62, 0.72), between(r, 0.62, 0.78)),
+    front: one(F * between(r, 0.6, 0.78), F * between(r, 0.78, 0.9), between(r, 1, 1.2)),
+  }
+}
+
+/** The blurred wedge of light. Every fragment gets one, as the posters do. */
+const beam = (id, xTop, wTop, yTop, wBot) =>
+  `<polygon points="${xTop - wTop},${yTop} ${xTop + wTop},${yTop} ${xTop + wBot},${F} ${xTop - wBot},${F}" fill="url(#b${id})" filter="url(#s${id})"/>`
+
+function fragment(key, sphere, index) {
+  const r = rng(key)
+  const p = PALETTE[sphere] ?? PALETTE.society
+  const kinds = FRAGMENTS[sphere] ?? FRAGMENTS.society
+  // Offset by the parent so two key shifts in a sphere do not open on the same
+  // picture; stepped by position so one stack never repeats itself.
+  const offset = parseInt(createHash('sha256').update(key.split('/')[0]).digest('hex').slice(0, 4), 16)
+  const kind = kinds[(index + offset) % kinds.length]
+  const id = key.replace(/[^a-z0-9]/g, '')
+  const draw = (body, fill, opacity = 1) =>
+    body ? `<g fill="${fill}" stroke="${fill}" fill-opacity="${opacity}" stroke-opacity="${opacity}">${body}</g>` : ''
+
+  let art = ''
+  let light = ''
+  if (kind === 'cornice') {
+    light = beam(id, F * 0.5, F * 0.2, F * 0.3, F * 0.34)
+    art = draw(fragCornice(r), p.dark, 0.97)
+  } else if (kind === 'rim') {
+    light = beam(id, F * 0.5, F * 0.22, F * 0.3, F * 0.42)
+    art = draw(fragRim(r), p.dark, 0.96)
+  } else if (kind === 'shaft') {
+    light = beam(id, F * 0.52, F * 0.16, 0, F * 0.24)
+    art = draw(fragShaft(r), p.dark, 0.97)
+  } else if (kind === 'slabs') {
+    light = beam(id, F * 0.5, F * 0.3, 0, F * 0.36)
+    art = draw(fragSlabs(r), p.dark, 0.96)
+  } else if (kind === 'descent') {
+    art = draw(fragDescent(r), p.dark, 0.97)
+  } else if (kind === 'fall') {
+    light = beam(id, F * 0.5, F * 0.26, 0, F * 0.44)
+    art = draw(fragFall(r), p.dark, 0.92)
+  } else {
+    light = beam(id, F * 0.44, F * 0.24, 0, F * 0.4)
+    const { back, front } = fragFigures(r)
+    art = draw(back, p.dark, 0.72) + draw(front, p.dark, 1)
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${F} ${F}" width="${F}" height="${F}" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>${key}</title>
+<defs>
+<linearGradient id="f${id}" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="${p.hot}"/><stop offset="0.42" stop-color="${p.mid}"/>
+<stop offset="0.8" stop-color="${p.warm}"/><stop offset="1" stop-color="${p.light}"/>
+</linearGradient>
+<radialGradient id="g${id}" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="${p.light}" stop-opacity="0.3"/>
+<stop offset="1" stop-color="${p.light}" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="b${id}" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="${p.light}" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="${p.light}" stop-opacity="0.15"/>
+<stop offset="1" stop-color="${p.light}" stop-opacity="0"/>
+</linearGradient>
+<filter id="s${id}" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="v${id}" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="${p.dark}" stop-opacity="0"/>
+<stop offset="1" stop-color="${p.dark}" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="n${id}" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:${p.light};stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="${F}" height="${F}" fill="url(#f${id})"/>
+<rect width="${F}" height="${F}" fill="url(#g${id})"/>
+${light}
+${art}
+<rect width="${F}" height="${F}" fill="url(#v${id})"/>
+<rect width="${F}" height="${F}" filter="url(#n${id})" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="${F}" height="${F}" filter="url(#n${id})" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>
+`
+}
+
 /* ── Drive ───────────────────────────────────────────────────────────── */
 
 const originArg = process.argv.indexOf('--origin')
@@ -443,16 +675,57 @@ const ORIGIN = originArg > -1
 
 const SPHERES = ['society', 'economy', 'organisations', 'consumers']
 
+const tail = (slug) => (typeof slug === 'string' ? slug.split('/').filter(Boolean).at(-1) : '')
+
+const sleep = (ms) => new Promise((done) => { setTimeout(done, ms) })
+
+/**
+ * One fetch, with the backoff the API's rate limiter asks for.
+ *
+ * Walking every key shift is 58 requests in a row, which trips staging's
+ * limiter partway through — and a half-generated run is worse than a failed one,
+ * because the directory has already been emptied by then.
+ */
+async function get(path, attempt = 0) {
+  const res = await fetch(`${ORIGIN}${path}`)
+  if (res.status === 429 && attempt < 6) {
+    const wait = Number(res.headers.get('retry-after')) * 1000 || 1000 * 2 ** attempt
+    await sleep(wait)
+    return get(path, attempt + 1)
+  }
+  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`)
+  return res.json()
+}
+
 async function shifts() {
   const out = []
   for (const sphere of SPHERES) {
-    const res = await fetch(`${ORIGIN}/api/v1/map/${sphere}`)
-    if (!res.ok) throw new Error(`${sphere}: HTTP ${res.status}`)
-    const body = await res.json()
+    const body = await get(`/api/v1/map/${sphere}`)
     const dom = body.domains?.[0] ?? body
     for (const k of dom.key_shifts ?? dom.key_trends ?? []) {
-      const slug = typeof k.slug === 'string' ? k.slug.split('/').filter(Boolean).at(-1) : ''
+      const slug = tail(k.slug)
       if (slug) out.push({ slug, sphere })
+    }
+  }
+  return out
+}
+
+/**
+ * Every sub-shift, keyed `<key shift>/<sub-shift>`.
+ *
+ * The composite key rather than the sub's own slug: nothing guarantees a
+ * sub-shift slug is unique across all 58 key shifts, and two shifts quietly
+ * sharing one image is the kind of bug that only shows up in a screenshot
+ * months later.
+ */
+async function subShifts(keyShifts) {
+  const out = []
+  for (const { slug, sphere } of keyShifts) {
+    const from = out.length
+    const body = await get(`/api/v1/map/${sphere}/${slug}`)
+    for (const s of body.sub_shifts ?? body.sub_trends ?? []) {
+      const sub = tail(s.slug)
+      if (sub) out.push({ key: `${slug}/${sub}`, file: `${slug}__${sub}`, sphere, index: out.length - from })
     }
   }
   return out
@@ -460,12 +733,15 @@ async function shifts() {
 
 const list = await shifts()
 if (!list.length) throw new Error('no key shifts published — refusing to wipe existing art')
+const subs = await subShifts(list)
 
-// Rewrite the directory wholesale. Art is derived, so a stale file for a shift
+// Rewrite the directories wholesale. Art is derived, so a stale file for a shift
 // that no longer exists is worse than no file: the manifest would not list it
 // but it would still be sitting in the deploy.
-if (existsSync(OUT_DIR)) for (const f of readdirSync(OUT_DIR)) rmSync(resolve(OUT_DIR, f))
-mkdirSync(OUT_DIR, { recursive: true })
+for (const dir of [OUT_DIR, SUB_DIR]) {
+  if (existsSync(dir)) for (const f of readdirSync(dir)) rmSync(resolve(dir, f))
+  mkdirSync(dir, { recursive: true })
+}
 
 const manifest = {}
 for (const { slug, sphere } of list) {
@@ -474,4 +750,11 @@ for (const { slug, sphere } of list) {
 }
 writeFileSync(MANIFEST, `${JSON.stringify(manifest, Object.keys(manifest).sort(), 2)}\n`)
 
-console.log(`${list.length} posters → public/shift/heroes, manifest → src/lib/heroes.json`)
+const subManifest = {}
+for (const { key, file, sphere, index } of subs) {
+  writeFileSync(resolve(SUB_DIR, `${file}.svg`), fragment(key, sphere, index))
+  subManifest[key] = `/shift/subs/${file}.svg`
+}
+writeFileSync(SUB_MANIFEST, `${JSON.stringify(subManifest, Object.keys(subManifest).sort(), 2)}\n`)
+
+console.log(`${list.length} posters → public/shift/heroes, ${subs.length} fragments → public/shift/subs`)

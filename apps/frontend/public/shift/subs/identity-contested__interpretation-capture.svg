@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>identity-contested/interpretation-capture</title>
+<defs>
+<linearGradient id="fidentitycontestedinterpretationcapture" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gidentitycontestedinterpretationcapture" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bidentitycontestedinterpretationcapture" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sidentitycontestedinterpretationcapture" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="videntitycontestedinterpretationcapture" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nidentitycontestedinterpretationcapture" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fidentitycontestedinterpretationcapture)"/>
+<rect width="640" height="640" fill="url(#gidentitycontestedinterpretationcapture)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bidentitycontestedinterpretationcapture)" filter="url(#sidentitycontestedinterpretationcapture)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="179.5" cy="382.9" r="49.3"/><path d="M 59.6 680 L 59.6 449.4 C 107.5 414 140.1 401.4 179.5 401.4 C 218.9 401.4 251.5 414 299.5 449.4 L 299.5 680 Z"/></g><g fill="#39001F" stroke="#39001F" fill-opacity="1" stroke-opacity="1"><circle cx="425.8" cy="384.3" r="91.7"/><path d="M 202.3 680 L 202.3 508.1 C 291.7 442.3 352.4 418.7 425.8 418.7 C 499.2 418.7 559.9 442.3 649.3 508.1 L 649.3 680 Z"/></g>
+<rect width="640" height="640" fill="url(#videntitycontestedinterpretationcapture)"/>
+<rect width="640" height="640" filter="url(#nidentitycontestedinterpretationcapture)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nidentitycontestedinterpretationcapture)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

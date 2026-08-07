@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>manipulation-blindspot/instinct-capture</title>
+<defs>
+<linearGradient id="fmanipulationblindspotinstinctcapture" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gmanipulationblindspotinstinctcapture" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bmanipulationblindspotinstinctcapture" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="smanipulationblindspotinstinctcapture" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vmanipulationblindspotinstinctcapture" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nmanipulationblindspotinstinctcapture" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fmanipulationblindspotinstinctcapture)"/>
+<rect width="640" height="640" fill="url(#gmanipulationblindspotinstinctcapture)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bmanipulationblindspotinstinctcapture)" filter="url(#smanipulationblindspotinstinctcapture)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="105.5" cy="351" r="59.4"/><path d="M -39.3 680 L -39.3 431.3 C 18.6 388.6 58 373.4 105.5 373.4 C 153.1 373.4 192.4 388.6 250.3 431.3 L 250.3 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="393.2" cy="392.7" r="86.3"/><path d="M 183.1 680 L 183.1 509.2 C 267.1 447.3 324.2 425.1 393.2 425.1 C 462.2 425.1 519.3 447.3 603.4 509.2 L 603.4 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vmanipulationblindspotinstinctcapture)"/>
+<rect width="640" height="640" filter="url(#nmanipulationblindspotinstinctcapture)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nmanipulationblindspotinstinctcapture)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

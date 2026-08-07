@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>fractured-authority/accountability-void</title>
+<defs>
+<linearGradient id="ffracturedauthorityaccountabilityvoid" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gfracturedauthorityaccountabilityvoid" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bfracturedauthorityaccountabilityvoid" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sfracturedauthorityaccountabilityvoid" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vfracturedauthorityaccountabilityvoid" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nfracturedauthorityaccountabilityvoid" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#ffracturedauthorityaccountabilityvoid)"/>
+<rect width="640" height="640" fill="url(#gfracturedauthorityaccountabilityvoid)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bfracturedauthorityaccountabilityvoid)" filter="url(#sfracturedauthorityaccountabilityvoid)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="130.6" rx="560.6" ry="201.8" fill="none" stroke-width="48"/><rect x="335.1" y="332.4" width="20" height="20" transform="rotate(67.3 335.1 332.4)"/><rect x="297.6" y="341.7" width="19.5" height="19.5" transform="rotate(43.7 297.6 341.7)"/><rect x="288.9" y="351" width="19.1" height="19.1" transform="rotate(54.9 288.9 351)"/><rect x="326.6" y="360.4" width="18.6" height="18.6" transform="rotate(39.5 326.6 360.4)"/><rect x="371.4" y="369.7" width="18.2" height="18.2" transform="rotate(24.2 371.4 369.7)"/><rect x="273.9" y="379" width="17.7" height="17.7" transform="rotate(61.6 273.9 379)"/><rect x="274.3" y="388.3" width="17.3" height="17.3" transform="rotate(49 274.3 388.3)"/><rect x="343.4" y="397.6" width="16.8" height="16.8" transform="rotate(4.9 343.4 397.6)"/><rect x="383.7" y="407" width="16.4" height="16.4" transform="rotate(33.5 383.7 407)"/><rect x="263.1" y="416.3" width="15.9" height="15.9" transform="rotate(41.1 263.1 416.3)"/><rect x="258" y="425.6" width="15.5" height="15.5" transform="rotate(82.4 258 425.6)"/><rect x="277.5" y="434.9" width="15" height="15" transform="rotate(80.4 277.5 434.9)"/><rect x="292" y="444.2" width="14.5" height="14.5" transform="rotate(37.1 292 444.2)"/><rect x="286.5" y="453.6" width="14.1" height="14.1" transform="rotate(63.2 286.5 453.6)"/><rect x="329.2" y="462.9" width="13.6" height="13.6" transform="rotate(38.8 329.2 462.9)"/><rect x="227.6" y="472.2" width="13.2" height="13.2" transform="rotate(66.5 227.6 472.2)"/><rect x="393.6" y="481.5" width="12.7" height="12.7" transform="rotate(8.6 393.6 481.5)"/><rect x="211.6" y="490.9" width="12.3" height="12.3" transform="rotate(31.1 211.6 490.9)"/><rect x="382.5" y="500.2" width="11.8" height="11.8" transform="rotate(85 382.5 500.2)"/><rect x="191.8" y="509.5" width="11.4" height="11.4" transform="rotate(20.3 191.8 509.5)"/><rect x="374.1" y="518.8" width="10.9" height="10.9" transform="rotate(88 374.1 518.8)"/><rect x="354.9" y="528.1" width="10.5" height="10.5" transform="rotate(47.2 354.9 528.1)"/><rect x="480.9" y="537.5" width="10" height="10" transform="rotate(22.6 480.9 537.5)"/><rect x="270.8" y="546.8" width="9.5" height="9.5" transform="rotate(46.9 270.8 546.8)"/><rect x="188.3" y="556.1" width="9.1" height="9.1" transform="rotate(84.3 188.3 556.1)"/><rect x="246.6" y="565.4" width="8.6" height="8.6" transform="rotate(33.9 246.6 565.4)"/><rect x="259.1" y="574.7" width="8.2" height="8.2" transform="rotate(62.5 259.1 574.7)"/><rect x="376.3" y="584.1" width="7.7" height="7.7" transform="rotate(37.3 376.3 584.1)"/><rect x="268.5" y="593.4" width="7.3" height="7.3" transform="rotate(77.3 268.5 593.4)"/><rect x="455.8" y="602.7" width="6.8" height="6.8" transform="rotate(6.4 455.8 602.7)"/><rect x="221.7" y="612" width="6.4" height="6.4" transform="rotate(41.3 221.7 612)"/><rect x="289.6" y="621.4" width="5.9" height="5.9" transform="rotate(25 289.6 621.4)"/><rect x="333.4" y="630.7" width="5.5" height="5.5" transform="rotate(5.6 333.4 630.7)"/><rect x="289.4" y="640" width="5" height="5" transform="rotate(46.6 289.4 640)"/></g>
+<rect width="640" height="640" fill="url(#vfracturedauthorityaccountabilityvoid)"/>
+<rect width="640" height="640" filter="url(#nfracturedauthorityaccountabilityvoid)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nfracturedauthorityaccountabilityvoid)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

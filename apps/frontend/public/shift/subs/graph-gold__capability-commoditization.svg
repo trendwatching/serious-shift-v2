@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>graph-gold/capability-commoditization</title>
+<defs>
+<linearGradient id="fgraphgoldcapabilitycommoditization" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#0FA6FF"/><stop offset="0.42" stop-color="#0A7FDA"/>
+<stop offset="0.8" stop-color="#23B9A6"/><stop offset="1" stop-color="#E6FF9C"/>
+</linearGradient>
+<radialGradient id="ggraphgoldcapabilitycommoditization" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bgraphgoldcapabilitycommoditization" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#E6FF9C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</linearGradient>
+<filter id="sgraphgoldcapabilitycommoditization" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vgraphgoldcapabilitycommoditization" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#022638" stop-opacity="0"/>
+<stop offset="1" stop-color="#022638" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ngraphgoldcapabilitycommoditization" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#E6FF9C;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fgraphgoldcapabilitycommoditization)"/>
+<rect width="640" height="640" fill="url(#ggraphgoldcapabilitycommoditization)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bgraphgoldcapabilitycommoditization)" filter="url(#sgraphgoldcapabilitycommoditization)"/>
+<g fill="#022638" stroke="#022638" fill-opacity="0.92" stroke-opacity="0.92"><rect x="506.6" y="-32" width="30" height="30" transform="rotate(62.8 506.6 -32)"/><rect x="118.7" y="-20.8" width="29.6" height="29.6" transform="rotate(85.6 118.7 -20.8)"/><rect x="72.5" y="-9.7" width="29.2" height="29.2" transform="rotate(23.1 72.5 -9.7)"/><circle cx="524.7" cy="1.5" r="14.4"/><rect x="341.1" y="12.7" width="28.5" height="28.5" transform="rotate(55.3 341.1 12.7)"/><circle cx="200.2" cy="23.9" r="14"/><circle cx="186.4" cy="35" r="13.9"/><rect x="553.3" y="46.2" width="27.3" height="27.3" transform="rotate(22.2 553.3 46.2)"/><rect x="246" y="57.4" width="27" height="27" transform="rotate(32.9 246 57.4)"/><rect x="104.7" y="68.6" width="26.6" height="26.6" transform="rotate(51.5 104.7 68.6)"/><circle cx="150" cy="79.7" r="13.1"/><rect x="353.9" y="90.9" width="25.8" height="25.8" transform="rotate(46.2 353.9 90.9)"/><circle cx="525.6" cy="102.1" r="12.7"/><rect x="147.5" y="113.3" width="25" height="25" transform="rotate(16.3 147.5 113.3)"/><rect x="283.9" y="124.4" width="24.7" height="24.7" transform="rotate(78.9 283.9 124.4)"/><rect x="498.1" y="135.6" width="24.3" height="24.3" transform="rotate(49.5 498.1 135.6)"/><rect x="244.4" y="146.8" width="23.9" height="23.9" transform="rotate(21.9 244.4 146.8)"/><rect x="452.9" y="158" width="23.5" height="23.5" transform="rotate(52.4 452.9 158)"/><circle cx="539.4" cy="169.1" r="11.6"/><rect x="210.9" y="180.3" width="22.8" height="22.8" transform="rotate(5 210.9 180.3)"/><rect x="154.1" y="191.5" width="22.4" height="22.4" transform="rotate(20.4 154.1 191.5)"/><rect x="78.4" y="202.7" width="22" height="22" transform="rotate(31.3 78.4 202.7)"/><rect x="68.7" y="213.8" width="21.6" height="21.6" transform="rotate(85.4 68.7 213.8)"/><circle cx="243.7" cy="225" r="10.6"/><rect x="305.1" y="236.2" width="20.9" height="20.9" transform="rotate(36.8 305.1 236.2)"/><circle cx="262.1" cy="247.4" r="10.2"/><rect x="337.7" y="258.5" width="20.1" height="20.1" transform="rotate(78.3 337.7 258.5)"/><rect x="356.7" y="269.7" width="19.7" height="19.7" transform="rotate(34.7 356.7 269.7)"/><circle cx="468.6" cy="280.9" r="9.7"/><rect x="153.9" y="292.1" width="19" height="19" transform="rotate(18 153.9 292.1)"/><rect x="572.6" y="303.2" width="18.6" height="18.6" transform="rotate(75.1 572.6 303.2)"/><rect x="320.6" y="314.4" width="18.2" height="18.2" transform="rotate(71.9 320.6 314.4)"/><rect x="382.4" y="325.6" width="17.8" height="17.8" transform="rotate(21.1 382.4 325.6)"/><circle cx="337" cy="336.8" r="8.7"/><rect x="569.8" y="347.9" width="17" height="17" transform="rotate(19.3 569.8 347.9)"/><rect x="400.6" y="359.1" width="16.7" height="16.7" transform="rotate(59.2 400.6 359.1)"/><rect x="215.8" y="370.3" width="16.3" height="16.3" transform="rotate(66.7 215.8 370.3)"/><circle cx="448.7" cy="381.5" r="8"/><circle cx="390.7" cy="392.6" r="7.8"/><circle cx="249.5" cy="403.8" r="7.6"/><rect x="388.6" y="415" width="14.8" height="14.8" transform="rotate(44.5 388.6 415)"/><circle cx="228.4" cy="426.2" r="7.2"/><rect x="151.8" y="437.3" width="14" height="14" transform="rotate(22.1 151.8 437.3)"/><circle cx="158.7" cy="448.5" r="6.8"/><rect x="326" y="459.7" width="13.2" height="13.2" transform="rotate(36.2 326 459.7)"/><rect x="270.3" y="470.9" width="12.9" height="12.9" transform="rotate(38.3 270.3 470.9)"/><rect x="178" y="482" width="12.5" height="12.5" transform="rotate(5.6 178 482)"/><circle cx="509.8" cy="493.2" r="6"/><circle cx="530.5" cy="504.4" r="5.9"/><rect x="100.3" y="515.6" width="11.3" height="11.3" transform="rotate(60.7 100.3 515.6)"/><rect x="243.2" y="526.7" width="11" height="11" transform="rotate(56.5 243.2 526.7)"/><rect x="566.9" y="537.9" width="10.6" height="10.6" transform="rotate(81.2 566.9 537.9)"/><circle cx="422.3" cy="549.1" r="5.1"/><rect x="240.6" y="560.3" width="9.8" height="9.8" transform="rotate(39.2 240.6 560.3)"/><circle cx="255.4" cy="571.4" r="4.7"/><rect x="61.6" y="582.6" width="9" height="9" transform="rotate(61.1 61.6 582.6)"/><rect x="523.3" y="593.8" width="8.7" height="8.7" transform="rotate(20.3 523.3 593.8)"/><circle cx="495" cy="605" r="4.1"/><rect x="290.1" y="616.1" width="7.9" height="7.9" transform="rotate(43.5 290.1 616.1)"/><rect x="318.6" y="627.3" width="7.5" height="7.5" transform="rotate(89.9 318.6 627.3)"/><circle cx="282.3" cy="638.5" r="3.6"/><rect x="516.3" y="649.7" width="6.8" height="6.8" transform="rotate(64.6 516.3 649.7)"/><circle cx="386.3" cy="660.8" r="3.2"/><circle cx="197.6" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vgraphgoldcapabilitycommoditization)"/>
+<rect width="640" height="640" filter="url(#ngraphgoldcapabilitycommoditization)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ngraphgoldcapabilitycommoditization)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

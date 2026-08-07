@@ -89,6 +89,20 @@
     display: none;
   }
 
+  /* ── Blocks the desktop layer reshapes ───────────────────────────────
+   * `.horizon` and `.sub-stack` declare their own `display` here rather than
+   * wearing Tailwind's `flex flex-col`, because desktop.css turns both into
+   * grids — and a utility always beats a component rule in v4's layer order,
+   * so those grid rules were being silently discarded and the widened layout
+   * never arrived. Declaring the base in the same layer as the override lets
+   * specificity decide, which is what was intended.
+   * ------------------------------------------------------------------- */
+  .horizon,
+  .sub-stack {
+    display: flex;
+    flex-direction: column;
+  }
+
   /* ── Card ────────────────────────────────────────────────────────────
    * radius 18 / hairline / the build's exact resting shadow.
    * ------------------------------------------------------------------- */

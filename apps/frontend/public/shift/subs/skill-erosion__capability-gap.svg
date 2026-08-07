@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>skill-erosion/capability-gap</title>
+<defs>
+<linearGradient id="fskillerosioncapabilitygap" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#0FA6FF"/><stop offset="0.42" stop-color="#0A7FDA"/>
+<stop offset="0.8" stop-color="#23B9A6"/><stop offset="1" stop-color="#E6FF9C"/>
+</linearGradient>
+<radialGradient id="gskillerosioncapabilitygap" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bskillerosioncapabilitygap" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#E6FF9C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</linearGradient>
+<filter id="sskillerosioncapabilitygap" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vskillerosioncapabilitygap" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#022638" stop-opacity="0"/>
+<stop offset="1" stop-color="#022638" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nskillerosioncapabilitygap" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#E6FF9C;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fskillerosioncapabilitygap)"/>
+<rect width="640" height="640" fill="url(#gskillerosioncapabilitygap)"/>
+<polygon points="230.4,0 435.20000000000005,0 486.4,640 179.20000000000002,640" fill="url(#bskillerosioncapabilitygap)" filter="url(#sskillerosioncapabilitygap)"/>
+<g fill="#022638" stroke="#022638" fill-opacity="0.97" stroke-opacity="0.97"><rect x="-64" y="-64" width="290.4" height="768"/><rect x="469.4" y="30.5" width="298.6" height="832"/><rect x="226.4" y="297.6" width="57.6" height="640"/></g>
+<rect width="640" height="640" fill="url(#vskillerosioncapabilitygap)"/>
+<rect width="640" height="640" filter="url(#nskillerosioncapabilitygap)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nskillerosioncapabilitygap)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

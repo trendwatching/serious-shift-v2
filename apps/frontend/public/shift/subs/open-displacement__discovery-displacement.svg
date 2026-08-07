@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>open-displacement/discovery-displacement</title>
+<defs>
+<linearGradient id="fopendisplacementdiscoverydisplacement" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gopendisplacementdiscoverydisplacement" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bopendisplacementdiscoverydisplacement" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sopendisplacementdiscoverydisplacement" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vopendisplacementdiscoverydisplacement" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nopendisplacementdiscoverydisplacement" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fopendisplacementdiscoverydisplacement)"/>
+<rect width="640" height="640" fill="url(#gopendisplacementdiscoverydisplacement)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bopendisplacementdiscoverydisplacement)" filter="url(#sopendisplacementdiscoverydisplacement)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="167" rx="460.3" ry="165.7" fill="none" stroke-width="48"/><rect x="359.3" y="332.7" width="20" height="20" transform="rotate(5.5 359.3 332.7)"/><rect x="348.3" y="342" width="19.5" height="19.5" transform="rotate(41.7 348.3 342)"/><rect x="320.6" y="351.4" width="19.1" height="19.1" transform="rotate(56.6 320.6 351.4)"/><rect x="264.4" y="360.7" width="18.6" height="18.6" transform="rotate(63.9 264.4 360.7)"/><rect x="348.4" y="370" width="18.2" height="18.2" transform="rotate(67.9 348.4 370)"/><rect x="373" y="379.3" width="17.7" height="17.7" transform="rotate(46.9 373 379.3)"/><rect x="353.7" y="388.6" width="17.3" height="17.3" transform="rotate(38.9 353.7 388.6)"/><rect x="322.2" y="397.9" width="16.8" height="16.8" transform="rotate(1 322.2 397.9)"/><rect x="334.1" y="407.2" width="16.4" height="16.4" transform="rotate(33 334.1 407.2)"/><rect x="342" y="416.5" width="15.9" height="15.9" transform="rotate(86.6 342 416.5)"/><rect x="357.5" y="425.8" width="15.5" height="15.5" transform="rotate(53.1 357.5 425.8)"/><rect x="350.7" y="435.2" width="15" height="15" transform="rotate(77.9 350.7 435.2)"/><rect x="333" y="444.5" width="14.5" height="14.5" transform="rotate(15.1 333 444.5)"/><rect x="404.6" y="453.8" width="14.1" height="14.1" transform="rotate(89.8 404.6 453.8)"/><rect x="339.3" y="463.1" width="13.6" height="13.6" transform="rotate(71 339.3 463.1)"/><rect x="328" y="472.4" width="13.2" height="13.2" transform="rotate(47.9 328 472.4)"/><rect x="296.9" y="481.7" width="12.7" height="12.7" transform="rotate(2.9 296.9 481.7)"/><rect x="370.6" y="491" width="12.3" height="12.3" transform="rotate(53.6 370.6 491)"/><rect x="251.8" y="500.3" width="11.8" height="11.8" transform="rotate(10.4 251.8 500.3)"/><rect x="381.6" y="509.6" width="11.4" height="11.4" transform="rotate(68.8 381.6 509.6)"/><rect x="189.4" y="519" width="10.9" height="10.9" transform="rotate(88 189.4 519)"/><rect x="330.6" y="528.3" width="10.5" height="10.5" transform="rotate(65.3 330.6 528.3)"/><rect x="244.2" y="537.6" width="10" height="10" transform="rotate(72.7 244.2 537.6)"/><rect x="342" y="546.9" width="9.5" height="9.5" transform="rotate(67 342 546.9)"/><rect x="455.4" y="556.2" width="9.1" height="9.1" transform="rotate(0.7 455.4 556.2)"/><rect x="320.3" y="565.5" width="8.6" height="8.6" transform="rotate(35.8 320.3 565.5)"/><rect x="202.8" y="574.8" width="8.2" height="8.2" transform="rotate(64.5 202.8 574.8)"/><rect x="306.9" y="584.1" width="7.7" height="7.7" transform="rotate(10.7 306.9 584.1)"/><rect x="288.1" y="593.4" width="7.3" height="7.3" transform="rotate(73.1 288.1 593.4)"/><rect x="127.9" y="602.8" width="6.8" height="6.8" transform="rotate(20.7 127.9 602.8)"/><rect x="441.9" y="612.1" width="6.4" height="6.4" transform="rotate(24.8 441.9 612.1)"/><rect x="280.8" y="621.4" width="5.9" height="5.9" transform="rotate(8 280.8 621.4)"/><rect x="182.7" y="630.7" width="5.5" height="5.5" transform="rotate(57.8 182.7 630.7)"/><rect x="262.7" y="640" width="5" height="5" transform="rotate(41.4 262.7 640)"/></g>
+<rect width="640" height="640" fill="url(#vopendisplacementdiscoverydisplacement)"/>
+<rect width="640" height="640" filter="url(#nopendisplacementdiscoverydisplacement)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nopendisplacementdiscoverydisplacement)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

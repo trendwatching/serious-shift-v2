@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>deferred-credit/sentiment-collapse</title>
+<defs>
+<linearGradient id="fdeferredcreditsentimentcollapse" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gdeferredcreditsentimentcollapse" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bdeferredcreditsentimentcollapse" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sdeferredcreditsentimentcollapse" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vdeferredcreditsentimentcollapse" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ndeferredcreditsentimentcollapse" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fdeferredcreditsentimentcollapse)"/>
+<rect width="640" height="640" fill="url(#gdeferredcreditsentimentcollapse)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bdeferredcreditsentimentcollapse)" filter="url(#sdeferredcreditsentimentcollapse)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="117.8" cy="362.2" r="49.4"/><path d="M -2.5 680 L -2.5 428.8 C 45.6 393.4 78.3 380.7 117.8 380.7 C 157.3 380.7 189.9 393.4 238 428.8 L 238 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="487.8" cy="392.7" r="92.3"/><path d="M 263 680 L 263 517.3 C 352.9 451.1 414 427.4 487.8 427.4 C 561.6 427.4 622.7 451.1 712.6 517.3 L 712.6 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vdeferredcreditsentimentcollapse)"/>
+<rect width="640" height="640" filter="url(#ndeferredcreditsentimentcollapse)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ndeferredcreditsentimentcollapse)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

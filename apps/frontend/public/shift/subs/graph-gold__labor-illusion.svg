@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>graph-gold/labor-illusion</title>
+<defs>
+<linearGradient id="fgraphgoldlaborillusion" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#0FA6FF"/><stop offset="0.42" stop-color="#0A7FDA"/>
+<stop offset="0.8" stop-color="#23B9A6"/><stop offset="1" stop-color="#E6FF9C"/>
+</linearGradient>
+<radialGradient id="ggraphgoldlaborillusion" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bgraphgoldlaborillusion" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#E6FF9C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</linearGradient>
+<filter id="sgraphgoldlaborillusion" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vgraphgoldlaborillusion" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#022638" stop-opacity="0"/>
+<stop offset="1" stop-color="#022638" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ngraphgoldlaborillusion" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#E6FF9C;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fgraphgoldlaborillusion)"/>
+<rect width="640" height="640" fill="url(#ggraphgoldlaborillusion)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bgraphgoldlaborillusion)" filter="url(#sgraphgoldlaborillusion)"/>
+<g fill="#022638" stroke="#022638" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="176.2" rx="546.9" ry="196.9" fill="none" stroke-width="48"/><rect x="334.6" y="373.1" width="20" height="20" transform="rotate(28.9 334.6 373.1)"/><rect x="350.2" y="381.2" width="19.5" height="19.5" transform="rotate(3.4 350.2 381.2)"/><rect x="323" y="389.3" width="19.1" height="19.1" transform="rotate(46 323 389.3)"/><rect x="269.1" y="397.3" width="18.6" height="18.6" transform="rotate(65.3 269.1 397.3)"/><rect x="358.1" y="405.4" width="18.2" height="18.2" transform="rotate(53.7 358.1 405.4)"/><rect x="294.1" y="413.5" width="17.7" height="17.7" transform="rotate(33.7 294.1 413.5)"/><rect x="334.5" y="421.6" width="17.3" height="17.3" transform="rotate(22.1 334.5 421.6)"/><rect x="356.3" y="429.7" width="16.8" height="16.8" transform="rotate(42.1 356.3 429.7)"/><rect x="308.8" y="437.8" width="16.4" height="16.4" transform="rotate(53.3 308.8 437.8)"/><rect x="320.3" y="445.9" width="15.9" height="15.9" transform="rotate(12.1 320.3 445.9)"/><rect x="398.1" y="454" width="15.5" height="15.5" transform="rotate(78.6 398.1 454)"/><rect x="367.5" y="462.1" width="15" height="15" transform="rotate(47.9 367.5 462.1)"/><rect x="330.6" y="470.1" width="14.5" height="14.5" transform="rotate(25.9 330.6 470.1)"/><rect x="236.6" y="478.2" width="14.1" height="14.1" transform="rotate(17.2 236.6 478.2)"/><rect x="220.9" y="486.3" width="13.6" height="13.6" transform="rotate(54 220.9 486.3)"/><rect x="304.2" y="494.4" width="13.2" height="13.2" transform="rotate(33.1 304.2 494.4)"/><rect x="333.2" y="502.5" width="12.7" height="12.7" transform="rotate(58.4 333.2 502.5)"/><rect x="411" y="510.6" width="12.3" height="12.3" transform="rotate(62.8 411 510.6)"/><rect x="290.7" y="518.7" width="11.8" height="11.8" transform="rotate(61.1 290.7 518.7)"/><rect x="306.2" y="526.8" width="11.4" height="11.4" transform="rotate(36 306.2 526.8)"/><rect x="350" y="534.8" width="10.9" height="10.9" transform="rotate(81.9 350 534.8)"/><rect x="467.1" y="542.9" width="10.5" height="10.5" transform="rotate(35 467.1 542.9)"/><rect x="157.6" y="551" width="10" height="10" transform="rotate(81.8 157.6 551)"/><rect x="396.9" y="559.1" width="9.5" height="9.5" transform="rotate(58.6 396.9 559.1)"/><rect x="223.9" y="567.2" width="9.1" height="9.1" transform="rotate(63.3 223.9 567.2)"/><rect x="142.2" y="575.3" width="8.6" height="8.6" transform="rotate(40.5 142.2 575.3)"/><rect x="162.5" y="583.4" width="8.2" height="8.2" transform="rotate(47.4 162.5 583.4)"/><rect x="175.3" y="591.5" width="7.7" height="7.7" transform="rotate(48.5 175.3 591.5)"/><rect x="382.8" y="599.6" width="7.3" height="7.3" transform="rotate(76.9 382.8 599.6)"/><rect x="460.5" y="607.6" width="6.8" height="6.8" transform="rotate(20.7 460.5 607.6)"/><rect x="467.3" y="615.7" width="6.4" height="6.4" transform="rotate(90 467.3 615.7)"/><rect x="453.5" y="623.8" width="5.9" height="5.9" transform="rotate(18.9 453.5 623.8)"/><rect x="327.2" y="631.9" width="5.5" height="5.5" transform="rotate(90 327.2 631.9)"/><rect x="106.6" y="640" width="5" height="5" transform="rotate(0.3 106.6 640)"/></g>
+<rect width="640" height="640" fill="url(#vgraphgoldlaborillusion)"/>
+<rect width="640" height="640" filter="url(#ngraphgoldlaborillusion)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ngraphgoldlaborillusion)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

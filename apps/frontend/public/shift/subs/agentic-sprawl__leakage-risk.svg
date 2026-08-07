@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>agentic-sprawl/leakage-risk</title>
+<defs>
+<linearGradient id="fagenticsprawlleakagerisk" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gagenticsprawlleakagerisk" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bagenticsprawlleakagerisk" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sagenticsprawlleakagerisk" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vagenticsprawlleakagerisk" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nagenticsprawlleakagerisk" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fagenticsprawlleakagerisk)"/>
+<rect width="640" height="640" fill="url(#gagenticsprawlleakagerisk)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bagenticsprawlleakagerisk)" filter="url(#sagenticsprawlleakagerisk)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="191" rx="473.2" ry="170.3" fill="none" stroke-width="48"/><rect x="293.6" y="361.3" width="20" height="20" transform="rotate(4 293.6 361.3)"/><rect x="352.6" y="369.7" width="19.5" height="19.5" transform="rotate(15.7 352.6 369.7)"/><rect x="298" y="378.2" width="19.1" height="19.1" transform="rotate(35.5 298 378.2)"/><rect x="375.1" y="386.6" width="18.6" height="18.6" transform="rotate(58.6 375.1 386.6)"/><rect x="277.1" y="395.1" width="18.2" height="18.2" transform="rotate(48.2 277.1 395.1)"/><rect x="346.6" y="403.5" width="17.7" height="17.7" transform="rotate(56.9 346.6 403.5)"/><rect x="262.9" y="412" width="17.3" height="17.3" transform="rotate(86.2 262.9 412)"/><rect x="363.9" y="420.4" width="16.8" height="16.8" transform="rotate(0.5 363.9 420.4)"/><rect x="309.2" y="428.9" width="16.4" height="16.4" transform="rotate(43.5 309.2 428.9)"/><rect x="311.9" y="437.3" width="15.9" height="15.9" transform="rotate(19.9 311.9 437.3)"/><rect x="395.5" y="445.8" width="15.5" height="15.5" transform="rotate(89.8 395.5 445.8)"/><rect x="344.2" y="454.2" width="15" height="15" transform="rotate(31.8 344.2 454.2)"/><rect x="325.4" y="462.6" width="14.5" height="14.5" transform="rotate(61.9 325.4 462.6)"/><rect x="385.9" y="471.1" width="14.1" height="14.1" transform="rotate(24 385.9 471.1)"/><rect x="343.8" y="479.5" width="13.6" height="13.6" transform="rotate(24.5 343.8 479.5)"/><rect x="330.2" y="488" width="13.2" height="13.2" transform="rotate(49.8 330.2 488)"/><rect x="279.6" y="496.4" width="12.7" height="12.7" transform="rotate(82.6 279.6 496.4)"/><rect x="300" y="504.9" width="12.3" height="12.3" transform="rotate(53 300 504.9)"/><rect x="213.8" y="513.3" width="11.8" height="11.8" transform="rotate(45.9 213.8 513.3)"/><rect x="326.1" y="521.8" width="11.4" height="11.4" transform="rotate(62.8 326.1 521.8)"/><rect x="398.7" y="530.2" width="10.9" height="10.9" transform="rotate(11 398.7 530.2)"/><rect x="299.8" y="538.7" width="10.5" height="10.5" transform="rotate(24.3 299.8 538.7)"/><rect x="230.1" y="547.1" width="10" height="10" transform="rotate(55.1 230.1 547.1)"/><rect x="475.5" y="555.5" width="9.5" height="9.5" transform="rotate(48.3 475.5 555.5)"/><rect x="329.4" y="564" width="9.1" height="9.1" transform="rotate(35.5 329.4 564)"/><rect x="496.3" y="572.4" width="8.6" height="8.6" transform="rotate(89.8 496.3 572.4)"/><rect x="443.7" y="580.9" width="8.2" height="8.2" transform="rotate(19.1 443.7 580.9)"/><rect x="309.1" y="589.3" width="7.7" height="7.7" transform="rotate(7.4 309.1 589.3)"/><rect x="158.3" y="597.8" width="7.3" height="7.3" transform="rotate(49.6 158.3 597.8)"/><rect x="250.6" y="606.2" width="6.8" height="6.8" transform="rotate(5.7 250.6 606.2)"/><rect x="409.3" y="614.7" width="6.4" height="6.4" transform="rotate(57.5 409.3 614.7)"/><rect x="530.5" y="623.1" width="5.9" height="5.9" transform="rotate(11.6 530.5 623.1)"/><rect x="141" y="631.6" width="5.5" height="5.5" transform="rotate(13.6 141 631.6)"/><rect x="129.1" y="640" width="5" height="5" transform="rotate(50 129.1 640)"/></g>
+<rect width="640" height="640" fill="url(#vagenticsprawlleakagerisk)"/>
+<rect width="640" height="640" filter="url(#nagenticsprawlleakagerisk)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nagenticsprawlleakagerisk)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

@@ -15,6 +15,13 @@
  *    means that component no longer holds the design's value at any width.
  *    Desktop belongs in exactly one file so it cannot drift.
  *
+ * 3. A DISPLAY UTILITY ON AN ELEMENT THE DESKTOP LAYER RESHAPES.
+ *    The mirror image of (1). desktop.css turns `.horizon` and `.sub-stack`
+ *    into grids from @layer components, and a co-applied `flex` utility beats
+ *    it — so the rule parsed, matched, and was discarded, and the widened
+ *    layout never arrived at any width. Those elements declare their own
+ *    `display` in components.css; a utility beside them re-breaks it.
+ *
  * Keyframes, @media, @supports and element/attribute selectors are all fine
  * unlayered — only class rules can collide with a utility.
  */
@@ -72,6 +79,25 @@ for (const file of files.filter((f) => /\.(jsx?|css)$/.test(f))) {
         `${relative(SRC, file)}:${i + 1}  responsive variant outside styles/desktop.css\n` +
         `    ${line.trim().slice(0, 100)}\n` +
         '    The design is one fixed mobile canvas; desktop lives in desktop.css alone.'
+      )
+    }
+  })
+}
+
+// ── 3. display utilities on elements desktop.css reshapes ─────────────────
+const RESHAPED = ['horizon', 'sub-stack']
+const DISPLAY = /(?:^|\s)(?:flex|grid|block|inline-flex|inline-grid|contents)(?:$|\s)/
+for (const file of files.filter((f) => /\.jsx?$/.test(f))) {
+  readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+    for (const match of line.matchAll(/className="([^"]*)"/g)) {
+      const names = match[1]
+      if (!RESHAPED.some((c) => new RegExp(`(?:^|\\s)${c}(?:$|\\s)`).test(names))) continue
+      if (!DISPLAY.test(names)) continue
+      problems.push(
+        `${relative(SRC, file)}:${i + 1}  display utility on an element desktop.css re-lays-out\n` +
+        `    className="${names}"\n` +
+        '    The utility layer wins, so the .widen grid rule is silently discarded.\n' +
+        '    Drop the display utility; the base display is set in components.css.'
       )
     }
   })

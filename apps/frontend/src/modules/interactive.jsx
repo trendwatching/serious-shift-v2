@@ -288,7 +288,7 @@ export function SubShiftList({ ctx }) {
   return (
     <section className="widen flex flex-col" style={{ marginTop: 6, gap: 10 }}>
       <Eyebrow right="Tap to open">The {subs.length} sub-shifts</Eyebrow>
-      <div className="sub-stack flex flex-col" style={{ gap: 10 }}>
+      <div className="sub-stack" style={{ gap: 10 }}>
         {subs.map((s, i) => {
           const to = `${ctx.basePath}/${s.slug}`
           const delay = `${(0.05 + i * 0.06).toFixed(2)}s`
@@ -300,9 +300,16 @@ export function SubShiftList({ ctx }) {
                 className="ss-tile flex items-stretch overflow-hidden bg-white"
                 style={{ minHeight: 148, borderRadius: 20, boxShadow: '0 6px 18px rgba(27,22,32,0.13)', animation: `ssRise 0.6s var(--ease-out) ${delay}` }}
               >
+                {/* Each sub-shift's own art. The shipped jpg is the fallback,
+                    and it used to be the whole story: every tile on every page
+                    in every sphere carried the same Society-pink picture. */}
                 <span
                   className="block shrink-0 self-stretch"
-                  style={{ width: 152, backgroundImage: "url('/shift/sub-card-art.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}
+                  style={{
+                    width: 152,
+                    backgroundImage: `url('${s.tileImage || '/shift/sub-card-art.jpg'}')`,
+                    backgroundSize: 'cover', backgroundPosition: 'center',
+                  }}
                 />
                 <span className="box-border flex min-w-0 flex-1 flex-col justify-center" style={{ padding: '16px 16px 16px 15px', gap: 7 }}>
                   <span className="t-display uppercase" style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.18, letterSpacing: '-0.01em' }}>{s.title}</span>
@@ -431,7 +438,7 @@ export function Voices({ data }) {
   return (
     <section className="widen flex flex-col" style={{ gap: 10 }}>
       <Eyebrow right={`${total} voices`}>Who is saying this</Eyebrow>
-      <div className="sub-stack flex flex-col" style={{ gap: 10 }}>
+      <div className="sub-stack" style={{ gap: 10 }}>
         {groups.map((g) => (
           <div key={g.label} className="flex flex-col" style={{ borderRadius: 14, padding: 22, gap: 14, backgroundImage: g.grad }}>
             <span className="t-eyebrow text-white" style={{ letterSpacing: '0.14em' }}>{g.label}</span>
@@ -455,7 +462,7 @@ export function Evidence({ data }) {
   return (
     <section className="widen flex flex-col" style={{ gap: 10 }}>
       <Eyebrow right={`${items.length} sourced`}>The evidence</Eyebrow>
-      <div className="sub-stack flex flex-col" style={{ gap: 10 }}>
+      <div className="sub-stack" style={{ gap: 10 }}>
         {items.map((c, i) => (
           <div key={i} className="card flex flex-col" style={{ padding: 18, gap: 10 }}>
             <span className="flex flex-wrap items-center" style={{ gap: 8 }}>
