@@ -152,7 +152,12 @@ export function useDomains() {
         grad: theme.grad,
         dot: theme.dot,
         horizon: first(live?.horizon, deck.horizon) || '',
-        blurb: first(live?.short_description, deck.blurb) || '',
+        // Local-first, like `name`. Both are fixed information architecture
+        // authored in mapgen/config.py, not model output, so the published
+        // document is a mirror of this list rather than its source — and when
+        // the two disagree the published one is simply older. This is what puts
+        // the design's own line on the page today instead of next Monday.
+        blurb: first(deck.blurb, live?.short_description) || '',
         // The "what's shifting right now" paragraph. Served only on the
         // per-sphere fragment, so on the deck (which reads the index) this
         // falls back to the authored copy in site.js.
