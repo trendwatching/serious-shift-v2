@@ -27,6 +27,9 @@ function Marquee() {
           >
             <img
               src={src} alt="" loading="lazy" decoding="async"
+              // Every client logo is exported at 240×114. CSS still sizes it;
+              // the attributes only give the browser a ratio to hold.
+              width={240} height={114}
               className="block max-h-full max-w-full object-contain"
               style={{ mixBlendMode: 'multiply' }}
             />

@@ -35,12 +35,39 @@ const A = ({ href, children }) => (
  * sections it sat directly on the page root, which has no gutter, so the band
  * ran 22px past the right edge and gave /about a horizontal scrollbar.
  */
+/**
+ * Intrinsic pixel sizes, so the browser can reserve the space before the bytes
+ * arrive.
+ *
+ * Without them an `h-auto w-full` image is zero pixels tall until it loads and
+ * then pushes everything below it down. That is not only a layout shift: the
+ * router scrolls to a `#section` in a layout effect, before any image has
+ * loaded, so five of the six nav rows — all `/about#…` — landed 330–570px above
+ * their heading, by a distance that changed with the network. It passed locally
+ * on a fast machine and failed in CI, twice, at different offsets.
+ *
+ * Real width/height rather than one `aspect-ratio`, because these five differ:
+ * 1.40, 1.59, 1.55, 1.36, 1.46.
+ */
+const IMAGE_DIMS = {
+  '/shift/about-crowd.jpg': [1400, 999],
+  '/shift/about-thinkers.jpg': [1400, 957],
+  '/shift/about-team.jpg': [1400, 1026],
+  '/shift/about-reports.jpg': [1400, 903],
+  '/shift/about-playbook.jpg': [1400, 879],
+  '/shift/about-whatsapp.jpg': [1400, 903],
+}
+
 const Section = ({ id, image, alt, eyebrow, children, after }) => (
   <section id={id} className="canvas gutter scroll-mt-24" style={{ padding: '36px 22px 40px' }}>
     <div className="w-prose flex flex-col gap-[22px]">
       {image && (
         <div className="overflow-hidden rounded-[20px]">
-          <img src={image} alt={alt} loading="lazy" decoding="async" className="block h-auto w-full" />
+          <img
+            src={image} alt={alt} loading="lazy" decoding="async"
+            width={IMAGE_DIMS[image]?.[0]} height={IMAGE_DIMS[image]?.[1]}
+            className="block h-auto w-full"
+          />
         </div>
       )}
       <div className="flex flex-col gap-3.5">
@@ -149,7 +176,13 @@ export default function About() {
           <div className="w-prose flex flex-col gap-5">
             <h2 className="t-eyebrow">Subscribe / follow</h2>
             <div className="overflow-hidden rounded-[20px]">
-              <img src="/shift/about-whatsapp.jpg" alt="One shift each weekday, on WhatsApp" loading="lazy" decoding="async" className="block h-auto w-full" />
+              <img
+                src="/shift/about-whatsapp.jpg" alt="One shift each weekday, on WhatsApp"
+                loading="lazy" decoding="async"
+                width={IMAGE_DIMS['/shift/about-whatsapp.jpg'][0]}
+                height={IMAGE_DIMS['/shift/about-whatsapp.jpg'][1]}
+                className="block h-auto w-full"
+              />
             </div>
             <P>Want to embark with us on a journey? <A href={WHATSAPP_URL}>Join us on WhatsApp</A> today, and receive one shift each weekday.</P>
             <P>And yes, do <A href={SUBSCRIBE_URL}>sign up for TrendWatching’s free membership</A> if you haven’t yet, so we can keep you updated on major new Serious Shift and TrendWatching features.</P>

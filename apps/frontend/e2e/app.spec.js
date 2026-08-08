@@ -196,6 +196,18 @@ for (const [width, height] of [[390, 844], [393, 852], [768, 1024], [1440, 900]]
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1, name: /Everything that is about to change/i })).toBeVisible()
     await page.evaluate(() => document.fonts.ready)
+    // `animations: 'disabled'` is not enough on this page: the orbs run
+    // infinite keyframes, and Playwright cannot rewind those to a defined
+    // frame, so consecutive runs differ by a few hundred sub-pixel-blurred
+    // pixels — enough to fail intermittently at a threshold tight enough to
+    // catch a real layout regression. Pin every animation to time zero and the
+    // page becomes deterministic instead of merely tolerated.
+    await page.evaluate(() => {
+      for (const animation of document.getAnimations()) {
+        animation.pause()
+        animation.currentTime = 0
+      }
+    })
     await expect(page).toHaveScreenshot(`homepage-${width}x${height}.png`, { animations: 'disabled' })
   })
 }

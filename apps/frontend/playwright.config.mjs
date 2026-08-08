@@ -7,12 +7,20 @@ export default defineConfig({
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
-  snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',
+  // `{platform}` is in Playwright's default template for a reason, and
+  // dropping it is what made the visual tests unpassable: the approved
+  // images were reviewed on macOS and CI runs Ubuntu, whose Chromium
+  // rasterises text differently enough to blow any sane threshold. One
+  // baseline per platform, both committed, both reviewed.
+  snapshotPathTemplate: '{testDir}/__screenshots__/{platform}/{arg}{ext}',
   expect: {
-    // Chromium's font rasterisation differs slightly between macOS (where the
-    // approved reference images are reviewed) and Ubuntu (where CI runs).
-    // Keep this below the observed layout-regression scale while allowing the
-    // stable ~1% anti-aliasing delta across platforms.
+    // Two different things were being conflated here. The PLATFORM gap — macOS
+    // baselines against an Ubuntu runner — is 10–25% and no threshold can
+    // absorb it; that is fixed by the per-platform template above. What is left
+    // is same-renderer font-paint jitter of about 1%, which appears only in a
+    // full-suite run and not when the test is repeated alone. 1.5% covers that
+    // and still leaves an order of magnitude of headroom: the stale baselines
+    // this suite caught earlier differed by 10–25%.
     toHaveScreenshot: { maxDiffPixelRatio: 0.015 },
   },
   use: {

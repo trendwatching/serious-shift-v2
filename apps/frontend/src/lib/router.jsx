@@ -30,8 +30,48 @@ const hashOf = (path) => {
 function ScrollManager({ pathname, hash }) {
   useLayoutEffect(() => {
     const target = hash && document.getElementById(hash)
-    if (target) target.scrollIntoView({ block: 'start' })
-    else window.scrollTo(0, 0)
+    if (!target) {
+      window.scrollTo(0, 0)
+      return undefined
+    }
+
+    // Scroll now so the jump feels immediate, then correct once the page has
+    // stopped growing. A layout effect runs before a single image has decoded
+    // and before the webfonts swap, and anything above the target that changes
+    // height afterwards takes the target with it: this landed 330–570px above
+    // the heading, by a distance that varied with the network, until the
+    // images were given intrinsic sizes. Those fixed the images; the fonts
+    // still move it ~17px, and something else will move it again later.
+    //
+    // The correction is abandoned the moment the reader scrolls, because
+    // fighting someone for control of the viewport is worse than a small
+    // offset.
+    target.scrollIntoView({ block: 'start' })
+
+    let cancelled = false
+    const stop = () => { cancelled = true }
+    addEventListener('wheel', stop, { passive: true, once: true })
+    addEventListener('touchstart', stop, { passive: true, once: true })
+    addEventListener('keydown', stop, { once: true })
+
+    const settle = () => {
+      if (cancelled || !document.getElementById(hash)) return
+      requestAnimationFrame(() => {
+        if (!cancelled) target.scrollIntoView({ block: 'start' })
+      })
+    }
+    const fonts = document.fonts?.ready ?? Promise.resolve()
+    fonts.then(settle).catch(() => {})
+    // Belt and braces for anything that lands after the fonts do.
+    const timer = setTimeout(settle, 600)
+
+    return () => {
+      stop()
+      clearTimeout(timer)
+      removeEventListener('wheel', stop)
+      removeEventListener('touchstart', stop)
+      removeEventListener('keydown', stop)
+    }
   }, [pathname, hash])
   return null
 }
