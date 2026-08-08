@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>science-privatized/recursive-risk</title>
+<defs>
+<linearGradient id="fscienceprivatizedrecursiverisk" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gscienceprivatizedrecursiverisk" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bscienceprivatizedrecursiverisk" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sscienceprivatizedrecursiverisk" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vscienceprivatizedrecursiverisk" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nscienceprivatizedrecursiverisk" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fscienceprivatizedrecursiverisk)"/>
+<rect width="640" height="640" fill="url(#gscienceprivatizedrecursiverisk)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bscienceprivatizedrecursiverisk)" filter="url(#sscienceprivatizedrecursiverisk)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="65.5" cy="-32" r="15"/><rect x="337.5" y="-20.8" width="29.6" height="29.6" transform="rotate(63.9 337.5 -20.8)"/><rect x="74" y="-9.7" width="29.2" height="29.2" transform="rotate(76.8 74 -9.7)"/><rect x="177.2" y="1.5" width="28.9" height="28.9" transform="rotate(5.1 177.2 1.5)"/><circle cx="323.2" cy="12.7" r="14.2"/><circle cx="139.9" cy="23.9" r="14"/><rect x="157.1" y="35" width="27.7" height="27.7" transform="rotate(71.3 157.1 35)"/><circle cx="215.1" cy="46.2" r="13.7"/><circle cx="163.7" cy="57.4" r="13.5"/><circle cx="427.8" cy="68.6" r="13.3"/><rect x="309" y="79.7" width="26.2" height="26.2" transform="rotate(14.7 309 79.7)"/><circle cx="58.2" cy="90.9" r="12.9"/><rect x="596" y="102.1" width="25.4" height="25.4" transform="rotate(13.8 596 102.1)"/><circle cx="52.8" cy="113.3" r="12.5"/><rect x="535" y="124.4" width="24.7" height="24.7" transform="rotate(25.4 535 124.4)"/><rect x="523.5" y="135.6" width="24.3" height="24.3" transform="rotate(38.4 523.5 135.6)"/><circle cx="390.4" cy="146.8" r="12"/><rect x="113.1" y="158" width="23.5" height="23.5" transform="rotate(87.7 113.1 158)"/><rect x="570.3" y="169.1" width="23.1" height="23.1" transform="rotate(6.4 570.3 169.1)"/><rect x="426.7" y="180.3" width="22.8" height="22.8" transform="rotate(42.6 426.7 180.3)"/><rect x="419.2" y="191.5" width="22.4" height="22.4" transform="rotate(56.1 419.2 191.5)"/><circle cx="240.3" cy="202.7" r="11"/><circle cx="168.9" cy="213.8" r="10.8"/><rect x="200.8" y="225" width="21.2" height="21.2" transform="rotate(60.7 200.8 225)"/><circle cx="519.9" cy="236.2" r="10.4"/><rect x="578.6" y="247.4" width="20.5" height="20.5" transform="rotate(72.1 578.6 247.4)"/><circle cx="250.1" cy="258.5" r="10"/><rect x="392.8" y="269.7" width="19.7" height="19.7" transform="rotate(28.3 392.8 269.7)"/><rect x="168.9" y="280.9" width="19.3" height="19.3" transform="rotate(59.7 168.9 280.9)"/><circle cx="337.3" cy="292.1" r="9.5"/><circle cx="173.2" cy="303.2" r="9.3"/><rect x="88.8" y="314.4" width="18.2" height="18.2" transform="rotate(1.1 88.8 314.4)"/><circle cx="523.2" cy="325.6" r="8.9"/><rect x="186.9" y="336.8" width="17.4" height="17.4" transform="rotate(36 186.9 336.8)"/><circle cx="74.1" cy="347.9" r="8.5"/><rect x="185.3" y="359.1" width="16.7" height="16.7" transform="rotate(74.1 185.3 359.1)"/><circle cx="330.1" cy="370.3" r="8.1"/><circle cx="556" cy="381.5" r="8"/><rect x="104.5" y="392.6" width="15.5" height="15.5" transform="rotate(89.3 104.5 392.6)"/><rect x="164.2" y="403.8" width="15.1" height="15.1" transform="rotate(14.5 164.2 403.8)"/><rect x="119.9" y="415" width="14.8" height="14.8" transform="rotate(12.8 119.9 415)"/><rect x="472" y="426.2" width="14.4" height="14.4" transform="rotate(22.8 472 426.2)"/><rect x="194.5" y="437.3" width="14" height="14" transform="rotate(12.7 194.5 437.3)"/><rect x="95.7" y="448.5" width="13.6" height="13.6" transform="rotate(7.3 95.7 448.5)"/><circle cx="261.3" cy="459.7" r="6.6"/><rect x="141.5" y="470.9" width="12.9" height="12.9" transform="rotate(60.1 141.5 470.9)"/><circle cx="535.9" cy="482" r="6.2"/><rect x="148.1" y="493.2" width="12.1" height="12.1" transform="rotate(56.1 148.1 493.2)"/><circle cx="548.6" cy="504.4" r="5.9"/><rect x="321" y="515.6" width="11.3" height="11.3" transform="rotate(83.4 321 515.6)"/><rect x="358.7" y="526.7" width="11" height="11" transform="rotate(76.4 358.7 526.7)"/><rect x="308.2" y="537.9" width="10.6" height="10.6" transform="rotate(64.1 308.2 537.9)"/><rect x="213.3" y="549.1" width="10.2" height="10.2" transform="rotate(72.1 213.3 549.1)"/><rect x="434.1" y="560.3" width="9.8" height="9.8" transform="rotate(69.8 434.1 560.3)"/><rect x="283.7" y="571.4" width="9.4" height="9.4" transform="rotate(53.2 283.7 571.4)"/><circle cx="114.2" cy="582.6" r="4.5"/><rect x="513" y="593.8" width="8.7" height="8.7" transform="rotate(19 513 593.8)"/><rect x="288.7" y="605" width="8.3" height="8.3" transform="rotate(77.1 288.7 605)"/><rect x="367.5" y="616.1" width="7.9" height="7.9" transform="rotate(23 367.5 616.1)"/><circle cx="529.8" cy="627.3" r="3.8"/><circle cx="387.6" cy="638.5" r="3.6"/><rect x="483.6" y="649.7" width="6.8" height="6.8" transform="rotate(28 483.6 649.7)"/><rect x="152" y="660.8" width="6.4" height="6.4" transform="rotate(54.5 152 660.8)"/><circle cx="266.1" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vscienceprivatizedrecursiverisk)"/>
+<rect width="640" height="640" filter="url(#nscienceprivatizedrecursiverisk)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nscienceprivatizedrecursiverisk)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

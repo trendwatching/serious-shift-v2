@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>coordination-ceiling/ideation-gap</title>
+<defs>
+<linearGradient id="fcoordinationceilingideationgap" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gcoordinationceilingideationgap" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bcoordinationceilingideationgap" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="scoordinationceilingideationgap" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vcoordinationceilingideationgap" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ncoordinationceilingideationgap" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fcoordinationceilingideationgap)"/>
+<rect width="640" height="640" fill="url(#gcoordinationceilingideationgap)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bcoordinationceilingideationgap)" filter="url(#scoordinationceilingideationgap)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="161.2" rx="453.6" ry="163.3" fill="none" stroke-width="48"/><rect x="280.9" y="324.5" width="20" height="20" transform="rotate(24.2 280.9 324.5)"/><rect x="310.5" y="334" width="19.5" height="19.5" transform="rotate(22.9 310.5 334)"/><rect x="293.8" y="343.6" width="19.1" height="19.1" transform="rotate(20.4 293.8 343.6)"/><rect x="320.1" y="353.1" width="18.6" height="18.6" transform="rotate(2.5 320.1 353.1)"/><rect x="351.5" y="362.7" width="18.2" height="18.2" transform="rotate(7.8 351.5 362.7)"/><rect x="256.1" y="372.3" width="17.7" height="17.7" transform="rotate(1.5 256.1 372.3)"/><rect x="303.2" y="381.8" width="17.3" height="17.3" transform="rotate(6.6 303.2 381.8)"/><rect x="256.6" y="391.4" width="16.8" height="16.8" transform="rotate(67 256.6 391.4)"/><rect x="335.7" y="401" width="16.4" height="16.4" transform="rotate(87.9 335.7 401)"/><rect x="237.5" y="410.5" width="15.9" height="15.9" transform="rotate(41.6 237.5 410.5)"/><rect x="353.9" y="420.1" width="15.5" height="15.5" transform="rotate(21.2 353.9 420.1)"/><rect x="356.2" y="429.6" width="15" height="15" transform="rotate(30.7 356.2 429.6)"/><rect x="364" y="439.2" width="14.5" height="14.5" transform="rotate(75.7 364 439.2)"/><rect x="405.6" y="448.8" width="14.1" height="14.1" transform="rotate(34.8 405.6 448.8)"/><rect x="333.7" y="458.3" width="13.6" height="13.6" transform="rotate(82.9 333.7 458.3)"/><rect x="441.5" y="467.9" width="13.2" height="13.2" transform="rotate(26.9 441.5 467.9)"/><rect x="437.4" y="477.4" width="12.7" height="12.7" transform="rotate(81.1 437.4 477.4)"/><rect x="318" y="487" width="12.3" height="12.3" transform="rotate(8.1 318 487)"/><rect x="196.2" y="496.6" width="11.8" height="11.8" transform="rotate(49.7 196.2 496.6)"/><rect x="364.5" y="506.1" width="11.4" height="11.4" transform="rotate(7 364.5 506.1)"/><rect x="281.9" y="515.7" width="10.9" height="10.9" transform="rotate(64.7 281.9 515.7)"/><rect x="310.4" y="525.3" width="10.5" height="10.5" transform="rotate(43.7 310.4 525.3)"/><rect x="219.4" y="534.8" width="10" height="10" transform="rotate(58.9 219.4 534.8)"/><rect x="305.9" y="544.4" width="9.5" height="9.5" transform="rotate(73.4 305.9 544.4)"/><rect x="433.5" y="553.9" width="9.1" height="9.1" transform="rotate(14.2 433.5 553.9)"/><rect x="293.2" y="563.5" width="8.6" height="8.6" transform="rotate(15.8 293.2 563.5)"/><rect x="358.2" y="573.1" width="8.2" height="8.2" transform="rotate(75.1 358.2 573.1)"/><rect x="235.1" y="582.6" width="7.7" height="7.7" transform="rotate(25.5 235.1 582.6)"/><rect x="401.5" y="592.2" width="7.3" height="7.3" transform="rotate(12.6 401.5 592.2)"/><rect x="243.8" y="601.8" width="6.8" height="6.8" transform="rotate(77.5 243.8 601.8)"/><rect x="395.3" y="611.3" width="6.4" height="6.4" transform="rotate(81.3 395.3 611.3)"/><rect x="341" y="620.9" width="5.9" height="5.9" transform="rotate(67.7 341 620.9)"/><rect x="404.2" y="630.4" width="5.5" height="5.5" transform="rotate(57.3 404.2 630.4)"/><rect x="92.2" y="640" width="5" height="5" transform="rotate(50.3 92.2 640)"/></g>
+<rect width="640" height="640" fill="url(#vcoordinationceilingideationgap)"/>
+<rect width="640" height="640" filter="url(#ncoordinationceilingideationgap)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ncoordinationceilingideationgap)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

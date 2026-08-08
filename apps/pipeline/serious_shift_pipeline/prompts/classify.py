@@ -46,11 +46,17 @@ def classify_prompt(innovation: dict, shifts: list[dict]) -> str:
         for slug in slugs
     )
     summary = innovation.get('trendbite') or (innovation.get('body') or '')[:600]
-    return load_and_render('classify/innovation_shift.txt', {
-        'title': innovation.get('title', ''),
-        'brands': ', '.join(innovation.get('brands_list') or []) or '—',
-        'tags': tags or '—',
-        'summary': summary or '—',
-        'shift_count': str(len(shifts)),
-        'catalogue': fmt_shift_catalogue(shifts),
-    })
+    # Keyword arguments, not a dict: `load_and_render` takes the template name
+    # positionally and every token as a keyword. Passing a dict raised TypeError
+    # on the first escalation, which is only reached once the lexical scorer is
+    # undecided — so the step's happy path never touched it and the failure only
+    # showed on a real corpus.
+    return load_and_render(
+        'classify/innovation_shift.txt',
+        title=innovation.get('title', ''),
+        brands=', '.join(innovation.get('brands_list') or []) or '—',
+        tags=tags or '—',
+        summary=summary or '—',
+        shift_count=str(len(shifts)),
+        catalogue=fmt_shift_catalogue(shifts),
+    )

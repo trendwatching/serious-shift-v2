@@ -10,6 +10,7 @@ from serious_shift_pipeline.mapgen.export import _write_map_document
 from serious_shift_pipeline.mapgen import cli
 from serious_shift_pipeline.mapgen.validation import (
     PublicationValidationError,
+    _validate_modules,
     validate_map,
 )
 
@@ -275,3 +276,103 @@ def test_editorial_citations_must_belong_to_the_current_route():
     module = next(item for item in document['sub_trends'][0]['modules'] if item['type'] == 'peel_tabs')
     module['data']['evidence_ids'] = document['sub_trends'][1]['claim_ids']
     assert 'editorial_provenance' in codes(document)
+
+
+# ── The three ways generation and the gate disagreed ────────────────────────
+#
+# Every synthesize run between 2026-08-03 and 2026-08-08 failed publication, and
+# all 75 issues on the last one came from three places where the writing side and
+# the checking side applied different rules. Each test below fails if the two are
+# allowed to drift apart again.
+
+def test_the_gate_and_the_clamp_count_words_the_same_way():
+    """`str.split()` and the gate's regex disagree on "cost/benefit", "U.S." and
+    "2026—2028" — one word each by the first measure, two, three and two by the
+    second. Clamping by one and gating by the other trimmed 23 fields to the
+    limit and then rejected them for exceeding it."""
+    from serious_shift_pipeline.mapgen.modules import clamp_words, count_words
+    from serious_shift_pipeline.mapgen.validation import _words
+
+    assert _words is count_words
+    awkward = 'cost/benefit trade-offs across U.S. and non-U.S. markets in 2026—2028 and beyond'
+    for limit in (3, 5, 8, 12):
+        assert count_words(clamp_words(awkward, limit)) <= limit
+
+
+def test_a_shift_cannot_cite_more_evidence_than_the_gate_accepts():
+    """The gate takes 2–6 citations. Generation only ever checked "at least two,
+    all inside the routed pool", so the model — handed the union of five
+    sub-shifts' claims — cited seventeen to twenty-one and all 49 shifts failed."""
+    from serious_shift_pipeline.mapgen.modules import MAX_CITATIONS, conform_modules
+
+    conformed = conform_modules([
+        {'type': 'peel_tabs', 'data': {
+            'whats_changing': 'x', 'why_now': 'y',
+            'evidence_ids': [f'c_{n}' for n in range(1, 22)],
+        }},
+    ])
+    cited = conformed[0]['data']['evidence_ids']
+    assert len(cited) == MAX_CITATIONS
+    assert cited == [f'c_{n}' for n in range(1, MAX_CITATIONS + 1)], 'keeps the strongest support, in order'
+
+
+def test_industries_are_made_canonical_or_dropped():
+    """The gate wants all sixteen sectors, exactly once, in order. Nothing put
+    them in that order — `_as_pairs` passed through whatever came back."""
+    from serious_shift_pipeline.mapgen.modules import conform_modules
+
+    shuffled = [{'name': name, 'text': 'Impact'} for name in reversed(SECTORS)]
+    conformed = conform_modules([{'type': 'industries', 'data': {'items': shuffled}}])
+    assert [item['name'] for item in conformed[0]['data']['items']] == SECTORS
+
+    # A sector the model skipped is completed with an empty note, not dropped
+    # and not invented: `industries` is a required module on every key shift, so
+    # dropping it traded three publication failures for four.
+    partial = [{'name': name, 'text': 'Impact'} for name in SECTORS[:-2]]
+    completed = conform_modules([{'type': 'industries', 'data': {'items': partial}}])
+    assert [item['name'] for item in completed[0]['data']['items']] == SECTORS
+    assert [item['text'] for item in completed[0]['data']['items']][-2:] == ['', '']
+
+
+def test_export_conformance_fixes_a_document_without_regenerating_it():
+    """The whole point of conforming at export rather than only at generation:
+    copy already in the database, written under a cap that disagreed with the
+    gate, becomes publishable on an --export-only run."""
+    from serious_shift_pipeline.mapgen.modules import conform_modules
+
+    over_limit = [
+        {'type': 'dek', 'data': {'text': ' '.join(['word'] * 60)}},
+        {'type': 'human_needs', 'data': {'unlocked': ' '.join(['w'] * 50),
+                                         'threatened': ' '.join(['w'] * 50)}},
+        {'type': 'timeline', 'data': {'steps': [{'label': 'Today', 'text': ' '.join(['w'] * 60)}]}},
+        {'type': 'signals', 'data': {'items': [' '.join(['w'] * 40)]}},
+    ]
+    conformed = conform_modules(over_limit)
+    issues = _validate_modules(conformed, 'sub_trend', 'sub_trends[x]', CONTRACT)
+    assert [issue for issue in issues if issue.code == 'editorial_length'] == []
+
+
+def test_two_spheres_naming_a_shift_the_same_get_distinct_slugs():
+    """`shift_refs` and `shift_module_overrides` are keyed on (scope, slug) with
+    no domain, so a URL slug has to be unique across the whole map — not just
+    within its sphere. Economy and Organizations both produced a "Moat Migration"
+    on the 2026-08-08 run; both were slugged `moat-migration`, and publication
+    died on a unique-constraint violation after passing the entire editorial
+    gate. An override keyed that way would also have hit the wrong sphere."""
+    from serious_shift_pipeline.core.text import url_slug
+
+    rows = [
+        {'id': 19, 'domain_id': 'economy', 'name': 'Moat Migration'},
+        {'id': 48, 'domain_id': 'organisations', 'name': 'Moat Migration'},
+        {'id': 60, 'domain_id': 'society', 'name': 'Moat Migration'},
+    ]
+    seen: dict = {}
+    slugs = []
+    for row in rows:
+        base = url_slug(row['name'])
+        n = seen.get(base, 0) + 1
+        seen[base] = n
+        slugs.append(base if n == 1 else f'{base}-{n}')
+
+    assert slugs == ['moat-migration', 'moat-migration-2', 'moat-migration-3']
+    assert len(set(slugs)) == len(rows), 'a slug may not repeat across spheres'

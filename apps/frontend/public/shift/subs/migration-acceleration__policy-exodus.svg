@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>migration-acceleration/policy-exodus</title>
+<defs>
+<linearGradient id="fmigrationaccelerationpolicyexodus" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gmigrationaccelerationpolicyexodus" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bmigrationaccelerationpolicyexodus" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="smigrationaccelerationpolicyexodus" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vmigrationaccelerationpolicyexodus" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nmigrationaccelerationpolicyexodus" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fmigrationaccelerationpolicyexodus)"/>
+<rect width="640" height="640" fill="url(#gmigrationaccelerationpolicyexodus)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bmigrationaccelerationpolicyexodus)" filter="url(#smigrationaccelerationpolicyexodus)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="200" cy="-32" r="15"/><circle cx="109.3" cy="-20.8" r="14.8"/><rect x="383.1" y="-9.7" width="29.2" height="29.2" transform="rotate(0.4 383.1 -9.7)"/><circle cx="451.7" cy="1.5" r="14.4"/><rect x="275" y="12.7" width="28.5" height="28.5" transform="rotate(13.6 275 12.7)"/><rect x="204.1" y="23.9" width="28.1" height="28.1" transform="rotate(71.2 204.1 23.9)"/><rect x="216.3" y="35" width="27.7" height="27.7" transform="rotate(26.9 216.3 35)"/><circle cx="127" cy="46.2" r="13.7"/><circle cx="356.3" cy="57.4" r="13.5"/><circle cx="292.1" cy="68.6" r="13.3"/><rect x="247.4" y="79.7" width="26.2" height="26.2" transform="rotate(89.7 247.4 79.7)"/><rect x="295.9" y="90.9" width="25.8" height="25.8" transform="rotate(37.7 295.9 90.9)"/><circle cx="85.3" cy="102.1" r="12.7"/><rect x="311.1" y="113.3" width="25" height="25" transform="rotate(63.5 311.1 113.3)"/><circle cx="570" cy="124.4" r="12.3"/><circle cx="243.3" cy="135.6" r="12.1"/><circle cx="263.3" cy="146.8" r="12"/><circle cx="539.7" cy="158" r="11.8"/><rect x="592.8" y="169.1" width="23.1" height="23.1" transform="rotate(11.4 592.8 169.1)"/><circle cx="574.8" cy="180.3" r="11.4"/><rect x="525.8" y="191.5" width="22.4" height="22.4" transform="rotate(43.2 525.8 191.5)"/><rect x="133.9" y="202.7" width="22" height="22" transform="rotate(62.9 133.9 202.7)"/><rect x="365.3" y="213.8" width="21.6" height="21.6" transform="rotate(3.4 365.3 213.8)"/><rect x="460.2" y="225" width="21.2" height="21.2" transform="rotate(17.7 460.2 225)"/><rect x="587.2" y="236.2" width="20.9" height="20.9" transform="rotate(20 587.2 236.2)"/><circle cx="315.7" cy="247.4" r="10.2"/><circle cx="98.4" cy="258.5" r="10"/><rect x="92.3" y="269.7" width="19.7" height="19.7" transform="rotate(48.1 92.3 269.7)"/><circle cx="81.1" cy="280.9" r="9.7"/><circle cx="308.6" cy="292.1" r="9.5"/><rect x="562.8" y="303.2" width="18.6" height="18.6" transform="rotate(44.3 562.8 303.2)"/><circle cx="438.7" cy="314.4" r="9.1"/><rect x="267.8" y="325.6" width="17.8" height="17.8" transform="rotate(36 267.8 325.6)"/><circle cx="64.3" cy="336.8" r="8.7"/><circle cx="454.2" cy="347.9" r="8.5"/><rect x="79.7" y="359.1" width="16.7" height="16.7" transform="rotate(83.9 79.7 359.1)"/><rect x="231.3" y="370.3" width="16.3" height="16.3" transform="rotate(14.4 231.3 370.3)"/><circle cx="490" cy="381.5" r="8"/><circle cx="216.9" cy="392.6" r="7.8"/><rect x="46.7" y="403.8" width="15.1" height="15.1" transform="rotate(60.3 46.7 403.8)"/><rect x="166.9" y="415" width="14.8" height="14.8" transform="rotate(68.8 166.9 415)"/><circle cx="582.3" cy="426.2" r="7.2"/><circle cx="530.7" cy="437.3" r="7"/><rect x="236.2" y="448.5" width="13.6" height="13.6" transform="rotate(17.7 236.2 448.5)"/><rect x="205.4" y="459.7" width="13.2" height="13.2" transform="rotate(24 205.4 459.7)"/><circle cx="441" cy="470.9" r="6.4"/><circle cx="299.3" cy="482" r="6.2"/><rect x="258.5" y="493.2" width="12.1" height="12.1" transform="rotate(57.6 258.5 493.2)"/><rect x="373.9" y="504.4" width="11.7" height="11.7" transform="rotate(5.2 373.9 504.4)"/><rect x="577.5" y="515.6" width="11.3" height="11.3" transform="rotate(65.9 577.5 515.6)"/><rect x="70.7" y="526.7" width="11" height="11" transform="rotate(17.4 70.7 526.7)"/><rect x="208.9" y="537.9" width="10.6" height="10.6" transform="rotate(19.1 208.9 537.9)"/><circle cx="402.3" cy="549.1" r="5.1"/><rect x="207.1" y="560.3" width="9.8" height="9.8" transform="rotate(14.9 207.1 560.3)"/><rect x="302.7" y="571.4" width="9.4" height="9.4" transform="rotate(32.1 302.7 571.4)"/><rect x="63.3" y="582.6" width="9" height="9" transform="rotate(79.4 63.3 582.6)"/><rect x="406.9" y="593.8" width="8.7" height="8.7" transform="rotate(20.3 406.9 593.8)"/><rect x="142.9" y="605" width="8.3" height="8.3" transform="rotate(6.4 142.9 605)"/><rect x="564.6" y="616.1" width="7.9" height="7.9" transform="rotate(46 564.6 616.1)"/><rect x="282.6" y="627.3" width="7.5" height="7.5" transform="rotate(36.5 282.6 627.3)"/><rect x="76.3" y="638.5" width="7.1" height="7.1" transform="rotate(29.9 76.3 638.5)"/><rect x="550.1" y="649.7" width="6.8" height="6.8" transform="rotate(18.8 550.1 649.7)"/><rect x="62" y="660.8" width="6.4" height="6.4" transform="rotate(31.6 62 660.8)"/><circle cx="237.9" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vmigrationaccelerationpolicyexodus)"/>
+<rect width="640" height="640" filter="url(#nmigrationaccelerationpolicyexodus)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nmigrationaccelerationpolicyexodus)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

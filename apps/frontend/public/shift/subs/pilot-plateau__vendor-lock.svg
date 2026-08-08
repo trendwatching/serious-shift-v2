@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>pilot-plateau/vendor-lock</title>
+<defs>
+<linearGradient id="fpilotplateauvendorlock" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gpilotplateauvendorlock" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bpilotplateauvendorlock" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="spilotplateauvendorlock" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vpilotplateauvendorlock" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="npilotplateauvendorlock" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fpilotplateauvendorlock)"/>
+<rect width="640" height="640" fill="url(#gpilotplateauvendorlock)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bpilotplateauvendorlock)" filter="url(#spilotplateauvendorlock)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="48.4" cy="-32" r="15"/><rect x="366" y="-20.8" width="29.6" height="29.6" transform="rotate(47.7 366 -20.8)"/><rect x="594.3" y="-9.7" width="29.2" height="29.2" transform="rotate(32.1 594.3 -9.7)"/><rect x="386.6" y="1.5" width="28.9" height="28.9" transform="rotate(82.7 386.6 1.5)"/><rect x="232.8" y="12.7" width="28.5" height="28.5" transform="rotate(15.7 232.8 12.7)"/><circle cx="386.9" cy="23.9" r="14"/><rect x="560.5" y="35" width="27.7" height="27.7" transform="rotate(64.9 560.5 35)"/><circle cx="258.5" cy="46.2" r="13.7"/><circle cx="254.1" cy="57.4" r="13.5"/><circle cx="521" cy="68.6" r="13.3"/><circle cx="543" cy="79.7" r="13.1"/><rect x="398.4" y="90.9" width="25.8" height="25.8" transform="rotate(3.6 398.4 90.9)"/><circle cx="94.4" cy="102.1" r="12.7"/><circle cx="126.4" cy="113.3" r="12.5"/><circle cx="510.2" cy="124.4" r="12.3"/><circle cx="487.3" cy="135.6" r="12.1"/><circle cx="563.9" cy="146.8" r="12"/><rect x="447" y="158" width="23.5" height="23.5" transform="rotate(55.1 447 158)"/><circle cx="265.4" cy="169.1" r="11.6"/><rect x="39.3" y="180.3" width="22.8" height="22.8" transform="rotate(37.6 39.3 180.3)"/><rect x="77.9" y="191.5" width="22.4" height="22.4" transform="rotate(34.3 77.9 191.5)"/><circle cx="234.7" cy="202.7" r="11"/><circle cx="40.7" cy="213.8" r="10.8"/><circle cx="559.7" cy="225" r="10.6"/><rect x="170.8" y="236.2" width="20.9" height="20.9" transform="rotate(69.2 170.8 236.2)"/><rect x="385.5" y="247.4" width="20.5" height="20.5" transform="rotate(29.7 385.5 247.4)"/><rect x="68.2" y="258.5" width="20.1" height="20.1" transform="rotate(24.9 68.2 258.5)"/><circle cx="497.6" cy="269.7" r="9.9"/><rect x="435.9" y="280.9" width="19.3" height="19.3" transform="rotate(70.1 435.9 280.9)"/><circle cx="149.4" cy="292.1" r="9.5"/><circle cx="578.3" cy="303.2" r="9.3"/><circle cx="205" cy="314.4" r="9.1"/><rect x="396.2" y="325.6" width="17.8" height="17.8" transform="rotate(63.5 396.2 325.6)"/><rect x="537.7" y="336.8" width="17.4" height="17.4" transform="rotate(28.1 537.7 336.8)"/><circle cx="124.4" cy="347.9" r="8.5"/><circle cx="574.7" cy="359.1" r="8.3"/><rect x="314.4" y="370.3" width="16.3" height="16.3" transform="rotate(19.3 314.4 370.3)"/><rect x="194.5" y="381.5" width="15.9" height="15.9" transform="rotate(65.4 194.5 381.5)"/><rect x="201.3" y="392.6" width="15.5" height="15.5" transform="rotate(81.6 201.3 392.6)"/><circle cx="492.1" cy="403.8" r="7.6"/><rect x="103.5" y="415" width="14.8" height="14.8" transform="rotate(9.8 103.5 415)"/><circle cx="256.7" cy="426.2" r="7.2"/><circle cx="384.2" cy="437.3" r="7"/><rect x="130.7" y="448.5" width="13.6" height="13.6" transform="rotate(22.1 130.7 448.5)"/><rect x="429" y="459.7" width="13.2" height="13.2" transform="rotate(5.3 429 459.7)"/><circle cx="527" cy="470.9" r="6.4"/><rect x="333.1" y="482" width="12.5" height="12.5" transform="rotate(88.5 333.1 482)"/><rect x="157" y="493.2" width="12.1" height="12.1" transform="rotate(46.5 157 493.2)"/><rect x="406.4" y="504.4" width="11.7" height="11.7" transform="rotate(2.8 406.4 504.4)"/><circle cx="566.6" cy="515.6" r="5.7"/><rect x="450.7" y="526.7" width="11" height="11" transform="rotate(8.2 450.7 526.7)"/><circle cx="270.9" cy="537.9" r="5.3"/><circle cx="336.4" cy="549.1" r="5.1"/><rect x="545.5" y="560.3" width="9.8" height="9.8" transform="rotate(10.5 545.5 560.3)"/><circle cx="215.6" cy="571.4" r="4.7"/><circle cx="362.1" cy="582.6" r="4.5"/><rect x="112.8" y="593.8" width="8.7" height="8.7" transform="rotate(87.4 112.8 593.8)"/><rect x="273.5" y="605" width="8.3" height="8.3" transform="rotate(82.7 273.5 605)"/><rect x="458.3" y="616.1" width="7.9" height="7.9" transform="rotate(6 458.3 616.1)"/><rect x="142.1" y="627.3" width="7.5" height="7.5" transform="rotate(26.7 142.1 627.3)"/><rect x="70.5" y="638.5" width="7.1" height="7.1" transform="rotate(23.1 70.5 638.5)"/><rect x="77.5" y="649.7" width="6.8" height="6.8" transform="rotate(36.3 77.5 649.7)"/><circle cx="136.7" cy="660.8" r="3.2"/><rect x="146.4" y="672" width="6" height="6" transform="rotate(44.5 146.4 672)"/></g>
+<rect width="640" height="640" fill="url(#vpilotplateauvendorlock)"/>
+<rect width="640" height="640" filter="url(#npilotplateauvendorlock)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#npilotplateauvendorlock)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

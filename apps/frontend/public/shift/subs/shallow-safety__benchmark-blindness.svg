@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>shallow-safety/benchmark-blindness</title>
+<defs>
+<linearGradient id="fshallowsafetybenchmarkblindness" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gshallowsafetybenchmarkblindness" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bshallowsafetybenchmarkblindness" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sshallowsafetybenchmarkblindness" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vshallowsafetybenchmarkblindness" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nshallowsafetybenchmarkblindness" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fshallowsafetybenchmarkblindness)"/>
+<rect width="640" height="640" fill="url(#gshallowsafetybenchmarkblindness)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bshallowsafetybenchmarkblindness)" filter="url(#sshallowsafetybenchmarkblindness)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="148.5" rx="539.7" ry="194.3" fill="none" stroke-width="48"/><rect x="318.5" y="342.8" width="20" height="20" transform="rotate(14.1 318.5 342.8)"/><rect x="287" y="351.8" width="19.5" height="19.5" transform="rotate(35.3 287 351.8)"/><rect x="289.3" y="360.8" width="19.1" height="19.1" transform="rotate(57.8 289.3 360.8)"/><rect x="324.9" y="369.8" width="18.6" height="18.6" transform="rotate(15.3 324.9 369.8)"/><rect x="319.2" y="378.8" width="18.2" height="18.2" transform="rotate(25 319.2 378.8)"/><rect x="269.1" y="387.8" width="17.7" height="17.7" transform="rotate(47.2 269.1 387.8)"/><rect x="246.6" y="396.8" width="17.3" height="17.3" transform="rotate(62.2 246.6 396.8)"/><rect x="383.4" y="405.8" width="16.8" height="16.8" transform="rotate(32.1 383.4 405.8)"/><rect x="349.4" y="414.8" width="16.4" height="16.4" transform="rotate(81.1 349.4 414.8)"/><rect x="242.6" y="423.8" width="15.9" height="15.9" transform="rotate(33.1 242.6 423.8)"/><rect x="267.4" y="432.8" width="15.5" height="15.5" transform="rotate(59 267.4 432.8)"/><rect x="379.8" y="441.8" width="15" height="15" transform="rotate(37.4 379.8 441.8)"/><rect x="290.5" y="450.9" width="14.5" height="14.5" transform="rotate(54.9 290.5 450.9)"/><rect x="247" y="459.9" width="14.1" height="14.1" transform="rotate(77.1 247 459.9)"/><rect x="201.2" y="468.9" width="13.6" height="13.6" transform="rotate(25.3 201.2 468.9)"/><rect x="223.3" y="477.9" width="13.2" height="13.2" transform="rotate(70.9 223.3 477.9)"/><rect x="258.1" y="486.9" width="12.7" height="12.7" transform="rotate(88.6 258.1 486.9)"/><rect x="399.1" y="495.9" width="12.3" height="12.3" transform="rotate(21.6 399.1 495.9)"/><rect x="462.1" y="504.9" width="11.8" height="11.8" transform="rotate(76.1 462.1 504.9)"/><rect x="348.5" y="513.9" width="11.4" height="11.4" transform="rotate(61.4 348.5 513.9)"/><rect x="407.7" y="522.9" width="10.9" height="10.9" transform="rotate(54.3 407.7 522.9)"/><rect x="204.1" y="531.9" width="10.5" height="10.5" transform="rotate(30.4 204.1 531.9)"/><rect x="481.1" y="540.9" width="10" height="10" transform="rotate(21 481.1 540.9)"/><rect x="298" y="549.9" width="9.5" height="9.5" transform="rotate(33.7 298 549.9)"/><rect x="427" y="558.9" width="9.1" height="9.1" transform="rotate(88.9 427 558.9)"/><rect x="423" y="567.9" width="8.6" height="8.6" transform="rotate(47.9 423 567.9)"/><rect x="499.6" y="577" width="8.2" height="8.2" transform="rotate(78.9 499.6 577)"/><rect x="305.6" y="586" width="7.7" height="7.7" transform="rotate(73.4 305.6 586)"/><rect x="519.3" y="595" width="7.3" height="7.3" transform="rotate(51.9 519.3 595)"/><rect x="271.6" y="604" width="6.8" height="6.8" transform="rotate(0.7 271.6 604)"/><rect x="200.4" y="613" width="6.4" height="6.4" transform="rotate(70 200.4 613)"/><rect x="508.3" y="622" width="5.9" height="5.9" transform="rotate(80.6 508.3 622)"/><rect x="323.8" y="631" width="5.5" height="5.5" transform="rotate(88.8 323.8 631)"/><rect x="240" y="640" width="5" height="5" transform="rotate(47.1 240 640)"/></g>
+<rect width="640" height="640" fill="url(#vshallowsafetybenchmarkblindness)"/>
+<rect width="640" height="640" filter="url(#nshallowsafetybenchmarkblindness)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nshallowsafetybenchmarkblindness)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

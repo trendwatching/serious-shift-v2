@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>pilot-plateau/margin-gap</title>
+<defs>
+<linearGradient id="fpilotplateaumargingap" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gpilotplateaumargingap" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bpilotplateaumargingap" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="spilotplateaumargingap" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vpilotplateaumargingap" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="npilotplateaumargingap" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fpilotplateaumargingap)"/>
+<rect width="640" height="640" fill="url(#gpilotplateaumargingap)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bpilotplateaumargingap)" filter="url(#spilotplateaumargingap)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="141.4" rx="516.1" ry="185.8" fill="none" stroke-width="48"/><rect x="348.7" y="327.2" width="20" height="20" transform="rotate(59.2 348.7 327.2)"/><rect x="297.7" y="336.6" width="19.5" height="19.5" transform="rotate(71.6 297.7 336.6)"/><rect x="355.4" y="346.1" width="19.1" height="19.1" transform="rotate(87.3 355.4 346.1)"/><rect x="360.1" y="355.6" width="18.6" height="18.6" transform="rotate(26.7 360.1 355.6)"/><rect x="361.5" y="365.1" width="18.2" height="18.2" transform="rotate(60 361.5 365.1)"/><rect x="329.8" y="374.6" width="17.7" height="17.7" transform="rotate(72.5 329.8 374.6)"/><rect x="379.5" y="384" width="17.3" height="17.3" transform="rotate(19 379.5 384)"/><rect x="282.3" y="393.5" width="16.8" height="16.8" transform="rotate(12.5 282.3 393.5)"/><rect x="287.6" y="403" width="16.4" height="16.4" transform="rotate(44.2 287.6 403)"/><rect x="309.1" y="412.5" width="15.9" height="15.9" transform="rotate(83.7 309.1 412.5)"/><rect x="259.9" y="422" width="15.5" height="15.5" transform="rotate(85.1 259.9 422)"/><rect x="332.8" y="431.4" width="15" height="15" transform="rotate(42.8 332.8 431.4)"/><rect x="270.1" y="440.9" width="14.5" height="14.5" transform="rotate(60.6 270.1 440.9)"/><rect x="377.4" y="450.4" width="14.1" height="14.1" transform="rotate(88.1 377.4 450.4)"/><rect x="288.4" y="459.9" width="13.6" height="13.6" transform="rotate(60.8 288.4 459.9)"/><rect x="312.6" y="469.4" width="13.2" height="13.2" transform="rotate(34.4 312.6 469.4)"/><rect x="292.7" y="478.8" width="12.7" height="12.7" transform="rotate(35.4 292.7 478.8)"/><rect x="386.7" y="488.3" width="12.3" height="12.3" transform="rotate(22.5 386.7 488.3)"/><rect x="261.7" y="497.8" width="11.8" height="11.8" transform="rotate(13.7 261.7 497.8)"/><rect x="184.7" y="507.3" width="11.4" height="11.4" transform="rotate(83.4 184.7 507.3)"/><rect x="227.7" y="516.8" width="10.9" height="10.9" transform="rotate(57.6 227.7 516.8)"/><rect x="242.1" y="526.2" width="10.5" height="10.5" transform="rotate(10.6 242.1 526.2)"/><rect x="207.4" y="535.7" width="10" height="10" transform="rotate(25.7 207.4 535.7)"/><rect x="287.1" y="545.2" width="9.5" height="9.5" transform="rotate(4.9 287.1 545.2)"/><rect x="491.8" y="554.7" width="9.1" height="9.1" transform="rotate(52.6 491.8 554.7)"/><rect x="192.7" y="564.2" width="8.6" height="8.6" transform="rotate(33.1 192.7 564.2)"/><rect x="287.3" y="573.6" width="8.2" height="8.2" transform="rotate(86.4 287.3 573.6)"/><rect x="287.2" y="583.1" width="7.7" height="7.7" transform="rotate(33.4 287.2 583.1)"/><rect x="209.9" y="592.6" width="7.3" height="7.3" transform="rotate(38.9 209.9 592.6)"/><rect x="258.6" y="602.1" width="6.8" height="6.8" transform="rotate(72 258.6 602.1)"/><rect x="326.2" y="611.6" width="6.4" height="6.4" transform="rotate(38.3 326.2 611.6)"/><rect x="455.6" y="621" width="5.9" height="5.9" transform="rotate(15.9 455.6 621)"/><rect x="195.5" y="630.5" width="5.5" height="5.5" transform="rotate(30.6 195.5 630.5)"/><rect x="325.9" y="640" width="5" height="5" transform="rotate(33.6 325.9 640)"/></g>
+<rect width="640" height="640" fill="url(#vpilotplateaumargingap)"/>
+<rect width="640" height="640" filter="url(#npilotplateaumargingap)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#npilotplateaumargingap)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

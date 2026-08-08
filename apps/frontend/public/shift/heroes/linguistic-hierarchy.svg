@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>linguistic-hierarchy</title>
+<defs>
+<linearGradient id="skylinguistichierarchy" x1="0" y1="0" x2="0.55" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<linearGradient id="beamlinguistichierarchy" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.72"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<radialGradient id="disclinguistichierarchy">
+<stop offset="0.72" stop-color="#FDFF85" stop-opacity="0.92"/>
+<stop offset="0.86" stop-color="#FDFF85" stop-opacity="0.34"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="glowlinguistichierarchy" cx="42.1%" cy="34%" r="62%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="hazelinguistichierarchy" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#F2734A" stop-opacity="0"/>
+<stop offset="0.5" stop-color="#F2734A" stop-opacity="0.42"/>
+<stop offset="1" stop-color="#F2734A" stop-opacity="0"/>
+</linearGradient>
+<radialGradient id="viglinguistichierarchy" cx="50%" cy="42%" r="72%">
+<stop offset="0.55" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.5"/>
+</radialGradient>
+<!-- Poster grain. Two frequencies: a fine tooth that sits on the whole field
+     and a coarse mottle that keeps the flat gradient from looking printed by a
+     browser. Both are filters on a rect, so they cost nothing to download. -->
+<filter id="softlinguistichierarchy" x="-20%" y="-20%" width="140%" height="140%">
+<feGaussianBlur stdDeviation="16"/>
+</filter>
+<filter id="finelinguistichierarchy" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="7" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<filter id="coarselinguistichierarchy" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" seed="19" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.7 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.22}.lit-stroke{stroke:#FDFF85;stroke-opacity:0.85}</style>
+</defs>
+<rect width="800" height="1000" fill="url(#skylinguistichierarchy)"/>
+<rect width="800" height="1000" fill="url(#glowlinguistichierarchy)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.17" stroke-opacity="0.17" ><rect x="-20.8" y="512.2" width="71.5" height="167.8"/><rect x="-2.9" y="482" width="35.8" height="30.2"/><rect x="76.9" y="507.1" width="96.3" height="172.9"/><rect x="100.9" y="476" width="48.1" height="31.1"/><rect x="183.7" y="483" width="102.6" height="197"/><rect x="295.5" y="537.6" width="99" height="142.4"/><rect x="413.3" y="468.1" width="83.5" height="211.9"/><rect x="518.1" y="481.4" width="93.7" height="198.6"/><rect x="541.6" y="445.7" width="46.9" height="35.7"/><rect x="563.5" y="442.2" width="3" height="39.2"/><rect x="638.1" y="507.5" width="73.8" height="172.5"/><rect x="744" y="487.5" width="82" height="192.5"/></g>
+<rect x="0" y="360" width="800" height="300" fill="url(#hazelinguistichierarchy)"/>
+<g filter="url(#softlinguistichierarchy)"><circle cx="337.1" cy="214.1" r="126" fill="url(#disclinguistichierarchy)"/><g fill="#FDFF85" stroke="#FDFF85" fill-opacity="0.14" stroke-opacity="0.14" ><path d="M 183.1 720 L -1132.9 1000" fill="none" stroke-width="2"/><path d="M 205.1 720 L -922.9 1000" fill="none" stroke-width="2"/><path d="M 227.1 720 L -712.9 1000" fill="none" stroke-width="2"/><path d="M 249.1 720 L -502.9 1000" fill="none" stroke-width="2"/><path d="M 271.1 720 L -292.9 1000" fill="none" stroke-width="2"/><path d="M 293.1 720 L -82.9 1000" fill="none" stroke-width="2"/><path d="M 315.1 720 L 127.1 1000" fill="none" stroke-width="2"/><path d="M 337.1 720 L 337.1 1000" fill="none" stroke-width="2"/><path d="M 359.1 720 L 547.1 1000" fill="none" stroke-width="2"/><path d="M 381.1 720 L 757.1 1000" fill="none" stroke-width="2"/><path d="M 403.1 720 L 967.1 1000" fill="none" stroke-width="2"/><path d="M 425.1 720 L 1177.1 1000" fill="none" stroke-width="2"/><path d="M 447.1 720 L 1387.1 1000" fill="none" stroke-width="2"/><path d="M 469.1 720 L 1597.1 1000" fill="none" stroke-width="2"/><path d="M 491.1 720 L 1807.1 1000" fill="none" stroke-width="2"/><path d="M 0 725.7 L 800 725.7" fill="none" stroke-width="2"/><path d="M 0 742.9 L 800 742.9" fill="none" stroke-width="2"/><path d="M 0 771.4 L 800 771.4" fill="none" stroke-width="2"/><path d="M 0 811.4 L 800 811.4" fill="none" stroke-width="2"/><path d="M 0 862.9 L 800 862.9" fill="none" stroke-width="2"/><path d="M 0 925.7 L 800 925.7" fill="none" stroke-width="2"/><path d="M 0 1000 L 800 1000" fill="none" stroke-width="2"/></g><polygon points="223.7,214.1 450.5,214.1 639.5,1000 34.7,1000" fill="url(#beamlinguistichierarchy)" opacity="0.55"/></g>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.58" stroke-opacity="0.58" ><rect x="-9.3" y="665" width="130.6" height="95"/><rect x="163.6" y="652.6" width="128.9" height="107.4"/><rect x="329.2" y="550.6" width="141.6" height="209.4"/><rect x="364.6" y="512.9" width="70.8" height="37.7"/><rect x="493.1" y="616.5" width="157.8" height="143.5"/><rect x="532.5" y="590.7" width="78.9" height="25.8"/><rect x="570.5" y="585.7" width="3" height="30.8"/><rect x="667.4" y="577.6" width="153.2" height="182.4"/></g>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.94" stroke-opacity="0.94" ><polygon points="41.6,474.4 400,420 758.4,474.4"/><rect x="54.4" y="474.4" width="691.2" height="19.6"/><rect x="106.5" y="494" width="38.4" height="251.6"/><rect x="197.9" y="494" width="38.4" height="251.6"/><rect x="289.4" y="494" width="38.4" height="251.6"/><rect x="380.8" y="494" width="38.4" height="251.6"/><rect x="472.2" y="494" width="38.4" height="251.6"/><rect x="563.7" y="494" width="38.4" height="251.6"/><rect x="655.1" y="494" width="38.4" height="251.6"/><rect x="16" y="726" width="768" height="34"/><rect x="156.8" y="277.2" width="3" height="142.8"/><polygon points="159.8,277.2 284.8,297.6 159.8,318"/></g>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.72" stroke-opacity="0.72" ><circle cx="-40" cy="864.3" r="6.8"/><path d="M -57.2 1040 L -57.2 872.2 C -50.7 867.2 -45.4 865.4 -40 865.4 C -34.6 865.4 -29.3 867.2 -22.8 872.2 L -22.8 1040 Z"/><circle cx="-2.8" cy="882.4" r="6"/><path d="M -17.9 1040 L -17.9 889.2 C -12.2 884.8 -7.6 883.3 -2.8 883.3 C 2 883.3 6.6 884.8 12.3 889.2 L 12.3 1040 Z"/><circle cx="52.1" cy="872.9" r="6.5"/><path d="M 35.7 1040 L 35.7 880.3 C 42 875.5 46.9 873.8 52.1 873.8 C 57.3 873.8 62.2 875.5 68.5 880.3 L 68.5 1040 Z"/><circle cx="105.1" cy="873.9" r="6.5"/><path d="M 88.7 1040 L 88.7 881.4 C 94.9 876.6 99.9 874.9 105.1 874.9 C 110.3 874.9 115.3 876.6 121.5 881.4 L 121.5 1040 Z"/><circle cx="155.1" cy="853.2" r="7.9"/><path d="M 135.1 1040 L 135.1 862.2 C 142.7 856.4 148.7 854.3 155.1 854.3 C 161.4 854.3 167.5 856.4 175.1 862.2 L 175.1 1040 Z"/><circle cx="207.4" cy="835.4" r="6.1"/><path d="M 191.9 1040 L 191.9 842.5 C 197.8 838 202.5 836.3 207.4 836.3 C 212.3 836.3 217 838 222.9 842.5 L 222.9 1040 Z"/><circle cx="255.6" cy="842.1" r="6.5"/><path d="M 239 1040 L 239 849.6 C 245.3 844.8 250.4 843.1 255.6 843.1 C 260.8 843.1 265.9 844.8 272.2 849.6 L 272.2 1040 Z"/><circle cx="299.7" cy="872.9" r="5.1"/><path d="M 286.7 1040 L 286.7 878.8 C 291.6 875 295.6 873.7 299.7 873.7 C 303.7 873.7 307.7 875 312.6 878.8 L 312.6 1040 Z"/><circle cx="350.6" cy="848.2" r="5.4"/><path d="M 336.9 1040 L 336.9 854.4 C 342.1 850.4 346.3 849 350.6 849 C 354.9 849 359 850.4 364.2 854.4 L 364.2 1040 Z"/><circle cx="386.3" cy="894.4" r="5.3"/><path d="M 372.9 1040 L 372.9 900.5 C 378 896.6 382.1 895.2 386.3 895.2 C 390.5 895.2 394.6 896.6 399.7 900.5 L 399.7 1040 Z"/><circle cx="428.8" cy="842" r="7.5"/><path d="M 409.7 1040 L 409.7 850.6 C 416.9 845.1 422.7 843.1 428.8 843.1 C 434.8 843.1 440.6 845.1 447.8 850.6 L 447.8 1040 Z"/><circle cx="487.1" cy="834.9" r="7.1"/><path d="M 469 1040 L 469 843.1 C 475.9 837.9 481.4 836 487.1 836 C 492.8 836 498.3 837.9 505.2 843.1 L 505.2 1040 Z"/><circle cx="527" cy="833.6" r="7.7"/><path d="M 507.5 1040 L 507.5 842.4 C 514.9 836.8 520.8 834.7 527 834.7 C 533.2 834.7 539.1 836.8 546.5 842.4 L 546.5 1040 Z"/><circle cx="576" cy="870.8" r="7"/><path d="M 558.2 1040 L 558.2 878.9 C 565 873.7 570.4 871.9 576 871.9 C 581.7 871.9 587.1 873.7 593.9 878.9 L 593.9 1040 Z"/><circle cx="610.4" cy="874.8" r="6.3"/><path d="M 594.4 1040 L 594.4 882.1 C 600.4 877.5 605.3 875.8 610.4 875.8 C 615.4 875.8 620.3 877.5 626.3 882.1 L 626.3 1040 Z"/><circle cx="652.7" cy="859.3" r="7.6"/><path d="M 633.4 1040 L 633.4 868.1 C 640.7 862.5 646.6 860.5 652.7 860.5 C 658.8 860.5 664.7 862.5 672.1 868.1 L 672.1 1040 Z"/><circle cx="708.9" cy="877.1" r="8.1"/><path d="M 688.5 1040 L 688.5 886.4 C 696.2 880.5 702.4 878.3 708.9 878.3 C 715.3 878.3 721.5 880.5 729.3 886.4 L 729.3 1040 Z"/><circle cx="750.5" cy="890" r="6.4"/><path d="M 734.4 1040 L 734.4 897.3 C 740.5 892.6 745.5 890.9 750.5 890.9 C 755.6 890.9 760.5 892.6 766.7 897.3 L 766.7 1040 Z"/><circle cx="798.4" cy="852.9" r="7.5"/><path d="M 779.3 1040 L 779.3 861.6 C 786.6 856.1 792.4 854.1 798.4 854.1 C 804.4 854.1 810.2 856.1 817.4 861.6 L 817.4 1040 Z"/></g><g fill="#39001F" stroke="#39001F" fill-opacity="0.98" stroke-opacity="0.98" ><circle cx="-63" cy="910.3" r="22.3"/><path d="M -119.4 1040 L -119.4 935.9 C -98 919.6 -80.9 913.7 -63 913.7 C -45.2 913.7 -28.1 919.6 -6.6 935.9 L -6.6 1040 Z"/><circle cx="102.3" cy="930.9" r="18.4"/><path d="M 55.7 1040 L 55.7 952 C 73.4 938.5 87.6 933.6 102.3 933.6 C 117 933.6 131.2 938.5 148.9 952 L 148.9 1040 Z"/><circle cx="273.4" cy="910.9" r="22.4"/><path d="M 216.6 1040 L 216.6 936.7 C 238.2 920.2 255.4 914.3 273.4 914.3 C 291.3 914.3 308.6 920.2 330.2 936.7 L 330.2 1040 Z"/><circle cx="436.8" cy="908.1" r="24.4"/><path d="M 375.1 1040 L 375.1 936.1 C 398.5 918.2 417.3 911.7 436.8 911.7 C 456.3 911.7 475.1 918.2 498.5 936.1 L 498.5 1040 Z"/><circle cx="562.5" cy="893.7" r="23.3"/><path d="M 503.6 1040 L 503.6 920.5 C 526 903.4 543.9 897.2 562.5 897.2 C 581.1 897.2 599.1 903.4 621.5 920.5 L 621.5 1040 Z"/><circle cx="737.8" cy="904" r="23.6"/><path d="M 678.1 1040 L 678.1 931 C 700.8 913.8 718.9 907.5 737.8 907.5 C 756.6 907.5 774.8 913.8 797.4 931 L 797.4 1040 Z"/></g>
+<rect width="800" height="1000" fill="url(#viglinguistichierarchy)"/>
+<rect width="800" height="1000" filter="url(#coarselinguistichierarchy)" opacity="0.22" style="mix-blend-mode:overlay"/>
+<rect width="800" height="1000" filter="url(#finelinguistichierarchy)" opacity="0.34" style="mix-blend-mode:multiply"/>
+<rect width="800" height="1000" filter="url(#finelinguistichierarchy)" opacity="0.16" style="mix-blend-mode:screen"/>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>wired-authority/prompt-opacity</title>
+<defs>
+<linearGradient id="fwiredauthoritypromptopacity" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gwiredauthoritypromptopacity" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bwiredauthoritypromptopacity" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="swiredauthoritypromptopacity" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vwiredauthoritypromptopacity" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nwiredauthoritypromptopacity" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fwiredauthoritypromptopacity)"/>
+<rect width="640" height="640" fill="url(#gwiredauthoritypromptopacity)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bwiredauthoritypromptopacity)" filter="url(#swiredauthoritypromptopacity)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="88.4" cy="-32" r="15"/><rect x="238.6" y="-20.8" width="29.6" height="29.6" transform="rotate(16.8 238.6 -20.8)"/><rect x="345.9" y="-9.7" width="29.2" height="29.2" transform="rotate(46.5 345.9 -9.7)"/><rect x="204.4" y="1.5" width="28.9" height="28.9" transform="rotate(76.2 204.4 1.5)"/><circle cx="433.6" cy="12.7" r="14.2"/><circle cx="451.6" cy="23.9" r="14"/><circle cx="101.8" cy="35" r="13.9"/><rect x="594.5" y="46.2" width="27.3" height="27.3" transform="rotate(71.2 594.5 46.2)"/><rect x="157.8" y="57.4" width="27" height="27" transform="rotate(84.3 157.8 57.4)"/><circle cx="513.4" cy="68.6" r="13.3"/><circle cx="472.7" cy="79.7" r="13.1"/><circle cx="123.4" cy="90.9" r="12.9"/><circle cx="327.1" cy="102.1" r="12.7"/><rect x="359.3" y="113.3" width="25" height="25" transform="rotate(60.9 359.3 113.3)"/><circle cx="321.5" cy="124.4" r="12.3"/><circle cx="141" cy="135.6" r="12.1"/><rect x="170.6" y="146.8" width="23.9" height="23.9" transform="rotate(2.7 170.6 146.8)"/><circle cx="303.8" cy="158" r="11.8"/><rect x="337.8" y="169.1" width="23.1" height="23.1" transform="rotate(36.6 337.8 169.1)"/><rect x="127.6" y="180.3" width="22.8" height="22.8" transform="rotate(53.2 127.6 180.3)"/><rect x="89.2" y="191.5" width="22.4" height="22.4" transform="rotate(27.3 89.2 191.5)"/><rect x="441.7" y="202.7" width="22" height="22" transform="rotate(76.5 441.7 202.7)"/><circle cx="187.1" cy="213.8" r="10.8"/><circle cx="351.2" cy="225" r="10.6"/><circle cx="59.6" cy="236.2" r="10.4"/><rect x="581.2" y="247.4" width="20.5" height="20.5" transform="rotate(86.4 581.2 247.4)"/><circle cx="392.9" cy="258.5" r="10"/><rect x="93.7" y="269.7" width="19.7" height="19.7" transform="rotate(85 93.7 269.7)"/><rect x="96" y="280.9" width="19.3" height="19.3" transform="rotate(66 96 280.9)"/><rect x="210.6" y="292.1" width="19" height="19" transform="rotate(55.5 210.6 292.1)"/><rect x="457.7" y="303.2" width="18.6" height="18.6" transform="rotate(84.5 457.7 303.2)"/><circle cx="441.3" cy="314.4" r="9.1"/><rect x="262.7" y="325.6" width="17.8" height="17.8" transform="rotate(33.1 262.7 325.6)"/><circle cx="515.8" cy="336.8" r="8.7"/><circle cx="231.3" cy="347.9" r="8.5"/><rect x="403.8" y="359.1" width="16.7" height="16.7" transform="rotate(47.2 403.8 359.1)"/><circle cx="127.5" cy="370.3" r="8.1"/><rect x="84.9" y="381.5" width="15.9" height="15.9" transform="rotate(10.7 84.9 381.5)"/><circle cx="202.6" cy="392.6" r="7.8"/><rect x="456.3" y="403.8" width="15.1" height="15.1" transform="rotate(0.9 456.3 403.8)"/><rect x="348.3" y="415" width="14.8" height="14.8" transform="rotate(75.5 348.3 415)"/><rect x="211.5" y="426.2" width="14.4" height="14.4" transform="rotate(28.6 211.5 426.2)"/><circle cx="70.2" cy="437.3" r="7"/><rect x="105.3" y="448.5" width="13.6" height="13.6" transform="rotate(81.6 105.3 448.5)"/><rect x="449.8" y="459.7" width="13.2" height="13.2" transform="rotate(0.7 449.8 459.7)"/><circle cx="434" cy="470.9" r="6.4"/><rect x="102.6" y="482" width="12.5" height="12.5" transform="rotate(73.6 102.6 482)"/><rect x="362.1" y="493.2" width="12.1" height="12.1" transform="rotate(51.7 362.1 493.2)"/><circle cx="121.5" cy="504.4" r="5.9"/><rect x="54.1" y="515.6" width="11.3" height="11.3" transform="rotate(2.4 54.1 515.6)"/><rect x="172.2" y="526.7" width="11" height="11" transform="rotate(26.2 172.2 526.7)"/><rect x="562.7" y="537.9" width="10.6" height="10.6" transform="rotate(26.6 562.7 537.9)"/><circle cx="74" cy="549.1" r="5.1"/><rect x="98.1" y="560.3" width="9.8" height="9.8" transform="rotate(63.9 98.1 560.3)"/><circle cx="385.9" cy="571.4" r="4.7"/><rect x="503.8" y="582.6" width="9" height="9" transform="rotate(1.7 503.8 582.6)"/><rect x="144" y="593.8" width="8.7" height="8.7" transform="rotate(35.3 144 593.8)"/><rect x="555.7" y="605" width="8.3" height="8.3" transform="rotate(89.8 555.7 605)"/><circle cx="284.5" cy="616.1" r="4"/><rect x="246.4" y="627.3" width="7.5" height="7.5" transform="rotate(76.7 246.4 627.3)"/><rect x="426.7" y="638.5" width="7.1" height="7.1" transform="rotate(12.7 426.7 638.5)"/><circle cx="77.3" cy="649.7" r="3.4"/><circle cx="225" cy="660.8" r="3.2"/><rect x="144.4" y="672" width="6" height="6" transform="rotate(21.2 144.4 672)"/></g>
+<rect width="640" height="640" fill="url(#vwiredauthoritypromptopacity)"/>
+<rect width="640" height="640" filter="url(#nwiredauthoritypromptopacity)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nwiredauthoritypromptopacity)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

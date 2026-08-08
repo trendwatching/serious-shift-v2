@@ -7,7 +7,9 @@ from dataclasses import asdict, dataclass
 from urllib.parse import urlparse
 
 from .config import DOMAINS
-from .modules import _LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE
+from .modules import (_LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE,
+                      FIELD_WORD_LIMITS, LIST_ITEM_WORD_LIMITS, PAIR_TEXT_WORD_LIMITS,
+                      STEP_TEXT_WORD_LIMIT, count_words)
 
 #: A stat band displays a statistic, and a statistic contains a number.
 _HAS_DIGIT = re.compile(r'\d')
@@ -49,19 +51,10 @@ REQUIRED_MODULES = {
     },
 }
 
-WORD_LIMITS = {
-    ('dek', 'text'): 45,
-    ('lede', 'text'): 40,
-    ('pull_quote', 'quote'): 18,
-    ('tension_band', 'quote'): 38,
-    ('peel_tabs', 'whats_changing'): 90,
-    ('peel_tabs', 'why_now'): 70,
-}
-
-ITEM_WORD_LIMITS = {
-    'signals': 35,
-    'counter_signals': 35,
-}
+#: Imported, not restated. Every one of these caps has a clamp on the writing
+#: side that must satisfy it, and two copies of a number drift.
+WORD_LIMITS = FIELD_WORD_LIMITS
+ITEM_WORD_LIMITS = LIST_ITEM_WORD_LIMITS
 
 
 @dataclass(frozen=True)
@@ -109,8 +102,10 @@ def _missing(value) -> bool:
     return value is None or value == '' or value == [] or value == {}
 
 
-def _words(value) -> int:
-    return len(re.findall(r"\b[\w’'-]+\b", str(value or '')))
+#: The gate and the write-time clamp must agree on what a word is, or a field
+#: can be trimmed to the limit and still be rejected for exceeding it. One
+#: definition, in modules.py, next to the clamp that has to satisfy it.
+_words = count_words
 
 
 def _claim_number(value) -> int | None:
@@ -172,26 +167,15 @@ def _validate_modules(modules, scope: str, path: str, contract: dict) -> list[Va
                     f'{field} exceeds {limit} words', True,
                 ))
 
-        if type_ in {'from_to', 'from_to_solid'}:
-            for field in ('from', 'to'):
-                if _words(data.get(field)) > 30:
-                    issues.append(ValidationIssue(
-                        'editorial_length', f'{module_path}.data.{field}',
-                        f'{field} exceeds 30 words', True,
-                    ))
-        if type_ == 'human_needs':
-            for field in ('unlocked', 'threatened'):
-                if _words(data.get(field)) > 45:
-                    issues.append(ValidationIssue(
-                        'editorial_length', f'{module_path}.data.{field}',
-                        f'{field} exceeds 45 words', True,
-                    ))
+        # from_to, from_to_solid and human_needs used to be checked again here,
+        # by hand. They are entries in FIELD_WORD_LIMITS now, so the loop above
+        # covers them and a second check only reported each overrun twice.
         if type_ == 'timeline':
             for item_index, item in enumerate(data.get('steps') or []):
-                if isinstance(item, dict) and _words(item.get('text')) > 45:
+                if isinstance(item, dict) and _words(item.get('text')) > STEP_TEXT_WORD_LIMIT:
                     issues.append(ValidationIssue(
                         'editorial_length', f'{module_path}.data.steps[{item_index}].text',
-                        'timeline step exceeds 45 words', True,
+                        f'timeline step exceeds {STEP_TEXT_WORD_LIMIT} words', True,
                     ))
         if type_ in ITEM_WORD_LIMITS:
             limit = ITEM_WORD_LIMITS[type_]
@@ -251,7 +235,7 @@ def _validate_modules(modules, scope: str, path: str, contract: dict) -> list[Va
             ))
         if type_ in {'industries', 'territories'}:
             for item_index, item in enumerate(data.get('items') or []):
-                if isinstance(item, dict) and _words(item.get('text')) > (40 if type_ == 'industries' else 50):
+                if isinstance(item, dict) and _words(item.get('text')) > PAIR_TEXT_WORD_LIMITS[type_]:
                     issues.append(ValidationIssue(
                         'editorial_length', f'{module_path}.data.items[{item_index}].text',
                         f'{type_} text is too long', True,

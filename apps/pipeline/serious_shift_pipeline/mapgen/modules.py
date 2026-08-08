@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 import re
 
+from .config import INDUSTRY_SECTORS
+
 # Phases 3 and 4 name and cluster; this writes the prose the reader sees on the
 # shift and sub-shift pages (From→To, what's changing / why now, human needs,
 # the tension, horizon, industries, opportunity territories).
@@ -132,6 +134,20 @@ def scrub_module_tree(value):
     return value
 
 
+#: How the publication gate counts a word. `str.split()` is NOT the same
+#: measure: it treats "cost/benefit", "U.S." and "2026—2028" as one word each,
+#: where this counts them as two, three and two. Clamping by one definition and
+#: gating by the other is why 23 fields on one run were trimmed to the limit and
+#: then rejected for exceeding it. There is now one counter and both sides use
+#: it — validation.py imports `count_words` from here.
+_WORD = re.compile(r"\b[\w’'-]+\b")
+
+
+def count_words(value) -> int:
+    """The number of words in `value`, as the publication contract counts them."""
+    return len(_WORD.findall(str(value or '')))
+
+
 def clamp_words(text, limit: int) -> str:
     """Trim prose to `limit` words, preferring a sentence boundary.
 
@@ -145,21 +161,85 @@ def clamp_words(text, limit: int) -> str:
     So the cap is applied here instead, where it is one item's problem. Cutting
     at the last full sentence inside the limit keeps the note readable; only when
     there is no sentence break do we fall back to a word cut with an ellipsis.
+
+    Whitespace tokens are added one at a time and measured with `count_words`,
+    because a single token can carry more than one word by that measure — which
+    is exactly how a clamped field went on to fail the gate.
     """
     # Scrub before measuring: a stripped identifier should not cost the copy a
     # word of its allowance, and every prose field already passes through here.
     cleaned = strip_identifiers(text)
-    words = cleaned.split()
-    if len(words) <= limit:
+    if count_words(cleaned) <= limit:
         return cleaned
-    head = ' '.join(words[:limit])
+
+    kept: list[str] = []
+    used = 0
+    for token in cleaned.split():
+        cost = count_words(token)
+        if used + cost > limit:
+            break
+        kept.append(token)
+        used += cost
+    head = ' '.join(kept)
     # Prefer the last sentence end, but only if it keeps most of the allowance —
     # cutting a 40-word note down to 6 to land on a full stop loses more than the
     # ellipsis does.
     cut = max(head.rfind('. '), head.rfind('! '), head.rfind('? '))
-    if cut > 0 and len(head[:cut].split()) >= limit * 0.6:
+    if cut > 0 and count_words(head[:cut]) >= limit * 0.6:
         return head[:cut + 1]
     return head.rstrip(' ,;:—-') + '…'
+
+
+#: The publication gate accepts 2–6 citations on a peel-tab body. Nothing during
+#: generation enforced the upper bound — `kt_is_complete` checks only "at least
+#: two, all inside the routed pool" — so the model, handed the union of five
+#: sub-shifts' claims, routinely cited seventeen to twenty-one of them and every
+#: single key shift failed the gate. 49 of 49 on one run.
+#:
+#: Trimmed here rather than retried, for the same reason lengths are: citing too
+#: much is not a defect in the body, and re-asking discards a good one. The first
+#: six are kept — the model lists its strongest support first — and validity is
+#: preserved because every id already came from the pool the gate checks against.
+MAX_CITATIONS = 6
+
+
+def _clamp_citations(ids) -> list:
+    if not isinstance(ids, list):
+        return []
+    seen, out = set(), []
+    for value in ids:
+        if value in seen:
+            continue
+        seen.add(value)
+        out.append(value)
+        if len(out) == MAX_CITATIONS:
+            break
+    return out
+
+
+def _canonical_industries(items, sectors: list) -> list | None:
+    """The model's sector notes, in the contract's order, with the canon complete.
+
+    The gate requires all sixteen canonical sectors, exactly once, in order.
+    Nothing put them in that order; `_as_pairs` passed through whatever came
+    back, and three shifts on one run failed for a missing or reordered sector.
+
+    A sector the model skipped carries an empty note rather than invented prose,
+    and rather than the module being dropped — `industries` is a required module
+    on every key shift, because the document is the full record and the
+    visibility matrix decides separately which spheres show it. Dropping it
+    traded three failures for four. The reading view renders only the sectors
+    that actually carry a note, so an empty one costs the reader nothing.
+    """
+    if not isinstance(items, list) or not sectors:
+        return None
+    key = lambda name: re.sub(r'[^a-z0-9]', '', str(name or '').lower())
+    by_name: dict = {}
+    for item in items:
+        if isinstance(item, dict) and item.get('name'):
+            by_name.setdefault(key(item['name']), item)
+    return [{'name': sector, 'text': (by_name.get(key(sector)) or {}).get('text', '')}
+            for sector in sectors]
 
 
 def _clamp_items(items, limit: int) -> list | None:
@@ -251,6 +331,72 @@ def _module(type_: str, data, required: tuple = ()) -> dict | None:
     return {'type': type_, 'data': data}
 
 
+#: Every capped editorial field, in one place. The write-time builders below use
+#: these, `conform_modules` re-applies them at export, and validation.py imports
+#: them for its own checks — so a limit cannot be changed on one side only.
+FIELD_WORD_LIMITS = {
+    ('dek', 'text'): 45,
+    ('lede', 'text'): 40,
+    ('pull_quote', 'quote'): 18,
+    ('tension_band', 'quote'): 38,
+    ('peel_tabs', 'whats_changing'): 90,
+    ('peel_tabs', 'why_now'): 70,
+    ('from_to', 'from'): 30,
+    ('from_to', 'to'): 30,
+    ('from_to_solid', 'from'): 30,
+    ('from_to_solid', 'to'): 30,
+    ('human_needs', 'unlocked'): 45,
+    ('human_needs', 'threatened'): 45,
+}
+LIST_ITEM_WORD_LIMITS = {'signals': 35, 'counter_signals': 35}
+PAIR_TEXT_WORD_LIMITS = {'industries': 40, 'territories': 50}
+STEP_TEXT_WORD_LIMIT = 45
+
+
+def conform_modules(modules: list) -> list:
+    """`modules` with every contract cap applied.
+
+    The builders already clamp as they write, so this is a second application of
+    the same rules — and it is the one that matters. Generation writes a module
+    list into the database once; the export reads it back on every run, including
+    `--export-only`. Conforming here is what lets a cap that was wrong, or absent,
+    when the copy was generated be corrected without regenerating anything, and
+    it is the only point a hand-authored override passes through at all.
+
+    It removes nothing except an industries module that cannot be made canonical,
+    which is not publishable by definition.
+    """
+    out = []
+    for module in modules or []:
+        if not isinstance(module, dict):
+            continue
+        type_ = module.get('type')
+        data = dict(module.get('data') or {})
+
+        for (limited_type, field), limit in FIELD_WORD_LIMITS.items():
+            if type_ == limited_type and data.get(field):
+                data[field] = clamp_words(data[field], limit)
+
+        if type_ == 'peel_tabs':
+            data['evidence_ids'] = _clamp_citations(data.get('evidence_ids'))
+        if type_ in LIST_ITEM_WORD_LIMITS:
+            data['items'] = _clamp_strings(_as_strings(data.get('items')),
+                                           LIST_ITEM_WORD_LIMITS[type_]) or []
+        if type_ == 'timeline':
+            data['steps'] = _clamp_steps(_as_steps(data.get('steps')), STEP_TEXT_WORD_LIMIT) or []
+        if type_ == 'industries':
+            canonical = _canonical_industries(data.get('items'), INDUSTRY_SECTORS)
+            if canonical is None:
+                continue
+            data['items'] = _clamp_items(canonical, PAIR_TEXT_WORD_LIMITS['industries'])
+        elif type_ == 'territories':
+            data['items'] = _clamp_items(_as_pairs(data.get('items')),
+                                         PAIR_TEXT_WORD_LIMITS['territories']) or []
+
+        out.append({**module, 'data': data})
+    return out
+
+
 def kt_modules(kt_row: dict, editorial: dict) -> list:
     """Module list for a key shift, in the design's reading order."""
     e = editorial or {}
@@ -277,7 +423,7 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
         _module('peel_tabs', {
             'whats_changing': clamp_words(e.get('whats_changing'), 90),
             'why_now': clamp_words(e.get('why_now'), 70),
-            'evidence_ids': e.get('evidence_ids') or [],
+            'evidence_ids': _clamp_citations(e.get('evidence_ids')),
         }),
         # Resolved from the shift's sub-shifts at render time, so it carries no
         # data of its own — but it still has to sit in the order.
@@ -297,7 +443,8 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
             'label': 'The tension',
         }, ('quote',)),
         _module('timeline', {'steps': _clamp_steps(_as_steps(e.get('timeline')), 45)}, ('steps',)),
-        _module('industries', {'items': _clamp_items(_as_pairs(e.get('industries')), 40)}, ('items',)),
+        _module('industries', {'items': _clamp_items(
+            _canonical_industries(e.get('industries'), INDUSTRY_SECTORS), 40)}, ('items',)),
         _module('territories', {'items': _clamp_items(_as_pairs(e.get('opportunities')), 50)}, ('items',)),
     ]
     return [m for m in candidates if m]
@@ -328,7 +475,7 @@ def st_modules(st_row: dict, editorial: dict) -> list:
         _module('peel_tabs', {
             'whats_changing': clamp_words(e.get('whats_changing'), 90),
             'why_now': clamp_words(e.get('why_now'), 70),
-            'evidence_ids': e.get('evidence_ids') or [],
+            'evidence_ids': _clamp_citations(e.get('evidence_ids')),
         }),
         _module('human_needs', {
             'unlocked': clamp_words(needs.get('unlocked'), 45),

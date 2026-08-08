@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>manipulation-blindspot/instinct-override</title>
+<defs>
+<linearGradient id="fmanipulationblindspotinstinctoverride" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gmanipulationblindspotinstinctoverride" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bmanipulationblindspotinstinctoverride" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="smanipulationblindspotinstinctoverride" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vmanipulationblindspotinstinctoverride" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nmanipulationblindspotinstinctoverride" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fmanipulationblindspotinstinctoverride)"/>
+<rect width="640" height="640" fill="url(#gmanipulationblindspotinstinctoverride)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bmanipulationblindspotinstinctoverride)" filter="url(#smanipulationblindspotinstinctoverride)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.92" stroke-opacity="0.92"><rect x="147.8" y="-32" width="30" height="30" transform="rotate(11.2 147.8 -32)"/><rect x="480.8" y="-20.8" width="29.6" height="29.6" transform="rotate(61.1 480.8 -20.8)"/><circle cx="573.7" cy="-9.7" r="14.6"/><rect x="452.3" y="1.5" width="28.9" height="28.9" transform="rotate(62.3 452.3 1.5)"/><rect x="403.4" y="12.7" width="28.5" height="28.5" transform="rotate(67.9 403.4 12.7)"/><rect x="464.1" y="23.9" width="28.1" height="28.1" transform="rotate(28.7 464.1 23.9)"/><circle cx="604.3" cy="35" r="13.9"/><rect x="471.9" y="46.2" width="27.3" height="27.3" transform="rotate(17.5 471.9 46.2)"/><rect x="52.6" y="57.4" width="27" height="27" transform="rotate(4.6 52.6 57.4)"/><rect x="186" y="68.6" width="26.6" height="26.6" transform="rotate(24 186 68.6)"/><circle cx="591" cy="79.7" r="13.1"/><circle cx="396.4" cy="90.9" r="12.9"/><rect x="443.3" y="102.1" width="25.4" height="25.4" transform="rotate(11.1 443.3 102.1)"/><rect x="343.3" y="113.3" width="25" height="25" transform="rotate(67.3 343.3 113.3)"/><rect x="326.5" y="124.4" width="24.7" height="24.7" transform="rotate(12.7 326.5 124.4)"/><circle cx="258.8" cy="135.6" r="12.1"/><circle cx="253.6" cy="146.8" r="12"/><circle cx="48.3" cy="158" r="11.8"/><rect x="150.8" y="169.1" width="23.1" height="23.1" transform="rotate(79.9 150.8 169.1)"/><circle cx="544.8" cy="180.3" r="11.4"/><circle cx="454.3" cy="191.5" r="11.2"/><rect x="436.6" y="202.7" width="22" height="22" transform="rotate(30.4 436.6 202.7)"/><rect x="316.6" y="213.8" width="21.6" height="21.6" transform="rotate(52.4 316.6 213.8)"/><circle cx="470.2" cy="225" r="10.6"/><rect x="93.3" y="236.2" width="20.9" height="20.9" transform="rotate(9.2 93.3 236.2)"/><rect x="550.4" y="247.4" width="20.5" height="20.5" transform="rotate(67.2 550.4 247.4)"/><rect x="227" y="258.5" width="20.1" height="20.1" transform="rotate(41.1 227 258.5)"/><rect x="190.7" y="269.7" width="19.7" height="19.7" transform="rotate(48.8 190.7 269.7)"/><circle cx="53" cy="280.9" r="9.7"/><rect x="307.2" y="292.1" width="19" height="19" transform="rotate(0.8 307.2 292.1)"/><circle cx="487.7" cy="303.2" r="9.3"/><rect x="584.8" y="314.4" width="18.2" height="18.2" transform="rotate(28.2 584.8 314.4)"/><circle cx="512.6" cy="325.6" r="8.9"/><rect x="326.3" y="336.8" width="17.4" height="17.4" transform="rotate(1.9 326.3 336.8)"/><rect x="84.9" y="347.9" width="17" height="17" transform="rotate(65.4 84.9 347.9)"/><circle cx="322.7" cy="359.1" r="8.3"/><rect x="584.4" y="370.3" width="16.3" height="16.3" transform="rotate(55 584.4 370.3)"/><rect x="85.4" y="381.5" width="15.9" height="15.9" transform="rotate(75.1 85.4 381.5)"/><circle cx="498.1" cy="392.6" r="7.8"/><circle cx="478.7" cy="403.8" r="7.6"/><circle cx="484.3" cy="415" r="7.4"/><rect x="268.1" y="426.2" width="14.4" height="14.4" transform="rotate(71.7 268.1 426.2)"/><circle cx="94.7" cy="437.3" r="7"/><rect x="481.7" y="448.5" width="13.6" height="13.6" transform="rotate(16.8 481.7 448.5)"/><rect x="550.4" y="459.7" width="13.2" height="13.2" transform="rotate(61 550.4 459.7)"/><circle cx="570.4" cy="470.9" r="6.4"/><rect x="228" y="482" width="12.5" height="12.5" transform="rotate(57.8 228 482)"/><rect x="445.6" y="493.2" width="12.1" height="12.1" transform="rotate(70.9 445.6 493.2)"/><rect x="334.1" y="504.4" width="11.7" height="11.7" transform="rotate(78.8 334.1 504.4)"/><circle cx="407.8" cy="515.6" r="5.7"/><rect x="335.2" y="526.7" width="11" height="11" transform="rotate(51.1 335.2 526.7)"/><circle cx="527.2" cy="537.9" r="5.3"/><rect x="143.2" y="549.1" width="10.2" height="10.2" transform="rotate(59.1 143.2 549.1)"/><rect x="375.8" y="560.3" width="9.8" height="9.8" transform="rotate(12.2 375.8 560.3)"/><rect x="147" y="571.4" width="9.4" height="9.4" transform="rotate(49.8 147 571.4)"/><rect x="381.8" y="582.6" width="9" height="9" transform="rotate(2.4 381.8 582.6)"/><rect x="522.7" y="593.8" width="8.7" height="8.7" transform="rotate(73.2 522.7 593.8)"/><rect x="270.9" y="605" width="8.3" height="8.3" transform="rotate(62.7 270.9 605)"/><rect x="420.5" y="616.1" width="7.9" height="7.9" transform="rotate(15.1 420.5 616.1)"/><rect x="302.4" y="627.3" width="7.5" height="7.5" transform="rotate(53.2 302.4 627.3)"/><circle cx="390.1" cy="638.5" r="3.6"/><circle cx="565" cy="649.7" r="3.4"/><circle cx="569.3" cy="660.8" r="3.2"/><rect x="158.6" y="672" width="6" height="6" transform="rotate(83.3 158.6 672)"/></g>
+<rect width="640" height="640" fill="url(#vmanipulationblindspotinstinctoverride)"/>
+<rect width="640" height="640" filter="url(#nmanipulationblindspotinstinctoverride)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nmanipulationblindspotinstinctoverride)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

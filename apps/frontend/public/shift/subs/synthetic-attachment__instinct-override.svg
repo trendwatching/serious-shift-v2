@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>synthetic-attachment/instinct-override</title>
+<defs>
+<linearGradient id="fsyntheticattachmentinstinctoverride" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gsyntheticattachmentinstinctoverride" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bsyntheticattachmentinstinctoverride" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="ssyntheticattachmentinstinctoverride" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vsyntheticattachmentinstinctoverride" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nsyntheticattachmentinstinctoverride" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fsyntheticattachmentinstinctoverride)"/>
+<rect width="640" height="640" fill="url(#gsyntheticattachmentinstinctoverride)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bsyntheticattachmentinstinctoverride)" filter="url(#ssyntheticattachmentinstinctoverride)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="99.5" cy="-32" r="15"/><rect x="312" y="-20.8" width="29.6" height="29.6" transform="rotate(22.2 312 -20.8)"/><rect x="363.3" y="-9.7" width="29.2" height="29.2" transform="rotate(76.1 363.3 -9.7)"/><rect x="174.6" y="1.5" width="28.9" height="28.9" transform="rotate(12.8 174.6 1.5)"/><rect x="94.8" y="12.7" width="28.5" height="28.5" transform="rotate(84.7 94.8 12.7)"/><rect x="198.5" y="23.9" width="28.1" height="28.1" transform="rotate(50.7 198.5 23.9)"/><rect x="278.1" y="35" width="27.7" height="27.7" transform="rotate(51.1 278.1 35)"/><circle cx="545.1" cy="46.2" r="13.7"/><circle cx="462.5" cy="57.4" r="13.5"/><rect x="328.8" y="68.6" width="26.6" height="26.6" transform="rotate(45.6 328.8 68.6)"/><circle cx="587.1" cy="79.7" r="13.1"/><rect x="421.8" y="90.9" width="25.8" height="25.8" transform="rotate(22.7 421.8 90.9)"/><circle cx="386.5" cy="102.1" r="12.7"/><circle cx="48.9" cy="113.3" r="12.5"/><circle cx="156" cy="124.4" r="12.3"/><rect x="173.5" y="135.6" width="24.3" height="24.3" transform="rotate(31.6 173.5 135.6)"/><circle cx="204.9" cy="146.8" r="12"/><circle cx="485.8" cy="158" r="11.8"/><circle cx="320.9" cy="169.1" r="11.6"/><rect x="476.1" y="180.3" width="22.8" height="22.8" transform="rotate(37.2 476.1 180.3)"/><rect x="522.8" y="191.5" width="22.4" height="22.4" transform="rotate(55 522.8 191.5)"/><circle cx="309.9" cy="202.7" r="11"/><rect x="450.4" y="213.8" width="21.6" height="21.6" transform="rotate(63 450.4 213.8)"/><circle cx="283.9" cy="225" r="10.6"/><rect x="206.1" y="236.2" width="20.9" height="20.9" transform="rotate(67.2 206.1 236.2)"/><rect x="232" y="247.4" width="20.5" height="20.5" transform="rotate(45.5 232 247.4)"/><rect x="539" y="258.5" width="20.1" height="20.1" transform="rotate(20.2 539 258.5)"/><circle cx="527.7" cy="269.7" r="9.9"/><circle cx="565.8" cy="280.9" r="9.7"/><rect x="328.8" y="292.1" width="19" height="19" transform="rotate(29.1 328.8 292.1)"/><circle cx="97.1" cy="303.2" r="9.3"/><rect x="235.5" y="314.4" width="18.2" height="18.2" transform="rotate(44.6 235.5 314.4)"/><rect x="389.7" y="325.6" width="17.8" height="17.8" transform="rotate(41 389.7 325.6)"/><rect x="79.1" y="336.8" width="17.4" height="17.4" transform="rotate(22.7 79.1 336.8)"/><circle cx="97.4" cy="347.9" r="8.5"/><circle cx="508" cy="359.1" r="8.3"/><circle cx="200.3" cy="370.3" r="8.1"/><circle cx="349.4" cy="381.5" r="8"/><circle cx="576" cy="392.6" r="7.8"/><rect x="520.1" y="403.8" width="15.1" height="15.1" transform="rotate(21.2 520.1 403.8)"/><rect x="540.1" y="415" width="14.8" height="14.8" transform="rotate(86 540.1 415)"/><rect x="450.8" y="426.2" width="14.4" height="14.4" transform="rotate(12.1 450.8 426.2)"/><rect x="559.8" y="437.3" width="14" height="14" transform="rotate(20.7 559.8 437.3)"/><rect x="330.9" y="448.5" width="13.6" height="13.6" transform="rotate(56.4 330.9 448.5)"/><circle cx="291.3" cy="459.7" r="6.6"/><rect x="283.4" y="470.9" width="12.9" height="12.9" transform="rotate(73.6 283.4 470.9)"/><rect x="447.7" y="482" width="12.5" height="12.5" transform="rotate(87.8 447.7 482)"/><rect x="296.7" y="493.2" width="12.1" height="12.1" transform="rotate(7.7 296.7 493.2)"/><rect x="281.6" y="504.4" width="11.7" height="11.7" transform="rotate(13.1 281.6 504.4)"/><circle cx="362.3" cy="515.6" r="5.7"/><circle cx="492.2" cy="526.7" r="5.5"/><circle cx="120.7" cy="537.9" r="5.3"/><rect x="303.9" y="549.1" width="10.2" height="10.2" transform="rotate(43.9 303.9 549.1)"/><rect x="472.5" y="560.3" width="9.8" height="9.8" transform="rotate(7.3 472.5 560.3)"/><rect x="461.7" y="571.4" width="9.4" height="9.4" transform="rotate(88.6 461.7 571.4)"/><circle cx="344.5" cy="582.6" r="4.5"/><rect x="128.8" y="593.8" width="8.7" height="8.7" transform="rotate(38.2 128.8 593.8)"/><rect x="239.1" y="605" width="8.3" height="8.3" transform="rotate(8.3 239.1 605)"/><rect x="480" y="616.1" width="7.9" height="7.9" transform="rotate(75.5 480 616.1)"/><circle cx="250.4" cy="627.3" r="3.8"/><circle cx="451.6" cy="638.5" r="3.6"/><rect x="270.4" y="649.7" width="6.8" height="6.8" transform="rotate(28.7 270.4 649.7)"/><circle cx="205.9" cy="660.8" r="3.2"/><circle cx="57.6" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vsyntheticattachmentinstinctoverride)"/>
+<rect width="640" height="640" filter="url(#nsyntheticattachmentinstinctoverride)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nsyntheticattachmentinstinctoverride)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>attention-collapse/crisis-palimpsest</title>
+<defs>
+<linearGradient id="fattentioncollapsecrisispalimpsest" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gattentioncollapsecrisispalimpsest" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="battentioncollapsecrisispalimpsest" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sattentioncollapsecrisispalimpsest" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vattentioncollapsecrisispalimpsest" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nattentioncollapsecrisispalimpsest" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fattentioncollapsecrisispalimpsest)"/>
+<rect width="640" height="640" fill="url(#gattentioncollapsecrisispalimpsest)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#battentioncollapsecrisispalimpsest)" filter="url(#sattentioncollapsecrisispalimpsest)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="112.1" cy="389.1" r="49.5"/><path d="M -8.4 680 L -8.4 455.9 C 39.8 420.3 72.5 407.6 112.1 407.6 C 151.7 407.6 184.4 420.3 232.6 455.9 L 232.6 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="408.8" cy="444.6" r="88.7"/><path d="M 192.8 680 L 192.8 564.3 C 279.2 500.6 337.8 477.9 408.8 477.9 C 479.7 477.9 538.4 500.6 624.8 564.3 L 624.8 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vattentioncollapsecrisispalimpsest)"/>
+<rect width="640" height="640" filter="url(#nattentioncollapsecrisispalimpsest)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nattentioncollapsecrisispalimpsest)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

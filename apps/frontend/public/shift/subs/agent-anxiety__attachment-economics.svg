@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>agent-anxiety/attachment-economics</title>
+<defs>
+<linearGradient id="fagentanxietyattachmenteconomics" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gagentanxietyattachmenteconomics" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bagentanxietyattachmenteconomics" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sagentanxietyattachmenteconomics" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vagentanxietyattachmenteconomics" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nagentanxietyattachmenteconomics" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fagentanxietyattachmenteconomics)"/>
+<rect width="640" height="640" fill="url(#gagentanxietyattachmenteconomics)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bagentanxietyattachmenteconomics)" filter="url(#sagentanxietyattachmenteconomics)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="149.9" rx="493.6" ry="177.7" fill="none" stroke-width="48"/><rect x="325.2" y="327.6" width="20" height="20" transform="rotate(77.5 325.2 327.6)"/><rect x="319.4" y="337.1" width="19.5" height="19.5" transform="rotate(8.4 319.4 337.1)"/><rect x="362.5" y="346.5" width="19.1" height="19.1" transform="rotate(60.3 362.5 346.5)"/><rect x="330" y="356" width="18.6" height="18.6" transform="rotate(85.7 330 356)"/><rect x="324.5" y="365.5" width="18.2" height="18.2" transform="rotate(36.4 324.5 365.5)"/><rect x="293.4" y="374.9" width="17.7" height="17.7" transform="rotate(6.8 293.4 374.9)"/><rect x="353.5" y="384.4" width="17.3" height="17.3" transform="rotate(71.9 353.5 384.4)"/><rect x="304.9" y="393.9" width="16.8" height="16.8" transform="rotate(62.5 304.9 393.9)"/><rect x="261.6" y="403.3" width="16.4" height="16.4" transform="rotate(26.9 261.6 403.3)"/><rect x="228.3" y="412.8" width="15.9" height="15.9" transform="rotate(77.9 228.3 412.8)"/><rect x="251.5" y="422.3" width="15.5" height="15.5" transform="rotate(34.1 251.5 422.3)"/><rect x="419.3" y="431.7" width="15" height="15" transform="rotate(74.8 419.3 431.7)"/><rect x="270.9" y="441.2" width="14.5" height="14.5" transform="rotate(6.4 270.9 441.2)"/><rect x="342.3" y="450.7" width="14.1" height="14.1" transform="rotate(5.6 342.3 450.7)"/><rect x="358.4" y="460.1" width="13.6" height="13.6" transform="rotate(42.9 358.4 460.1)"/><rect x="424.2" y="469.6" width="13.2" height="13.2" transform="rotate(38.4 424.2 469.6)"/><rect x="265.9" y="479.1" width="12.7" height="12.7" transform="rotate(78.2 265.9 479.1)"/><rect x="369" y="488.5" width="12.3" height="12.3" transform="rotate(43.5 369 488.5)"/><rect x="273.7" y="498" width="11.8" height="11.8" transform="rotate(78.1 273.7 498)"/><rect x="270.1" y="507.5" width="11.4" height="11.4" transform="rotate(68.6 270.1 507.5)"/><rect x="206" y="516.9" width="10.9" height="10.9" transform="rotate(4 206 516.9)"/><rect x="345.8" y="526.4" width="10.5" height="10.5" transform="rotate(79.6 345.8 526.4)"/><rect x="380.9" y="535.9" width="10" height="10" transform="rotate(43.3 380.9 535.9)"/><rect x="245.1" y="545.3" width="9.5" height="9.5" transform="rotate(85 245.1 545.3)"/><rect x="177.9" y="554.8" width="9.1" height="9.1" transform="rotate(25.5 177.9 554.8)"/><rect x="272.7" y="564.3" width="8.6" height="8.6" transform="rotate(48.5 272.7 564.3)"/><rect x="368.2" y="573.7" width="8.2" height="8.2" transform="rotate(28.7 368.2 573.7)"/><rect x="362.3" y="583.2" width="7.7" height="7.7" transform="rotate(22.2 362.3 583.2)"/><rect x="496.8" y="592.7" width="7.3" height="7.3" transform="rotate(76 496.8 592.7)"/><rect x="123.8" y="602.1" width="6.8" height="6.8" transform="rotate(60.5 123.8 602.1)"/><rect x="352.1" y="611.6" width="6.4" height="6.4" transform="rotate(75.2 352.1 611.6)"/><rect x="236.4" y="621.1" width="5.9" height="5.9" transform="rotate(57.7 236.4 621.1)"/><rect x="533.3" y="630.5" width="5.5" height="5.5" transform="rotate(38.6 533.3 630.5)"/><rect x="353.9" y="640" width="5" height="5" transform="rotate(51.2 353.9 640)"/></g>
+<rect width="640" height="640" fill="url(#vagentanxietyattachmenteconomics)"/>
+<rect width="640" height="640" filter="url(#nagentanxietyattachmenteconomics)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nagentanxietyattachmenteconomics)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

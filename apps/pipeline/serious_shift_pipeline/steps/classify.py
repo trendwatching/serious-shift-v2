@@ -243,8 +243,12 @@ def _escalate(row, corpus, keys, cost):
             })
     if not catalogue:
         return []
-    text, usage = llm.call(llm.Req(prompt=classify_prompt(row, catalogue), model=CLASSIFY_MODEL))
-    cost.add(usage, model=CLASSIFY_MODEL)
+    # `Req` carries the prompt as `user`; there is no `prompt` field on it.
+    text, usage = llm.call(llm.Req(user=classify_prompt(row, catalogue),
+                                   model=CLASSIFY_MODEL))
+    # CostTracker.add(usage, thinker_name) — the second argument is the
+    # attribution bucket, not the model.
+    cost.add(usage, 'classify')
     try:
         matches = (json.loads(text[text.index('{'):text.rindex('}') + 1]) or {}).get('matches') or []
     except (ValueError, KeyError):
@@ -266,84 +270,87 @@ def _escalate(row, corpus, keys, cost):
 
 
 def run(*, limit: int, do_all: bool, dry_run: bool, only: int | None) -> int:
-    conn = db.connect()
-    corpus, corpus_hash, ref_ids = load_corpus(conn)
-    if not corpus or not corpus.shifts:
-        print('  ⚠  no published map — nothing to classify against')
-        return 0
-    print(f'  corpus: {len(corpus.shifts)} shifts, hash {corpus_hash[:12]}')
+    # `db.connect()` is a context manager, not a connection. Calling it bare
+    # handed every helper below a _GeneratorContextManager, so this step threw
+    # AttributeError on its first query and had never completed a run.
+    with db.connect() as conn:
+        corpus, corpus_hash, ref_ids = load_corpus(conn)
+        if not corpus or not corpus.shifts:
+            print('  ⚠  no published map — nothing to classify against')
+            return 0
+        print(f'  corpus: {len(corpus.shifts)} shifts, hash {corpus_hash[:12]}')
 
-    rows = db.query(conn, SWEEP, {'all': do_all, 'hash': corpus_hash, 'limit': limit})
-    if only:
-        rows = [r for r in rows if r['id'] == only]
-    if not rows:
-        print('  ✓  nothing to classify')
-        return 0
+        rows = db.query(conn, SWEEP, {'all': do_all, 'hash': corpus_hash, 'limit': limit})
+        if only:
+            rows = [r for r in rows if r['id'] == only]
+        if not rows:
+            print('  ✓  nothing to classify')
+            return 0
 
-    cost = observability.CostTracker(budget=BUDGET, phase='classify')
-    calls = linked = 0
-    model_on = MODEL_ENABLED
-    for row in rows:
-        innovation = _innovation_doc(row)
-        owned = {f"{r['scope']}:{r['slug']}" for r in db.query(conn, OWNED, (row['id'],))}
-        key_budget = MAX_KEY_LINKS - sum(1 for r in owned if r.startswith('key_trend:'))
-        sub_budget = MAX_SUB_LINKS - sum(1 for r in owned if r.startswith('sub_trend:'))
-        picks, notes = [], {}
-        if key_budget > 0 or sub_budget > 0:
-            scored = score_all(corpus, innovation, sector_of, exclude=owned)
-            keys = [s for s in scored if s.scope == 'key_trend']
-            escalate = (
-                model_on and not dry_run and calls < MODEL_CALLS_MAX
-                and is_ambiguous(keys, accept=ACCEPT_AT, floor=FLOOR_AT)
-            )
-            verdict = None
-            if escalate:
-                calls += 1
-                try:
-                    verdict = _escalate(row, corpus, keys, cost)
-                except config.BudgetExceeded:
-                    # Spending the budget is not a failure: the deterministic
-                    # answer is still a good answer, so stop escalating and
-                    # finish the sweep rather than abandoning it half-written.
-                    print('  ⚠  classify budget reached — finishing deterministically')
-                    model_on = False
-                    verdict = None
-            if verdict is None:
-                picks = choose(scored, key_budget=key_budget, sub_budget=sub_budget, accept=ACCEPT_AT)
-            else:
-                by_ref = {s.ref: s for s in scored}
-                picks = [replace(by_ref[ref], confidence=conf) for ref, conf, _ in verdict
-                         if ref in by_ref][:key_budget]
-                notes = {ref: note for ref, _, note in verdict if note}
+        cost = observability.CostTracker(budget=BUDGET, phase='classify')
+        calls = linked = 0
+        model_on = MODEL_ENABLED
+        for row in rows:
+            innovation = _innovation_doc(row)
+            owned = {f"{r['scope']}:{r['slug']}" for r in db.query(conn, OWNED, (row['id'],))}
+            key_budget = MAX_KEY_LINKS - sum(1 for r in owned if r.startswith('key_trend:'))
+            sub_budget = MAX_SUB_LINKS - sum(1 for r in owned if r.startswith('sub_trend:'))
+            picks, notes = [], {}
+            if key_budget > 0 or sub_budget > 0:
+                scored = score_all(corpus, innovation, sector_of, exclude=owned)
+                keys = [s for s in scored if s.scope == 'key_trend']
+                escalate = (
+                    model_on and not dry_run and calls < MODEL_CALLS_MAX
+                    and is_ambiguous(keys, accept=ACCEPT_AT, floor=FLOOR_AT)
+                )
+                verdict = None
+                if escalate:
+                    calls += 1
+                    try:
+                        verdict = _escalate(row, corpus, keys, cost)
+                    except config.BudgetExceeded:
+                        # Spending the budget is not a failure: the deterministic
+                        # answer is still a good answer, so stop escalating and
+                        # finish the sweep rather than abandoning it half-written.
+                        print('  ⚠  classify budget reached — finishing deterministically')
+                        model_on = False
+                        verdict = None
+                if verdict is None:
+                    picks = choose(scored, key_budget=key_budget, sub_budget=sub_budget, accept=ACCEPT_AT)
+                else:
+                    by_ref = {s.ref: s for s in scored}
+                    picks = [replace(by_ref[ref], confidence=conf) for ref, conf, _ in verdict
+                             if ref in by_ref][:key_budget]
+                    notes = {ref: note for ref, _, note in verdict if note}
 
-        ids, confs, ranks, texts = [], [], [], []
-        for rank, pick in enumerate(picks):
-            ref_id = ref_ids.get(pick.ref)
-            if not ref_id:
+            ids, confs, ranks, texts = [], [], [], []
+            for rank, pick in enumerate(picks):
+                ref_id = ref_ids.get(pick.ref)
+                if not ref_id:
+                    continue
+                ids.append(ref_id)
+                confs.append(pick.confidence)
+                ranks.append(rank)
+                texts.append(notes.get(pick.ref) or pick.note)
+
+            if dry_run:
+                print(f'  · {row["id"]} {row["title"][:52]!r} → '
+                      + (', '.join(f'{p.ref} {p.confidence}' for p in picks) or '(none)'))
                 continue
-            ids.append(ref_id)
-            confs.append(pick.confidence)
-            ranks.append(rank)
-            texts.append(notes.get(pick.ref) or pick.note)
 
-        if dry_run:
-            print(f'  · {row["id"]} {row["title"][:52]!r} → '
-                  + (', '.join(f'{p.ref} {p.confidence}' for p in picks) or '(none)'))
-            continue
+            db.execute(conn, RETRACT, (row['id'], ids))
+            if ids:
+                db.execute(conn, UPSERT, (row['id'], AUTO_SORT_BASE, ids, confs, ranks, texts))
+                linked += len(ids)
+            db.execute(conn,
+                       'UPDATE innovations SET classified_at = now(), classified_corpus_hash = %s WHERE id = %s',
+                       (corpus_hash, row['id']))
+            conn.commit()
 
-        db.execute(conn, RETRACT, (row['id'], ids))
-        if ids:
-            db.execute(conn, UPSERT, (row['id'], AUTO_SORT_BASE, ids, confs, ranks, texts))
-            linked += len(ids)
-        db.execute(conn,
-                   'UPDATE innovations SET classified_at = now(), classified_corpus_hash = %s WHERE id = %s',
-                   (corpus_hash, row['id']))
-        conn.commit()
-
-    verb = 'would link' if dry_run else 'linked'
-    print(f'  ✓  {len(rows)} innovation(s) swept, {verb} {linked}, {calls} model call(s), '
-          f'${cost.total_usd:.4f}')
-    return 0
+        verb = 'would link' if dry_run else 'linked'
+        print(f'  ✓  {len(rows)} innovation(s) swept, {verb} {linked}, {calls} model call(s), '
+              f'${cost.cost:.4f}')  # CostTracker exposes `.cost`, not `.total_usd`
+        return 0
 
 
 def main() -> int:

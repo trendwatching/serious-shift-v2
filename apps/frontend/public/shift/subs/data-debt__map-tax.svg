@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>data-debt/map-tax</title>
+<defs>
+<linearGradient id="fdatadebtmaptax" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gdatadebtmaptax" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bdatadebtmaptax" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sdatadebtmaptax" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vdatadebtmaptax" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ndatadebtmaptax" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fdatadebtmaptax)"/>
+<rect width="640" height="640" fill="url(#gdatadebtmaptax)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bdatadebtmaptax)" filter="url(#sdatadebtmaptax)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="134.5" rx="487.7" ry="175.6" fill="none" stroke-width="48"/><rect x="294.8" y="310.1" width="20" height="20" transform="rotate(45.2 294.8 310.1)"/><rect x="275.5" y="320.1" width="19.5" height="19.5" transform="rotate(77.3 275.5 320.1)"/><rect x="347.1" y="330.1" width="19.1" height="19.1" transform="rotate(61.6 347.1 330.1)"/><rect x="320.3" y="340" width="18.6" height="18.6" transform="rotate(29.2 320.3 340)"/><rect x="381.3" y="350" width="18.2" height="18.2" transform="rotate(24 381.3 350)"/><rect x="383" y="360" width="17.7" height="17.7" transform="rotate(65 383 360)"/><rect x="354.2" y="370" width="17.3" height="17.3" transform="rotate(41.8 354.2 370)"/><rect x="240.3" y="380" width="16.8" height="16.8" transform="rotate(47.5 240.3 380)"/><rect x="369" y="390" width="16.4" height="16.4" transform="rotate(30.4 369 390)"/><rect x="331.9" y="400" width="15.9" height="15.9" transform="rotate(80.5 331.9 400)"/><rect x="270.7" y="410" width="15.5" height="15.5" transform="rotate(66.2 270.7 410)"/><rect x="350.1" y="420" width="15" height="15" transform="rotate(81.8 350.1 420)"/><rect x="402.5" y="430" width="14.5" height="14.5" transform="rotate(38.5 402.5 430)"/><rect x="404" y="440" width="14.1" height="14.1" transform="rotate(37.8 404 440)"/><rect x="413.9" y="450" width="13.6" height="13.6" transform="rotate(86 413.9 450)"/><rect x="358.1" y="460" width="13.2" height="13.2" transform="rotate(85.6 358.1 460)"/><rect x="281" y="470" width="12.7" height="12.7" transform="rotate(78.3 281 470)"/><rect x="331.9" y="480" width="12.3" height="12.3" transform="rotate(40.4 331.9 480)"/><rect x="371.2" y="490" width="11.8" height="11.8" transform="rotate(11 371.2 490)"/><rect x="403.2" y="500" width="11.4" height="11.4" transform="rotate(81.9 403.2 500)"/><rect x="309.8" y="510" width="10.9" height="10.9" transform="rotate(50.6 309.8 510)"/><rect x="205.7" y="520" width="10.5" height="10.5" transform="rotate(87.6 205.7 520)"/><rect x="162.6" y="530" width="10" height="10" transform="rotate(42 162.6 530)"/><rect x="446.1" y="540" width="9.5" height="9.5" transform="rotate(33.1 446.1 540)"/><rect x="419.7" y="550" width="9.1" height="9.1" transform="rotate(79.1 419.7 550)"/><rect x="209.9" y="560" width="8.6" height="8.6" transform="rotate(57.8 209.9 560)"/><rect x="460" y="570" width="8.2" height="8.2" transform="rotate(29.9 460 570)"/><rect x="442.6" y="580" width="7.7" height="7.7" transform="rotate(47.7 442.6 580)"/><rect x="490.5" y="590" width="7.3" height="7.3" transform="rotate(69.4 490.5 590)"/><rect x="114.2" y="600" width="6.8" height="6.8" transform="rotate(67 114.2 600)"/><rect x="317" y="610" width="6.4" height="6.4" transform="rotate(13.5 317 610)"/><rect x="249" y="620" width="5.9" height="5.9" transform="rotate(89.2 249 620)"/><rect x="250.7" y="630" width="5.5" height="5.5" transform="rotate(75.1 250.7 630)"/><rect x="376.4" y="640" width="5" height="5" transform="rotate(36.1 376.4 640)"/></g>
+<rect width="640" height="640" fill="url(#vdatadebtmaptax)"/>
+<rect width="640" height="640" filter="url(#ndatadebtmaptax)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ndatadebtmaptax)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

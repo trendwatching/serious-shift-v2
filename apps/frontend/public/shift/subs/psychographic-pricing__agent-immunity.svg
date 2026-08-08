@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>psychographic-pricing/agent-immunity</title>
+<defs>
+<linearGradient id="fpsychographicpricingagentimmunity" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gpsychographicpricingagentimmunity" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bpsychographicpricingagentimmunity" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="spsychographicpricingagentimmunity" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vpsychographicpricingagentimmunity" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="npsychographicpricingagentimmunity" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fpsychographicpricingagentimmunity)"/>
+<rect width="640" height="640" fill="url(#gpsychographicpricingagentimmunity)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bpsychographicpricingagentimmunity)" filter="url(#spsychographicpricingagentimmunity)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="127.1" cy="376.8" r="60.7"/><path d="M -20.8 680 L -20.8 458.8 C 38.4 415.2 78.5 399.6 127.1 399.6 C 175.7 399.6 215.8 415.2 275 458.8 L 275 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="439.5" cy="406.2" r="84.2"/><path d="M 234.4 680 L 234.4 519.9 C 316.4 459.5 372.2 437.9 439.5 437.9 C 506.9 437.9 562.6 459.5 644.7 519.9 L 644.7 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vpsychographicpricingagentimmunity)"/>
+<rect width="640" height="640" filter="url(#npsychographicpricingagentimmunity)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#npsychographicpricingagentimmunity)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

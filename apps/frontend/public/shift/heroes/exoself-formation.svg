@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>exoself-formation</title>
+<defs>
+<linearGradient id="skyexoselfformation" x1="0" y1="0" x2="0.55" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<linearGradient id="beamexoselfformation" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.72"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<radialGradient id="discexoselfformation">
+<stop offset="0.72" stop-color="#FDFF85" stop-opacity="0.92"/>
+<stop offset="0.86" stop-color="#FDFF85" stop-opacity="0.34"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="glowexoselfformation" cx="48.8%" cy="34%" r="62%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="hazeexoselfformation" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#F2A03A" stop-opacity="0"/>
+<stop offset="0.5" stop-color="#F2A03A" stop-opacity="0.42"/>
+<stop offset="1" stop-color="#F2A03A" stop-opacity="0"/>
+</linearGradient>
+<radialGradient id="vigexoselfformation" cx="50%" cy="42%" r="72%">
+<stop offset="0.55" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.5"/>
+</radialGradient>
+<!-- Poster grain. Two frequencies: a fine tooth that sits on the whole field
+     and a coarse mottle that keeps the flat gradient from looking printed by a
+     browser. Both are filters on a rect, so they cost nothing to download. -->
+<filter id="softexoselfformation" x="-20%" y="-20%" width="140%" height="140%">
+<feGaussianBlur stdDeviation="16"/>
+</filter>
+<filter id="fineexoselfformation" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="7" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<filter id="coarseexoselfformation" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" seed="19" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.7 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.22}.lit-stroke{stroke:#FDFF85;stroke-opacity:0.85}</style>
+</defs>
+<rect width="800" height="1000" fill="url(#skyexoselfformation)"/>
+<rect width="800" height="1000" fill="url(#glowexoselfformation)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.17" stroke-opacity="0.17" ><rect x="-34.5" y="556.8" width="114.8" height="123.2"/><rect x="109.6" y="494.4" width="78" height="185.6"/><rect x="227.5" y="549.2" width="93.5" height="130.8"/><rect x="250.9" y="525.7" width="46.8" height="23.5"/><rect x="343.9" y="475.7" width="112.1" height="204.3"/><rect x="483.4" y="435.5" width="84.7" height="244.5"/><rect x="524.2" y="396.3" width="3" height="39.2"/><rect x="602.9" y="547.3" width="97" height="132.7"/><rect x="627.2" y="523.5" width="48.5" height="23.9"/><rect x="720.5" y="444.3" width="113.4" height="235.7"/><rect x="775.6" y="405.1" width="3" height="39.2"/></g>
+<rect x="0" y="360" width="800" height="300" fill="url(#hazeexoselfformation)"/>
+<g filter="url(#softexoselfformation)"><circle cx="390.6" cy="223.7" r="153.7" fill="url(#discexoselfformation)"/><g fill="#FDFF85" stroke="#FDFF85" fill-opacity="0.14" stroke-opacity="0.14" ><path d="M 236.6 720 L -1079.4 1000" fill="none" stroke-width="2"/><path d="M 258.6 720 L -869.4 1000" fill="none" stroke-width="2"/><path d="M 280.6 720 L -659.4 1000" fill="none" stroke-width="2"/><path d="M 302.6 720 L -449.4 1000" fill="none" stroke-width="2"/><path d="M 324.6 720 L -239.4 1000" fill="none" stroke-width="2"/><path d="M 346.6 720 L -29.4 1000" fill="none" stroke-width="2"/><path d="M 368.6 720 L 180.6 1000" fill="none" stroke-width="2"/><path d="M 390.6 720 L 390.6 1000" fill="none" stroke-width="2"/><path d="M 412.6 720 L 600.6 1000" fill="none" stroke-width="2"/><path d="M 434.6 720 L 810.6 1000" fill="none" stroke-width="2"/><path d="M 456.6 720 L 1020.6 1000" fill="none" stroke-width="2"/><path d="M 478.6 720 L 1230.6 1000" fill="none" stroke-width="2"/><path d="M 500.6 720 L 1440.6 1000" fill="none" stroke-width="2"/><path d="M 522.6 720 L 1650.6 1000" fill="none" stroke-width="2"/><path d="M 544.6 720 L 1860.6 1000" fill="none" stroke-width="2"/><path d="M 0 725.7 L 800 725.7" fill="none" stroke-width="2"/><path d="M 0 742.9 L 800 742.9" fill="none" stroke-width="2"/><path d="M 0 771.4 L 800 771.4" fill="none" stroke-width="2"/><path d="M 0 811.4 L 800 811.4" fill="none" stroke-width="2"/><path d="M 0 862.9 L 800 862.9" fill="none" stroke-width="2"/><path d="M 0 925.7 L 800 925.7" fill="none" stroke-width="2"/><path d="M 0 1000 L 800 1000" fill="none" stroke-width="2"/></g><polygon points="252.2,223.7 528.9,223.7 759.5,1000 21.7,1000" fill="url(#beamexoselfformation)" opacity="0.55"/></g>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.58" stroke-opacity="0.58" ><rect x="-7" y="564.3" width="125.9" height="195.7"/><rect x="54.5" y="533.5" width="3" height="30.8"/><rect x="172.4" y="642.3" width="111.2" height="117.7"/><rect x="200.2" y="621.2" width="55.6" height="21.2"/><rect x="343.2" y="657.8" width="113.6" height="102.2"/><rect x="371.6" y="639.4" width="56.8" height="18.4"/><rect x="512.3" y="559.4" width="119.4" height="200.6"/><rect x="542.1" y="523.3" width="59.7" height="36.1"/><rect x="664.2" y="617.1" width="159.7" height="142.9"/></g>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.94" stroke-opacity="0.94" ><rect x="80" y="420" width="640" height="340"/><polyline class="lit-stroke" points="131.2,633.8 175.3,658 219.4,651.4 263.5,688.9 307.6,679.1 351.6,691.4 395.7,688 439.8,698.8 483.9,698.8 528,698.8" fill="none" stroke-width="4"/><rect class="lit" x="579.2" y="508.4" width="89.6" height="5"/><rect class="lit" x="579.2" y="552.6" width="89.6" height="5"/><rect class="lit" x="579.2" y="596.8" width="89.6" height="5"/><rect class="lit" x="579.2" y="641" width="89.6" height="5"/><rect class="lit" x="579.2" y="685.2" width="89.6" height="5"/></g>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72" ><circle cx="-40" cy="859.7" r="5.7"/><path d="M -54.5 1040 L -54.5 866.3 C -49 862.1 -44.6 860.6 -40 860.6 C -35.4 860.6 -31 862.1 -25.5 866.3 L -25.5 1040 Z"/><circle cx="5" cy="878" r="6.5"/><path d="M -11.6 1040 L -11.6 885.5 C -5.3 880.7 -0.2 878.9 5 878.9 C 10.2 878.9 15.3 880.7 21.6 885.5 L 21.6 1040 Z"/><circle cx="61.9" cy="877.7" r="7.2"/><path d="M 43.6 1040 L 43.6 886 C 50.6 880.7 56.1 878.8 61.9 878.8 C 67.6 878.8 73.2 880.7 80.1 886 L 80.1 1040 Z"/><circle cx="104.9" cy="841.8" r="6.2"/><path d="M 89.3 1040 L 89.3 848.9 C 95.2 844.4 100 842.7 104.9 842.7 C 109.8 842.7 114.6 844.4 120.5 848.9 L 120.5 1040 Z"/><circle cx="158.3" cy="839.3" r="6.9"/><path d="M 140.7 1040 L 140.7 847.3 C 147.4 842.2 152.8 840.3 158.3 840.3 C 163.9 840.3 169.2 842.2 175.9 847.3 L 175.9 1040 Z"/><circle cx="195" cy="881.7" r="5.9"/><path d="M 179.9 1040 L 179.9 888.5 C 185.6 884.1 190.2 882.5 195 882.5 C 199.7 882.5 204.3 884.1 210 888.5 L 210 1040 Z"/><circle cx="246.5" cy="871.4" r="7.7"/><path d="M 227.1 1040 L 227.1 880.2 C 234.4 874.6 240.3 872.5 246.5 872.5 C 252.6 872.5 258.5 874.6 265.8 880.2 L 265.8 1040 Z"/><circle cx="295.8" cy="846.2" r="5.3"/><path d="M 282.4 1040 L 282.4 852.3 C 287.5 848.4 291.6 847 295.8 847 C 300 847 304.1 848.4 309.2 852.3 L 309.2 1040 Z"/><circle cx="351.8" cy="839.4" r="6.9"/><path d="M 334.3 1040 L 334.3 847.3 C 340.9 842.3 346.3 840.4 351.8 840.4 C 357.3 840.4 362.6 842.3 369.3 847.3 L 369.3 1040 Z"/><circle cx="404.4" cy="886.2" r="8"/><path d="M 384 1040 L 384 895.5 C 391.7 889.6 397.9 887.4 404.4 887.4 C 410.8 887.4 417 889.6 424.7 895.5 L 424.7 1040 Z"/><circle cx="458.6" cy="875.4" r="5.5"/><path d="M 444.7 1040 L 444.7 881.8 C 450 877.7 454.2 876.3 458.6 876.3 C 463 876.3 467.3 877.7 472.6 881.8 L 472.6 1040 Z"/><circle cx="495.9" cy="872.4" r="6.9"/><path d="M 478.3 1040 L 478.3 880.4 C 485 875.3 490.3 873.4 495.9 873.4 C 501.4 873.4 506.7 875.3 513.4 880.4 L 513.4 1040 Z"/><circle cx="531.7" cy="860.3" r="6.9"/><path d="M 514.1 1040 L 514.1 868.3 C 520.8 863.2 526.2 861.4 531.7 861.4 C 537.3 861.4 542.6 863.2 549.3 868.3 L 549.3 1040 Z"/><circle cx="579" cy="854.5" r="6.3"/><path d="M 563 1040 L 563 861.7 C 569 857.1 573.9 855.4 579 855.4 C 584 855.4 588.9 857.1 595 861.7 L 595 1040 Z"/><circle cx="628.4" cy="849.6" r="5.6"/><path d="M 614.2 1040 L 614.2 856.1 C 619.6 852 623.9 850.5 628.4 850.5 C 632.8 850.5 637.1 852 642.5 856.1 L 642.5 1040 Z"/><circle cx="675.7" cy="867.8" r="7.7"/><path d="M 656.3 1040 L 656.3 876.6 C 663.7 871 669.6 868.9 675.7 868.9 C 681.9 868.9 687.8 871 695.2 876.6 L 695.2 1040 Z"/><circle cx="716.8" cy="872.9" r="6.9"/><path d="M 699.4 1040 L 699.4 880.8 C 706 875.8 711.3 874 716.8 874 C 722.3 874 727.6 875.8 734.2 880.8 L 734.2 1040 Z"/><circle cx="771.2" cy="887.7" r="6.1"/><path d="M 755.7 1040 L 755.7 894.7 C 761.6 890.2 766.3 888.6 771.2 888.6 C 776.1 888.6 780.8 890.2 786.7 894.7 L 786.7 1040 Z"/><circle cx="821" cy="843.9" r="6.3"/><path d="M 805 1040 L 805 851.1 C 811.1 846.5 815.9 844.8 821 844.8 C 826 844.8 830.9 846.5 836.9 851.1 L 836.9 1040 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="0.98" stroke-opacity="0.98" ><circle cx="-63.1" cy="890.1" r="25.4"/><path d="M -127.4 1040 L -127.4 919.3 C -103 900.7 -83.4 893.9 -63.1 893.9 C -42.8 893.9 -23.3 900.7 1.1 919.3 L 1.1 1040 Z"/><circle cx="73.5" cy="912.4" r="21.7"/><path d="M 18.6 1040 L 18.6 937.4 C 39.5 921.5 56.2 915.7 73.5 915.7 C 90.9 915.7 107.6 921.5 128.5 937.4 L 128.5 1040 Z"/><circle cx="245.8" cy="908.4" r="22.6"/><path d="M 188.4 1040 L 188.4 934.4 C 210.2 917.8 227.6 911.8 245.8 911.8 C 263.9 911.8 281.3 917.8 303.1 934.4 L 303.1 1040 Z"/><circle cx="387.4" cy="920.8" r="20.4"/><path d="M 335.7 1040 L 335.7 944.3 C 355.4 929.3 371.1 923.9 387.4 923.9 C 403.8 923.9 419.5 929.3 439.1 944.3 L 439.1 1040 Z"/><circle cx="485.7" cy="916.8" r="22.7"/><path d="M 428.2 1040 L 428.2 942.9 C 450.1 926.3 467.6 920.2 485.7 920.2 C 503.9 920.2 521.4 926.3 543.2 942.9 L 543.2 1040 Z"/><circle cx="663.1" cy="924.3" r="19.2"/><path d="M 614.5 1040 L 614.5 946.3 C 633 932.3 647.7 927.2 663.1 927.2 C 678.4 927.2 693.2 932.3 711.6 946.3 L 711.6 1040 Z"/><circle cx="796.3" cy="895.6" r="19.5"/><path d="M 746.8 1040 L 746.8 918 C 765.6 903.7 780.7 898.5 796.3 898.5 C 811.9 898.5 826.9 903.7 845.7 918 L 845.7 1040 Z"/></g>
+<rect width="800" height="1000" fill="url(#vigexoselfformation)"/>
+<rect width="800" height="1000" filter="url(#coarseexoselfformation)" opacity="0.22" style="mix-blend-mode:overlay"/>
+<rect width="800" height="1000" filter="url(#fineexoselfformation)" opacity="0.34" style="mix-blend-mode:multiply"/>
+<rect width="800" height="1000" filter="url(#fineexoselfformation)" opacity="0.16" style="mix-blend-mode:screen"/>
+</svg>

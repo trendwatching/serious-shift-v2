@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>delegated-cognition/proprietary-graphs</title>
+<defs>
+<linearGradient id="fdelegatedcognitionproprietarygraphs" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#0FA6FF"/><stop offset="0.42" stop-color="#0A7FDA"/>
+<stop offset="0.8" stop-color="#23B9A6"/><stop offset="1" stop-color="#E6FF9C"/>
+</linearGradient>
+<radialGradient id="gdelegatedcognitionproprietarygraphs" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bdelegatedcognitionproprietarygraphs" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#E6FF9C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</linearGradient>
+<filter id="sdelegatedcognitionproprietarygraphs" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vdelegatedcognitionproprietarygraphs" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#022638" stop-opacity="0"/>
+<stop offset="1" stop-color="#022638" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ndelegatedcognitionproprietarygraphs" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#E6FF9C;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fdelegatedcognitionproprietarygraphs)"/>
+<rect width="640" height="640" fill="url(#gdelegatedcognitionproprietarygraphs)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bdelegatedcognitionproprietarygraphs)" filter="url(#sdelegatedcognitionproprietarygraphs)"/>
+<g fill="#022638" stroke="#022638" fill-opacity="0.92" stroke-opacity="0.92"><rect x="604.7" y="-32" width="30" height="30" transform="rotate(70.2 604.7 -32)"/><circle cx="574.3" cy="-20.8" r="14.8"/><rect x="423.6" y="-9.7" width="29.2" height="29.2" transform="rotate(12.9 423.6 -9.7)"/><circle cx="477.7" cy="1.5" r="14.4"/><rect x="91.2" y="12.7" width="28.5" height="28.5" transform="rotate(23.9 91.2 12.7)"/><circle cx="494" cy="23.9" r="14"/><rect x="283.9" y="35" width="27.7" height="27.7" transform="rotate(66.2 283.9 35)"/><rect x="422" y="46.2" width="27.3" height="27.3" transform="rotate(66.8 422 46.2)"/><rect x="242.1" y="57.4" width="27" height="27" transform="rotate(83 242.1 57.4)"/><circle cx="570.2" cy="68.6" r="13.3"/><rect x="284.9" y="79.7" width="26.2" height="26.2" transform="rotate(84.7 284.9 79.7)"/><rect x="195.2" y="90.9" width="25.8" height="25.8" transform="rotate(8.6 195.2 90.9)"/><circle cx="285.6" cy="102.1" r="12.7"/><rect x="590.9" y="113.3" width="25" height="25" transform="rotate(19.6 590.9 113.3)"/><rect x="218.4" y="124.4" width="24.7" height="24.7" transform="rotate(77.5 218.4 124.4)"/><rect x="364.1" y="135.6" width="24.3" height="24.3" transform="rotate(55.3 364.1 135.6)"/><rect x="83.4" y="146.8" width="23.9" height="23.9" transform="rotate(43 83.4 146.8)"/><rect x="39.9" y="158" width="23.5" height="23.5" transform="rotate(88.5 39.9 158)"/><circle cx="473.7" cy="169.1" r="11.6"/><rect x="86.4" y="180.3" width="22.8" height="22.8" transform="rotate(3.3 86.4 180.3)"/><rect x="149.5" y="191.5" width="22.4" height="22.4" transform="rotate(42.3 149.5 191.5)"/><circle cx="62.6" cy="202.7" r="11"/><circle cx="505.6" cy="213.8" r="10.8"/><circle cx="205.4" cy="225" r="10.6"/><rect x="40.2" y="236.2" width="20.9" height="20.9" transform="rotate(22.4 40.2 236.2)"/><circle cx="202.3" cy="247.4" r="10.2"/><rect x="317.2" y="258.5" width="20.1" height="20.1" transform="rotate(25.3 317.2 258.5)"/><circle cx="304.2" cy="269.7" r="9.9"/><circle cx="407.7" cy="280.9" r="9.7"/><circle cx="543.2" cy="292.1" r="9.5"/><circle cx="418.3" cy="303.2" r="9.3"/><rect x="503.2" y="314.4" width="18.2" height="18.2" transform="rotate(5.6 503.2 314.4)"/><rect x="184.3" y="325.6" width="17.8" height="17.8" transform="rotate(49.1 184.3 325.6)"/><rect x="551.8" y="336.8" width="17.4" height="17.4" transform="rotate(59.8 551.8 336.8)"/><rect x="577" y="347.9" width="17" height="17" transform="rotate(53.1 577 347.9)"/><circle cx="122.8" cy="359.1" r="8.3"/><rect x="212.6" y="370.3" width="16.3" height="16.3" transform="rotate(34 212.6 370.3)"/><circle cx="478.9" cy="381.5" r="8"/><rect x="477.8" y="392.6" width="15.5" height="15.5" transform="rotate(39.5 477.8 392.6)"/><rect x="544.7" y="403.8" width="15.1" height="15.1" transform="rotate(6.3 544.7 403.8)"/><circle cx="123.2" cy="415" r="7.4"/><rect x="498.5" y="426.2" width="14.4" height="14.4" transform="rotate(33.6 498.5 426.2)"/><rect x="574.3" y="437.3" width="14" height="14" transform="rotate(5 574.3 437.3)"/><rect x="521.8" y="448.5" width="13.6" height="13.6" transform="rotate(53.3 521.8 448.5)"/><circle cx="482.7" cy="459.7" r="6.6"/><circle cx="364.3" cy="470.9" r="6.4"/><rect x="209.5" y="482" width="12.5" height="12.5" transform="rotate(21.4 209.5 482)"/><circle cx="137.8" cy="493.2" r="6"/><rect x="451.2" y="504.4" width="11.7" height="11.7" transform="rotate(24.8 451.2 504.4)"/><rect x="54.7" y="515.6" width="11.3" height="11.3" transform="rotate(5.3 54.7 515.6)"/><rect x="216.6" y="526.7" width="11" height="11" transform="rotate(75.6 216.6 526.7)"/><circle cx="180" cy="537.9" r="5.3"/><circle cx="198.1" cy="549.1" r="5.1"/><circle cx="506.5" cy="560.3" r="4.9"/><rect x="247" y="571.4" width="9.4" height="9.4" transform="rotate(59.6 247 571.4)"/><circle cx="305.8" cy="582.6" r="4.5"/><rect x="414.9" y="593.8" width="8.7" height="8.7" transform="rotate(73.1 414.9 593.8)"/><circle cx="301.4" cy="605" r="4.1"/><circle cx="62.2" cy="616.1" r="4"/><circle cx="131.4" cy="627.3" r="3.8"/><rect x="73.1" y="638.5" width="7.1" height="7.1" transform="rotate(73 73.1 638.5)"/><circle cx="528.8" cy="649.7" r="3.4"/><rect x="324" y="660.8" width="6.4" height="6.4" transform="rotate(49.5 324 660.8)"/><rect x="462" y="672" width="6" height="6" transform="rotate(31.9 462 672)"/></g>
+<rect width="640" height="640" fill="url(#vdelegatedcognitionproprietarygraphs)"/>
+<rect width="640" height="640" filter="url(#ndelegatedcognitionproprietarygraphs)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ndelegatedcognitionproprietarygraphs)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

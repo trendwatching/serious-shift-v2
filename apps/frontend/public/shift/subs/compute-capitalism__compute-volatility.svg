@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>compute-capitalism/compute-volatility</title>
+<defs>
+<linearGradient id="fcomputecapitalismcomputevolatility" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#0FA6FF"/><stop offset="0.42" stop-color="#0A7FDA"/>
+<stop offset="0.8" stop-color="#23B9A6"/><stop offset="1" stop-color="#E6FF9C"/>
+</linearGradient>
+<radialGradient id="gcomputecapitalismcomputevolatility" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bcomputecapitalismcomputevolatility" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#E6FF9C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</linearGradient>
+<filter id="scomputecapitalismcomputevolatility" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vcomputecapitalismcomputevolatility" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#022638" stop-opacity="0"/>
+<stop offset="1" stop-color="#022638" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ncomputecapitalismcomputevolatility" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#E6FF9C;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fcomputecapitalismcomputevolatility)"/>
+<rect width="640" height="640" fill="url(#gcomputecapitalismcomputevolatility)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bcomputecapitalismcomputevolatility)" filter="url(#scomputecapitalismcomputevolatility)"/>
+<g fill="#022638" stroke="#022638" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="355.1" cy="-32" r="15"/><rect x="295.7" y="-20.8" width="29.6" height="29.6" transform="rotate(86.8 295.7 -20.8)"/><circle cx="538.1" cy="-9.7" r="14.6"/><rect x="275.2" y="1.5" width="28.9" height="28.9" transform="rotate(0.7 275.2 1.5)"/><rect x="226.8" y="12.7" width="28.5" height="28.5" transform="rotate(7.5 226.8 12.7)"/><rect x="214.7" y="23.9" width="28.1" height="28.1" transform="rotate(87.6 214.7 23.9)"/><circle cx="349.2" cy="35" r="13.9"/><rect x="424.6" y="46.2" width="27.3" height="27.3" transform="rotate(79.4 424.6 46.2)"/><circle cx="490.6" cy="57.4" r="13.5"/><circle cx="368.2" cy="68.6" r="13.3"/><circle cx="109.2" cy="79.7" r="13.1"/><rect x="182.8" y="90.9" width="25.8" height="25.8" transform="rotate(26.4 182.8 90.9)"/><circle cx="109.6" cy="102.1" r="12.7"/><rect x="339.8" y="113.3" width="25" height="25" transform="rotate(53.1 339.8 113.3)"/><circle cx="532.1" cy="124.4" r="12.3"/><rect x="390.6" y="135.6" width="24.3" height="24.3" transform="rotate(36.7 390.6 135.6)"/><circle cx="73.2" cy="146.8" r="12"/><circle cx="51.2" cy="158" r="11.8"/><rect x="425.4" y="169.1" width="23.1" height="23.1" transform="rotate(49.4 425.4 169.1)"/><rect x="208.1" y="180.3" width="22.8" height="22.8" transform="rotate(3.3 208.1 180.3)"/><rect x="328.4" y="191.5" width="22.4" height="22.4" transform="rotate(78.3 328.4 191.5)"/><rect x="136.8" y="202.7" width="22" height="22" transform="rotate(20.8 136.8 202.7)"/><rect x="54.6" y="213.8" width="21.6" height="21.6" transform="rotate(78.2 54.6 213.8)"/><circle cx="150.5" cy="225" r="10.6"/><circle cx="249.1" cy="236.2" r="10.4"/><rect x="356.8" y="247.4" width="20.5" height="20.5" transform="rotate(33.1 356.8 247.4)"/><rect x="229" y="258.5" width="20.1" height="20.1" transform="rotate(68.7 229 258.5)"/><circle cx="295.5" cy="269.7" r="9.9"/><rect x="70.7" y="280.9" width="19.3" height="19.3" transform="rotate(80.1 70.7 280.9)"/><circle cx="480.1" cy="292.1" r="9.5"/><rect x="506.6" y="303.2" width="18.6" height="18.6" transform="rotate(46.4 506.6 303.2)"/><circle cx="212" cy="314.4" r="9.1"/><rect x="504.8" y="325.6" width="17.8" height="17.8" transform="rotate(3 504.8 325.6)"/><circle cx="304.9" cy="336.8" r="8.7"/><circle cx="322.9" cy="347.9" r="8.5"/><circle cx="178.9" cy="359.1" r="8.3"/><rect x="508.4" y="370.3" width="16.3" height="16.3" transform="rotate(85.5 508.4 370.3)"/><rect x="440.9" y="381.5" width="15.9" height="15.9" transform="rotate(56.5 440.9 381.5)"/><rect x="467.4" y="392.6" width="15.5" height="15.5" transform="rotate(8.6 467.4 392.6)"/><circle cx="213.4" cy="403.8" r="7.6"/><rect x="133.4" y="415" width="14.8" height="14.8" transform="rotate(48.6 133.4 415)"/><rect x="139.2" y="426.2" width="14.4" height="14.4" transform="rotate(12.5 139.2 426.2)"/><rect x="552.3" y="437.3" width="14" height="14" transform="rotate(43.1 552.3 437.3)"/><circle cx="124" cy="448.5" r="6.8"/><circle cx="342.6" cy="459.7" r="6.6"/><circle cx="311.2" cy="470.9" r="6.4"/><rect x="87.4" y="482" width="12.5" height="12.5" transform="rotate(72.9 87.4 482)"/><rect x="400.4" y="493.2" width="12.1" height="12.1" transform="rotate(61.8 400.4 493.2)"/><rect x="356.3" y="504.4" width="11.7" height="11.7" transform="rotate(12.4 356.3 504.4)"/><rect x="362.3" y="515.6" width="11.3" height="11.3" transform="rotate(59.3 362.3 515.6)"/><rect x="369" y="526.7" width="11" height="11" transform="rotate(80.5 369 526.7)"/><circle cx="222.8" cy="537.9" r="5.3"/><rect x="559.2" y="549.1" width="10.2" height="10.2" transform="rotate(82.2 559.2 549.1)"/><circle cx="271.8" cy="560.3" r="4.9"/><rect x="471.1" y="571.4" width="9.4" height="9.4" transform="rotate(80.4 471.1 571.4)"/><circle cx="307.3" cy="582.6" r="4.5"/><circle cx="151.4" cy="593.8" r="4.3"/><circle cx="244.8" cy="605" r="4.1"/><rect x="182.2" y="616.1" width="7.9" height="7.9" transform="rotate(78.2 182.2 616.1)"/><circle cx="345.2" cy="627.3" r="3.8"/><circle cx="196.1" cy="638.5" r="3.6"/><circle cx="382.4" cy="649.7" r="3.4"/><circle cx="113.1" cy="660.8" r="3.2"/><rect x="375.8" y="672" width="6" height="6" transform="rotate(15.7 375.8 672)"/></g>
+<rect width="640" height="640" fill="url(#vcomputecapitalismcomputevolatility)"/>
+<rect width="640" height="640" filter="url(#ncomputecapitalismcomputevolatility)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ncomputecapitalismcomputevolatility)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

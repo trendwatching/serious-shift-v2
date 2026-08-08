@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 from ..core.text import url_slug as slugify
 from .config import DOMAINS, MODULE_ORDER
-from .modules import scrub_module_tree
+from .modules import conform_modules, scrub_module_tree
 from .validation import require_valid_map
 
 
@@ -189,15 +189,17 @@ def build_map_json_v2(conn) -> dict:
 
         This is also the one point every module list passes through — generated,
         derived and override-authored alike, after the derived ones have been
-        inserted — so it is where the identifier scrub belongs. Doing it here
-        rather than at generation is what lets an --export-only run clean copy
-        that was published before the scrub existed.
+        inserted — so it is where the identifier scrub and the contract caps
+        belong. Doing it here rather than only at generation is what lets an
+        --export-only run correct copy that was written before a cap existed, or
+        under one that disagreed with the gate: 75 issues on one run, none of
+        them needing a single new model call to fix.
         """
         order = MODULE_ORDER.get(scope) or []
         rank = {t: i for i, t in enumerate(order)}
         fallback = len(rank)
         return sorted(
-            scrub_module_tree(modules or []),
+            conform_modules(scrub_module_tree(modules or [])),
             key=lambda m: (rank.get(m.get('type'), fallback), 0),
         )
 
@@ -238,16 +240,24 @@ def build_map_json_v2(conn) -> dict:
         FROM domain_key_trends kt
         ORDER BY kt.domain_id, kt.sort_order
     """).fetchall()
-    # URL slugs are derived from the name (that is what the front end routes on
-    # and what an override is keyed by). Two shifts in one domain could slugify
-    # the same, so disambiguate in a stable order — the query is ORDER BY
-    # domain_id, sort_order, so the same input always yields the same slug.
+    # URL slugs are derived from the name — that is what the front end routes on
+    # and what an override is keyed by. Two shifts could slugify the same, so
+    # disambiguate in a stable order: the query is ORDER BY domain_id,
+    # sort_order, so the same input always yields the same slug.
+    #
+    # GLOBALLY unique, not per domain. The URL carries the sphere, so per-domain
+    # would be enough to route — but `shift_refs` and `shift_module_overrides`
+    # are both keyed on (scope, slug) with no domain, so two spheres each
+    # producing a "Moat Migration" gave both the slug `moat-migration` and the
+    # publication died on a unique-constraint violation *after* passing the whole
+    # editorial gate. An override keyed that way would also have silently applied
+    # to the wrong sphere.
     kt_slug_by_id: dict = {}
     _seen_kt: dict = {}
     for kt in kt_rows_all:
         base = slugify(kt['name'])
-        n = _seen_kt.get((kt['domain_id'], base), 0) + 1
-        _seen_kt[(kt['domain_id'], base)] = n
+        n = _seen_kt.get(base, 0) + 1
+        _seen_kt[base] = n
         kt_slug_by_id[kt['id']] = base if n == 1 else f'{base}-{n}'
     key_trends_j = []
     for kt in kt_rows_all:

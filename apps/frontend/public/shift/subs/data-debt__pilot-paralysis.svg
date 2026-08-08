@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>data-debt/pilot-paralysis</title>
+<defs>
+<linearGradient id="fdatadebtpilotparalysis" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gdatadebtpilotparalysis" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bdatadebtpilotparalysis" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sdatadebtpilotparalysis" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vdatadebtpilotparalysis" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ndatadebtpilotparalysis" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fdatadebtpilotparalysis)"/>
+<rect width="640" height="640" fill="url(#gdatadebtpilotparalysis)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bdatadebtpilotparalysis)" filter="url(#sdatadebtpilotparalysis)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><rect x="331.1" y="-32" width="30" height="30" transform="rotate(48 331.1 -32)"/><circle cx="446.4" cy="-20.8" r="14.8"/><circle cx="73.1" cy="-9.7" r="14.6"/><circle cx="50.2" cy="1.5" r="14.4"/><circle cx="122.1" cy="12.7" r="14.2"/><rect x="85.6" y="23.9" width="28.1" height="28.1" transform="rotate(23.4 85.6 23.9)"/><rect x="119.3" y="35" width="27.7" height="27.7" transform="rotate(81.7 119.3 35)"/><circle cx="147.2" cy="46.2" r="13.7"/><rect x="535.7" y="57.4" width="27" height="27" transform="rotate(59.5 535.7 57.4)"/><rect x="381" y="68.6" width="26.6" height="26.6" transform="rotate(28 381 68.6)"/><rect x="263.5" y="79.7" width="26.2" height="26.2" transform="rotate(40.5 263.5 79.7)"/><circle cx="450.2" cy="90.9" r="12.9"/><rect x="288.6" y="102.1" width="25.4" height="25.4" transform="rotate(26.5 288.6 102.1)"/><circle cx="89.2" cy="113.3" r="12.5"/><rect x="494.3" y="124.4" width="24.7" height="24.7" transform="rotate(18.8 494.3 124.4)"/><circle cx="234.7" cy="135.6" r="12.1"/><rect x="94.2" y="146.8" width="23.9" height="23.9" transform="rotate(82.1 94.2 146.8)"/><rect x="398.3" y="158" width="23.5" height="23.5" transform="rotate(68 398.3 158)"/><rect x="176.8" y="169.1" width="23.1" height="23.1" transform="rotate(82.2 176.8 169.1)"/><rect x="234.7" y="180.3" width="22.8" height="22.8" transform="rotate(58 234.7 180.3)"/><rect x="213.9" y="191.5" width="22.4" height="22.4" transform="rotate(80.9 213.9 191.5)"/><rect x="190.3" y="202.7" width="22" height="22" transform="rotate(71.8 190.3 202.7)"/><circle cx="351.4" cy="213.8" r="10.8"/><circle cx="147" cy="225" r="10.6"/><rect x="576.5" y="236.2" width="20.9" height="20.9" transform="rotate(67.7 576.5 236.2)"/><rect x="203.8" y="247.4" width="20.5" height="20.5" transform="rotate(85.7 203.8 247.4)"/><rect x="76.6" y="258.5" width="20.1" height="20.1" transform="rotate(88.3 76.6 258.5)"/><rect x="432.6" y="269.7" width="19.7" height="19.7" transform="rotate(79 432.6 269.7)"/><rect x="536.8" y="280.9" width="19.3" height="19.3" transform="rotate(16.3 536.8 280.9)"/><circle cx="398.9" cy="292.1" r="9.5"/><rect x="379.7" y="303.2" width="18.6" height="18.6" transform="rotate(15.5 379.7 303.2)"/><rect x="197.3" y="314.4" width="18.2" height="18.2" transform="rotate(50 197.3 314.4)"/><circle cx="67.1" cy="325.6" r="8.9"/><rect x="573.4" y="336.8" width="17.4" height="17.4" transform="rotate(30.6 573.4 336.8)"/><rect x="251.6" y="347.9" width="17" height="17" transform="rotate(43.6 251.6 347.9)"/><rect x="101.2" y="359.1" width="16.7" height="16.7" transform="rotate(43.8 101.2 359.1)"/><rect x="177.8" y="370.3" width="16.3" height="16.3" transform="rotate(80.2 177.8 370.3)"/><circle cx="434.3" cy="381.5" r="8"/><rect x="282.8" y="392.6" width="15.5" height="15.5" transform="rotate(35.8 282.8 392.6)"/><rect x="50.6" y="403.8" width="15.1" height="15.1" transform="rotate(34.4 50.6 403.8)"/><rect x="437.3" y="415" width="14.8" height="14.8" transform="rotate(55.6 437.3 415)"/><circle cx="406.3" cy="426.2" r="7.2"/><circle cx="423" cy="437.3" r="7"/><rect x="425.1" y="448.5" width="13.6" height="13.6" transform="rotate(14.5 425.1 448.5)"/><circle cx="523.6" cy="459.7" r="6.6"/><rect x="302.6" y="470.9" width="12.9" height="12.9" transform="rotate(54.4 302.6 470.9)"/><rect x="297.3" y="482" width="12.5" height="12.5" transform="rotate(77.3 297.3 482)"/><rect x="553.7" y="493.2" width="12.1" height="12.1" transform="rotate(85.7 553.7 493.2)"/><rect x="486.3" y="504.4" width="11.7" height="11.7" transform="rotate(0.1 486.3 504.4)"/><rect x="73.9" y="515.6" width="11.3" height="11.3" transform="rotate(33.8 73.9 515.6)"/><rect x="488.7" y="526.7" width="11" height="11" transform="rotate(66.1 488.7 526.7)"/><rect x="305.5" y="537.9" width="10.6" height="10.6" transform="rotate(66.6 305.5 537.9)"/><circle cx="555.4" cy="549.1" r="5.1"/><circle cx="568.3" cy="560.3" r="4.9"/><circle cx="254.9" cy="571.4" r="4.7"/><circle cx="146.4" cy="582.6" r="4.5"/><rect x="564.2" y="593.8" width="8.7" height="8.7" transform="rotate(7.8 564.2 593.8)"/><rect x="100" y="605" width="8.3" height="8.3" transform="rotate(59.7 100 605)"/><rect x="240" y="616.1" width="7.9" height="7.9" transform="rotate(53.2 240 616.1)"/><circle cx="237.3" cy="627.3" r="3.8"/><rect x="346.7" y="638.5" width="7.1" height="7.1" transform="rotate(15.2 346.7 638.5)"/><rect x="477.8" y="649.7" width="6.8" height="6.8" transform="rotate(27.1 477.8 649.7)"/><rect x="238.7" y="660.8" width="6.4" height="6.4" transform="rotate(80.4 238.7 660.8)"/><rect x="83.9" y="672" width="6" height="6" transform="rotate(87.5 83.9 672)"/></g>
+<rect width="640" height="640" fill="url(#vdatadebtpilotparalysis)"/>
+<rect width="640" height="640" filter="url(#ndatadebtpilotparalysis)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ndatadebtpilotparalysis)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

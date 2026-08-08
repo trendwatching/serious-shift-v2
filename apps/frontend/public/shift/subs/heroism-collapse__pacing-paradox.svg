@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>heroism-collapse/pacing-paradox</title>
+<defs>
+<linearGradient id="fheroismcollapsepacingparadox" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gheroismcollapsepacingparadox" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bheroismcollapsepacingparadox" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sheroismcollapsepacingparadox" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vheroismcollapsepacingparadox" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nheroismcollapsepacingparadox" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fheroismcollapsepacingparadox)"/>
+<rect width="640" height="640" fill="url(#gheroismcollapsepacingparadox)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bheroismcollapsepacingparadox)" filter="url(#sheroismcollapsepacingparadox)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="319.7" cy="-32" r="15"/><rect x="222.8" y="-20.8" width="29.6" height="29.6" transform="rotate(0.8 222.8 -20.8)"/><rect x="457" y="-9.7" width="29.2" height="29.2" transform="rotate(63.5 457 -9.7)"/><circle cx="314.2" cy="1.5" r="14.4"/><rect x="52.6" y="12.7" width="28.5" height="28.5" transform="rotate(48.7 52.6 12.7)"/><rect x="233.1" y="23.9" width="28.1" height="28.1" transform="rotate(20.3 233.1 23.9)"/><rect x="165.9" y="35" width="27.7" height="27.7" transform="rotate(26.7 165.9 35)"/><rect x="426.8" y="46.2" width="27.3" height="27.3" transform="rotate(33.5 426.8 46.2)"/><rect x="329.8" y="57.4" width="27" height="27" transform="rotate(39.6 329.8 57.4)"/><rect x="92.3" y="68.6" width="26.6" height="26.6" transform="rotate(33.9 92.3 68.6)"/><rect x="219.5" y="79.7" width="26.2" height="26.2" transform="rotate(33.6 219.5 79.7)"/><rect x="128.3" y="90.9" width="25.8" height="25.8" transform="rotate(30 128.3 90.9)"/><rect x="311.5" y="102.1" width="25.4" height="25.4" transform="rotate(84.1 311.5 102.1)"/><rect x="457.3" y="113.3" width="25" height="25" transform="rotate(9.9 457.3 113.3)"/><rect x="487.1" y="124.4" width="24.7" height="24.7" transform="rotate(62.3 487.1 124.4)"/><circle cx="479.8" cy="135.6" r="12.1"/><rect x="439.8" y="146.8" width="23.9" height="23.9" transform="rotate(58.2 439.8 146.8)"/><rect x="519.3" y="158" width="23.5" height="23.5" transform="rotate(37.8 519.3 158)"/><rect x="515.3" y="169.1" width="23.1" height="23.1" transform="rotate(65.5 515.3 169.1)"/><circle cx="547.1" cy="180.3" r="11.4"/><circle cx="151.4" cy="191.5" r="11.2"/><rect x="425.8" y="202.7" width="22" height="22" transform="rotate(26.5 425.8 202.7)"/><circle cx="305.1" cy="213.8" r="10.8"/><circle cx="335.8" cy="225" r="10.6"/><rect x="41.2" y="236.2" width="20.9" height="20.9" transform="rotate(85.9 41.2 236.2)"/><rect x="474.8" y="247.4" width="20.5" height="20.5" transform="rotate(65.4 474.8 247.4)"/><circle cx="587" cy="258.5" r="10"/><circle cx="469.1" cy="269.7" r="9.9"/><rect x="145.7" y="280.9" width="19.3" height="19.3" transform="rotate(79.8 145.7 280.9)"/><circle cx="469" cy="292.1" r="9.5"/><rect x="184.6" y="303.2" width="18.6" height="18.6" transform="rotate(72.9 184.6 303.2)"/><circle cx="48.1" cy="314.4" r="9.1"/><rect x="284" y="325.6" width="17.8" height="17.8" transform="rotate(59.1 284 325.6)"/><rect x="319" y="336.8" width="17.4" height="17.4" transform="rotate(17.5 319 336.8)"/><rect x="263.6" y="347.9" width="17" height="17" transform="rotate(35 263.6 347.9)"/><rect x="394.7" y="359.1" width="16.7" height="16.7" transform="rotate(55.2 394.7 359.1)"/><circle cx="289.9" cy="370.3" r="8.1"/><rect x="307.1" y="381.5" width="15.9" height="15.9" transform="rotate(24.8 307.1 381.5)"/><rect x="514.5" y="392.6" width="15.5" height="15.5" transform="rotate(58.5 514.5 392.6)"/><circle cx="551.9" cy="403.8" r="7.6"/><rect x="346.3" y="415" width="14.8" height="14.8" transform="rotate(4.1 346.3 415)"/><circle cx="507.8" cy="426.2" r="7.2"/><circle cx="199.3" cy="437.3" r="7"/><rect x="153.6" y="448.5" width="13.6" height="13.6" transform="rotate(43.8 153.6 448.5)"/><rect x="87.3" y="459.7" width="13.2" height="13.2" transform="rotate(4.3 87.3 459.7)"/><rect x="390.6" y="470.9" width="12.9" height="12.9" transform="rotate(14.9 390.6 470.9)"/><rect x="134.4" y="482" width="12.5" height="12.5" transform="rotate(4.6 134.4 482)"/><rect x="367.9" y="493.2" width="12.1" height="12.1" transform="rotate(9 367.9 493.2)"/><rect x="262.6" y="504.4" width="11.7" height="11.7" transform="rotate(41.7 262.6 504.4)"/><rect x="329.1" y="515.6" width="11.3" height="11.3" transform="rotate(70.9 329.1 515.6)"/><rect x="232.2" y="526.7" width="11" height="11" transform="rotate(68.5 232.2 526.7)"/><rect x="315.7" y="537.9" width="10.6" height="10.6" transform="rotate(7.4 315.7 537.9)"/><rect x="113.1" y="549.1" width="10.2" height="10.2" transform="rotate(39.8 113.1 549.1)"/><rect x="162.6" y="560.3" width="9.8" height="9.8" transform="rotate(87.2 162.6 560.3)"/><rect x="203.6" y="571.4" width="9.4" height="9.4" transform="rotate(38.7 203.6 571.4)"/><rect x="203.4" y="582.6" width="9" height="9" transform="rotate(68 203.4 582.6)"/><rect x="53.8" y="593.8" width="8.7" height="8.7" transform="rotate(32.2 53.8 593.8)"/><rect x="442.8" y="605" width="8.3" height="8.3" transform="rotate(25.9 442.8 605)"/><rect x="118" y="616.1" width="7.9" height="7.9" transform="rotate(26.2 118 616.1)"/><rect x="320.6" y="627.3" width="7.5" height="7.5" transform="rotate(59.8 320.6 627.3)"/><circle cx="432.6" cy="638.5" r="3.6"/><circle cx="420.9" cy="649.7" r="3.4"/><circle cx="315.9" cy="660.8" r="3.2"/><rect x="302.4" y="672" width="6" height="6" transform="rotate(21 302.4 672)"/></g>
+<rect width="640" height="640" fill="url(#vheroismcollapsepacingparadox)"/>
+<rect width="640" height="640" filter="url(#nheroismcollapsepacingparadox)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nheroismcollapsepacingparadox)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

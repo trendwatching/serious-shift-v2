@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>demographic-reckoning/demographic-divergence</title>
+<defs>
+<linearGradient id="fdemographicreckoningdemographicdivergence" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gdemographicreckoningdemographicdivergence" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bdemographicreckoningdemographicdivergence" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sdemographicreckoningdemographicdivergence" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vdemographicreckoningdemographicdivergence" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ndemographicreckoningdemographicdivergence" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fdemographicreckoningdemographicdivergence)"/>
+<rect width="640" height="640" fill="url(#gdemographicreckoningdemographicdivergence)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bdemographicreckoningdemographicdivergence)" filter="url(#sdemographicreckoningdemographicdivergence)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="150.5" rx="486.1" ry="175" fill="none" stroke-width="48"/><rect x="285.7" y="325.5" width="20" height="20" transform="rotate(8.9 285.7 325.5)"/><rect x="311.2" y="335" width="19.5" height="19.5" transform="rotate(31.6 311.2 335)"/><rect x="368.1" y="344.6" width="19.1" height="19.1" transform="rotate(12.5 368.1 344.6)"/><rect x="273.7" y="354.1" width="18.6" height="18.6" transform="rotate(77 273.7 354.1)"/><rect x="371.9" y="363.6" width="18.2" height="18.2" transform="rotate(36.9 371.9 363.6)"/><rect x="255.8" y="373.2" width="17.7" height="17.7" transform="rotate(65.2 255.8 373.2)"/><rect x="254.1" y="382.7" width="17.3" height="17.3" transform="rotate(18 254.1 382.7)"/><rect x="259.6" y="392.2" width="16.8" height="16.8" transform="rotate(70.1 259.6 392.2)"/><rect x="403.2" y="401.7" width="16.4" height="16.4" transform="rotate(74.1 403.2 401.7)"/><rect x="334.7" y="411.3" width="15.9" height="15.9" transform="rotate(47.3 334.7 411.3)"/><rect x="239.3" y="420.8" width="15.5" height="15.5" transform="rotate(72.2 239.3 420.8)"/><rect x="309" y="430.3" width="15" height="15" transform="rotate(69.6 309 430.3)"/><rect x="254.4" y="439.9" width="14.5" height="14.5" transform="rotate(47.2 254.4 439.9)"/><rect x="386.7" y="449.4" width="14.1" height="14.1" transform="rotate(59.3 386.7 449.4)"/><rect x="432.5" y="458.9" width="13.6" height="13.6" transform="rotate(70.5 432.5 458.9)"/><rect x="439.4" y="468.5" width="13.2" height="13.2" transform="rotate(53.6 439.4 468.5)"/><rect x="210.7" y="478" width="12.7" height="12.7" transform="rotate(48.9 210.7 478)"/><rect x="399.8" y="487.5" width="12.3" height="12.3" transform="rotate(65.7 399.8 487.5)"/><rect x="337.6" y="497" width="11.8" height="11.8" transform="rotate(83.9 337.6 497)"/><rect x="319.6" y="506.6" width="11.4" height="11.4" transform="rotate(23 319.6 506.6)"/><rect x="280.9" y="516.1" width="10.9" height="10.9" transform="rotate(21.4 280.9 516.1)"/><rect x="476.6" y="525.6" width="10.5" height="10.5" transform="rotate(38.3 476.6 525.6)"/><rect x="344.4" y="535.2" width="10" height="10" transform="rotate(81.5 344.4 535.2)"/><rect x="451" y="544.7" width="9.5" height="9.5" transform="rotate(40.3 451 544.7)"/><rect x="388.2" y="554.2" width="9.1" height="9.1" transform="rotate(3.2 388.2 554.2)"/><rect x="287.3" y="563.8" width="8.6" height="8.6" transform="rotate(79.7 287.3 563.8)"/><rect x="268.7" y="573.3" width="8.2" height="8.2" transform="rotate(41 268.7 573.3)"/><rect x="242" y="582.8" width="7.7" height="7.7" transform="rotate(45.1 242 582.8)"/><rect x="244" y="592.3" width="7.3" height="7.3" transform="rotate(64.5 244 592.3)"/><rect x="380.6" y="601.9" width="6.8" height="6.8" transform="rotate(61 380.6 601.9)"/><rect x="323.8" y="611.4" width="6.4" height="6.4" transform="rotate(79.2 323.8 611.4)"/><rect x="216.4" y="620.9" width="5.9" height="5.9" transform="rotate(35.2 216.4 620.9)"/><rect x="399.3" y="630.5" width="5.5" height="5.5" transform="rotate(7.3 399.3 630.5)"/><rect x="282" y="640" width="5" height="5" transform="rotate(72.6 282 640)"/></g>
+<rect width="640" height="640" fill="url(#vdemographicreckoningdemographicdivergence)"/>
+<rect width="640" height="640" filter="url(#ndemographicreckoningdemographicdivergence)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ndemographicreckoningdemographicdivergence)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

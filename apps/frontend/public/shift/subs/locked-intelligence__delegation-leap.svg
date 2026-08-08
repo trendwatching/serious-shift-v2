@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>locked-intelligence/delegation-leap</title>
+<defs>
+<linearGradient id="flockedintelligencedelegationleap" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="glockedintelligencedelegationleap" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="blockedintelligencedelegationleap" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="slockedintelligencedelegationleap" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vlockedintelligencedelegationleap" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nlockedintelligencedelegationleap" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#flockedintelligencedelegationleap)"/>
+<rect width="640" height="640" fill="url(#glockedintelligencedelegationleap)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#blockedintelligencedelegationleap)" filter="url(#slockedintelligencedelegationleap)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="147.9" rx="478.7" ry="172.3" fill="none" stroke-width="48"/><rect x="311" y="320.2" width="20" height="20" transform="rotate(3.4 311 320.2)"/><rect x="300" y="329.9" width="19.5" height="19.5" transform="rotate(8.3 300 329.9)"/><rect x="312.9" y="339.6" width="19.1" height="19.1" transform="rotate(71 312.9 339.6)"/><rect x="286.4" y="349.3" width="18.6" height="18.6" transform="rotate(53.6 286.4 349.3)"/><rect x="268.6" y="359" width="18.2" height="18.2" transform="rotate(27 268.6 359)"/><rect x="326.8" y="368.7" width="17.7" height="17.7" transform="rotate(59.6 326.8 368.7)"/><rect x="308.3" y="378.4" width="17.3" height="17.3" transform="rotate(78.1 308.3 378.4)"/><rect x="294.5" y="388.1" width="16.8" height="16.8" transform="rotate(27.2 294.5 388.1)"/><rect x="308.5" y="397.8" width="16.4" height="16.4" transform="rotate(5.5 308.5 397.8)"/><rect x="242.7" y="407.4" width="15.9" height="15.9" transform="rotate(38 242.7 407.4)"/><rect x="224.4" y="417.1" width="15.5" height="15.5" transform="rotate(78.1 224.4 417.1)"/><rect x="277.1" y="426.8" width="15" height="15" transform="rotate(6.1 277.1 426.8)"/><rect x="393.5" y="436.5" width="14.5" height="14.5" transform="rotate(31 393.5 436.5)"/><rect x="318.1" y="446.2" width="14.1" height="14.1" transform="rotate(27.2 318.1 446.2)"/><rect x="378.4" y="455.9" width="13.6" height="13.6" transform="rotate(18.5 378.4 455.9)"/><rect x="290.2" y="465.6" width="13.2" height="13.2" transform="rotate(72.7 290.2 465.6)"/><rect x="422" y="475.3" width="12.7" height="12.7" transform="rotate(66.7 422 475.3)"/><rect x="278.7" y="485" width="12.3" height="12.3" transform="rotate(18.1 278.7 485)"/><rect x="185" y="494.7" width="11.8" height="11.8" transform="rotate(6.8 185 494.7)"/><rect x="222.9" y="504.3" width="11.4" height="11.4" transform="rotate(31.2 222.9 504.3)"/><rect x="316.5" y="514" width="10.9" height="10.9" transform="rotate(37.9 316.5 514)"/><rect x="233.6" y="523.7" width="10.5" height="10.5" transform="rotate(3.1 233.6 523.7)"/><rect x="402.2" y="533.4" width="10" height="10" transform="rotate(2.7 402.2 533.4)"/><rect x="319.7" y="543.1" width="9.5" height="9.5" transform="rotate(68.2 319.7 543.1)"/><rect x="335.8" y="552.8" width="9.1" height="9.1" transform="rotate(58.5 335.8 552.8)"/><rect x="367" y="562.5" width="8.6" height="8.6" transform="rotate(87.2 367 562.5)"/><rect x="482.4" y="572.2" width="8.2" height="8.2" transform="rotate(55.2 482.4 572.2)"/><rect x="440.5" y="581.9" width="7.7" height="7.7" transform="rotate(3.3 440.5 581.9)"/><rect x="246.8" y="591.6" width="7.3" height="7.3" transform="rotate(67.8 246.8 591.6)"/><rect x="370.5" y="601.2" width="6.8" height="6.8" transform="rotate(49.5 370.5 601.2)"/><rect x="501.4" y="610.9" width="6.4" height="6.4" transform="rotate(48.1 501.4 610.9)"/><rect x="421.9" y="620.6" width="5.9" height="5.9" transform="rotate(6.8 421.9 620.6)"/><rect x="451.7" y="630.3" width="5.5" height="5.5" transform="rotate(74.5 451.7 630.3)"/><rect x="105.1" y="640" width="5" height="5" transform="rotate(33.4 105.1 640)"/></g>
+<rect width="640" height="640" fill="url(#vlockedintelligencedelegationleap)"/>
+<rect width="640" height="640" filter="url(#nlockedintelligencedelegationleap)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nlockedintelligencedelegationleap)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

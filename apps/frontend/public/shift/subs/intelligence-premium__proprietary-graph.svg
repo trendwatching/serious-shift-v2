@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>intelligence-premium/proprietary-graph</title>
+<defs>
+<linearGradient id="fintelligencepremiumproprietarygraph" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#0FA6FF"/><stop offset="0.42" stop-color="#0A7FDA"/>
+<stop offset="0.8" stop-color="#23B9A6"/><stop offset="1" stop-color="#E6FF9C"/>
+</linearGradient>
+<radialGradient id="gintelligencepremiumproprietarygraph" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bintelligencepremiumproprietarygraph" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#E6FF9C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</linearGradient>
+<filter id="sintelligencepremiumproprietarygraph" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vintelligencepremiumproprietarygraph" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#022638" stop-opacity="0"/>
+<stop offset="1" stop-color="#022638" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nintelligencepremiumproprietarygraph" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#E6FF9C;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fintelligencepremiumproprietarygraph)"/>
+<rect width="640" height="640" fill="url(#gintelligencepremiumproprietarygraph)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bintelligencepremiumproprietarygraph)" filter="url(#sintelligencepremiumproprietarygraph)"/>
+<g fill="#022638" stroke="#022638" fill-opacity="0.92" stroke-opacity="0.92"><rect x="359.5" y="-32" width="30" height="30" transform="rotate(37.1 359.5 -32)"/><circle cx="356.5" cy="-20.8" r="14.8"/><circle cx="549.1" cy="-9.7" r="14.6"/><rect x="98.6" y="1.5" width="28.9" height="28.9" transform="rotate(47.4 98.6 1.5)"/><circle cx="159.6" cy="12.7" r="14.2"/><rect x="236" y="23.9" width="28.1" height="28.1" transform="rotate(3.1 236 23.9)"/><rect x="156" y="35" width="27.7" height="27.7" transform="rotate(55.4 156 35)"/><rect x="231.6" y="46.2" width="27.3" height="27.3" transform="rotate(44.3 231.6 46.2)"/><circle cx="128.5" cy="57.4" r="13.5"/><rect x="485.8" y="68.6" width="26.6" height="26.6" transform="rotate(66.8 485.8 68.6)"/><circle cx="508.4" cy="79.7" r="13.1"/><rect x="238.6" y="90.9" width="25.8" height="25.8" transform="rotate(56.9 238.6 90.9)"/><rect x="288.2" y="102.1" width="25.4" height="25.4" transform="rotate(6.6 288.2 102.1)"/><circle cx="341.1" cy="113.3" r="12.5"/><rect x="549.1" y="124.4" width="24.7" height="24.7" transform="rotate(37.3 549.1 124.4)"/><rect x="240.4" y="135.6" width="24.3" height="24.3" transform="rotate(57 240.4 135.6)"/><rect x="189.4" y="146.8" width="23.9" height="23.9" transform="rotate(64.8 189.4 146.8)"/><rect x="488.1" y="158" width="23.5" height="23.5" transform="rotate(20.4 488.1 158)"/><circle cx="188.5" cy="169.1" r="11.6"/><circle cx="456.4" cy="180.3" r="11.4"/><rect x="111.7" y="191.5" width="22.4" height="22.4" transform="rotate(87 111.7 191.5)"/><rect x="522.8" y="202.7" width="22" height="22" transform="rotate(24.1 522.8 202.7)"/><rect x="306.1" y="213.8" width="21.6" height="21.6" transform="rotate(80.5 306.1 213.8)"/><rect x="533.9" y="225" width="21.2" height="21.2" transform="rotate(45.7 533.9 225)"/><circle cx="391.4" cy="236.2" r="10.4"/><rect x="397.3" y="247.4" width="20.5" height="20.5" transform="rotate(44.3 397.3 247.4)"/><rect x="270.1" y="258.5" width="20.1" height="20.1" transform="rotate(28.3 270.1 258.5)"/><circle cx="200.4" cy="269.7" r="9.9"/><rect x="374.2" y="280.9" width="19.3" height="19.3" transform="rotate(41.4 374.2 280.9)"/><rect x="233.5" y="292.1" width="19" height="19" transform="rotate(32.4 233.5 292.1)"/><rect x="153.1" y="303.2" width="18.6" height="18.6" transform="rotate(27.3 153.1 303.2)"/><rect x="268.8" y="314.4" width="18.2" height="18.2" transform="rotate(46.4 268.8 314.4)"/><rect x="410.4" y="325.6" width="17.8" height="17.8" transform="rotate(59.8 410.4 325.6)"/><circle cx="111.7" cy="336.8" r="8.7"/><circle cx="160.2" cy="347.9" r="8.5"/><rect x="377.4" y="359.1" width="16.7" height="16.7" transform="rotate(18.5 377.4 359.1)"/><rect x="381.5" y="370.3" width="16.3" height="16.3" transform="rotate(28.9 381.5 370.3)"/><rect x="582.3" y="381.5" width="15.9" height="15.9" transform="rotate(36.2 582.3 381.5)"/><rect x="556.2" y="392.6" width="15.5" height="15.5" transform="rotate(67.5 556.2 392.6)"/><circle cx="281.9" cy="403.8" r="7.6"/><rect x="205.2" y="415" width="14.8" height="14.8" transform="rotate(45.8 205.2 415)"/><rect x="170.5" y="426.2" width="14.4" height="14.4" transform="rotate(57.3 170.5 426.2)"/><circle cx="547.5" cy="437.3" r="7"/><rect x="103.9" y="448.5" width="13.6" height="13.6" transform="rotate(22.2 103.9 448.5)"/><circle cx="549.1" cy="459.7" r="6.6"/><rect x="117.6" y="470.9" width="12.9" height="12.9" transform="rotate(63 117.6 470.9)"/><rect x="358.3" y="482" width="12.5" height="12.5" transform="rotate(65.4 358.3 482)"/><rect x="53.1" y="493.2" width="12.1" height="12.1" transform="rotate(33.1 53.1 493.2)"/><circle cx="293.3" cy="504.4" r="5.9"/><rect x="59" y="515.6" width="11.3" height="11.3" transform="rotate(85.1 59 515.6)"/><rect x="303" y="526.7" width="11" height="11" transform="rotate(15.6 303 526.7)"/><circle cx="226.6" cy="537.9" r="5.3"/><circle cx="201.3" cy="549.1" r="5.1"/><rect x="500.2" y="560.3" width="9.8" height="9.8" transform="rotate(18.8 500.2 560.3)"/><circle cx="226.2" cy="571.4" r="4.7"/><rect x="261.3" y="582.6" width="9" height="9" transform="rotate(84 261.3 582.6)"/><rect x="270.2" y="593.8" width="8.7" height="8.7" transform="rotate(50.8 270.2 593.8)"/><rect x="352.1" y="605" width="8.3" height="8.3" transform="rotate(7 352.1 605)"/><rect x="514.5" y="616.1" width="7.9" height="7.9" transform="rotate(68.7 514.5 616.1)"/><circle cx="123.9" cy="627.3" r="3.8"/><rect x="412.6" y="638.5" width="7.1" height="7.1" transform="rotate(72.9 412.6 638.5)"/><rect x="276.4" y="649.7" width="6.8" height="6.8" transform="rotate(69.4 276.4 649.7)"/><circle cx="532.3" cy="660.8" r="3.2"/><circle cx="456.3" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vintelligencepremiumproprietarygraph)"/>
+<rect width="640" height="640" filter="url(#nintelligencepremiumproprietarygraph)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nintelligencepremiumproprietarygraph)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

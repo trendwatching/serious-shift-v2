@@ -24,18 +24,26 @@ import json
 
 from ..paths import contracts_dir
 
-def _load_module_order() -> dict:
-    """Canonical module order per scope, from packages/contracts. Empty mapping
-    if unreadable, in which case the export preserves whatever order the modules
-    were written in."""
+def _load_contract() -> dict:
+    """packages/contracts/shift_modules.json, or an empty mapping if unreadable.
+
+    An unreadable contract degrades rather than raises: the export then preserves
+    whatever order the modules were written in, and the industries module — which
+    cannot be made canonical without the sector list — is simply omitted.
+    """
     try:
-        path = contracts_dir() / 'shift_modules.json'
-        return json.loads(path.read_text()).get('order') or {}
+        return json.loads((contracts_dir() / 'shift_modules.json').read_text())
     except (ValueError, OSError, RuntimeError):
         return {}
 
 
-MODULE_ORDER = _load_module_order()
+_CONTRACT = _load_contract()
+
+MODULE_ORDER = _CONTRACT.get('order') or {}
+
+#: The sixteen sectors, in the order the gate demands them. Read from the same
+#: file the validator reads, so the two cannot disagree.
+INDUSTRY_SECTORS = _CONTRACT.get('industry_sectors') or []
 
 CLAIMS_PER_DOM  = 200   # claims sent to Key Trend generation per domain
 CLAIMS_PER_KT   = 100   # claims sent to sub-trend generation per KT

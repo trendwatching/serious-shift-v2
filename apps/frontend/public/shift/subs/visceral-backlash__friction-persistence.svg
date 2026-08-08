@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>visceral-backlash/friction-persistence</title>
+<defs>
+<linearGradient id="fvisceralbacklashfrictionpersistence" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gvisceralbacklashfrictionpersistence" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bvisceralbacklashfrictionpersistence" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="svisceralbacklashfrictionpersistence" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vvisceralbacklashfrictionpersistence" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nvisceralbacklashfrictionpersistence" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fvisceralbacklashfrictionpersistence)"/>
+<rect width="640" height="640" fill="url(#gvisceralbacklashfrictionpersistence)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bvisceralbacklashfrictionpersistence)" filter="url(#svisceralbacklashfrictionpersistence)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="174.9" rx="469.8" ry="169.1" fill="none" stroke-width="48"/><rect x="333.9" y="344" width="20" height="20" transform="rotate(27.2 333.9 344)"/><rect x="288.4" y="353" width="19.5" height="19.5" transform="rotate(12.1 288.4 353)"/><rect x="274.4" y="362" width="19.1" height="19.1" transform="rotate(71.7 274.4 362)"/><rect x="325.2" y="370.9" width="18.6" height="18.6" transform="rotate(19.7 325.2 370.9)"/><rect x="263.1" y="379.9" width="18.2" height="18.2" transform="rotate(76.6 263.1 379.9)"/><rect x="253" y="388.9" width="17.7" height="17.7" transform="rotate(28.2 253 388.9)"/><rect x="322.4" y="397.8" width="17.3" height="17.3" transform="rotate(12.6 322.4 397.8)"/><rect x="395.2" y="406.8" width="16.8" height="16.8" transform="rotate(75.9 395.2 406.8)"/><rect x="292.8" y="415.8" width="16.4" height="16.4" transform="rotate(68.5 292.8 415.8)"/><rect x="294.5" y="424.7" width="15.9" height="15.9" transform="rotate(6.3 294.5 424.7)"/><rect x="270.5" y="433.7" width="15.5" height="15.5" transform="rotate(55.8 270.5 433.7)"/><rect x="330.5" y="442.7" width="15" height="15" transform="rotate(41 330.5 442.7)"/><rect x="234.6" y="451.6" width="14.5" height="14.5" transform="rotate(21.9 234.6 451.6)"/><rect x="217.3" y="460.6" width="14.1" height="14.1" transform="rotate(26.1 217.3 460.6)"/><rect x="440.5" y="469.6" width="13.6" height="13.6" transform="rotate(25.9 440.5 469.6)"/><rect x="413.7" y="478.6" width="13.2" height="13.2" transform="rotate(41.2 413.7 478.6)"/><rect x="310.4" y="487.5" width="12.7" height="12.7" transform="rotate(30.8 310.4 487.5)"/><rect x="392.2" y="496.5" width="12.3" height="12.3" transform="rotate(48.8 392.2 496.5)"/><rect x="453.4" y="505.5" width="11.8" height="11.8" transform="rotate(60.1 453.4 505.5)"/><rect x="263.6" y="514.4" width="11.4" height="11.4" transform="rotate(10.8 263.6 514.4)"/><rect x="331" y="523.4" width="10.9" height="10.9" transform="rotate(26.6 331 523.4)"/><rect x="358.8" y="532.4" width="10.5" height="10.5" transform="rotate(11.6 358.8 532.4)"/><rect x="261.6" y="541.3" width="10" height="10" transform="rotate(68.9 261.6 541.3)"/><rect x="212.2" y="550.3" width="9.5" height="9.5" transform="rotate(27.8 212.2 550.3)"/><rect x="303.3" y="559.3" width="9.1" height="9.1" transform="rotate(72.4 303.3 559.3)"/><rect x="186.3" y="568.2" width="8.6" height="8.6" transform="rotate(71.9 186.3 568.2)"/><rect x="504.3" y="577.2" width="8.2" height="8.2" transform="rotate(86.4 504.3 577.2)"/><rect x="473.8" y="586.2" width="7.7" height="7.7" transform="rotate(32.4 473.8 586.2)"/><rect x="507.5" y="595.2" width="7.3" height="7.3" transform="rotate(46.9 507.5 595.2)"/><rect x="238.5" y="604.1" width="6.8" height="6.8" transform="rotate(53.3 238.5 604.1)"/><rect x="410.5" y="613.1" width="6.4" height="6.4" transform="rotate(14.5 410.5 613.1)"/><rect x="186.2" y="622.1" width="5.9" height="5.9" transform="rotate(74 186.2 622.1)"/><rect x="450.6" y="631" width="5.5" height="5.5" transform="rotate(55.4 450.6 631)"/><rect x="410.1" y="640" width="5" height="5" transform="rotate(24.3 410.1 640)"/></g>
+<rect width="640" height="640" fill="url(#vvisceralbacklashfrictionpersistence)"/>
+<rect width="640" height="640" filter="url(#nvisceralbacklashfrictionpersistence)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nvisceralbacklashfrictionpersistence)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>
