@@ -31,8 +31,8 @@ test('a nav anchor settles on its section', async ({ page }) => {
   await page.waitForTimeout(900)
 
   const settled = await y()
-  // `scroll-mt-24` is 96px, so that is where the heading is meant to come to
-  // rest — not zero.
+  // `.anchor-top` is `--topbar + 16`, so ~100px at this width — that is where
+  // the heading is meant to come to rest, not zero.
   expect(settled, 'the section rests at its scroll margin').toBeGreaterThan(60)
   expect(settled, 'and near the top of the viewport, not a section away').toBeLessThan(140)
 

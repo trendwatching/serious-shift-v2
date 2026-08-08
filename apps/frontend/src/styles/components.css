@@ -98,10 +98,13 @@
     gap: 22px;
   }
 
-  /* Where an anchored heading comes to rest. Derived, because the bar it has to
-     clear is now fluid: the literal `scroll-mt-24` this replaced was 96px, and
-     the bar reaches 116px, so every `/about#…` row in the nav parked its own
-     heading behind the black bar on any screen wider than about 1100px. */
+  /* Where an anchored heading comes to rest.
+     Derived rather than the literal `scroll-mt-24` it replaces: 96px was chosen
+     against a bar that was always 84px, and the bar is fluid now, so the two
+     had quietly come apart. The heading is not hidden either way — the bar is
+     `absolute`, so by the time you have scrolled to a section it has scrolled
+     off with the rest of the document — but the offset it lands at should stay
+     in proportion to the chrome instead of drifting from it. */
   .anchor-top { scroll-margin-top: calc(var(--topbar) + 16px); }
 
   /* Hero heights. In CSS rather than inline for the same reason the horizon
