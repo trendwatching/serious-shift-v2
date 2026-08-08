@@ -58,9 +58,17 @@ const IMAGE_DIMS = {
   '/shift/about-whatsapp.jpg': [1400, 903],
 }
 
+/**
+ * `paddingBlock`, not `padding`. The shorthand also sets padding-inline, and an
+ * inline style beats every rule — so `padding: '36px 22px 40px'` on an element
+ * carrying `.gutter` quietly pinned this page to a 22px gutter at every width
+ * while the rest of the site moved to the fluid one. /about was the only page
+ * whose measure did not match its neighbours, which is most of why it read as
+ * a different site.
+ */
 const Section = ({ id, image, alt, eyebrow, children, after }) => (
-  <section id={id} className="canvas gutter scroll-mt-24" style={{ padding: '36px 22px 40px' }}>
-    <div className="w-prose flex flex-col gap-[22px]">
+  <section id={id} className="about-section canvas gutter anchor-top" style={{ paddingBlock: '36px 40px' }}>
+    <div className="about-body">
       {image && (
         <div className="overflow-hidden rounded-[20px]">
           <img
@@ -101,27 +109,38 @@ export default function About() {
 
   return (
     <article className="min-h-dvh bg-white" style={{ animation: 'abRise 0.45s var(--ease-out)' }}>
-      <>
-        <div className="w-prose pt-8">
-          <Link
-            to="/"
-            className="inline-flex h-[30px] items-center gap-[7px] rounded-full bg-white px-[13px] text-xs !text-[var(--color-ink)]"
-            style={{ boxShadow: '0 3px 10px rgba(27,22,32,0.18)', fontFamily: 'var(--font-display)', fontWeight: 650 }}
-          >
-            <span aria-hidden="true" className="rotate-180 text-[13px] leading-none opacity-70">→</span>
-            Home
-          </Link>
-        </div>
+      {/* The masthead had three separate faults, and together they are why this
+          page looked broken rather than merely plain.
 
-        <div className="w-prose pb-10 pt-5">
-          <h1 className="t-display leading-none" style={{ fontSize: 'var(--t-about)', letterSpacing: '-0.035em' }}>
-            About<span className="italic">.</span>
-          </h1>
-          <p className="mt-4 max-w-[300px] text-[16.5px] leading-[1.45]" style={{ color: 'var(--color-ink-soft)' }}>
-            Why Serious Shift exists, how we build it, and who is behind it.
-          </p>
-        </div>
-      </>
+          It sat on the page root instead of in the canvas, so `w-prose` — which
+          is not a class; Tailwind's is `max-w-prose`, and this one emitted no
+          CSS at all — was the only thing meant to be holding it. The title and
+          the standfirst therefore ran from x=0, hard against the viewport edge,
+          while every section below them was centred in a 660px column.
+
+          And it had `pt-8`, 32px, to clear a bar that is absolutely positioned
+          and 84–116px tall. The Home pill was drawn entirely behind the black
+          bar and the H1 started 24px behind it too. */}
+      <header className="about-masthead canvas gutter" style={{ paddingTop: 'calc(var(--topbar) + 22px)', paddingBottom: 40 }}>
+        <Link
+          to="/"
+          className="inline-flex h-[30px] items-center gap-[7px] rounded-full bg-white px-[13px] text-xs !text-[var(--color-ink)]"
+          style={{ boxShadow: '0 3px 10px rgba(27,22,32,0.18)', fontFamily: 'var(--font-display)', fontWeight: 650 }}
+        >
+          <span aria-hidden="true" className="rotate-180 text-[13px] leading-none opacity-70">→</span>
+          Home
+        </Link>
+
+        <h1 className="t-display leading-none" style={{ marginTop: 20, fontSize: 'var(--t-about)', letterSpacing: '-0.035em' }}>
+          About<span className="italic">.</span>
+        </h1>
+        {/* `.measure`, not `max-w-[300px]`: the 300px cap is a phone constraint,
+            and the desktop layer releases it the way it does every other
+            standfirst on the site. */}
+        <p className="measure mt-4 text-[16.5px] leading-[1.45]" style={{ color: 'var(--color-ink-soft)' }}>
+          Why Serious Shift exists, how we build it, and who is behind it.
+        </p>
+      </header>
 
       <Section
         image="/shift/about-crowd.jpg" alt="AI and society, as a collage of cut-out photographs" eyebrow="Why & who & what"
@@ -131,7 +150,7 @@ export default function About() {
              and the design nests it inside this section, which is also the only
              place its negative margins land on the viewport edges. */
           <div className="bleed py-[30px]" style={{ marginTop: 4, background: 'var(--color-ink)' }}>
-            <div className="w-prose flex flex-col gap-3 text-white">
+            <div className="flex flex-col gap-3 text-white">
               <span className="t-eyebrow" style={{ color: 'var(--color-yellow)' }}>The point</span>
               <span className="t-display text-2xl font-semibold leading-[1.28]" style={{ letterSpacing: '-0.018em' }}>
                 Seriously, if not now, then when?
@@ -171,35 +190,24 @@ export default function About() {
         <P>The systems get smarter every week, so will Serious Shift, and so then will you.</P>
       </Section>
 
-      <section id="subscribe" className="canvas gutter scroll-mt-24" style={{ padding: '36px 22px 40px' }}>
-        <>
-          <div className="w-prose flex flex-col gap-5">
-            <h2 className="t-eyebrow">Subscribe / follow</h2>
-            <div className="overflow-hidden rounded-[20px]">
-              <img
-                src="/shift/about-whatsapp.jpg" alt="One shift each weekday, on WhatsApp"
-                loading="lazy" decoding="async"
-                width={IMAGE_DIMS['/shift/about-whatsapp.jpg'][0]}
-                height={IMAGE_DIMS['/shift/about-whatsapp.jpg'][1]}
-                className="block h-auto w-full"
-              />
-            </div>
-            <P>Want to embark with us on a journey? <A href={WHATSAPP_URL}>Join us on WhatsApp</A> today, and receive one shift each weekday.</P>
-            <P>And yes, do <A href={SUBSCRIBE_URL}>sign up for TrendWatching’s free membership</A> if you haven’t yet, so we can keep you updated on major new Serious Shift and TrendWatching features.</P>
-            <a
-              href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-              className="inline-flex h-12 items-center gap-[9px] self-start rounded-full px-[22px] text-[15px] transition-transform duration-300 hover:-translate-y-0.5"
-              style={{
-                background: 'var(--color-whatsapp)', color: 'var(--color-ink)',
-                fontFamily: 'var(--font-display)', fontWeight: 650,
-              }}
-            >
-              <img src="/shift/whatsapp-logo.png" alt="" width={22} height={22} className="block size-[22px] object-contain" />
-              Join us on WhatsApp
-            </a>
-          </div>
-      </>
-      </section>
+      <Section
+        id="subscribe" image="/shift/about-whatsapp.jpg"
+        alt="One shift each weekday, on WhatsApp" eyebrow="Subscribe / follow"
+      >
+        <P>Want to embark with us on a journey? <A href={WHATSAPP_URL}>Join us on WhatsApp</A> today, and receive one shift each weekday.</P>
+        <P>And yes, do <A href={SUBSCRIBE_URL}>sign up for TrendWatching’s free membership</A> if you haven’t yet, so we can keep you updated on major new Serious Shift and TrendWatching features.</P>
+        <a
+          href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
+          className="inline-flex h-12 items-center gap-[9px] self-start rounded-full px-[22px] text-[15px] transition-transform duration-300 hover:-translate-y-0.5"
+          style={{
+            background: 'var(--color-whatsapp)', color: 'var(--color-ink)',
+            fontFamily: 'var(--font-display)', fontWeight: 650,
+          }}
+        >
+          <img src="/shift/whatsapp-logo.png" alt="" width={22} height={22} className="block size-[22px] object-contain" />
+          Join us on WhatsApp
+        </a>
+      </Section>
 
       <Footer />
     </article>

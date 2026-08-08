@@ -90,7 +90,7 @@ for (const file of files.filter((f) => /\.(jsx?|css)$/.test(f))) {
 // is silently discarded. `.horizon` and `.sub-stack` become grids; `.widen` and
 // `.bleed` are given an explicit width.
 const OVERRIDDEN = [
-  { classes: ['horizon', 'sub-stack'], property: 'display',
+  { classes: ['horizon', 'sub-stack', 'about-body'], property: 'display',
     utility: /(?:^|\s)(?:flex|grid|block|inline-flex|inline-grid|contents)(?:$|\s)/ },
   { classes: ['widen', 'bleed', 'badge-row'], property: 'width',
     utility: /(?:^|\s)(?:w-full|w-screen|w-\[|max-w-)/ },
@@ -98,7 +98,7 @@ const OVERRIDDEN = [
   // or max-width utility on them wins and the block drifts off the page axis.
   { classes: ['footer-inner', 'crumb-float'], property: 'margin',
     utility: /(?:^|\s)(?:m-|mx-|ml-|mr-)/ },
-  { classes: ['footer-inner', 'measure'], property: 'max-width',
+  { classes: ['footer-inner', 'measure', 'about-section', 'about-masthead'], property: 'max-width',
     utility: /(?:^|\s)max-w-/ },
 ]
 const has = (names, klass) => new RegExp(`(?:^|\\s)${klass}(?:$|\\s)`).test(names)

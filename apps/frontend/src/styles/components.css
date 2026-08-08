@@ -86,6 +86,24 @@
      660px column reads as a mistake, not as a short line. */
   .measure { max-width: var(--measure, 300px); }
 
+  /* An About section's picture and its prose. Stacked on a phone, side by side
+     on a desktop — and the `display` lives HERE rather than as a `flex` utility
+     precisely so desktop.css can turn it into a grid. A co-applied utility
+     would beat the layer and the two-up would never arrive at any width, which
+     is the same trap `.horizon` and `.sub-stack` are already guarded against in
+     scripts/check-layers.mjs. */
+  .about-body {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* Where an anchored heading comes to rest. Derived, because the bar it has to
+     clear is now fluid: the literal `scroll-mt-24` this replaced was 96px, and
+     the bar reaches 116px, so every `/about#…` row in the nav parked its own
+     heading behind the black bar on any screen wider than about 1100px. */
+  .anchor-top { scroll-margin-top: calc(var(--topbar) + 16px); }
+
   /* Hero heights. In CSS rather than inline for the same reason the horizon
      rail is: desktop.css changes them, and an inline style beats every rule —
      so an inline `minHeight: 500` left the domain hero at 500px of mostly empty

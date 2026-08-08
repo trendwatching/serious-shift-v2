@@ -150,6 +150,29 @@
        sphere name wraps instead of running off the panel. */
     .badge-row { width: max-content; max-width: var(--wide); }
 
+    /* /about stops being a phone column stretched down a desktop.
+       Stacked, each picture sat alone in a 660px column with the prose beneath
+       it, so a 1440 screen showed a small image marooned in white, then a short
+       paragraph, then more white — six times. The section takes the wide
+       measure and pairs the two, which halves the page's height and gives each
+       column a sane 450–520px of its own. The picture alternates sides so the
+       page has a rhythm instead of a left margin of stamps. */
+    .about-section { max-width: var(--wide); }
+    .about-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 46px;
+      align-items: center;
+    }
+    .about-section:nth-of-type(even) .about-body > :first-child { order: 1; }
+
+    /* The masthead takes the same measure as the sections, so "About." starts
+       on the same left edge as the copy underneath it. Centring it on `--col`
+       instead — two centred widths on one axis — indented the title by half
+       their difference, 132px, and the page opened with a heading that lined up
+       with nothing on it. */
+    .about-masthead { max-width: var(--wide); }
+
     /* The intro is top-aligned because a phone screen has no room to spare.
        A desktop panel is the full viewport height, which left ~450px of nothing
        between the badges and the pager — so the copy sits in the middle of its
