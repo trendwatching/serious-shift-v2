@@ -7,12 +7,20 @@
 # and makes no model calls, so it needs no ANTHROPIC_API_KEY.
 
 # ── 1. Frontend: static export ───────────────────────────────────────────────
+# This stage mirrors the repo layout — /web/apps/frontend, /web/packages —
+# rather than flattening the frontend to /web. The module reading order is a
+# cross-package contract, so useDomains.js imports the same JSON the pipeline
+# and the backend read instead of keeping a third copy; that import is
+# repo-relative, and flattening resolved it to a path above the build context.
+# The result compiled locally and failed only in Docker, which is precisely the
+# trap the backend crate's own comment warns about for `include_str!`.
 FROM node:22-slim@sha256:f32b81066cde10a75dbac96646099533316d94bac4150c55da1636e1f0ffdc46 AS web
-WORKDIR /web
+WORKDIR /web/apps/frontend
 COPY apps/frontend/package.json apps/frontend/package-lock.json ./
 RUN npm ci
 COPY apps/frontend/ ./
-RUN npm run build          # → /web/out
+COPY packages/contracts /web/packages/contracts
+RUN npm run build          # → /web/apps/frontend/out
 
 # ── 2. Backend: compile ──────────────────────────────────────────────────────
 FROM rust:1-bookworm@sha256:77fac8b98f9f46062bb680b6d25d5bcaabfc400143952ebc572e924bcbedc3fa AS build
@@ -35,7 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /srv
 COPY --from=build /app/apps/backend/target/release/serious-shift-backend /usr/local/bin/app
-COPY --from=web /web/out ./static
+COPY --from=web /web/apps/frontend/out ./static
 ENV PORT=8080 STATIC_DIR=/srv/static
 EXPOSE 8080
 USER 10001:10001
