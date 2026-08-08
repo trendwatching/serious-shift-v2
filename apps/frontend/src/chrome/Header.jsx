@@ -62,15 +62,22 @@ export function Header() {
           height: 'var(--topbar)',
           // 56px of the design's 140px is the iOS status bar. On the web that
           // inset is real and variable, so it is honoured rather than faked.
-          padding: 'max(0px, env(safe-area-inset-top)) 22px 0',
+          padding: 'max(0px, env(safe-area-inset-top)) var(--gutter) 0',
           background: 'var(--color-black)',
         }}
       >
         <Link to="/" aria-label="Serious Shi(f)t — home" className="flex shrink-0 items-center">
+          {/* Sized as a FRACTION of the band, not in pixels. The lock-up is
+              74×214 in an 84px bar, so it keeps 88% of the band's height and
+              its own 2.892 aspect at every width — which is what stops a
+              214px logo from becoming a stamp in the corner of a 27" display.
+              The width/height attributes stay: they give the browser the ratio
+              to hold before the PNG arrives. */}
           <img
             src={LOGO} alt="Serious Shi(f)t, powered by TrendWatching"
             width={214} height={74} draggable="false"
-            className="block h-[74px] w-[214px] object-contain"
+            className="block object-contain"
+            style={{ height: 'calc(var(--bar-h) * 0.881)', width: 'calc(var(--bar-h) * 2.548)' }}
           />
         </Link>
 
@@ -80,13 +87,18 @@ export function Header() {
           aria-label={open ? 'Close navigation' : 'Open navigation'}
           aria-expanded={open} aria-controls="site-nav"
           className="flex cursor-pointer flex-col items-end"
-          style={{ padding: '4px 0 10px 14px', gap: 5 }}
+          style={{ padding: '4px 0 10px 14px', gap: 'calc(var(--bar-h) * 0.0595)' }}
         >
           {/* Three bars of falling width. They do not morph on open — the
               design's hamburger is static and the panel's presence is the
-              state indicator. */}
-          {[26, 20, 13].map((w) => (
-            <span key={w} className="block rounded-sm bg-white" style={{ width: w, height: 2.5 }} />
+              state indicator. Like the logo, each is a fraction of the band
+              (26, 20 and 13 of an 84px bar), so the target grows with the
+              chrome instead of staying a 26px smudge on a large screen. */}
+          {[0.3095, 0.2381, 0.1548].map((k) => (
+            <span
+              key={k} className="block rounded-sm bg-white"
+              style={{ width: `calc(var(--bar-h) * ${k})`, height: 'calc(var(--bar-h) * 0.0298)' }}
+            />
           ))}
         </button>
       </header>
@@ -102,11 +114,11 @@ export function Header() {
         className="fixed inset-x-0 z-[49] m-0 w-full max-w-none border-0 bg-black p-0 text-white"
         style={{ top: 'var(--topbar)' }}
       >
-        <nav aria-label="Primary" style={{ padding: '8px 22px 26px', animation: 'ssRise 0.42s var(--ease-out)' }}>
+        <nav aria-label="Primary" style={{ padding: '8px var(--gutter) 26px', animation: 'ssRise 0.42s var(--ease-out)' }}>
           {MENU_LINKS.map((link) => {
             const body = (
               <>
-                <span className="t-display text-[20px] font-semibold tracking-[-0.01em]">{link.label}</span>
+                <span className="t-display font-semibold tracking-[-0.01em]" style={{ fontSize: 'var(--t-nav)' }}>{link.label}</span>
                 <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
                   {link.meta ?? (meta.shiftCount ? `${meta.shiftCount} key shifts` : 'Every domain')}
                 </span>
@@ -115,7 +127,9 @@ export function Header() {
             const props = {
               onClick: close,
               className: 'flex items-center gap-3 !text-white',
-              style: { padding: '15px 0', borderBottom: '1px solid rgba(255,255,255,0.12)' },
+              // Derived from the label, so the rows open up as the type does
+              // — 15px against 20px type, 19.5 against 26.
+              style: { padding: 'calc(var(--t-nav) * 0.75) 0', borderBottom: '1px solid rgba(255,255,255,0.12)' },
             }
             return link.internal
               ? <Link key={link.label} to={link.href} {...props}>{body}</Link>

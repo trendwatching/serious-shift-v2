@@ -39,8 +39,18 @@
 
   @media (min-width: 64rem) {
     :root {
+      /* --col does NOT scale, and that is a decision rather than an omission.
+         It is the reading measure: 660px of 16px prose is already ~85
+         characters, at the top of the comfortable range. Growing it with the
+         display would buy nothing but longer lines to track back along. A
+         bigger screen earns bigger CHROME and more room for grids — not wider
+         paragraphs, which is why body copy is off the ramp too. */
       --col: 660px;
-      --wide: min(940px, calc(100vw - 96px));
+
+      /* --wide does scale: it carries rails, grids and bands, where extra room
+         means another card in the row instead of a longer line. It still yields
+         to the viewport, so the band never touches the edge. */
+      --wide: min(clamp(940px, 665.71px + 26.79vw, 1180px), calc(100vw - 96px));
     }
 
     .canvas { max-width: var(--col); }
@@ -123,10 +133,22 @@
     /* A hero is a band, not a billboard. Full-bleed artwork is right; 660px of
        it under a title set at 46px is not, and the title has to sit on the same
        axis as the prose beneath it rather than in the middle of the picture. */
-    .hero-tall  { --hero-h: 460px; --hero-h-min: 300px; }
-    .hero-flat  { height: 300px; }
-    .hero-short { min-height: 380px; }
-    .hero-sub   { min-height: 330px; }
+    .hero-tall  {
+      --hero-h: clamp(460px, 277.14px + 17.86vw, 620px);
+      --hero-h-min: clamp(300px, 208.57px + 8.93vw, 380px);
+    }
+    .hero-flat  { height: clamp(300px, 185.71px + 11.16vw, 400px); }
+    .hero-short { min-height: clamp(380px, 242.86px + 13.39vw, 500px); }
+    .hero-sub   { min-height: clamp(330px, 215.71px + 11.16vw, 430px); }
+
+    /* The four sphere badges are primary navigation, not prose, so they are
+       the one block in the intro that does not take the reading column's cap.
+       Grown to a desktop size they needed 678px of a 660px column, and the
+       fourth dropped onto a line of its own — a worse result than the phone's
+       deliberate 2+1+1 wrap. `max-content` keeps them on one line starting at
+       the headline's left edge, and `--wide` is the backstop so a longer
+       sphere name wraps instead of running off the panel. */
+    .badge-row { width: max-content; max-width: var(--wide); }
 
     /* The intro is top-aligned because a phone screen has no room to spare.
        A desktop panel is the full viewport height, which left ~450px of nothing

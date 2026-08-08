@@ -40,7 +40,7 @@ export default function DomainPage() {
 
       <header
         className="hero-short relative box-border flex flex-col overflow-hidden text-white"
-        style={{ padding: '152px 0 74px' }}
+        style={{ padding: 'calc(var(--topbar) + 68px) 0 74px' }}
       >
         {photo && (
           <span
@@ -53,7 +53,7 @@ export default function DomainPage() {
           style={{ backgroundImage: 'linear-gradient(180deg, rgba(27,22,32,0) 34%, rgba(27,22,32,0.34) 100%)' }}
         />
         <div className="canvas gutter relative z-[2] mt-auto">
-          <h1 className="t-display uppercase" style={{ fontSize: 46, fontWeight: 700, lineHeight: 0.98, letterSpacing: '-0.03em' }}>
+          <h1 className="t-display uppercase" style={{ fontSize: 'var(--t-hero)', fontWeight: 700, lineHeight: 0.98, letterSpacing: '-0.03em' }}>
             {domain.name}
           </h1>
           <p className="measure" style={{ '--measure': '290px', marginTop: 14, fontSize: 15, lineHeight: 1.5, opacity: 0.94 }}>{domain.blurb}</p>

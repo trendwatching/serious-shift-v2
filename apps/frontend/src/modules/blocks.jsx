@@ -44,7 +44,7 @@ export const FromTo = ({ data, ctx }) => {
         className="relative box-border flex flex-col items-center justify-center text-center"
         style={{ height: 208, padding: '20px 15px', gap: 10, animation: `${ink} 8s ease-in-out infinite` }}
       >
-        <span className="t-display" style={{ fontSize: 25, fontWeight: 700, letterSpacing: '-0.02em' }}>{label}</span>
+        <span className="t-display" style={{ fontSize: 'var(--t-stat)', fontWeight: 700, letterSpacing: '-0.02em' }}>{label}</span>
         <span style={{ fontSize: 13.5, lineHeight: 1.42 }}>{text}</span>
       </div>
     </div>

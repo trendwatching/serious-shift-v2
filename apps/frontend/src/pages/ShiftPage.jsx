@@ -37,7 +37,16 @@ function useHeroShrink(ref, enabled) {
       const tall = bound('--hero-h', 660)
       const short = bound('--hero-h-min', 360)
       node.style.height = `${Math.max(short, tall - y * 0.85).toFixed(0)}px`
-      node.style.setProperty('--hero-fs', `${Math.max(29, 46 - y * 0.055).toFixed(1)}px`)
+      // The title shrinks 46 → 29 on the design canvas. Both ends and the rate
+      // are now taken from `--t-hero` rather than written out, for the same
+      // reason the height is: this writes an inline size that beats every rule,
+      // so a literal 46 would yank a 68px desktop title down to the phone's on
+      // the first scroll event — and then shrink it at the phone's pace.
+      const base = bound('--t-hero', 46)
+      node.style.setProperty(
+        '--hero-fs',
+        `${Math.max(base * 0.63, base - y * 0.055 * (base / 46)).toFixed(1)}px`,
+      )
     }
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(paint) }
     paint()
@@ -80,7 +89,7 @@ export default function ShiftPage() {
         ref={heroRef}
         className={`${image ? 'hero-tall' : 'hero-flat'} relative box-border flex flex-col overflow-hidden text-white`}
         style={{
-          padding: '152px 0 22px',
+          padding: 'calc(var(--topbar) + 68px) 0 22px',
           backgroundImage: [
             'linear-gradient(180deg, rgba(27,22,32,0) 34%, rgba(27,22,32,0.58) 100%)',
             'repeating-linear-gradient(115deg, rgba(255,255,255,0.1) 0 10px, rgba(255,255,255,0) 10px 26px)',
@@ -116,7 +125,7 @@ export default function ShiftPage() {
         <div className="canvas gutter relative z-[2] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.16s' }}>
           <h1
             className="t-title"
-            style={{ margin: 0, fontSize: `var(--hero-fs, ${image ? 46 : 32}px)`, lineHeight: 1.1, letterSpacing: '0.005em' }}
+            style={{ margin: 0, fontSize: `var(--hero-fs, var(${image ? '--t-hero' : '--t-sub'}))`, lineHeight: 1.1, letterSpacing: '0.005em' }}
           >
             {shift.title}
           </h1>

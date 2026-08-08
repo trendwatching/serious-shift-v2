@@ -75,24 +75,80 @@
   --color-menu-on:   #FBF3F7;   /* breadcrumb-menu active row       */
 }
 
+/* Registered as lengths, and that is load-bearing rather than tidiness.
+   `useHeroShrink` reads these back with `getComputedStyle().getPropertyValue()`
+   and `parseFloat`s the result. For an UNREGISTERED custom property the computed
+   value is the token sequence as written — so the moment these became
+   `clamp(460px, … vw, 620px)` that call returned the literal string "clamp(…",
+   `parseFloat` returned NaN, and the hook would have silently fallen back to the
+   phone's 660px hero and the phone's 46px title on every desktop. Registering
+   them makes the computed value a resolved pixel length, which is what the hook
+   has always assumed it was getting. */
+@property --hero-h     { syntax: '<length>'; inherits: true; initial-value: 660px; }
+@property --hero-h-min { syntax: '<length>'; inherits: true; initial-value: 360px; }
+@property --t-hero     { syntax: '<length>'; inherits: true; initial-value: 46px; }
+
 :root {
-  /* ── Page geometry ────────────────────────────────────────────────────
-   * One gutter, one module gap, at every width. The design is a single
-   * 393px canvas; desktop centres it rather than re-spacing it, so these
-   * are constants and not a scale. See styles/desktop.css.
+  /* ══ The fluid ramp ═══════════════════════════════════════════════════
+   * The design is a single 393px canvas, and for a long time the site simply
+   * WAS that canvas at every size: desktop.css widened the reading column and
+   * nothing else, so an 84px bar carrying a 214px logo stayed 84px whether it
+   * was on a phone or a 27" monitor. At 393 that bar is 21% of the screen; at
+   * 2560 it is 3%, and the chrome reads as a phone screenshot pasted onto a
+   * desktop rather than as a site that fits the display it is on.
+   *
+   * So every piece of FURNITURE — the bar, the gutters, the display type — is
+   * interpolated along one shared ramp instead of being a constant:
+   *
+   *   393px   the design canvas. Every clamp floors here, so the phone
+   *           renders exactly the delivered numbers and nothing below 393
+   *           ever shrinks further.
+   *   1920px  a large desktop, where each token reaches its ceiling and
+   *           stops. Past that the page grows no more, because a 5K display
+   *           is usually further away, not asking for bigger everything.
+   *
+   * One ramp for all of them is the point: mixed slopes are what make a page
+   * come apart at the widths nobody tested. The values are computed, not
+   * eyeballed — `min` is the value at 393, `max` the value at 1920, and the
+   * middle term is the line joining them.
+   *
+   * BODY COPY IS DELIBERATELY NOT ON THIS RAMP. Prose is set at the size it
+   * reads best and a wider screen does not change that; scaling it with the
+   * viewport is how you get 24px paragraphs on a monitor. The reading column
+   * widens instead, which is the actual desktop affordance.
    * ------------------------------------------------------------------- */
-  --gutter: 22px;
-  --module-gap: 30px;
 
-  /* Height of the black bar. The build fixes it at 140px, of which the top
-     56px is the iOS status bar. On the web that inset is real and variable,
-     so it is `safe-area + 84` — which equals 140 on a notched phone and
-     collapses gracefully everywhere else.
+  /* ── Page geometry ───────────────────────────────────────────────────── */
+  --gutter: clamp(22px, 17.367px + 1.179vw, 40px);
+  --module-gap: clamp(30px, 26.397px + 0.917vw, 44px);
 
-     Anything positioned against the bar MUST read this token. The previous
+  /* ── Display type ────────────────────────────────────────────────────── */
+  --t-deck:       clamp(58px, 49.25px + 2.227vw, 92px);    /* deck H1        */
+  --t-standfirst: clamp(18.5px, 17.084px + 0.36vw, 24px);  /* deck standfirst */
+  --t-hero:       clamp(46px, 40.338px + 1.441vw, 68px);   /* sphere H1      */
+  --t-sub:        clamp(32px, 28.397px + 0.917vw, 46px);   /* sub-shift H1   */
+  --t-about:      clamp(52px, 45.823px + 1.572vw, 76px);   /* About H1       */
+  --t-trust:      clamp(23px, 21.198px + 0.458vw, 30px);   /* footer trust   */
+  --t-stat:       clamp(25px, 22.684px + 0.589vw, 34px);   /* stat figure    */
+  --t-nav:        clamp(20px, 18.456px + 0.393vw, 26px);   /* nav menu label */
+  --t-cta:        clamp(15px, 14.23px + 0.196vw, 18px);    /* WhatsApp CTA   */
+  --cta-h:        clamp(50px, 46.91px + 0.786vw, 62px);    /* …and its pill  */
+  --t-badge:      clamp(13.5px, 12.6px + 0.229vw, 17px);   /* deck badge     */
+  --badge-h:      clamp(40px, 36.91px + 0.786vw, 52px);    /* …and its pill  */
+
+  /* Height of the black bar's own band, before the status-bar inset. The
+     build fixes the whole thing at 140px, of which the top 56px is the iOS
+     status bar; on the web that inset is real and variable, so it is
+     `safe-area + the band` — 140 on a notched phone, and collapsing
+     gracefully everywhere else.
+
+     Anything positioned against the bar MUST read `--topbar`. The previous
      build hard-coded a 62px token against an 82px bar and every hero and
-     breadcrumb on the site inherited the 20px error. */
-  --topbar: calc(max(0px, env(safe-area-inset-top)) + 84px);
+     breadcrumb on the site inherited the 20px error. Everything INSIDE the
+     bar reads `--bar-h`, so the logo and the hamburger grow with the band
+     rather than rattling around in it. */
+  --bar-h: clamp(84px, 75.764px + 2.096vw, 116px);
+  --topbar: calc(max(0px, env(safe-area-inset-top)) + var(--bar-h));
 
   /* ── Per-domain gradients ─────────────────────────────────────────────
    * Verbatim from the build's DECK table.

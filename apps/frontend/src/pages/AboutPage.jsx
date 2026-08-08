@@ -114,7 +114,7 @@ export default function About() {
         </div>
 
         <div className="w-prose pb-10 pt-5">
-          <h1 className="t-display text-[52px] leading-none" style={{ letterSpacing: '-0.035em' }}>
+          <h1 className="t-display leading-none" style={{ fontSize: 'var(--t-about)', letterSpacing: '-0.035em' }}>
             About<span className="italic">.</span>
           </h1>
           <p className="mt-4 max-w-[300px] text-[16.5px] leading-[1.45]" style={{ color: 'var(--color-ink-soft)' }}>

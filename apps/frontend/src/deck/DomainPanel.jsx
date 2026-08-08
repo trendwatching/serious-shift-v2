@@ -33,7 +33,7 @@ export default function DomainPanel({ domain, width, active, position, count, to
 
         <h2
           className="t-display uppercase"
-          style={{ marginTop: 30, fontSize: 46, fontWeight: 700, lineHeight: 0.98, letterSpacing: '-0.03em' }}
+          style={{ marginTop: 30, fontSize: 'var(--t-hero)', fontWeight: 700, lineHeight: 0.98, letterSpacing: '-0.03em' }}
         >
           {domain.name}
         </h2>

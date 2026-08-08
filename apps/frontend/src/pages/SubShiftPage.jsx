@@ -65,7 +65,7 @@ export default function SubShiftPage() {
         <div className="canvas gutter relative z-[3] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.14s' }}>
           <h1
             className="t-display uppercase"
-            style={{ margin: 0, fontSize: 32, fontWeight: 800, lineHeight: 1.06, letterSpacing: '-0.015em' }}
+            style={{ margin: 0, fontSize: 'var(--t-sub)', fontWeight: 800, lineHeight: 1.06, letterSpacing: '-0.015em' }}
           >
             {sub.title}
           </h1>

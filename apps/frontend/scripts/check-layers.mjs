@@ -92,7 +92,7 @@ for (const file of files.filter((f) => /\.(jsx?|css)$/.test(f))) {
 const OVERRIDDEN = [
   { classes: ['horizon', 'sub-stack'], property: 'display',
     utility: /(?:^|\s)(?:flex|grid|block|inline-flex|inline-grid|contents)(?:$|\s)/ },
-  { classes: ['widen', 'bleed'], property: 'width',
+  { classes: ['widen', 'bleed', 'badge-row'], property: 'width',
     utility: /(?:^|\s)(?:w-full|w-screen|w-\[|max-w-)/ },
   // `.footer-inner` and `.measure` are centred / capped by the layer; a margin
   // or max-width utility on them wins and the block drifts off the page axis.

@@ -24,7 +24,10 @@ function Marquee() {
           <span
             key={i}
             className="box-border flex shrink-0 items-center justify-center rounded-xl bg-white p-2"
-            style={{ width: 118, height: 56, boxShadow: '0 3px 12px rgba(27,22,32,0.08)' }}
+            style={{
+              width: 'calc(var(--bar-h) * 1.405)', height: 'calc(var(--bar-h) * 0.667)',
+              boxShadow: '0 3px 12px rgba(27,22,32,0.08)',
+            }}
           >
             <img
               src={src} alt="" loading="lazy" decoding="async"
@@ -63,7 +66,7 @@ export function Footer() {
       >
         <p
           className="t-display footer-inner text-center text-pretty"
-          style={{ fontSize: 23, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }}
+          style={{ fontSize: 'var(--t-trust)', fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }}
         >
           TrendWatching and Serious Shift are trusted by 50,000+ members worldwide
         </p>
@@ -76,7 +79,8 @@ export function Footer() {
         <img
           src={LOGO} alt="Serious Shi(f)t, powered by TrendWatching"
           width={220} height={76}
-          className="block h-[76px] w-[220px] object-contain"
+          className="block object-contain"
+          style={{ height: 'calc(var(--bar-h) * 0.905)', width: 'calc(var(--bar-h) * 2.619)' }}
         />
         {/* Dark ink, not white: white on #25D366 is 1.98:1 and unreadable.
             Ink is 8.96:1 and it is the same move the yellow pill already makes,
@@ -86,9 +90,9 @@ export function Footer() {
           href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
           className="ss-cta inline-flex items-center"
           style={{
-            height: 50, padding: '0 24px', borderRadius: 999, gap: 10,
+            height: 'var(--cta-h)', padding: '0 24px', borderRadius: 999, gap: 10,
             background: 'var(--color-whatsapp)', color: 'var(--color-ink)',
-            fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700,
+            fontFamily: 'var(--font-display)', fontSize: 'var(--t-cta)', fontWeight: 700,
             letterSpacing: '0.08em', textTransform: 'uppercase',
             transition: 'transform 0.28s var(--ease-out), box-shadow 0.28s ease',
           }}

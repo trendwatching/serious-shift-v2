@@ -30,7 +30,7 @@ export default function HomePanel({ width, active, count, domains, onJump }) {
       <div className="canvas relative">
         <h1
           className="t-display"
-          style={{ margin: '6px 0 0', fontSize: 58, lineHeight: 0.94, fontWeight: 700, letterSpacing: '-0.04em' }}
+          style={{ margin: '6px 0 0', fontSize: 'var(--t-deck)', lineHeight: 0.94, fontWeight: 700, letterSpacing: '-0.04em' }}
         >
           {['Everything', 'that is about'].map((line, i) => (
             <span key={line} className="block" style={{ animation: `ssWord 0.75s var(--ease-out) ${0.05 + i * 0.09}s` }}>{line}</span>
@@ -42,27 +42,27 @@ export default function HomePanel({ width, active, count, domains, onJump }) {
           className="measure"
           style={{
             '--measure': '320px',
-            margin: '24px 0 0', fontSize: 18.5, lineHeight: 1.45,
+            margin: '24px 0 0', fontSize: 'var(--t-standfirst)', lineHeight: 1.45,
             color: 'var(--color-ink-soft)', animation: 'ssRise 0.7s var(--ease-out) 0.4s',
           }}
         >
           Understand how AI will transform society, the economy, consumers and organizations — then turn those shifts into your own daring new opportunities and futures.
         </p>
 
-        <div className="flex flex-wrap items-center" style={{ marginTop: 24, gap: 9 }}>
+        <div className="badge-row flex flex-wrap items-center" style={{ marginTop: 24, gap: 9 }}>
           {DOMAIN_ORDER.map((id, i) => (
             <button
               key={id} type="button" onClick={() => onJump(i + 1)} tabIndex={active ? 0 : -1}
               className="ss-badge box-border inline-flex items-center text-white"
               style={{
-                height: 40, padding: '0 16px', borderRadius: 999, gap: 10,
+                height: 'var(--badge-h)', padding: '0 calc(var(--badge-h) * 0.4)', borderRadius: 999, gap: 10,
                 backgroundImage: DOMAIN_THEME[id].grad,
                 boxShadow: '0 6px 14px rgba(27,22,32,0.2), inset 0 1px 0 rgba(255,255,255,0.26)',
                 animation: `ssRise 0.7s var(--ease-out) ${(0.5 + i * 0.07).toFixed(2)}s`,
                 transition: 'transform 0.25s var(--ease-out), box-shadow 0.25s ease',
               }}
             >
-              <span className="t-display" style={{ fontSize: 13.5, fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              <span className="t-display" style={{ fontSize: 'var(--t-badge)', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 {nameOf(id)}
               </span>
               <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>→</span>
