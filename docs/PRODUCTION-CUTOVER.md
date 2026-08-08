@@ -56,6 +56,20 @@ credential should not be able to change what appears on a page.
 Before enabling YouTube, provision managed `YOUTUBE_PROXY_URL` on the pipeline
 service; never put the credential in this runbook or a command transcript.
 
+> **Steps 2–5 are scripted.** `./scripts/cutover-steps-2-to-5.sh` runs the whole
+> invisible half — back up, migrate, repoint the service, deploy from
+> `mobile-ui`, verify on the Railway URL — and stops before the domain. It is a
+> dry run unless you pass `--apply`, refuses on an unexpected `schema_migrations`
+> state, and is idempotent. Verified end to end against a `pg_restore` of
+> production: 48,104 claims intact, zero column differences from staging, and a
+> second run correctly does nothing.
+>
+> ```bash
+> export PROD_DATABASE_URL="…"   # the Postgres service's DATABASE_PUBLIC_URL
+> ./scripts/cutover-steps-2-to-5.sh            # prints, changes nothing
+> ./scripts/cutover-steps-2-to-5.sh --apply
+> ```
+
 ### 2. Reconcile the schema
 
 **Corrected 2026-08-08.** Production holds `0001`–**`0006`**, not `0001`–`0007`
