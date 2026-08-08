@@ -165,7 +165,9 @@ def test_short_figure_extraction():
     for raw, want in [
         ("25%", "25%"), ("18-34", "18-34"), ("3×", "3×"),
         ("200 years of encyclical history, first time dedicated to tech", "200"),
-        ("16 million Claude chats harvested via 24,000 fake accounts", "16 million"),
+        # "16 million" is ten characters and ~270px of Suez One in a 349px
+        # band. The scale word compresses so the number survives the width.
+        ("16 million Claude chats harvested via 24,000 fake accounts", "16M"),
         ("195 references verified in 30 minutes with zero errors", "195"),
         ("Boom Supersonic achieved supersonic flight in 2025", None),
         ("", None), (None, None),

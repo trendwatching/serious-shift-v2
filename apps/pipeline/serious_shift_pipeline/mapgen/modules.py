@@ -268,7 +268,18 @@ def _clamp_strings(items, limit: int) -> list | None:
 _HAS_DIGIT = re.compile(r'\d')
 
 
-def _short_figure(text, limit: int = 14) -> str | None:
+#: "54.2 million" is a figure a reader wants and a string the band cannot hold.
+#: Compressing the scale word keeps the number rather than dropping the module.
+_SCALE_WORDS = (
+    (re.compile(r'\s*trillion\b', re.I), 'T'),
+    (re.compile(r'\s*billion\b', re.I), 'B'),
+    (re.compile(r'\s*million\b', re.I), 'M'),
+    (re.compile(r'\s*thousand\b', re.I), 'K'),
+    (re.compile(r'\s*percent\b', re.I), '%'),
+)
+
+
+def _short_figure(text, limit: int = 8) -> str | None:
     """A numeral fit for the stat band, or None.
 
     `hero_stat.value` is prose lifted from a claim ("200 years of encyclical
@@ -276,10 +287,19 @@ def _short_figure(text, limit: int = 14) -> str | None:
     it at ~99px on desktop, so only a short figure works. Take a leading figure
     if there is one and give up otherwise — an overflowing band is worse than no
     band, and the module is dropped when this returns nothing.
+
+    The limit counts characters and the band cares about width, so it has to be
+    tight: the design's own figures are "72%", "3.4×", "10,874". At 14 it passed
+    "$54.2 million" — 13 characters, 353px of unshrinkable Suez One in a 349px
+    band, which scrolled the whole page sideways on three published sub-shifts.
+    Scale words are compressed first, so that value survives as "$54.2M" instead
+    of costing the shift its statistic.
     """
     if not text:
         return None
     t = ' '.join(str(text).split())
+    for pattern, short in _SCALE_WORDS:
+        t = pattern.sub(short, t)
     # A short string is only a figure if it contains one. Without the digit
     # check a ten-character phrase like "multi-hop" passed straight through and
     # rendered as the page's headline statistic at ~99px.
@@ -379,6 +399,14 @@ def conform_modules(modules: list) -> list:
 
         if type_ == 'peel_tabs':
             data['evidence_ids'] = _clamp_citations(data.get('evidence_ids'))
+        if type_ == 'stat_band':
+            # Re-reduced here too: a value written under the older, looser limit
+            # is already in the database, and the band it breaks is on a page
+            # that is already published.
+            value = _short_figure(data.get('value'))
+            if not value:
+                continue
+            data['value'] = value
         if type_ in LIST_ITEM_WORD_LIMITS:
             data['items'] = _clamp_strings(_as_strings(data.get('items')),
                                            LIST_ITEM_WORD_LIMITS[type_]) or []

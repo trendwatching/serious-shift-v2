@@ -93,7 +93,20 @@ export const StatBand = ({ data, ctx }) => {
       }}
       aria-label="Key statistic"
     >
-      <span className="t-title" style={{ flex: '0 0 auto', fontSize: big, lineHeight: 0.9, letterSpacing: '-0.015em' }}>
+      {/* `flex: 0 0 auto` is right for the figure the design draws — "72%",
+          "3.4×" — and catastrophic for one the pipeline let through long, such
+          as "$54.2 million": at 52px that is 353px of unshrinkable content in a
+          349px band, and the whole PAGE scrolls sideways. Capped and allowed to
+          wrap, so a long value costs a line rather than the layout. The real
+          repair is upstream, in _short_figure; this is the floor under it. */}
+      <span
+        className="t-title"
+        style={{
+          flex: '0 1 auto', minWidth: 0, maxWidth: '58%',
+          fontSize: big, lineHeight: 0.9, letterSpacing: '-0.015em',
+          overflowWrap: 'anywhere',
+        }}
+      >
         {data.value}
       </span>
       {/* `min-w-0` is load-bearing: a flex item defaults to `min-width: auto`,

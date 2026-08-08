@@ -376,3 +376,29 @@ def test_two_spheres_naming_a_shift_the_same_get_distinct_slugs():
 
     assert slugs == ['moat-migration', 'moat-migration-2', 'moat-migration-3']
     assert len(set(slugs)) == len(rows), 'a slug may not repeat across spheres'
+
+
+def test_a_stat_figure_cannot_be_wider_than_the_band():
+    """The band renders its value at ~52–58px in a 349px-wide strip, and the
+    value is set not to shrink, so an over-long figure scrolls the whole PAGE
+    sideways. "$54.2 million" is 13 characters — inside the old 14-character
+    limit — and 353px of Suez One. It broke three published sub-shifts.
+
+    Scale words compress rather than the module being dropped: the number is
+    what the reader came for."""
+    from serious_shift_pipeline.mapgen.modules import _short_figure, conform_modules
+
+    assert _short_figure('$54.2 million') == '$54.2M'
+    assert _short_figure('1.2 billion') == '1.2B'
+    assert _short_figure('72%') == '72%'
+    assert _short_figure('10,874') == '10,874'
+    # No numeral is not a statistic, whatever its length.
+    assert _short_figure('multi-hop') is None
+
+    # And the export re-reduces a value already written under the older limit.
+    conformed = conform_modules([
+        {'type': 'stat_band', 'data': {'value': '$54.2 million', 'text': 'x', 'source': 's'}},
+    ])
+    assert conformed[0]['data']['value'] == '$54.2M'
+    # A band whose value cannot be reduced to a figure is dropped, not shipped.
+    assert conform_modules([{'type': 'stat_band', 'data': {'value': 'a long phrase'}}]) == []
