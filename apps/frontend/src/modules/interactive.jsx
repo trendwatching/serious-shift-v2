@@ -3,6 +3,7 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from '../lib/router'
 import { Eyebrow } from './blocks'
+import { cssUrl, safeHref } from '../lib/safeUrl'
 
 /**
  * The peel-tab stack — two cards in one place, one on top.
@@ -180,7 +181,10 @@ export function HumanNeeds({ data, ctx }) {
 
 /** Sector chips over a detail card that swaps on selection. */
 export function Industries({ data }) {
-  const items = (data.items || []).filter((i) => i?.name)
+  // A sector with no note is carried by the document but not shown. The export
+  // completes the canonical sixteen so the contract holds and an editor sees the
+  // whole set; a sector the model skipped would otherwise open an empty panel.
+  const items = (data.items || []).filter((i) => i?.name && String(i.text || '').trim())
   const [pick, setPick] = useState(0)
   if (!items.length) return null
   const current = items[Math.min(pick, items.length - 1)]
@@ -307,7 +311,7 @@ export function SubShiftList({ ctx }) {
                   className="block shrink-0 self-stretch"
                   style={{
                     width: 152,
-                    backgroundImage: `url('${s.tileImage || '/shift/sub-card-art.jpg'}')`,
+                    backgroundImage: cssUrl(s.tileImage || '/shift/sub-card-art.jpg'),
                     backgroundSize: 'cover', backgroundPosition: 'center',
                   }}
                 />
@@ -364,11 +368,15 @@ export function Innovations({ data }) {
       <Eyebrow right="Scroll ›">Innovations in the wild</Eyebrow>
       <div className="rail bleed-edge" style={{ padding: '2px 22px 6px', gap: 12, scrollSnapType: 'x mandatory' }}>
         {items.map((item, i) => {
-          const Card = item.url ? 'a' : 'div'
+          // An innovation arrives from an upstream database, so its link is
+          // checked for a scheme we will actually follow before it becomes an
+          // href, and its image is escaped before it becomes CSS.
+          const href = safeHref(item.url)
+          const Card = href ? 'a' : 'div'
           return (
             <Card
               key={`${item.title}-${i}`}
-              {...(item.url ? { href: item.url, target: '_blank', rel: 'noopener noreferrer' } : {})}
+              {...(href ? { href, target: '_blank', rel: 'noopener noreferrer' } : {})}
               className="card card-lift box-border flex shrink-0 flex-col overflow-hidden"
               style={{ width: 236, scrollSnapAlign: 'center' }}
             >
@@ -376,7 +384,10 @@ export function Innovations({ data }) {
                 className="block"
                 style={{
                   height: 132,
-                  background: item.image ? `#F7F6F9 url('${item.image}') center/cover` : 'var(--color-paper)',
+                  background: 'var(--color-paper)',
+                  backgroundImage: cssUrl(item.image) || undefined,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
                 }}
               />
               <span className="box-border flex flex-1 flex-col" style={{ padding: 16, gap: 8 }}>
@@ -485,9 +496,9 @@ export function Evidence({ data }) {
                 a claim that arrives with a URL has to be followable. The port
                 dropped the link and left the module asserting provenance it gave
                 the reader no way to check. */}
-            {c.url && (
+            {safeHref(c.url) && (
               <a
-                href={c.url} target="_blank" rel="noopener noreferrer"
+                href={safeHref(c.url)} target="_blank" rel="noopener noreferrer"
                 className="t-display self-start"
                 style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '-0.005em', color: 'var(--a-ink)' }}
               >

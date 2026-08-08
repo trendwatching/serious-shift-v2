@@ -28,21 +28,27 @@ const A = ({ href, children }) => (
   </a>
 )
 
-const Section = ({ id, image, alt, eyebrow, children }) => (
+/**
+ * `after` renders inside the section, below its prose. The statement band needs
+ * that: it bleeds to the viewport edges with `-22px` margins, which only reach
+ * the edges from inside a container that is inset by 22px. As a sibling of the
+ * sections it sat directly on the page root, which has no gutter, so the band
+ * ran 22px past the right edge and gave /about a horizontal scrollbar.
+ */
+const Section = ({ id, image, alt, eyebrow, children, after }) => (
   <section id={id} className="canvas gutter scroll-mt-24" style={{ padding: '36px 22px 40px' }}>
-    <>
-      <div className="w-prose flex flex-col gap-[22px]">
-        {image && (
-          <div className="overflow-hidden rounded-[20px]">
-            <img src={image} alt={alt} loading="lazy" decoding="async" className="block h-auto w-full" />
-          </div>
-        )}
-        <div className="flex flex-col gap-3.5">
-          <h2 className="t-eyebrow">{eyebrow}</h2>
-          {children}
+    <div className="w-prose flex flex-col gap-[22px]">
+      {image && (
+        <div className="overflow-hidden rounded-[20px]">
+          <img src={image} alt={alt} loading="lazy" decoding="async" className="block h-auto w-full" />
         </div>
+      )}
+      <div className="flex flex-col gap-3.5">
+        <h2 className="t-eyebrow">{eyebrow}</h2>
+        {children}
       </div>
-      </>
+    </div>
+    {after}
   </section>
 )
 
@@ -90,25 +96,28 @@ export default function About() {
         </div>
       </>
 
-      <Section image="/shift/about-crowd.jpg" alt="AI and society, as a collage of cut-out photographs" eyebrow="Why & who & what">
+      <Section
+        image="/shift/about-crowd.jpg" alt="AI and society, as a collage of cut-out photographs" eyebrow="Why & who & what"
+        after={(
+          /* The one full-bleed band on the page. It is the argument the whole
+             site rests on, so it gets the site's only black statement surface —
+             and the design nests it inside this section, which is also the only
+             place its negative margins land on the viewport edges. */
+          <div className="bleed py-[30px]" style={{ marginTop: 4, background: 'var(--color-ink)' }}>
+            <div className="w-prose flex flex-col gap-3 text-white">
+              <span className="t-eyebrow" style={{ color: 'var(--color-yellow)' }}>The point</span>
+              <span className="t-display text-2xl font-semibold leading-[1.28]" style={{ letterSpacing: '-0.018em' }}>
+                Seriously, if not now, then when?
+              </span>
+            </div>
+          </div>
+        )}
+      >
         <P>Everything predicted three years ago is now unfolding: AI is becoming the organizational engine and orchestrating layer. Agents are here. You can just feel the systems building.</P>
         <P>If you’re responsible for AI strategy, the stakes have changed dramatically. Your biggest challenge? Finding the time to understand what matters, and turning it into action beyond ‘prompting courses for everyone’.</P>
         <P>To the rescue: <strong>Serious Shift</strong>, powered by <A href={TRENDWATCHING_URL}>TrendWatching</A>, giving decision-makers a <A href={ABOUT_URL}>continuously updated intelligence layer</A> on how AI is reshaping consumers, organizations, economies and society.</P>
         <P>The signals, distilled into trends, opportunities and <strong>actions</strong>.</P>
       </Section>
-
-      {/* The one full-bleed band on the page. It is the argument the whole site
-          rests on, so it gets the site's only black statement surface. */}
-      <div className="bleed py-[30px]" style={{ background: 'var(--color-ink)' }}>
-        <>
-          <div className="w-prose flex flex-col gap-3 text-white">
-            <span className="t-eyebrow" style={{ color: 'var(--color-yellow)' }}>The point</span>
-            <span className="t-display text-2xl font-semibold leading-[1.28]" style={{ letterSpacing: '-0.018em' }}>
-              Seriously, if not now, then when?
-            </span>
-          </div>
-      </>
-      </div>
 
       <Section id="methodology" image="/shift/about-thinkers.jpg" alt="The network of thinkers Serious Shift tracks" eyebrow="Methodology">
         <P>We relentlessly track 100+ of the world’s most consequential <A href={METHODOLOGY_URL}>thinkers</A> and organizations on AI and societal change, in real time. Alongside those voices, TrendWatching’s own <strong>experts</strong> contribute human and synthetic perspectives, sharpening the analysis and synthesis.</P>

@@ -1,5 +1,6 @@
 import { Link, useParams } from '../lib/router'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { cssUrl } from '../lib/safeUrl'
 import { useResolved } from '../lib/useDomains'
 import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
@@ -34,7 +35,7 @@ export default function DomainPage() {
         {photo && (
           <span
             aria-hidden="true" className="absolute z-0"
-            style={{ inset: -2, backgroundImage: `url('${photo}')`, backgroundSize: 'cover', backgroundPosition: 'center top' }}
+            style={{ inset: -2, backgroundImage: cssUrl(photo), backgroundSize: 'cover', backgroundPosition: 'center top' }}
           />
         )}
         <span

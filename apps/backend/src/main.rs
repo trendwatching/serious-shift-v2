@@ -285,7 +285,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         origin: Arc::from(public_origin()),
         legacy_map_limiter: Arc::new(RateLimiter::per_minute(10, 2)),
         legacy_map_concurrency: Arc::new(tokio::sync::Semaphore::new(2)),
-        public_v1_limiter: Arc::new(RateLimiter::per_minute(120, 30)),
+        // 120/min with a 30 burst was too tight for the thing it protects. A
+        // reading route costs two calls (index + fragment), the response is a
+        // slice of one cached document, and the bucket is keyed by IP — so a
+        // room of people behind one office NAT shares it. Walking the map at a
+        // normal pace tripped it on 120 of 310 routes in a crawl; the client
+        // retries on Retry-After and recovers, so it showed as a stall rather
+        // than an error, which is worse to debug and worse to demo.
+        //
+        // 600/min with a 150 burst still refuses a scraper and still bounds the
+        // memory the bucket map can take, while leaving ordinary browsing —
+        // including several people at once — nowhere near the ceiling.
+        public_v1_limiter: Arc::new(RateLimiter::per_minute(600, 150)),
         ingest_limiter: Arc::new(RateLimiter::per_minute(60, 20)),
     };
 
@@ -1837,7 +1848,18 @@ mod tests {
             origin: Arc::from(""),
             legacy_map_limiter: Arc::new(RateLimiter::per_minute(10, 2)),
             legacy_map_concurrency: Arc::new(tokio::sync::Semaphore::new(2)),
-            public_v1_limiter: Arc::new(RateLimiter::per_minute(120, 30)),
+            // 120/min with a 30 burst was too tight for the thing it protects. A
+        // reading route costs two calls (index + fragment), the response is a
+        // slice of one cached document, and the bucket is keyed by IP — so a
+        // room of people behind one office NAT shares it. Walking the map at a
+        // normal pace tripped it on 120 of 310 routes in a crawl; the client
+        // retries on Retry-After and recovers, so it showed as a stall rather
+        // than an error, which is worse to debug and worse to demo.
+        //
+        // 600/min with a 150 burst still refuses a scraper and still bounds the
+        // memory the bucket map can take, while leaving ordinary browsing —
+        // including several people at once — nowhere near the ceiling.
+        public_v1_limiter: Arc::new(RateLimiter::per_minute(600, 150)),
             ingest_limiter: Arc::new(RateLimiter::per_minute(60, 20)),
         };
 

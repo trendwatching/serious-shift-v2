@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useParams } from '../lib/router'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { cssUrl } from '../lib/safeUrl'
 import { useResolved } from '../lib/useDomains'
 import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
@@ -79,7 +80,7 @@ export default function ShiftPage() {
           <>
             <span
               aria-hidden="true" className="absolute inset-0 z-0"
-              style={{ backgroundImage: `url('${image}')`, backgroundSize: 'cover', backgroundPosition: 'center 30%' }}
+              style={{ backgroundImage: cssUrl(image), backgroundSize: 'cover', backgroundPosition: 'center 30%' }}
             />
             <span
               aria-hidden="true" className="absolute inset-0 z-[1]"

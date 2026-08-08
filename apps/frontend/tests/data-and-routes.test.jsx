@@ -199,3 +199,25 @@ describe('sub-shift response validation', () => {
     await expect(load('/api/v1/map/society/sovereign-machines/sovereign-labs')).rejects.toThrow()
   })
 })
+
+describe('URLs the site did not author', () => {
+  it('cannot break out of a CSS url() or run a javascript: href', async () => {
+    const { cssUrl, safeHref } = await import('../src/lib/safeUrl')
+
+    // Hero images and innovation thumbnails come from the map document and the
+    // upstream innovations database, and went into a CSS string raw.
+    const injection = "https://x.test/a.jpg'); background:url(//evil/x"
+    const payload = cssUrl(injection).slice('url("'.length, -2)
+    expect(payload).not.toMatch(/["'()\\]/)
+    expect(cssUrl('/shift/heroes/a.svg')).toBe('url("/shift/heroes/a.svg")')
+    expect(cssUrl('https://cdn.test/a.jpg?w=1&h=2')).toBe('url("https://cdn.test/a.jpg?w=1&h=2")')
+    expect(cssUrl('')).toBeNull()
+
+    // An innovation's link became an href with nothing checking the scheme.
+    expect(safeHref('javascript:alert(1)')).toBeUndefined()
+    expect(safeHref('JaVaScRiPt:alert(1)')).toBeUndefined()
+    expect(safeHref('data:text/html,x')).toBeUndefined()
+    expect(safeHref('https://ok.test/x')).toBe('https://ok.test/x')
+    expect(safeHref('/map/society')).toBe('/map/society')
+  })
+})
