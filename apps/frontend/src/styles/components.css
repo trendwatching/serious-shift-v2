@@ -49,7 +49,9 @@
 
   /* ── Page rhythm ─────────────────────────────────────────────────────── */
 
-  /* The 22px gutter. One value, every width. */
+  /* The page gutter. Fluid since the chrome started fitting the display —
+     see the ramp in tokens.css. Anything that cancels it must read the token
+     rather than restate the phone value. */
   .gutter {
     padding-inline: var(--gutter);
   }
@@ -188,6 +190,22 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
+
+  /* A rail escapes the gutter so the row can run to the screen edge, then pays
+     it straight back so its first card still lines up with the prose above it.
+     Both halves have to be the SAME token, and the inset used to be a literal
+     22px written inline. That cancelled exactly while the gutter was always 22
+     — and stopped the moment it became fluid, leaving every rail's first card
+     20px right of its own heading on a desktop.
+     Inline is also the one place this could not live: desktop.css turns these
+     rows into grids with `padding-inline: 0`, and an inline style beats it, so
+     that rule was being discarded on every rail on the site. */
+  .rail.bleed-edge {
+    padding-inline: var(--gutter);
+  }
+
+  /* Same reason: desktop.css gives the widened rail its own gap. */
+  .rail { gap: var(--rail-gap, 12px); }
   .rail::-webkit-scrollbar {
     width: 0;
     height: 0;
@@ -207,6 +225,22 @@
     display: flex;
     flex-direction: column;
   }
+
+  /* The same argument applies to the VALUES, and only `display` was moved the
+     first time. desktop.css also sets `gap` on both of these and on the rails,
+     and `padding-left: 0` on the horizon — whose spine turns horizontal there,
+     so the 26px inset that made room for a vertical rail is simply wrong. All
+     of it was being beaten by an inline `gap` / `paddingLeft`, so the widened
+     horizon kept the phone's spine inset and Connected shifts kept `gap: 0`
+     and ran its two desktop columns into each other.
+
+     Per-instance variation comes in as a custom property instead, which a rule
+     can still override — an inline `gap` can not be. */
+  .horizon {
+    padding-left: 26px;
+    gap: 12px;
+  }
+  .sub-stack { gap: var(--stack-gap, 10px); }
 
   /* ── Card ────────────────────────────────────────────────────────────
    * radius 18 / hairline / the build's exact resting shadow.

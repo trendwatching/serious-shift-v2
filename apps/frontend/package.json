@@ -17,6 +17,7 @@
     "check:slugs": "node scripts/check-slug-fixture.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:layers": "node scripts/check-layers.mjs",
+    "check:classes": "node scripts/check-classes.mjs",
     "heroes": "node scripts/generate-heroes.mjs",
     "check:heroes": "node scripts/check-heroes.mjs",
     "check:accents": "node scripts/check-accents.mjs",

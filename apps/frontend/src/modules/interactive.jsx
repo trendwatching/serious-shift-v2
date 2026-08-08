@@ -194,7 +194,7 @@ export function Industries({ data }) {
       <Eyebrow right={`${Math.min(pick, items.length - 1) + 1} of ${items.length}`}>Implications by industry</Eyebrow>
       <div
         className="rail chips bleed-edge" role="tablist" aria-label="Industry sectors"
-        style={{ padding: '2px 22px 4px', gap: 8, scrollSnapType: 'x proximity' }}
+        style={{ paddingBlock: '2px 4px', '--rail-gap': '8px', scrollSnapType: 'x proximity' }}
       >
         {items.map((item, i) => {
           const on = i === pick
@@ -236,7 +236,7 @@ export function Territories({ data, ctx }) {
   return (
     <section className="widen flex flex-col" style={{ gap: 10 }}>
       <Eyebrow right="Scroll ›">Opportunity territories</Eyebrow>
-      <div className="rail bleed-edge" style={{ padding: '2px 22px 6px', gap: 12, scrollSnapType: 'x mandatory' }}>
+      <div className="rail bleed-edge" style={{ paddingBlock: '2px 6px', scrollSnapType: 'x mandatory' }}>
         {items.map((t, i) => (
           <div
             key={t.name}
@@ -292,7 +292,7 @@ export function SubShiftList({ ctx }) {
   return (
     <section className="widen flex flex-col" style={{ marginTop: 6, gap: 10 }}>
       <Eyebrow right="Tap to open">The {subs.length} sub-shifts</Eyebrow>
-      <div className="sub-stack" style={{ gap: 10 }}>
+      <div className="sub-stack">
         {subs.map((s, i) => {
           const to = `${ctx.basePath}/${s.slug}`
           const delay = `${(0.05 + i * 0.06).toFixed(2)}s`
@@ -366,7 +366,7 @@ export function Innovations({ data }) {
   return (
     <section className="widen flex flex-col" style={{ gap: 10 }}>
       <Eyebrow right="Scroll ›">Innovations in the wild</Eyebrow>
-      <div className="rail bleed-edge" style={{ padding: '2px 22px 6px', gap: 12, scrollSnapType: 'x mandatory' }}>
+      <div className="rail bleed-edge" style={{ paddingBlock: '2px 6px', scrollSnapType: 'x mandatory' }}>
         {items.map((item, i) => {
           // An innovation arrives from an upstream database, so its link is
           // checked for a scheme we will actually follow before it becomes an
@@ -449,7 +449,7 @@ export function Voices({ data }) {
   return (
     <section className="widen flex flex-col" style={{ gap: 10 }}>
       <Eyebrow right={`${total} voices`}>Who is saying this</Eyebrow>
-      <div className="sub-stack" style={{ gap: 10 }}>
+      <div className="sub-stack">
         {groups.map((g) => (
           <div key={g.label} className="flex flex-col" style={{ borderRadius: 14, padding: 22, gap: 14, backgroundImage: g.grad }}>
             <span className="t-eyebrow text-white" style={{ letterSpacing: '0.14em' }}>{g.label}</span>
@@ -473,7 +473,7 @@ export function Evidence({ data }) {
   return (
     <section className="widen flex flex-col" style={{ gap: 10 }}>
       <Eyebrow right={`${items.length} sourced`}>The evidence</Eyebrow>
-      <div className="sub-stack" style={{ gap: 10 }}>
+      <div className="sub-stack">
         {items.map((c, i) => (
           <div key={i} className="card flex flex-col" style={{ padding: 18, gap: 10 }}>
             <span className="flex flex-wrap items-center" style={{ gap: 8 }}>

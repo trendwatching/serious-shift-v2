@@ -121,6 +121,91 @@ for (const file of files.filter((f) => /\.jsx?$/.test(f))) {
   })
 }
 
+// ── 4. inline styles that override what the desktop layer sets ────────────
+// The same failure as (3) but through the one channel nothing can outrank: an
+// inline style beats every rule in every layer. This has bitten five times —
+// an inline `minHeight` left a hero at phone height on desktop; inline geometry
+// stranded the horizon dots on the phone's spine; an inline `padding` shorthand
+// pinned /about to a 22px gutter; and `padding: '2px 22px 6px'` on the rails
+// discarded `.widen .rail { padding-inline: 0 }`, putting every rail's first
+// card 20px right of its own heading on every desktop.
+//
+// So the table is DERIVED from desktop.css rather than hand-kept: whatever that
+// file sets is what an inline style must not restate. A hand-maintained list is
+// exactly what let the rails through.
+// Comments are stripped FIRST. A selector capture runs back to the previous
+// brace, so it swallows the comment above the rule — and almost every rule in
+// desktop.css has one. Leaving them in made this check silently parse eight
+// rules out of thirty and pass on the very regression it was written for.
+const desktop = readFileSync(DESKTOP, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+// selector → properties, for the simple `.a`/`.a .b`/`.a:nth… .b` shapes here
+const guarded = new Map()
+for (const block of desktop.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+  const selector = block[1].trim()
+  if (!selector.startsWith('.')) continue
+  const classes = [...selector.matchAll(/\.([A-Za-z_][\w-]*)/g)].map((m) => m[1])
+  if (!classes.length) continue
+  const target = classes[classes.length - 1]
+  for (const decl of block[2].split(';')) {
+    const prop = decl.split(':')[0]?.trim()
+    if (!prop || prop.startsWith('--')) continue
+    if (!guarded.has(target)) guarded.set(target, new Set())
+    guarded.get(target).add(prop)
+  }
+}
+
+// Which inline style keys write a given CSS property. Shorthands count: React's
+// `padding` writes padding-inline, which is the whole point.
+const WRITES = {
+  'padding-inline': ['padding', 'paddingInline', 'paddingLeft', 'paddingRight'],
+  'padding-left': ['padding', 'paddingInline', 'paddingLeft'],
+  'margin-inline': ['margin', 'marginInline', 'marginLeft', 'marginRight'],
+  width: ['width'],
+  'max-width': ['maxWidth'],
+  height: ['height'],
+  'min-height': ['minHeight'],
+  display: ['display'],
+  'grid-template-columns': ['gridTemplateColumns'],
+  order: ['order'],
+  gap: ['gap'],
+  left: ['left', 'inset'],
+  top: ['top', 'inset'],
+  inset: ['inset'],
+  transform: ['transform'],
+  'flex-wrap': ['flexWrap'],
+  'padding-top': ['padding', 'paddingBlock', 'paddingTop'],
+}
+
+for (const file of files.filter((f) => /\.jsx?$/.test(f))) {
+  const lines = readFileSync(file, 'utf8').split('\n')
+  lines.forEach((line, i) => {
+    const cls = line.match(/className=(?:"([^"]*)"|\{`([^`]*)`\})/)
+    if (!cls) return
+    const names = cls[1] ?? cls[2] ?? ''
+    // The style prop for this element: same line, or the next few before the
+    // tag closes. Stop at `>` so a child's style is never attributed here.
+    const tag = lines.slice(i, i + 8).join('\n').split(/>\s*$|>\n/)[0]
+    const style = tag.match(/style=\{\{([\s\S]*?)\}\}/)
+    if (!style) return
+    const keys = [...style[1].matchAll(/(?:^|[,{\s])'?([A-Za-z-]+)'?\s*:/g)].map((m) => m[1])
+    for (const klass of names.split(/\s+/)) {
+      const props = guarded.get(klass)
+      if (!props) continue
+      for (const prop of props) {
+        const writers = WRITES[prop] || []
+        const clash = keys.find((k) => writers.includes(k))
+        if (!clash) continue
+        problems.push(
+          `${relative(SRC, file)}:${i + 1}  inline \`${clash}\` overrides \`${prop}\`, which styles/desktop.css sets on .${klass}\n` +
+          `    ${line.trim().slice(0, 100)}\n` +
+          '    An inline style beats every layer, so the desktop rule is silently discarded.\n' +
+          `    Move the base value into components.css so desktop.css can win.`
+        )
+      }
+    }
+  })
+}
+
 if (problems.length) {
   console.error(`\n✗ ${problems.length} layering/responsive violation(s):\n`)
   console.error(problems.join('\n\n'))

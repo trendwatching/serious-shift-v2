@@ -58,28 +58,45 @@ test('desktop lines every module up on one of two axes', async ({ page }) => {
     const dots = [...document.querySelectorAll('.horizon-dot')].map((d) => Math.round(d.getBoundingClientRect().left))
     return {
       col: box('.canvas.gutter'),
+      wide: box('.widen'),
       band: box('.stat-surface'),
       list: box('.widen .sub-stack'),
       footer: box('footer'),
       footerInner: box('footer .footer-inner'),
-      hero: Math.round(document.querySelector('header').getBoundingClientRect().height),
+      // `article header`, not `header`: the black top bar is a <header> too and
+      // comes first in the DOM, so the old selector measured the chrome. At 84px
+      // it satisfied `<= 470` on every run — the hero was never being checked.
+      hero: Math.round(document.querySelector('article header').getBoundingClientRect().height),
       dots,
       overflow: document.documentElement.scrollWidth - window.innerWidth,
     }
   })
 
   expect(seen.overflow).toBeLessThanOrEqual(1)
-  expect(seen.hero).toBeLessThanOrEqual(470)
+  // The hero band's bounds, not a frozen height: `.hero-tall` interpolates
+  // 460 → 620 across the desktop range now.
+  expect(seen.hero).toBeGreaterThanOrEqual(460)
+  expect(seen.hero).toBeLessThanOrEqual(620)
+
   // Two widths, and everything is one of them.
+  //
+  // The wide one is read off the page rather than written down. It used to be
+  // asserted as a literal 940, which is what it was while every measure was
+  // fixed — and this spec is opt-in, so when `--wide` became a ramp (940 at
+  // 1024 → 1180 at 1920, and 1051 here) nothing failed and the contract just
+  // went stale. The invariant was never the number: it is that every wide
+  // block shares ONE measure and sits on the same axis as the column.
   expect(seen.col.width).toBe(660)
-  expect(seen.band.width).toBe(940)
-  expect(seen.list.width).toBe(940)
+  expect(seen.wide.width).toBeGreaterThanOrEqual(940)
+  expect(seen.wide.width).toBeLessThanOrEqual(1180)
+  expect(seen.band.width).toBe(seen.wide.width)
+  expect(seen.list.width).toBe(seen.wide.width)
   // A footer band spans the page; only its contents take the measure.
   expect(seen.footer.width).toBe(1440)
-  expect(seen.footerInner.width).toBe(940)
+  expect(seen.footerInner.width).toBe(seen.wide.width)
   // Centred on the same axis.
   const centre = (b) => b.left + b.width / 2
-  for (const b of [seen.col, seen.band, seen.list, seen.footerInner]) {
+  for (const b of [seen.col, seen.wide, seen.band, seen.list, seen.footerInner]) {
     expect(Math.abs(centre(b) - 720)).toBeLessThanOrEqual(1)
   }
   // The horizon dots ride their own cards, spread across the rail — they used

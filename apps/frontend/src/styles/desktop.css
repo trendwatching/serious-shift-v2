@@ -114,8 +114,11 @@
       transform: translateX(-50%);
     }
 
-    /* Industry chips wrap rather than scroll — there is room for all 16. */
+    /* Industry chips wrap rather than scroll — there is room for all 16. They
+       keep their own tighter gap: `.widen .rail` matches them too, and 12px
+       between pills that small reads as a gappy row rather than a set. */
     .widen .chips {
+      gap: 8px;
       flex-wrap: wrap;
       overflow: visible;
       margin-inline: 0;

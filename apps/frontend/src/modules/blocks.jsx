@@ -167,7 +167,7 @@ export const Timeline = ({ data, ctx }) => {
            shift's by the accent itself. On Society that hot end is #F5007F —
            the #FF007A the mockup drew — and every other sphere now lights its
            own rather than inheriting Society's pink. */
-        style={{ paddingLeft: 26, gap: 12, '--dot-lit': ctx.scope === 'sub_shift' ? 'var(--a-hot)' : 'var(--a)' }}
+        style={{ '--dot-lit': ctx.scope === 'sub_shift' ? 'var(--a-hot)' : 'var(--a)' }}
       >
         <span className="horizon-rail" />
         {steps.map((s, i) => (
@@ -208,7 +208,7 @@ export const RelatedShifts = ({ data }) => {
   return (
     <section className="widen flex flex-col" style={{ gap: 10 }}>
       <Eyebrow right={String(items.length)}>Connected shifts</Eyebrow>
-      <div className="sub-stack" style={{ gap: 0 }}>
+      <div className="sub-stack" style={{ '--stack-gap': '0px' }}>
         {items.map((r) => (
           <Link key={r.href} to={r.href} className="flex flex-col" style={{ gap: 6, padding: '14px 0', borderBottom: '1px solid var(--color-line)' }}>
             <span className="t-eyebrow" style={{ fontSize: 10, letterSpacing: '0.12em', color: 'var(--a-ink)' }}>{r.relationship}</span>

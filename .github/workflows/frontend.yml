@@ -43,6 +43,12 @@ jobs:
         # neither half of that pair is visible in a diff.
         run: npm run check:heroes
       - run: npm run build
+      - name: Every class in the source styles something
+        # `w-prose` is not a Tailwind class. It sat in five places on /about,
+        # emitted no CSS, and was the only thing holding that page's masthead.
+        # A typo'd utility is invisible in review; the built stylesheet is the
+        # only oracle, so this runs after the build.
+        run: npm run check:classes
       - name: Unit and component tests
         run: npm test
       - name: Install Playwright Chromium
