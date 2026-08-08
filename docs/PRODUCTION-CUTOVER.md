@@ -58,22 +58,55 @@ service; never put the credential in this runbook or a command transcript.
 
 ### 2. Reconcile the schema
 
-Read-only check first — it should print `0001 … 0007`:
+**Corrected 2026-08-08.** Production holds `0001`–**`0006`**, not `0001`–`0007`
+as this runbook previously said. `0007` creates `shift_module_overrides` and adds
+`domain_key_trends.modules` / `.read_time`, `domain_sub_trends.modules` and
+`domains_v2.horizon` — none of which exist in production. `reconcile_baseline.sql`
+requires that table and correctly refuses:
+
+> Cannot reconcile: the baseline expects tables that do not exist
+> (shift_module_overrides). This database is behind the pre-squash chain, not
+> merely un-squashed.
+
+Read-only check first:
 
 ```bash
 psql "$PROD_DATABASE_URL" -Atc "SELECT string_agg(version,',' ORDER BY version) FROM schema_migrations;"
+# expect: 0001,0002,0003,0004,0005,0006
 ```
 
-Then:
+**Back up before any DDL** — this is the only step that is not trivially
+reversible:
 
 ```bash
-psql "$PROD_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/db/etl/reconcile_baseline.sql
+pg_dump "$PROD_DATABASE_URL" --no-owner --no-acl -Fc -f prod-$(date +%Y%m%d-%H%M).dump
 ```
 
-This applies `0008`'s drops retroactively (five empty concept-graph tables) and
-stamps the baseline. It refuses if any of those tables has rows, or if the
-database is behind the pre-squash chain. Verified against a faithful simulation
-of this exact state; idempotent.
+Then, in order:
+
+```bash
+psql "$PROD_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/db/etl/0007_map_rich_fields_up.sql
+psql "$PROD_DATABASE_URL" -Atc "INSERT INTO schema_migrations(version) VALUES ('0007') ON CONFLICT DO NOTHING;"
+psql "$PROD_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/db/etl/reconcile_baseline.sql
+DATABASE_URL="$PROD_DATABASE_URL" python -m serious_shift_pipeline.core.migrate
+```
+
+`0007_map_rich_fields_up.sql` is 0007's **up half only**, recovered from git
+history. Do not run the original migration file through `psql -f`: it is a dbmate
+file carrying both halves, so psql executes the down section immediately after
+the up one, creates the table, drops it again, and reports success.
+
+Expected after: `20250101000000` plus the six dated migrations, 27 tables,
+schema identical to staging.
+
+Rehearsed 2026-08-08 against a `pg_restore` of production into a scratch
+Postgres: 48,104 claims intact, zero column differences from staging afterwards.
+Rehearse again rather than trusting this — the restore takes under a minute:
+
+```bash
+docker run -d --name ss-rehearse -e POSTGRES_PASSWORD=x -p 55432:5432 postgres:18
+pg_restore -d postgresql://postgres:x@127.0.0.1:55432/postgres --no-owner --no-acl prod.dump
+```
 
 Expected after: `{20250101000000}`.
 
