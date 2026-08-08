@@ -32,9 +32,12 @@
      one label a reader is most likely to lose. Darkened to the nearest value
      that clears AA; the hue is unchanged. See scripts/check-contrast.mjs. */
   --color-ink-meta:   #757085;
-  --color-ink-tag:    #A9A3B8;  /* breadcrumb-menu "Domain" tag      */
-  --color-ink-num:    #B3AEC0;  /* domain-page row number            */
-  --color-ink-dot:    #8E88A0;  /* deck pager, inactive, slide 0     */
+  /* The domain-page row number. The mockup drew this #B3AEC0, which is 2.2:1
+     on white — ten failing nodes on every sphere page, and the lightest text on
+     the site. Darkened to the lightest value that clears AA; the number stays
+     de-emphasised by being 12px mono against a 19px serif title, which is where
+     that hierarchy should have come from anyway. */
+  --color-ink-num:    #787288;
 
   /* ── Surfaces ────────────────────────────────────────────────────────── */
   --color-paper:      #F7F6F9;

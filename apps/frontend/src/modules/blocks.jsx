@@ -126,8 +126,11 @@ export const TensionBand = ({ data, ctx }) => {
       className="bleed flex flex-col text-white"
       style={{
         gap: 12, paddingBlock: 30, background: 'var(--color-ink)',
-        // On a sub-shift the band butts straight onto the stat band below it.
-        marginBottom: ctx.scope === 'sub_shift' ? -30 : undefined,
+        // On a sub-shift the band butts straight onto the stat band below it —
+        // but only when there IS one. Applied unconditionally it pulled the
+        // peel-tab stack up into the band on every sub-shift without a
+        // statistic, which is 19 of the 51 shifts' children.
+        marginBottom: ctx.scope === 'sub_shift' && ctx.next === 'stat_band' ? -30 : undefined,
       }}
     >
       <h2 className="t-eyebrow" style={{ color: 'var(--color-yellow)' }}>{data.label || 'The tension'}</h2>

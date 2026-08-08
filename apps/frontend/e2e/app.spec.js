@@ -28,6 +28,12 @@ const subs = Array.from({ length: 5 }, (_, i) => ({
   name: `Sub Shift ${i + 1}`, description: `Sub shift ${i + 1} description`,
 }))
 const shiftDetail = { updated: index.updated, domain: domains[0], shift, siblings: [shift, shiftTwo], sub_shifts: subs }
+const domainDetail = {
+  updated: index.updated,
+  domain: domains[0],
+  key_shifts: [shift, shiftTwo].map((s) => ({ ...s, modules: undefined })),
+  insights: [],
+}
 const subDetail = {
   updated: index.updated,
   domain: domains[0],
@@ -50,9 +56,10 @@ async function mockMap(page, failure) {
     }
     const pathname = new URL(route.request().url()).pathname
     const data = pathname === '/api/v1/map' ? index
-      : pathname === '/api/v1/map/society/trust-machines' ? shiftDetail
-        : pathname === '/api/v1/map/society/trust-machines/sub-1' ? subDetail
-          : null
+      : pathname === '/api/v1/map/society' ? domainDetail
+        : pathname === '/api/v1/map/society/trust-machines' ? shiftDetail
+          : pathname === '/api/v1/map/society/trust-machines/sub-1' ? subDetail
+            : null
     await route.fulfill({ status: data ? 200 : 404, contentType: 'application/json', body: JSON.stringify(data || { error: { code: 'not_found' } }) })
   })
 }
@@ -92,6 +99,12 @@ test('navigation, keyboard modules, source safety, and axe', async ({ page }) =>
   await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: 'Open navigation' })).toBeFocused()
 
+  // The sphere page: its row numbers are the lightest text on the site, and it
+  // was the one page type this walk never visited.
+  await clientNavigate(page, '/map/society')
+  await expect(page.getByRole('heading', { level: 1, name: /Society/i })).toBeVisible()
+  await expectNoSeriousAxe(page)
+
   await clientNavigate(page, '/map/society/trust-machines')
   const why = page.getByRole('tab', { name: 'Why now' })
   await why.focus()
@@ -117,6 +130,12 @@ test('navigation, keyboard modules, source safety, and axe', async ({ page }) =>
   const source = page.getByRole('link', { name: 'Read source: Study' })
   await expect(source).toHaveAttribute('target', '_blank')
   await expect(source).toHaveAttribute('rel', 'noopener noreferrer')
+  await expectNoSeriousAxe(page)
+
+  // About is authored rather than projected, so nothing else covers it.
+  await clientNavigate(page, '/about')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expectNoSeriousAxe(page)
 })
 
 test('a route change lands at the top, and a nav anchor lands on its section', async ({ page }) => {

@@ -52,8 +52,12 @@ class ModuleBoundary extends Component {
 }
 
 export function Modules({ modules, ctx }) {
-  return (modules || []).map((m, i) => {
+  const list = modules || []
+  return list.map((m, i) => {
     const type = String(m?.type || '')
+    // A module occasionally needs to know what follows it — the tension band
+    // butts onto a stat band and has to stop doing that when there isn't one.
+    const next = String(list[i + 1]?.type || '')
     const Body = SHIFT_MODULES[type]
     if (!Body) {
       if (type) console.error(`[modules] unsupported module type "${type}"`)
@@ -61,7 +65,7 @@ export function Modules({ modules, ctx }) {
     }
     return (
       <ModuleBoundary key={`${type}-${i}`} type={type}>
-        <Body data={m.data || {}} ctx={ctx} />
+        <Body data={m.data || {}} ctx={{ ...ctx, next }} />
       </ModuleBoundary>
     )
   })

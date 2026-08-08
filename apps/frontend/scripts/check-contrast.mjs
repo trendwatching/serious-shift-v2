@@ -46,8 +46,26 @@ const overlay = (foreground, background, opacity) => {
 
 const WHITE = '#FFFFFF'
 
+/**
+ * Ink tokens that are NOT text on white, with the reason.
+ *
+ * Every `--color-ink-*` token must appear either in the pairs below or in here.
+ * The list used to be hand-kept and merely incomplete, which is a gate that
+ * cannot fail: `--color-ink-num` sat at 2.2:1 on every sphere page for weeks
+ * because nobody had added it. Forcing a decision on each token is the whole
+ * point — an unclassified one now fails the build.
+ */
+const NOT_TEXT_ON_WHITE = {
+  '--color-ink': 'the default body colour, checked as the yellow-pill pair',
+}
+
 const normalTextPairs = [
+  ['ink-strong on white', token('--color-ink-strong'), WHITE],
+  ['ink-soft on white', token('--color-ink-soft'), WHITE],
   ['ink-mid on white', token('--color-ink-mid'), WHITE],
+  // The domain-page row number — the lightest text on the site, and the one
+  // the hand-kept list forgot.
+  ['ink-num on white', token('--color-ink-num'), WHITE],
   ['ink-row on white', token('--color-ink-row'), WHITE],
   ['ink-sector on white', token('--color-ink-sector'), WHITE],
   ['ink-body on white', token('--color-ink-body'), WHITE],
@@ -72,7 +90,19 @@ for (const color of decorativeStarts) {
   normalTextPairs.push([`white over darkened ${color}`, '#FFFFFF', overlay('#0D0B10', color, 0.38)])
 }
 
+// Every ink token is either checked or explicitly exempted.
+const inkTokens = [...TOKENS.matchAll(/(--color-ink[a-z-]*):/g)].map((m) => m[1])
+const checked = new Set(normalTextPairs.map(([, fg]) => fg))
+const unclassified = inkTokens.filter((name) => {
+  if (name in NOT_TEXT_ON_WHITE) return false
+  return !checked.has(token(name))
+})
+
 let failed = false
+for (const name of unclassified) {
+  failed = true
+  console.error(`✗ ${name} is neither checked against white nor listed in NOT_TEXT_ON_WHITE`)
+}
 for (const [label, foreground, background] of normalTextPairs) {
   const value = contrast(foreground, background)
   if (value < 4.5) {
