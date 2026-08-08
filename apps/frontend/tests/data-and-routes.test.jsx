@@ -221,3 +221,26 @@ describe('URLs the site did not author', () => {
     expect(safeHref('/map/society')).toBe('/map/society')
   })
 })
+
+describe('the deck', () => {
+  it('orders the panels the way the badges are drawn', async () => {
+    // HomePanel draws the badges in DOMAIN_ORDER and jumps by PANEL index, so
+    // the panels must be in that order too. They followed the published
+    // document's order instead — society, economy, consumers, organisations —
+    // so the Consumers badge opened Organizations, the Organizations badge
+    // opened Consumers, and the deck counted 01, 02, 04, 03.
+    const { orderDomains } = await import('../src/lib/useDomains')
+    const { DOMAIN_ORDER } = await import('../src/lib/theme')
+
+    const published = ['society', 'economy', 'consumers', 'organisations']
+    expect(published).not.toEqual(DOMAIN_ORDER)
+    expect(orderDomains(published)).toEqual(DOMAIN_ORDER)
+
+    // A cold or failed fetch still gives the deck its four panels.
+    expect(orderDomains([])).toEqual(DOMAIN_ORDER)
+    // A sphere this build has never heard of appears rather than vanishing.
+    expect(orderDomains([...published, 'climate'])).toEqual([...DOMAIN_ORDER, 'climate'])
+    // One the document has dropped is not conjured back.
+    expect(orderDomains(['society', 'economy'])).toEqual(['society', 'economy'])
+  })
+})

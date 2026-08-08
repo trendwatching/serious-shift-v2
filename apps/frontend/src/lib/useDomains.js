@@ -146,6 +146,29 @@ function toShift(src, i, domain) {
   }
 }
 
+/**
+ * Reading order for the deck, and therefore for the sphere badges that jump
+ * into it.
+ *
+ * Fixed information architecture, like the four names: Society, Economy,
+ * Organizations, Consumers — numbered 01 to 04 by the design. The published
+ * document lists them in the pipeline's own order (society, economy, consumers,
+ * organisations), and following that put the panels in one order while
+ * HomePanel drew its badges in another: the Consumers badge opened
+ * Organizations, the Organizations badge opened Consumers, and the deck counted
+ * 01, 02, 04, 03.
+ *
+ * A sphere the document carries but this list does not know about is appended
+ * rather than dropped, so a new one appears instead of vanishing.
+ */
+export function orderDomains(published = []) {
+  if (!published.length) return [...DOMAIN_ORDER]
+  return [
+    ...DOMAIN_ORDER.filter((id) => published.includes(id)),
+    ...published.filter((id) => !DOMAIN_ORDER.includes(id)),
+  ]
+}
+
 function routeSegments(pathname) {
   if (!pathname.startsWith('/map/')) return []
   return pathname.slice('/map/'.length).split('/').filter(Boolean).slice(0, 3)
@@ -164,8 +187,7 @@ export function useDomains() {
 
   const domains = useMemo(() => {
     const summaries = index?.domains || []
-    const order = summaries.length ? summaries.map((domain) => domain.id) : DOMAIN_ORDER
-
+    const order = orderDomains(summaries.map((domain) => domain.id))
     return order.map((id) => {
       const deck = DECK.find((domain) => domain.id === id) || {}
       const summary = summaries.find((domain) => domain.id === id)
