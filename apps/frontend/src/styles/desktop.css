@@ -1,15 +1,24 @@
 /* ════════════════════════════════════════════════════════════════════════
  * The desktop layer — the ONLY breakpoint in the codebase.
  *
- * The 393px design is canonical. Desktop is not a second design and does not
- * get a second set of values; it centres the mobile canvas and lets the
- * list-shaped modules — and only those — spread into the space.
+ * The 393px design is canonical: every type size, radius and gap below comes
+ * from it and none of them change here. What changes is how much room a block
+ * is given, and that is the whole job.
  *
- * That is a constraint, not a shortcut. The previous build put `md:` and `lg:`
- * variants inside every component, which meant no property anywhere held the
- * design's value, and desktop drifted from mobile with nothing to stop it.
- * Keeping the breakpoint in one file makes that drift impossible: there is
- * exactly one place it could come from.
+ * The first version centred a 480px canvas and let two list modules jump to
+ * 1120px. On a 1440 screen that read as three unrelated documents stacked: a
+ * 436px column of prose, 480px bands floating in the middle of nowhere, and
+ * 1120px grids twice their width — with a 660px hero spanning the full viewport
+ * above them and a breadcrumb pinned to the far top-left corner.
+ *
+ * So the layer is built on two widths and everything lines up with one of them:
+ *
+ *   --col   the reading column — prose, cards, the peel stack
+ *   --wide  lists, bands and the hero's inner content
+ *
+ * `--wide` is only 1.4× `--col`, not 2.6×, so a list feels like the same page
+ * opening up rather than a different one. Both are centred on the same axis,
+ * which is what makes the page read as a column at all.
  *
  * scripts/check-layers.mjs fails the build if `md:` or `lg:` appears anywhere
  * under src/ outside this file.
@@ -22,33 +31,42 @@
     margin-inline: auto;
   }
 
-  /* Opt-in, for lists that read better wide. Nothing else may use it. */
+  /* Opt-in, for lists and bands that read better wide. */
   .widen {
     width: 100%;
     margin-inline: auto;
   }
 
   @media (min-width: 64rem) {
-    /* 480px rather than 393: a touch of air at the edges so the canvas reads
-       as a deliberate column on a large screen instead of a phone screenshot
-       pasted onto one. Type and spacing are untouched. */
-    .canvas { max-width: 480px; }
-
-    /* A list module has to BREAK OUT of the canvas, not just be allowed to be
-       wider than it: `max-width` alone can never exceed the parent's width, so
-       the previous rule left every rail at the canvas's 436px content box and
-       the widening silently did nothing.
-       `100%` here is the canvas content box, so the margins go negative by
-       exactly half the difference and the block stays centred on the page. */
-    .widen {
-      --widen-w: min(1120px, calc(100vw - 80px));
-      width: var(--widen-w);
-      max-width: none;
-      margin-inline: calc((100% - var(--widen-w)) / 2);
+    :root {
+      --col: 660px;
+      --wide: min(940px, calc(100vw - 96px));
     }
 
-    /* Rails stop being rails and become grids. They keep their card widths,
-       so a card is the same object at every viewport. */
+    .canvas { max-width: var(--col); }
+
+    /* A wide block has to BREAK OUT of the canvas, not merely be allowed to be
+       wider than it: `max-width` alone can never exceed the parent's width, so
+       an earlier version left every rail at the canvas content box and the
+       widening silently did nothing. `100%` here is that content box, so the
+       margins go negative by exactly half the difference and the block stays
+       centred on the same axis as the prose. */
+    .widen,
+    .bleed {
+      width: var(--wide);
+      max-width: none;
+      margin-inline: calc((100% - var(--wide)) / 2);
+    }
+
+    /* A full-bleed band keeps its own inset once it is no longer running to a
+       phone's edge — otherwise the copy sits hard against the corner. */
+    .bleed {
+      padding-inline: 34px;
+      border-radius: 22px;
+    }
+
+    /* Rails stop being rails and become grids. Cards keep their widths, so a
+       card is the same object at every viewport. */
     .widen .rail {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
@@ -62,22 +80,27 @@
       scroll-snap-align: none;
     }
 
-    /* The horizon rail turns from a vertical spine into a horizontal one. */
+    /* The horizon rail turns from a vertical spine into a horizontal one. The
+       dot moves with it: left as a percentage of the CARD, not of the rail, or
+       the first step's dot is left behind at the old spine while the other two
+       land on their neighbour's duration label. */
     .widen .horizon {
       display: grid;
       grid-auto-flow: column;
       grid-auto-columns: 1fr;
       gap: 20px;
       padding-left: 0;
-      padding-top: 28px;
+      padding-top: 30px;
     }
     .widen .horizon-rail {
-      inset: 6px 10px auto 10px;
+      inset: 8px 12px auto 12px;
       width: auto;
       height: 2px;
     }
     .widen .horizon-dot {
-      inset: -22px auto auto 50%;
+      top: -24px;
+      left: 50%;
+      right: auto;
       transform: translateX(-50%);
     }
 
@@ -89,12 +112,35 @@
       padding-inline: 0;
     }
 
-    /* The sub-shift list is a stack on mobile; two up is as wide as it should
-       ever get, because each card carries a paragraph. */
+    /* Two up is as wide as the sub-shift list should ever get: each card
+       carries a paragraph, and three across leaves the text in a ribbon. */
     .widen .sub-stack {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
     }
+
+    /* A hero is a band, not a billboard. Full-bleed artwork is right; 660px of
+       it under a title set at 46px is not, and the title has to sit on the same
+       axis as the prose beneath it rather than in the middle of the picture. */
+    .hero-tall  { --hero-h: 460px; --hero-h-min: 300px; }
+    .hero-flat  { height: 300px; }
+    .hero-short { min-height: 380px; }
+    .hero-sub   { min-height: 330px; }
+
+    /* The breadcrumb floats over the hero at the gutter on a phone, which puts
+       it in the far corner of a wide screen. It rides the reading column. */
+    .crumb-float {
+      left: 50%;
+      transform: translateX(calc(var(--col) / -2));
+    }
+
+    /* Both needs cards stay readable: the collapsed one was a 100px sliver
+       holding a rotated-looking label. */
+    .needs-pair > * { min-width: 190px; }
+
+    /* The footer is rendered inside the page's canvas, so it opts into the
+       same wide measure as the lists rather than trying to run edge to edge —
+       at 480px it read as a narrow ribbon under a 1440px page. */
   }
 }

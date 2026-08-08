@@ -65,6 +65,64 @@
     padding-inline: var(--gutter);
   }
 
+  /* Hero heights. In CSS rather than inline for the same reason the horizon
+     rail is: desktop.css changes them, and an inline style beats every rule —
+     so an inline `minHeight: 500` left the domain hero at 500px of mostly empty
+     gradient on a 1440 screen while the class that was meant to shorten it did
+     nothing at all. */
+  /* `--hero-h` / `--hero-h-min` are the bounds the scroll-shrink interpolates
+     between. They are properties rather than constants in the hook because the
+     hook writes an inline height, which beats any rule — so a hard-coded 660
+     would drag the desktop hero back to phone proportions on the first scroll
+     event. One source of truth, read at run time. */
+  .hero-tall  { --hero-h: 660px; --hero-h-min: 360px; height: var(--hero-h); }
+  .hero-flat  { height: 340px; }
+  .hero-short { min-height: 500px; }
+  .hero-sub   { min-height: 400px; }
+
+  /* The horizon spine and its dots. Their geometry lives here rather than
+     inline because desktop.css turns the rail from a vertical spine into a
+     horizontal one and has to move both — and an inline style beats any rule,
+     so inline geometry meant the dots stayed on the phone's spine while the
+     cards spread into a row, landing on their neighbour's duration label. */
+  .horizon-rail {
+    position: absolute;
+    left: 6px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: var(--color-line-rail);
+  }
+  .horizon-dot {
+    position: absolute;
+    left: -26px;
+    top: 18px;
+    width: 13px;
+    height: 13px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    background: #fff;
+  }
+
+  /* The breadcrumb floats over the hero. On a phone that is the gutter; on a
+     wide screen desktop.css moves it onto the reading column instead of
+     leaving it in the corner. */
+  .crumb-float {
+    position: absolute;
+    left: var(--gutter);
+  }
+
+  /* The stat band's surface: the sphere's ramp plus the grain that made the
+     design's JPG feel printed rather than rendered. Tiled turbulence, inlined,
+     so it costs one gzipped line rather than a request per sphere. */
+  .stat-surface {
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0 0 0 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+      var(--grad-stat);
+    background-size: 160px 160px, cover;
+    background-blend-mode: overlay, normal;
+  }
+
   /* Escape only — for rails that want to run to the screen edge and set
      their own inner padding. */
   .bleed-edge {

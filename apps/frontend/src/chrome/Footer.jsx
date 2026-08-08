@@ -39,7 +39,7 @@ function Marquee() {
 
 export function Footer() {
   return (
-    <footer className="w-full">
+    <footer className="widen">
       <div
         className="t-display text-center text-pretty"
         style={{

@@ -24,10 +24,19 @@ function useHeroShrink(ref, enabled) {
     if (!node || !enabled) return undefined
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined
     let frame = 0
+    // Bounds come from the stylesheet, not from here: this writes an inline
+    // height, which beats every rule, so a constant would drag the desktop hero
+    // back to the phone's 660px on the first scroll event.
+    const bound = (name, fallback) => {
+      const value = Number.parseFloat(getComputedStyle(node).getPropertyValue(name))
+      return Number.isFinite(value) ? value : fallback
+    }
     const paint = () => {
       frame = 0
       const y = window.scrollY
-      node.style.height = `${Math.max(360, 660 - y * 0.85).toFixed(0)}px`
+      const tall = bound('--hero-h', 660)
+      const short = bound('--hero-h-min', 360)
+      node.style.height = `${Math.max(short, tall - y * 0.85).toFixed(0)}px`
       node.style.setProperty('--hero-fs', `${Math.max(29, 46 - y * 0.055).toFixed(1)}px`)
     }
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(paint) }
@@ -52,7 +61,7 @@ export default function ShiftPage() {
 
   return (
     <article className="a-expand relative min-h-dvh bg-white" data-domain={domain.id}>
-      <div className="absolute z-[48]" style={{ top: 156, left: 22, maxWidth: 300 }}>
+      <div className="crumb-float z-[48]" style={{ top: 156, maxWidth: 300 }}>
         <Breadcrumb
           crumb={domain.crumb}
           items={[
@@ -65,10 +74,9 @@ export default function ShiftPage() {
 
       <header
         ref={heroRef}
-        className="relative box-border flex flex-col overflow-hidden text-white"
+        className={`${image ? 'hero-tall' : 'hero-flat'} relative box-border flex flex-col overflow-hidden text-white`}
         style={{
-          height: image ? 660 : 340,
-          padding: '152px 22px 22px',
+          padding: '152px 0 22px',
           backgroundImage: [
             'linear-gradient(180deg, rgba(27,22,32,0) 34%, rgba(27,22,32,0.58) 100%)',
             'repeating-linear-gradient(115deg, rgba(255,255,255,0.1) 0 10px, rgba(255,255,255,0) 10px 26px)',
@@ -101,7 +109,7 @@ export default function ShiftPage() {
             />
           </>
         )}
-        <div className="canvas relative z-[2] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.16s' }}>
+        <div className="canvas gutter relative z-[2] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.16s' }}>
           <h1
             className="t-title"
             style={{ margin: 0, fontSize: `var(--hero-fs, ${image ? 46 : 32}px)`, lineHeight: 1.1, letterSpacing: '0.005em' }}

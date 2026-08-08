@@ -83,13 +83,11 @@ export const StatBand = ({ data, ctx }) => {
   const big = ctx.scope === 'sub_shift' ? 52 : 58
   return (
     <section
-      className="bleed box-border flex items-center text-white"
+      className="bleed stat-surface box-border flex items-center text-white"
       style={{
         gap: 18,
         marginBlock: ctx.scope === 'sub_shift' ? 0 : 10,
         paddingBlock: ctx.scope === 'sub_shift' ? 32 : 34,
-        backgroundImage: "url('/shift/stat-band-gradient.jpg')",
-        backgroundSize: 'cover', backgroundPosition: 'center',
       }}
       aria-label="Key statistic"
     >
@@ -168,7 +166,7 @@ export const Timeline = ({ data, ctx }) => {
            own rather than inheriting Society's pink. */
         style={{ paddingLeft: 26, gap: 12, '--dot-lit': ctx.scope === 'sub_shift' ? 'var(--a-hot)' : 'var(--a)' }}
       >
-        <span className="horizon-rail absolute" style={{ left: 6, top: 10, bottom: 10, width: 2, background: 'var(--color-line-rail)' }} />
+        <span className="horizon-rail" />
         {steps.map((s, i) => (
           <div
             key={s.label ?? i}
@@ -180,9 +178,8 @@ export const Timeline = ({ data, ctx }) => {
             }}
           >
             <span
-              className="horizon-dot absolute rounded-full"
+              className="horizon-dot"
               style={{
-                left: -26, top: 18, width: 13, height: 13, boxSizing: 'border-box', background: '#fff',
                 border: `2.5px solid ${ctx.scope === 'sub_shift' ? 'var(--a-hot)' : 'var(--a)'}`,
                 animation: i < 3 ? `ssDot${i + 1} 12s linear infinite` : undefined,
               }}

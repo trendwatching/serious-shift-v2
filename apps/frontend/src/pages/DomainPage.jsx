@@ -24,13 +24,13 @@ export default function DomainPage() {
       {/* Floats over the hero rather than docking under the bar — that
           placement is the design's, and it is what lets the hero keep its
           full height. */}
-      <div className="absolute z-[48]" style={{ top: 156, left: 22, maxWidth: 300 }}>
+      <div className="crumb-float z-[48]" style={{ top: 156, maxWidth: 300 }}>
         <Breadcrumb crumb={domain.crumb} items={[{ label: 'Home', to: '/' }, { label: domain.name }]} />
       </div>
 
       <header
-        className="relative box-border flex flex-col overflow-hidden text-white"
-        style={{ minHeight: 500, padding: '152px 22px 74px' }}
+        className="hero-short relative box-border flex flex-col overflow-hidden text-white"
+        style={{ padding: '152px 0 74px' }}
       >
         {photo && (
           <span
@@ -42,7 +42,7 @@ export default function DomainPage() {
           aria-hidden="true" className="absolute inset-0 z-[1]"
           style={{ backgroundImage: 'linear-gradient(180deg, rgba(27,22,32,0) 34%, rgba(27,22,32,0.34) 100%)' }}
         />
-        <div className="canvas relative z-[2] mt-auto">
+        <div className="canvas gutter relative z-[2] mt-auto">
           <h1 className="t-display uppercase" style={{ fontSize: 46, fontWeight: 700, lineHeight: 0.98, letterSpacing: '-0.03em' }}>
             {domain.name}
           </h1>

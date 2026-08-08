@@ -33,7 +33,7 @@ export default function SubShiftPage() {
 
   return (
     <article className="a-expand relative min-h-dvh bg-white" data-domain={domain.id}>
-      <div className="absolute z-[52]" style={{ top: 156, left: 22, maxWidth: 320 }}>
+      <div className="crumb-float z-[52]" style={{ top: 156, maxWidth: 320 }}>
         <Breadcrumb
           crumb={domain.crumb}
           items={[
@@ -47,8 +47,8 @@ export default function SubShiftPage() {
       {/* Sunset, and a title in Urbanist rather than the key shift's serif.
           Both say the same thing: you are a level down. */}
       <header
-        className="relative box-border flex flex-col overflow-hidden text-white"
-        style={{ minHeight: 400, padding: '226px 22px 30px', backgroundImage: 'var(--grad-sunset)' }}
+        className="hero-sub relative box-border flex flex-col overflow-hidden text-white"
+        style={{ padding: '226px 0 30px', backgroundImage: 'var(--grad-sunset)' }}
       >
         {image && (
           <span
@@ -60,7 +60,7 @@ export default function SubShiftPage() {
           aria-hidden="true" className="absolute inset-0 z-[2]"
           style={{ backgroundImage: 'linear-gradient(180deg, rgba(27,22,32,0) 42%, color-mix(in srgb, var(--a-deep) 74%, transparent) 100%)' }}
         />
-        <div className="canvas relative z-[3] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.14s' }}>
+        <div className="canvas gutter relative z-[3] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.14s' }}>
           <h1
             className="t-display uppercase"
             style={{ margin: 0, fontSize: 32, fontWeight: 800, lineHeight: 1.06, letterSpacing: '-0.015em' }}

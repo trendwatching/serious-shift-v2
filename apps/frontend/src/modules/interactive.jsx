@@ -169,7 +169,7 @@ export function HumanNeeds({ data, ctx }) {
   return (
     <section className="flex flex-col" style={{ marginTop: 6, gap: 10 }}>
       <Eyebrow>Human needs</Eyebrow>
-      <div className="flex items-stretch" style={{ gap: 10 }}>
+      <div className="needs-pair flex items-stretch" style={{ gap: 10 }}>
         {card('u', 'Unlocked', data.unlocked, 'var(--pos-grad)', '0 12px 26px var(--pos-shadow)')}
         {/* On a key shift this is its own pink ramp; on a sub-shift it is
             sunset, like everything else one level down. */}

@@ -84,21 +84,33 @@ for (const file of files.filter((f) => /\.(jsx?|css)$/.test(f))) {
   })
 }
 
-// ── 3. display utilities on elements desktop.css reshapes ─────────────────
-const RESHAPED = ['horizon', 'sub-stack']
-const DISPLAY = /(?:^|\s)(?:flex|grid|block|inline-flex|inline-grid|contents)(?:$|\s)/
+// ── 3. utilities that override what the desktop layer sets ────────────────
+// A utility beats a component rule in v4's layer order, so a utility that sets
+// the same property desktop.css sets means the desktop rule parses, matches and
+// is silently discarded. `.horizon` and `.sub-stack` become grids; `.widen` and
+// `.bleed` are given an explicit width.
+const OVERRIDDEN = [
+  { classes: ['horizon', 'sub-stack'], property: 'display',
+    utility: /(?:^|\s)(?:flex|grid|block|inline-flex|inline-grid|contents)(?:$|\s)/ },
+  { classes: ['widen', 'bleed'], property: 'width',
+    utility: /(?:^|\s)(?:w-full|w-screen|w-\[|max-w-)/ },
+]
+const has = (names, klass) => new RegExp(`(?:^|\\s)${klass}(?:$|\\s)`).test(names)
+
 for (const file of files.filter((f) => /\.jsx?$/.test(f))) {
   readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
     for (const match of line.matchAll(/className="([^"]*)"/g)) {
       const names = match[1]
-      if (!RESHAPED.some((c) => new RegExp(`(?:^|\\s)${c}(?:$|\\s)`).test(names))) continue
-      if (!DISPLAY.test(names)) continue
-      problems.push(
-        `${relative(SRC, file)}:${i + 1}  display utility on an element desktop.css re-lays-out\n` +
-        `    className="${names}"\n` +
-        '    The utility layer wins, so the .widen grid rule is silently discarded.\n' +
-        '    Drop the display utility; the base display is set in components.css.'
-      )
+      for (const rule of OVERRIDDEN) {
+        if (!rule.classes.some((klass) => has(names, klass))) continue
+        if (!rule.utility.test(names)) continue
+        problems.push(
+          `${relative(SRC, file)}:${i + 1}  utility sets \`${rule.property}\`, which styles/desktop.css also sets\n` +
+          `    className="${names}"\n` +
+          '    The utility layer wins, so the desktop rule is silently discarded.\n' +
+          `    Drop it; the base ${rule.property} belongs in components.css.`
+        )
+      }
     }
   })
 }

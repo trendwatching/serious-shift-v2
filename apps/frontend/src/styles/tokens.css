@@ -221,6 +221,30 @@
 
 :root,
 [data-domain] {
+  /* Declared for BOTH selectors, not just :root, and that is load-bearing.
+     A custom property whose value contains `var(--a)` is substituted where it
+     is DECLARED, not where it is used — so a `--grad-*` written once on :root
+     freezes Society's accent into itself and every sphere inherits pink. Each
+     domain block re-declares these, so each resolves against its own `--a`. */
   --a-grad: linear-gradient(180deg, var(--a) 0%, var(--a-deep) 100%);
   --pos-grad: linear-gradient(180deg, var(--pos) 0%, var(--pos-deep) 100%);
+
+  /* ── Stat band ────────────────────────────────────────────────────────
+   * The design ships this as one artwork, stat-band-gradient.jpg — a grainy
+   * magenta field. It is Society's, and it was painted onto the band on every
+   * sphere, so an Economy page carried a pink statistic sitting next to its own
+   * blue. The one module on the page whose whole job is to be loud was the one
+   * module that ignored the sphere.
+   *
+   * Rebuilt as layered radials in the sphere's own hues, in the same
+   * composition as the artwork: deep at the top-left, hot bloom low and centre,
+   * the deep tone closing the right. The grain that made the JPG feel printed
+   * comes back as a tiled turbulence overlay in components.css, so this stays a
+   * token that follows [data-domain] rather than an asset per sphere.
+   * ------------------------------------------------------------------- */
+  --grad-stat:
+    radial-gradient(120% 140% at 18% 0%, var(--a) 0%, transparent 58%),
+    radial-gradient(90% 120% at 52% 108%, var(--a-hot) 0%, transparent 62%),
+    radial-gradient(80% 130% at 100% 40%, var(--a-deep) 12%, transparent 72%),
+    linear-gradient(104deg, var(--a-deep) 0%, var(--a) 48%, var(--a-deep) 100%);
 }
