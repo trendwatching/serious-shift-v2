@@ -73,6 +73,7 @@ def valid_map() -> dict:
                 {'type': 'from_to', 'data': {'from': 'Old', 'to': 'New'}},
                 {'type': 'pull_quote', 'data': {'quote': 'A verdict'}},
                 {'type': 'peel_tabs', 'data': {'whats_changing': 'Change', 'why_now': 'Now', 'evidence_ids': [domain_index * 100 + 1, domain_index * 100 + 2]}},
+                {'type': 'sub_shift_list', 'data': {}},
                 {'type': 'human_needs', 'data': {'unlocked': 'Agency', 'threatened': 'Trust'}},
                 {'type': 'tension_band', 'data': {'quote': 'A tension'}},
                 {'type': 'timeline', 'data': {'steps': [{'label': 'Now', 'text': 'Move'}]}},
@@ -87,7 +88,6 @@ def valid_map() -> dict:
                     }],
                     'skeptics': [],
                 }},
-                {'type': 'sub_shift_list', 'data': {}},
             ],
         })
     return {'updated': '2026-08-02', 'domains': domains, 'key_trends': shifts,

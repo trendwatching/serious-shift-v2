@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { MemoryRouter, Route, Routes } from '../src/lib/router'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ApiError, load } from '../src/lib/useData'
@@ -9,6 +9,8 @@ import { useResolved } from '../src/lib/useDomains'
 import SubShiftPage from '../src/pages/SubShiftPage'
 import App from '../src/App'
 import { indexFixture, response, shiftFixture, subFixture } from './fixtures'
+import ShiftPage from '../src/pages/ShiftPage'
+import CONTRACT from '../../../packages/contracts/shift_modules.json'
 
 describe('route-scoped data', () => {
   it('retries transient failures twice and caches only the success', async () => {
@@ -93,21 +95,55 @@ describe('route-scoped data', () => {
     expect(fetch).not.toHaveBeenCalledWith('/api/map', expect.anything())
   })
 
-  it('gives a terminal sub-shift page its only way out: the breadcrumb menu', async () => {
-    // The design deliberately strips every other route off this page — no
-    // eyebrow link to the parent, no sibling rail, no next pager. The
-    // breadcrumb menu carries all of it, which is why it lists the whole
-    // domain rather than just the ancestors.
+  it('names the parent shift in a sub-shift breadcrumb, not just the page you are on', async () => {
+    // A sub-shift has no eyebrow link, no sibling rail and no next pager, so the
+    // trail is the entire way out. It has to name the KEY SHIFT: the page used
+    // to render a collapsed menu pill labelled with the sub-shift's own title,
+    // which put the only route upward behind a control a reader had to guess
+    // was a dropdown.
     global.fetch = vi.fn((url) => response(url === '/api/v1/map' ? indexFixture : subFixture))
     render(
       <MemoryRouter initialEntries={['/map/society/trust-machines/sub-1']}>
         <Routes><Route path="/map/:domainSlug/:ktSlug/:subSlug" element={<SubShiftPage />} /></Routes>
       </MemoryRouter>,
     )
-    const trigger = await screen.findByRole('button', { expanded: false })
-    await userEvent.click(trigger)
-    expect(screen.getByRole('button', { name: /Society/ })).toBeInTheDocument()
+    const trail = await screen.findByRole('navigation', { name: 'Breadcrumb' })
+    expect(within(trail).getByRole('link', { name: 'Home' })).toBeInTheDocument()
+    expect(within(trail).getByRole('link', { name: /Trust Machines/ }))
+      .toHaveAttribute('href', '/map/society/trust-machines')
     expect(screen.queryByRole('navigation', { name: 'Adjacent sub-shifts' })).not.toBeInTheDocument()
+  })
+
+  it('renders a shift in the contract order however the document arrived', async () => {
+    // The published document was composed by whatever order the contract had at
+    // export time, so a page cannot depend on the array it was handed: the live
+    // map still lists sub_shift_list last, where an older Miro mockup put it.
+    // Sorting at render is what puts it back after the peel tabs — the position
+    // the delivered design gives it — without a regeneration.
+    const scrambled = {
+      ...shiftFixture,
+      shift: {
+        ...shiftFixture.shift,
+        modules: [
+          { type: 'sub_shift_list', data: {} },
+          { type: 'timeline', data: { steps: [{ label: 'Today', text: 'a' }] } },
+          { type: 'dek', data: { text: 'A dek.' } },
+          { type: 'peel_tabs', data: { whats_changing: 'x', why_now: 'y' } },
+        ],
+      },
+    }
+    global.fetch = vi.fn((url) => response(url === '/api/v1/map' ? indexFixture : scrambled))
+    render(
+      <MemoryRouter initialEntries={['/map/society/trust-machines']}>
+        <Routes><Route path="/map/:domainSlug/:ktSlug" element={<ShiftPage />} /></Routes>
+      </MemoryRouter>,
+    )
+    await screen.findByText('A dek.')
+    const order = CONTRACT.order.key_trend
+    expect(order.indexOf('sub_shift_list')).toBe(order.indexOf('peel_tabs') + 1)
+
+    const seen = [...document.querySelectorAll('h2')].map((h) => h.textContent)
+    expect(seen.indexOf('The 2 sub-shifts')).toBeLessThan(seen.indexOf('Today / next / beyond'))
   })
 
   it('clears stale canonical metadata and marks client-side unknown routes noindex', async () => {

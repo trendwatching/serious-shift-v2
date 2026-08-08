@@ -18,11 +18,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from '../lib/router'
 import { MENU_LINKS } from '../lib/site'
+import { useDomains } from '../lib/useDomains'
 
 const LOGO = '/shift/serious-shift-logo-white.png'
 
 export function Header() {
   const [open, setOpen] = useState(false)
+  const { meta } = useDomains()
   const dialogRef = useRef(null)
   const triggerRef = useRef(null)
 
@@ -43,7 +45,13 @@ export function Header() {
 
   const close = () => {
     setOpen(false)
-    requestAnimationFrame(() => triggerRef.current?.focus())
+    // `preventScroll` is load-bearing, not a nicety. Returning focus to the
+    // trigger scrolls it back into view by default, and the trigger lives at the
+    // top of the document — so choosing "Services" scrolled to that section and
+    // then snapped straight back to the top of /about, one frame later. The
+    // focus return itself has to stay: closing a dropdown must not drop the
+    // keyboard user at the top of the document with nothing selected.
+    requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }))
   }
 
   return (
@@ -99,7 +107,9 @@ export function Header() {
             const body = (
               <>
                 <span className="t-display text-[20px] font-semibold tracking-[-0.01em]">{link.label}</span>
-                <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>{link.meta}</span>
+                <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {link.meta ?? (meta.shiftCount ? `${meta.shiftCount} key shifts` : 'Every domain')}
+                </span>
               </>
             )
             const props = {

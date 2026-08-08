@@ -71,16 +71,21 @@ export const WHATSAPP_URL = `${ABOUT_URL}#whatsapp`
  * right-aligned descriptor.
  *
  * A Miro sticky asked for the descriptors to be dropped; the later design build
- * still renders them, so they stay. They also earn their place — "52 key shifts"
+ * still renders them, so they stay. They also earn their place — the shift count
  * is the only number on the site that tells a first-time reader how much is
  * behind the deck.
  *
- * Every row but Shifts now resolves to the internal /about page, which carries
- * all five sections. The external HubSpot page remains the destination only for
- * the deep links the About copy itself makes.
+ * `meta: null` on Shifts means "fill this in from the published totals". The
+ * design writes the literal "52 key shifts"; a live site that says 52 while
+ * serving 58 is worse than one that counts, so the Header substitutes the real
+ * number and falls back to the plain label until the index has loaded.
+ *
+ * Every row but Shifts resolves to the internal /about page, which carries all
+ * five sections. The external HubSpot page remains the destination only for the
+ * deep links the About copy itself makes.
  */
 export const MENU_LINKS = [
-  { label: 'Shifts', meta: 'Every domain', href: '/', internal: true },
+  { label: 'Shifts', meta: null, href: '/', internal: true },
   { label: 'Methodology', meta: 'How we track', href: '/about#methodology', internal: true },
   { label: 'Subscribe', meta: 'One shift a day', href: '/about#subscribe', internal: true },
   { label: 'Services', meta: 'Reports & workshops', href: '/about#services', internal: true },

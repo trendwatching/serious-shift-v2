@@ -174,13 +174,6 @@ export default function Deck() {
           ))}
         </div>
 
-        {/* A short dark wash so the pager and hint hold against a light panel
-            as well as a gradient one. */}
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[16] h-10"
-          style={{ background: 'linear-gradient(180deg, rgba(27,22,32,0) 0%, rgba(27,22,32,0.42) 100%)' }}
-        />
-
         <div
           className="pointer-events-none absolute inset-x-0 text-center uppercase"
           style={{ bottom: 54, fontSize: 11.5, letterSpacing: '0.14em', color: index === 0 ? '#3E3949' : 'rgba(255,255,255,0.85)' }}

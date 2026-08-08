@@ -1,4 +1,5 @@
 /** Route-scoped map data → the view-model consumed by the UI. */
+import CONTRACT from '../../../../packages/contracts/shift_modules.json'
 import HERO_GENERATED from './heroes.json'
 import SUB_GENERATED from './sub-art.json'
 import { useMemo } from 'react'
@@ -32,6 +33,31 @@ function projectKtModules(row) {
   }
   out.push({ type: 'sub_shift_list', data: {} })
   return out
+}
+
+/**
+ * Reading order, straight from the contract both the pipeline and the backend
+ * obey — so there is one list, not three that can drift apart.
+ *
+ * Sorting again at render is not redundant. The published document was composed
+ * by whatever order the contract had at export time, so an ordering change only
+ * reaches readers after a full regeneration; sorting here means the page reads
+ * correctly the moment the contract changes. Unknown types keep their relative
+ * position at the end rather than being dropped — a module the front end has
+ * not heard of is the renderer's problem, not the sorter's.
+ */
+const ORDER = {
+  key_shift: CONTRACT.order.key_trend,
+  sub_shift: CONTRACT.order.sub_trend,
+}
+
+function inReadingOrder(modules, scope) {
+  const order = ORDER[scope] || []
+  const rank = (m) => {
+    const at = order.indexOf(m?.type)
+    return at === -1 ? order.length : at
+  }
+  return [...modules].map((m, i) => [m, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([m]) => m)
 }
 
 function projectStModules(row) {
@@ -90,7 +116,7 @@ function toSubShift(src, i, parentSlug) {
     title,
     context: src.context,
     dek: src.description || src.subtitle || '',
-    modules: nonEmpty(src.modules) || projectStModules(src),
+    modules: inReadingOrder(nonEmpty(src.modules) || projectStModules(src), 'sub_shift'),
     heroImage: src.hero_image || SUB_HERO_ART[slug] || HERO_GEN[parentSlug] || null,
     tileImage: SUB_GEN[`${parentSlug}/${slug}`] || null,
   }
@@ -111,7 +137,7 @@ function toShift(src, i, domain) {
     dek,
     velocity: src.velocity,
     read: first(src.read_time, readTimeOf(dek)),
-    modules: nonEmpty(src.modules) || projectKtModules(src),
+    modules: inReadingOrder(nonEmpty(src.modules) || projectKtModules(src), 'key_shift'),
     // Same-origin path served by the backend once art exists for this shift.
     // Absent is the normal case and the hero falls back to its gradient, which
     // is a finished design rather than a placeholder.

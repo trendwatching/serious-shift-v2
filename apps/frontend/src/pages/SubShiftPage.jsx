@@ -1,25 +1,28 @@
-import { useEffect } from 'react'
 import { useParams } from '../lib/router'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { useResolved } from '../lib/useDomains'
-import { BreadcrumbMenu } from '../chrome/Breadcrumb'
+import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Modules } from '../modules'
 import { Loading, Missing, Unavailable } from './states'
 import { unquote } from '../lib/theme'
 
 /**
- * A sub-shift is navigationally terminal by design — no sibling rail, no
- * related shifts, no next pager. The breadcrumb MENU is what replaces all of
- * them: it lists the whole domain, so the only way onward is also the way
- * back up.
+ * A sub-shift has no sibling rail, no related shifts and no next pager, so the
+ * breadcrumb is the entire way out — which is why it is the design's trail and
+ * not the collapsed menu this page used to render.
+ *
+ * The trail is `Home › {key shift} › {sub-shift}`: it names the parent and
+ * makes going up one level a single visible tap. The menu variant hid that
+ * behind a pill a reader had to guess was a dropdown, and named the sub-shift
+ * they were already reading. Note the middle rung is the KEY SHIFT, not the
+ * sphere — the sphere is one more tap from there, and this is the trail the
+ * delivered build renders.
  */
 export default function SubShiftPage() {
   const { domainSlug, ktSlug, subSlug } = useParams()
   const { domain, shift, sub, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug, subSlug })
   useDocumentMeta(sub?.title, sub?.dek)
-
-  useEffect(() => { window.scrollTo(0, 0) }, [subSlug])
 
   if (loading && !sub) return <Loading />
   if (unavailable) return <Unavailable error={error} onRetry={retry} />
@@ -30,22 +33,13 @@ export default function SubShiftPage() {
   return (
     <article className="a-expand relative min-h-dvh bg-white" data-domain={domain.id}>
       <div className="absolute z-[52]" style={{ top: 156, left: 22, maxWidth: 320 }}>
-        <BreadcrumbMenu
-          label={unquote(sub.title)}
-          domainLabel={domain.name}
-          domainTo={`/map/${domain.slug}`}
+        <Breadcrumb
           crumb={domain.crumb}
-          dot={domain.dot}
-          activeShift={shift.slug}
-          activeSub={shift.subshifts.findIndex((s) => s.slug === sub.slug)}
-          groups={domain.keyShifts.map((k) => ({
-            slug: k.slug,
-            title: unquote(k.title),
-            to: `/map/${domain.slug}/${k.slug}`,
-            subs: k.subshifts.map((s) => ({
-              slug: s.slug, title: unquote(s.title), to: `/map/${domain.slug}/${k.slug}/${s.slug}`,
-            })),
-          }))}
+          items={[
+            { label: 'Home', to: '/' },
+            { label: unquote(shift.title), to: `/map/${domain.slug}/${shift.slug}` },
+            { label: unquote(sub.title) },
+          ]}
         />
       </div>
 

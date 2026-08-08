@@ -122,6 +122,19 @@
     border-color: #DCD3E4;
   }
 
+  /* The sub-shift tile. `ss-tile` was on the element with no rule anywhere to
+     match it, so the tile was the one card on the site that did not respond to
+     a pointer. Its lift shadow is tinted with the sphere's own deep tint — the
+     design hard-codes Society's rgba(94,0,51,0.2) here, which would have put a
+     pink glow under a Consumers card. */
+  .ss-tile {
+    transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease;
+  }
+  .ss-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px var(--a-shadow);
+  }
+
   /* ── Pills ───────────────────────────────────────────────────────────
    * The deck CTA. 44px, 650 weight, and the resting inset highlight the
    * previous build dropped — which is why its buttons looked flat.

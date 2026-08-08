@@ -12,16 +12,19 @@
     "backend hydrates it into each shift row when it builds a route fragment, so",
     "an innovation pushed by the upstream database appears within the response",
     "cache TTL instead of waiting for the next weekly publication. The order",
-    "below is still what decides where it lands — apps/backend/src/innovations.rs",
+    "below is still what decides where it lands \u2014 apps/backend/src/innovations.rs",
     "mirrors these two lists as consts and a test fails if they drift."
   ],
-  "version": 4,
+  "version": 5,
   "$order_comment": [
-    "Canonical reading order, from the Miro content mockup (SERIOUS SHIFT 2026 →",
-    "Content Mockup- July'26). The export sorts every module list by this, so",
-    "changing the order here re-composes each page on the next --export-only with",
-    "no regeneration. Types absent from a page are simply skipped.",
-    "Note the sub-shift carousel sits at the BOTTOM of a shift page."
+    "Canonical reading order.",
+    "The export sorts every module list by this, so changing the order here",
+    "re-composes each page on the next --export-only with no regeneration, and",
+    "the front end sorts by it again at render so an already-published document",
+    "reads correctly too. Types absent from a page are simply skipped.",
+    "The sub-shift list sits directly after the peel tabs, which is where the",
+    "delivered design build puts it. An earlier Miro content mockup put it at the",
+    "bottom of the page and this file followed that; the design supersedes it."
   ],
   "order": {
     "key_trend": [
@@ -30,6 +33,7 @@
       "pull_quote",
       "stat_band",
       "peel_tabs",
+      "sub_shift_list",
       "human_needs",
       "tension_band",
       "timeline",
@@ -37,7 +41,6 @@
       "territories",
       "innovations",
       "voices",
-      "sub_shift_list",
       "related_shifts",
       "rich_text"
     ],
@@ -70,7 +73,7 @@
     "This block is the DEFAULT, taken from the delivered design build. A row in",
     "shift_module_visibility overrides it for one (scope, domain_id, module_type);",
     "domain_id '*' overrides it for every sphere at once. A page composed from a",
-    "shift_module_overrides row skips the filter entirely — an editor who authored",
+    "shift_module_overrides row skips the filter entirely \u2014 an editor who authored",
     "the whole module list has already decided what appears.",
     "apps/backend/src/module_policy.rs mirrors this as a const and",
     "default_visibility_matches_the_contract fails if the two drift.",
@@ -89,16 +92,64 @@
   "visibility": {
     "hidden": {
       "key_trend": {
-        "society":       ["pull_quote", "tension_band", "voices", "related_shifts", "industries", "territories"],
-        "economy":       ["pull_quote", "tension_band", "voices", "related_shifts", "industries", "territories"],
-        "organisations": ["pull_quote", "tension_band", "voices", "related_shifts", "industries", "territories"],
-        "consumers":     ["pull_quote", "tension_band", "voices", "related_shifts"]
+        "society": [
+          "pull_quote",
+          "tension_band",
+          "voices",
+          "related_shifts",
+          "industries",
+          "territories"
+        ],
+        "economy": [
+          "pull_quote",
+          "tension_band",
+          "voices",
+          "related_shifts",
+          "industries",
+          "territories"
+        ],
+        "organisations": [
+          "pull_quote",
+          "tension_band",
+          "voices",
+          "related_shifts",
+          "industries",
+          "territories"
+        ],
+        "consumers": [
+          "pull_quote",
+          "tension_band",
+          "voices",
+          "related_shifts"
+        ]
       },
       "sub_trend": {
-        "society":       ["signals", "counter_signals", "evidence", "human_needs", "territories"],
-        "economy":       ["signals", "counter_signals", "evidence", "human_needs", "territories"],
-        "organisations": ["signals", "counter_signals", "evidence", "human_needs", "territories"],
-        "consumers":     ["signals", "counter_signals", "evidence"]
+        "society": [
+          "signals",
+          "counter_signals",
+          "evidence",
+          "human_needs",
+          "territories"
+        ],
+        "economy": [
+          "signals",
+          "counter_signals",
+          "evidence",
+          "human_needs",
+          "territories"
+        ],
+        "organisations": [
+          "signals",
+          "counter_signals",
+          "evidence",
+          "human_needs",
+          "territories"
+        ],
+        "consumers": [
+          "signals",
+          "counter_signals",
+          "evidence"
+        ]
       }
     }
   },
@@ -160,7 +211,9 @@
       "data": {
         "whats_changing": "string",
         "why_now": "string",
-        "evidence_ids": ["integer"]
+        "evidence_ids": [
+          "integer"
+        ]
       },
       "required": [
         "whats_changing",
@@ -174,7 +227,7 @@
       "required": []
     },
     "human_needs": {
-      "summary": "A card pair set side by side: the need unlocked and the need threatened. Both halves are required — the design shows them at once rather than behind a toggle, so a missing side is a coloured rectangle with a label and no copy.",
+      "summary": "A card pair set side by side: the need unlocked and the need threatened. Both halves are required \u2014 the design shows them at once rather than behind a toggle, so a missing side is a coloured rectangle with a label and no copy.",
       "data": {
         "unlocked": "string",
         "threatened": "string"
@@ -204,7 +257,7 @@
       ]
     },
     "innovations": {
-      "summary": "\"Innovations in the wild\" — real branded examples of the shift, from the innovations table. Not generated: the backend hydrates this module's items from innovation_shift_links when it builds a route fragment, so a newly-ingested example appears without a publication run. `image` is always a same-origin /api/innovations/{id}/cover-image path, because the CSP is img-src 'self'.",
+      "summary": "\"Innovations in the wild\" \u2014 real branded examples of the shift, from the innovations table. Not generated: the backend hydrates this module's items from innovation_shift_links when it builds a route fragment, so a newly-ingested example appears without a publication run. `image` is always a same-origin /api/innovations/{id}/cover-image path, because the CSP is img-src 'self'.",
       "data": {
         "items": [
           {
@@ -213,7 +266,9 @@
             "description": "string?",
             "url": "string?",
             "image": "string?",
-            "tags": ["string"]
+            "tags": [
+              "string"
+            ]
           }
         ]
       },
@@ -286,7 +341,7 @@
       ]
     },
     "voices": {
-      "summary": "Who backs this shift and who disputes it, with their own words. Built at export from the thinker-attribution phase — no extra model spend.",
+      "summary": "Who backs this shift and who disputes it, with their own words. Built at export from the thinker-attribution phase \u2014 no extra model spend.",
       "data": {
         "proponents": [
           {
@@ -329,7 +384,7 @@
       ]
     },
     "related_shifts": {
-      "summary": "Typed links to other shifts (reinforces, accelerated_by, …) from the interrelatedness phase.",
+      "summary": "Typed links to other shifts (reinforces, accelerated_by, \u2026) from the interrelatedness phase.",
       "data": {
         "items": [
           {

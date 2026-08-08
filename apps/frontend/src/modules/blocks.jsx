@@ -142,7 +142,11 @@ export const Timeline = ({ data, ctx }) => {
   if (!steps.length) return null
   return (
     <section className="widen flex flex-col" style={{ gap: 10 }}>
-      <Eyebrow>{steps.map((s) => s.label).filter(Boolean).join(' / ') || 'Today / next / beyond'}</Eyebrow>
+      {/* A fixed label, not the steps joined. The design writes "Today / next /
+          beyond" above cards whose own labels are Today / Next / Beyond — and
+          deriving it meant a document published with the older "Now" wording put
+          "Now / Next / Beyond" over the section on every page. */}
+      <Eyebrow>Today / next / beyond</Eyebrow>
       <div
         className="horizon relative"
         /* A sub-shift's rail is lit by the hot end of the sphere's ramp, a key

@@ -89,6 +89,7 @@ const MODULE_ORDER_KEY_TREND: [&str; 15] = [
     "pull_quote",
     "stat_band",
     "peel_tabs",
+    "sub_shift_list",
     "human_needs",
     "tension_band",
     "timeline",
@@ -96,7 +97,6 @@ const MODULE_ORDER_KEY_TREND: [&str; 15] = [
     "territories",
     "innovations",
     "voices",
-    "sub_shift_list",
     "related_shifts",
     "rich_text",
 ];
@@ -1670,9 +1670,9 @@ mod tests {
     fn a_new_module_lands_at_its_contract_position() {
         let mut modules = vec![
             module("dek"),
+            module("sub_shift_list"),
             module("territories"),
             module("voices"),
-            module("sub_shift_list"),
         ];
         hydrate(
             &mut modules,
@@ -1683,10 +1683,10 @@ mod tests {
             types(&modules),
             [
                 "dek",
+                "sub_shift_list",
                 "territories",
                 "innovations",
-                "voices",
-                "sub_shift_list"
+                "voices"
             ]
         );
     }
@@ -1703,13 +1703,13 @@ mod tests {
         assert_eq!(types(&modules), ["dek", "timeline", "innovations"]);
 
         // Only modules that it outranks are present, so it leads.
-        let mut modules = vec![module("sub_shift_list")];
+        let mut modules = vec![module("related_shifts")];
         hydrate(
             &mut modules,
             Scope::KeyTrend,
             Some(&json!([{ "title": "x" }])),
         );
-        assert_eq!(types(&modules), ["innovations", "sub_shift_list"]);
+        assert_eq!(types(&modules), ["innovations", "related_shifts"]);
     }
 
     #[test]

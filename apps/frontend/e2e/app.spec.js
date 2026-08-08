@@ -109,16 +109,39 @@ test('navigation, keyboard modules, source safety, and axe', async ({ page }) =>
   await expectNoSeriousAxe(page)
 
   await clientNavigate(page, '/map/society/trust-machines/sub-1')
-  // A sub-shift page is deliberately terminal: the breadcrumb menu is the only
-  // way back up, which is why it is the thing under test rather than a
-  // sibling-nav card.
-  // The trigger is labelled with the sub-shift's own title, and the menu it
-  // opens is the route back to the sphere and to every sibling.
-  await page.getByRole('button', { name: /Sub Shift 1/i }).first().click()
-  await expect(page.getByRole('button', { name: 'Society' })).toBeVisible()
+  // A sub-shift has no sibling rail and no next pager, so the breadcrumb IS the
+  // way out — and it has to name the parent, not just the page you are on.
+  const trail = page.getByRole('navigation', { name: 'Breadcrumb' })
+  await expect(trail.getByRole('link', { name: 'Home' })).toBeVisible()
+  await expect(trail.getByRole('link', { name: /Trust Machines/i })).toBeVisible()
   const source = page.getByRole('link', { name: 'Read source: Study' })
   await expect(source).toHaveAttribute('target', '_blank')
   await expect(source).toHaveAttribute('rel', 'noopener noreferrer')
+})
+
+test('a route change lands at the top, and a nav anchor lands on its section', async ({ page }) => {
+  await mockMap(page)
+  await page.setViewportSize({ width: 393, height: 852 })
+  await page.goto('/')
+
+  // Deep enough into a key shift that keeping the offset would drop the reader
+  // into the middle of the next page — which is what used to happen, because
+  // nothing reset it.
+  await clientNavigate(page, '/map/society/trust-machines')
+  await expect(page.getByRole('heading', { level: 1, name: /Trust Machines/i })).toBeVisible()
+  await page.evaluate(() => window.scrollTo(0, 1200))
+  await page.getByRole('link', { name: /Sub Shift 1/i }).first().click()
+  await expect(page).toHaveURL(/sub-1$/)
+  expect(await page.evaluate(() => Math.round(window.scrollY))).toBe(0)
+
+  // Five of the six nav rows are `/about#section`. Without hash handling they
+  // all landed at the top of /about and were indistinguishable from each other.
+  await page.getByRole('button', { name: 'Open navigation' }).click()
+  await page.getByRole('link', { name: /Services/ }).click()
+  await expect(page).toHaveURL(/#services$/)
+  const box = await page.locator('#services').boundingBox()
+  expect(box.y).toBeGreaterThan(0)
+  expect(box.y).toBeLessThan(200)
 })
 
 test('pointer cancellation does not change slides and reduced motion is static', async ({ page }) => {

@@ -197,11 +197,12 @@
      sits on the domain's own gradient. */
   --a-eyebrow: #FFFFFF;
 
-  /* Green beside olive reads as one muddy family, so the positive side
-     shifts to teal — still unmistakably "the other side", but separable. */
-  --pos:      #126E63;
-  --pos-deep: #0B4A42;
-  --pos-shadow: rgba(11, 74, 66, 0.24);
+  /* NOTE: no --pos override here, deliberately. It used to shift to teal on
+     the grounds that green beside olive reads muddy — but --pos does not mean
+     "this sphere", it means "the side you are moving away from": the From card,
+     the unlocked need. A reader who learns that green on Society and meets teal
+     on Organizations has to learn it twice. The design uses one green
+     throughout; whatever this costs on olive, consistency is worth more. */
 }
 
 [data-domain='consumers'] {
