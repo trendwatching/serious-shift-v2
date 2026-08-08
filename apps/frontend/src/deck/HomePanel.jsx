@@ -14,7 +14,7 @@ export default function HomePanel({ width, active, count, domains, onJump }) {
 
   return (
     <div
-      className="relative box-border flex h-full shrink-0 flex-col overflow-hidden bg-white"
+      className="intro-panel relative box-border flex h-full shrink-0 flex-col overflow-hidden bg-white"
       style={{ width, padding: '30px 24px 74px' }}
       role="group" aria-roledescription="slide" aria-label={`Introduction, 1 of ${count}`}
       aria-hidden={!active} inert={!active ? '' : undefined}
@@ -33,8 +33,10 @@ export default function HomePanel({ width, active, count, domains, onJump }) {
         </h1>
 
         <p
+          className="measure"
           style={{
-            margin: '24px 0 0', maxWidth: 320, fontSize: 18.5, lineHeight: 1.45,
+            '--measure': '320px',
+            margin: '24px 0 0', fontSize: 18.5, lineHeight: 1.45,
             color: 'var(--color-ink-soft)', animation: 'ssRise 0.7s var(--ease-out) 0.4s',
           }}
         >

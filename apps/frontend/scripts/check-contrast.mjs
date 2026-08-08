@@ -75,6 +75,8 @@ const normalTextPairs = [
   ['ink-meta on white', token('--color-ink-meta'), WHITE],
   ['link on white', '#341482', WHITE],
   ['link hover on white', '#8B1E63', WHITE],
+  // The WhatsApp CTA carries dark ink, not white: white on #25D366 is 1.98:1.
+  ['WhatsApp CTA ink on green', token('--color-ink'), token('--color-whatsapp')],
   ['CTA white on orange', WHITE, token('--color-orange')],
   ['Society surface', WHITE, token('--color-pink')],
   ['Economy surface', WHITE, '#0A6FBF'],

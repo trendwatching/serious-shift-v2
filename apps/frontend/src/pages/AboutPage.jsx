@@ -188,8 +188,11 @@ export default function About() {
             <P>And yes, do <A href={SUBSCRIBE_URL}>sign up for TrendWatching’s free membership</A> if you haven’t yet, so we can keep you updated on major new Serious Shift and TrendWatching features.</P>
             <a
               href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-              className="inline-flex h-12 items-center gap-[9px] self-start rounded-full px-[22px] text-[15px] !text-white transition-transform duration-300 hover:-translate-y-0.5"
-              style={{ background: 'var(--color-orange)', fontFamily: 'var(--font-display)', fontWeight: 650 }}
+              className="inline-flex h-12 items-center gap-[9px] self-start rounded-full px-[22px] text-[15px] transition-transform duration-300 hover:-translate-y-0.5"
+              style={{
+                background: 'var(--color-whatsapp)', color: 'var(--color-ink)',
+                fontFamily: 'var(--font-display)', fontWeight: 650,
+              }}
             >
               <img src="/shift/whatsapp-logo.png" alt="" width={22} height={22} className="block size-[22px] object-contain" />
               Join us on WhatsApp

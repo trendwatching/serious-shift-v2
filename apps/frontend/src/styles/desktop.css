@@ -128,6 +128,24 @@
     .hero-short { min-height: 380px; }
     .hero-sub   { min-height: 330px; }
 
+    /* The intro is top-aligned because a phone screen has no room to spare.
+       A desktop panel is the full viewport height, which left ~450px of nothing
+       between the badges and the pager — so the copy sits in the middle of its
+       own panel instead of clinging to the top of it. */
+    .intro-panel { justify-content: center; padding-bottom: 110px; }
+
+    /* Released: the column is the measure now. */
+    .measure { max-width: none; }
+
+    /* The sub-shift tile's art keeps its share of the card rather than its
+       phone pixel width — 152px is 44% of a 349px card and 33% of a 465px one,
+       and the card stops looking like the same object. */
+    .ss-tile > :first-child { width: 38% !important; }
+
+    /* A stat band's supporting copy is body text; the band is 940px wide and
+       body text is not. The figure keeps the room it needs. */
+    .stat-surface > :last-child { max-width: 620px; }
+
     /* The breadcrumb floats over the hero at the gutter on a phone, which puts
        it in the far corner of a wide screen. It rides the reading column. */
     .crumb-float {

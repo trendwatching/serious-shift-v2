@@ -38,13 +38,13 @@ export default function DomainPanel({ domain, width, active, position, count, to
           {domain.name}
         </h2>
 
-        <p style={{ marginTop: 14, maxWidth: 290, fontSize: 15, lineHeight: 1.5, opacity: 0.94 }}>{domain.blurb}</p>
+        <p className="measure" style={{ '--measure': '290px', marginTop: 14, fontSize: 15, lineHeight: 1.5, opacity: 0.94 }}>{domain.blurb}</p>
 
         {/* Pinned to the bottom: what is moving in this domain right now, as
             opposed to the evergreen line above. */}
         <div className="mt-auto flex flex-col" style={{ gap: 8 }}>
           <span className="t-eyebrow" style={{ fontWeight: 800, color: domain.eyebrow }}>What’s shifting right now</span>
-          <span className="text-pretty" style={{ maxWidth: 300, fontSize: 14, lineHeight: 1.5, opacity: 0.94 }}>
+          <span className="measure text-pretty" style={{ fontSize: 14, lineHeight: 1.5, opacity: 0.94 }}>
             {domain.intro}
           </span>
         </div>

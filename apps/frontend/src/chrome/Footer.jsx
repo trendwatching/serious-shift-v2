@@ -2,13 +2,14 @@
  * Three bands: the trust line on a yellow fade, an auto-scrolling logo rail,
  * and the black block with the lock-up and the subscribe CTA.
  *
- * The CTA is `--color-orange`, the brand orange — not WhatsApp green. A sticky
- * asked for green plus the WhatsApp mark; the later design build kept the
+ * The CTA is WhatsApp green with the WhatsApp mark. The delivered build drew it
+ * in brand orange and an earlier sticky
  * orange and no mark, and the build is the spec.
  */
 import { LOGOS, WHATSAPP_URL } from '../lib/site'
 
 const LOGO = '/shift/serious-shift-logo-white.png'
+const WHATSAPP_MARK = '/shift/whatsapp-logo.png'
 
 /**
  * The list is rendered twice and translated by exactly -50%, so the second
@@ -65,17 +66,22 @@ export function Footer() {
           width={220} height={76}
           className="block h-[76px] w-[220px] object-contain"
         />
+        {/* Dark ink, not white: white on #25D366 is 1.98:1 and unreadable.
+            Ink is 8.96:1 and it is the same move the yellow pill already makes,
+            so a bright brand colour carrying dark type reads as the house
+            style rather than an exception. */}
         <a
           href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-          className="ss-cta inline-flex items-center !text-white"
+          className="ss-cta inline-flex items-center"
           style={{
-            height: 50, padding: '0 26px', borderRadius: 999, gap: 11,
-            background: 'var(--color-orange)',
+            height: 50, padding: '0 24px', borderRadius: 999, gap: 10,
+            background: 'var(--color-whatsapp)', color: 'var(--color-ink)',
             fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700,
             letterSpacing: '0.08em', textTransform: 'uppercase',
             transition: 'transform 0.28s var(--ease-out), box-shadow 0.28s ease',
           }}
         >
+          <img src={WHATSAPP_MARK} alt="" width={22} height={22} className="block size-[22px] object-contain" />
           Join us on WhatsApp
         </a>
       </div>

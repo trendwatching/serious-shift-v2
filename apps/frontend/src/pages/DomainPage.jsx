@@ -46,7 +46,7 @@ export default function DomainPage() {
           <h1 className="t-display uppercase" style={{ fontSize: 46, fontWeight: 700, lineHeight: 0.98, letterSpacing: '-0.03em' }}>
             {domain.name}
           </h1>
-          <p style={{ marginTop: 14, maxWidth: 290, fontSize: 15, lineHeight: 1.5, opacity: 0.94 }}>{domain.blurb}</p>
+          <p className="measure" style={{ '--measure': '290px', marginTop: 14, fontSize: 15, lineHeight: 1.5, opacity: 0.94 }}>{domain.blurb}</p>
         </div>
       </header>
 
