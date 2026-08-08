@@ -61,7 +61,7 @@ export default function ShiftPage() {
 
   return (
     <article className="a-expand relative min-h-dvh bg-white" data-domain={domain.id}>
-      <div className="crumb-float z-[48]" style={{ top: 156, maxWidth: 300 }}>
+      <div className="crumb-float z-[48]">
         <Breadcrumb
           crumb={domain.crumb}
           items={[
@@ -133,8 +133,12 @@ export default function ShiftPage() {
             basePath: `/map/${domain.slug}/${shift.slug}`,
           }}
         />
-        <div style={{ margin: '22px -22px 0' }}><Footer /></div>
       </div>
+
+      {/* Outside the canvas, not inside it with the gutter cancelled: a footer
+          band spans the page at every width, and nesting it was the only reason
+          it ever needed a width of its own. */}
+      <div style={{ marginTop: 22 }}><Footer /></div>
     </article>
   )
 }

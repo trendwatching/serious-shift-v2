@@ -24,7 +24,7 @@ export default function DomainPage() {
       {/* Floats over the hero rather than docking under the bar — that
           placement is the design's, and it is what lets the hero keep its
           full height. */}
-      <div className="crumb-float z-[48]" style={{ top: 156, maxWidth: 300 }}>
+      <div className="crumb-float z-[48]">
         <Breadcrumb crumb={domain.crumb} items={[{ label: 'Home', to: '/' }, { label: domain.name }]} />
       </div>
 
@@ -54,9 +54,9 @@ export default function DomainPage() {
           a card lifted off the hero rather than the next band down. */}
       <div
         className="relative z-[2] bg-white"
-        style={{ marginTop: -34, minHeight: 520, borderRadius: '28px 28px 0 0', padding: '8px 22px 0' }}
+        style={{ marginTop: -34, minHeight: 520, borderRadius: '28px 28px 0 0', padding: '8px 0 0' }}
       >
-        <div className="canvas">
+        <div className="canvas gutter">
           <h2 className="sr-only">Key shifts</h2>
           {domain.keyShifts.map((s, i) => (
             <Link
@@ -78,8 +78,9 @@ export default function DomainPage() {
           ))}
         </div>
 
-        {/* Inside the sheet, breaking its gutter — the design's own placement. */}
-        <div style={{ margin: '26px -22px 0' }}><Footer /></div>
+        {/* Inside the sheet — the design's own placement — but outside the
+            gutter, so the bands reach the sheet's edges on their own. */}
+        <div style={{ marginTop: 26 }}><Footer /></div>
       </div>
     </article>
   )

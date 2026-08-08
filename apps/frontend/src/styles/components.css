@@ -65,6 +65,10 @@
     padding-inline: var(--gutter);
   }
 
+  /* A footer band fills its parent; this measures what is inside it, on the
+     same axis as the page. */
+  .footer-inner { width: 100%; margin-inline: auto; }
+
   /* Prose whose width is a phone-column decision rather than an editorial one.
      Capped here, released by desktop.css — a 290px measure sitting inside a
      660px column reads as a mistake, not as a short line. */
@@ -115,6 +119,11 @@
   .crumb-float {
     position: absolute;
     left: var(--gutter);
+    /* Derived, not written out: 156 was `--topbar` plus 16, repeated on three
+       pages, so a change to the bar silently moved every breadcrumb off it. */
+    top: calc(var(--topbar) + 16px);
+    /* Wide enough for the trail on a phone. Desktop has room for all of it. */
+    max-width: var(--crumb-max, 300px);
   }
 
   /* The stat band's surface: the sphere's ramp plus the grain that made the

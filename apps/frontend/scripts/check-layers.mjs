@@ -94,6 +94,12 @@ const OVERRIDDEN = [
     utility: /(?:^|\s)(?:flex|grid|block|inline-flex|inline-grid|contents)(?:$|\s)/ },
   { classes: ['widen', 'bleed'], property: 'width',
     utility: /(?:^|\s)(?:w-full|w-screen|w-\[|max-w-)/ },
+  // `.footer-inner` and `.measure` are centred / capped by the layer; a margin
+  // or max-width utility on them wins and the block drifts off the page axis.
+  { classes: ['footer-inner', 'crumb-float'], property: 'margin',
+    utility: /(?:^|\s)(?:m-|mx-|ml-|mr-)/ },
+  { classes: ['footer-inner', 'measure'], property: 'max-width',
+    utility: /(?:^|\s)max-w-/ },
 ]
 const has = (names, klass) => new RegExp(`(?:^|\\s)${klass}(?:$|\\s)`).test(names)
 

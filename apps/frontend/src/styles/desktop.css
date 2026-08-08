@@ -134,6 +134,9 @@
        own panel instead of clinging to the top of it. */
     .intro-panel { justify-content: center; padding-bottom: 110px; }
 
+    /* The bands run edge to edge; their contents keep the page's measure. */
+    .footer-inner { max-width: var(--wide); }
+
     /* Released: the column is the measure now. */
     .measure { max-width: none; }
 
@@ -151,14 +154,14 @@
     .crumb-float {
       left: 50%;
       transform: translateX(calc(var(--col) / -2));
+      /* The trail stops being truncated the moment there is room for it —
+         "DELEGATE…" was a phone constraint applied to a 1440px screen. */
+      max-width: var(--col);
     }
 
     /* Both needs cards stay readable: the collapsed one was a 100px sliver
        holding a rotated-looking label. */
     .needs-pair > * { min-width: 190px; }
 
-    /* The footer is rendered inside the page's canvas, so it opts into the
-       same wide measure as the lists rather than trying to run edge to edge —
-       at 480px it read as a narrow ribbon under a 1440px page. */
   }
 }

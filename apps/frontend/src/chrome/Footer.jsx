@@ -41,26 +41,38 @@ function Marquee() {
   )
 }
 
+/**
+ * A footer is a page-level band: its surfaces run the full width of whatever
+ * they sit in and only their CONTENTS are measured.
+ *
+ * It used to be `.widen`, which pinned all three bands to 940px and left a
+ * ribbon floating under a 1440px page. That was a workaround for the real
+ * problem — the pages rendered it *inside* the reading canvas and cancelled the
+ * gutter with a negative margin, so it could never be wider than the column. It
+ * is a sibling of the canvas now and simply fills its parent, which is what a
+ * footer does at every width without a single fixed number.
+ */
 export function Footer() {
   return (
-    <footer className="widen">
+    <footer className="w-full">
       <div
-        className="t-display text-center text-pretty"
         style={{
           padding: '40px 24px 34px',
           backgroundImage: 'var(--grad-yellow)',
-          fontSize: 23, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em',
         }}
       >
-        TrendWatching and Serious Shift are trusted by 50,000+ members worldwide
+        <p
+          className="t-display footer-inner text-center text-pretty"
+          style={{ fontSize: 23, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }}
+        >
+          TrendWatching and Serious Shift are trusted by 50,000+ members worldwide
+        </p>
       </div>
 
       <Marquee />
 
-      <div
-        className="flex flex-col items-center"
-        style={{ padding: '52px 24px 56px', background: 'var(--color-darker)', gap: 30, color: '#fff' }}
-      >
+      <div style={{ padding: '52px 24px 56px', background: 'var(--color-darker)', color: '#fff' }}>
+        <div className="footer-inner flex flex-col items-center" style={{ gap: 30 }}>
         <img
           src={LOGO} alt="Serious Shi(f)t, powered by TrendWatching"
           width={220} height={76}
@@ -84,6 +96,7 @@ export function Footer() {
           <img src={WHATSAPP_MARK} alt="" width={22} height={22} className="block size-[22px] object-contain" />
           Join us on WhatsApp
         </a>
+        </div>
       </div>
     </footer>
   )

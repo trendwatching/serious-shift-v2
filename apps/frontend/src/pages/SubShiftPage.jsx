@@ -33,7 +33,7 @@ export default function SubShiftPage() {
 
   return (
     <article className="a-expand relative min-h-dvh bg-white" data-domain={domain.id}>
-      <div className="crumb-float z-[52]" style={{ top: 156, maxWidth: 320 }}>
+      <div className="crumb-float z-[52]" style={{ '--crumb-max': '320px' }}>
         <Breadcrumb
           crumb={domain.crumb}
           items={[
@@ -72,8 +72,9 @@ export default function SubShiftPage() {
 
       <div className="canvas gutter flex flex-col" style={{ paddingTop: 26, gap: 'var(--module-gap)' }}>
         <Modules modules={sub.modules} ctx={{ scope: 'sub_shift', domain, subs: [] }} />
-        <div style={{ margin: '10px -22px 0' }}><Footer /></div>
       </div>
+
+      <div style={{ marginTop: 10 }}><Footer /></div>
     </article>
   )
 }
