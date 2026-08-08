@@ -13,7 +13,17 @@ export default function DomainPage() {
   const { domain, loading, unavailable, error, retry } = useResolved({ domainSlug })
   useDocumentMeta(domain?.name, domain?.blurb)
 
-  if (loading && !domain) return <Loading />
+  // Not `!domain`. A sphere is assembled from TWO requests — the index, which
+  // carries every sphere's name and blurb, and the per-sphere fragment, which
+  // carries its key shifts. The index lands first, so `domain` was truthy while
+  // `keyShifts` was still empty: the sheet painted at its 520px minimum with the
+  // footer sitting at y=500, in view, and then five rows arrived and shoved it
+  // 1100px down the page. That was 0.39 of layout shift — the worst on the site,
+  // and the one thing here a reader would actually describe as a stutter.
+  //
+  // Once loading ends this guard opens regardless, so a sphere that genuinely
+  // has no key shifts still renders rather than hanging on the skeleton.
+  if (loading && !domain?.keyShifts?.length) return <Loading hero="hero-short" sheet />
   if (unavailable) return <Unavailable error={error} onRetry={retry} />
   if (!domain) return <Missing what="domain" />
 

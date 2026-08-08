@@ -25,7 +25,9 @@ export default function SubShiftPage() {
   const { domain, shift, sub, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug, subSlug })
   useDocumentMeta(sub?.title, sub?.dek)
 
-  if (loading && !sub) return <Loading />
+  // Gated on the modules — see the note in DomainPage. The index can satisfy
+  // `!sub` before the body arrives.
+  if (loading && !sub?.modules?.length) return <Loading hero="hero-sub" />
   if (unavailable) return <Unavailable error={error} onRetry={retry} />
   if (!domain || !shift || !sub) return <Missing what="sub-shift" />
 

@@ -53,7 +53,11 @@ export default function ShiftPage() {
   const heroRef = useRef(null)
   useHeroShrink(heroRef, Boolean(shift?.heroImage))
 
-  if (loading && !shift) return <Loading />
+  // Gated on the modules, not on `shift`: the index carries enough of a shift
+  // to satisfy `!shift` while its body is still in flight, so the page would
+  // paint a hero with nothing under it and then grow. Same failure the sphere
+  // page had at 0.39 — see the note in DomainPage.
+  if (loading && !shift?.modules?.length) return <Loading hero="hero-tall" />
   if (unavailable) return <Unavailable error={error} onRetry={retry} />
   if (!domain || !shift) return <Missing what="shift" />
 

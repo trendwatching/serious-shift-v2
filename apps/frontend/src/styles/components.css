@@ -65,6 +65,18 @@
     padding-inline: var(--gutter);
   }
 
+  /* A full screen that sits under the absolute top bar. `min-height: 100dvh`
+     with `padding-top: var(--topbar)` is 100dvh PLUS the bar — so swapping one
+     of these for the deck, which is exactly 100dvh, collapsed the document by
+     84px and shifted the whole page. The padding comes out of the height. */
+  .screen {
+    display: grid;
+    place-items: center;
+    min-height: calc(100dvh - var(--topbar));
+    margin-top: var(--topbar);
+    padding-inline: 24px;
+  }
+
   /* A footer band fills its parent; this measures what is inside it, on the
      same axis as the page. */
   .footer-inner { width: 100%; margin-inline: auto; }

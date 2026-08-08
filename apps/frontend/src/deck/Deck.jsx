@@ -15,7 +15,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { useDomains } from '../lib/useDomains'
 import { failureState } from '../lib/failure'
-import { Footer } from '../chrome/Footer'
 import HomePanel from './HomePanel'
 import DomainPanel from './DomainPanel'
 
@@ -24,7 +23,7 @@ const DAMP = 0.85       // the design damps the finger everywhere, not just at t
 const STEP_MS = 170     // a badge tap walks the deck one panel at a time
 
 export default function Deck() {
-  const { domains, meta, loading, unavailable, error, retry } = useDomains()
+  const { domains, meta, unavailable, error, retry } = useDomains()
   useDocumentMeta(undefined, meta?.shiftCount
     ? `${meta.domainCount} domains and ${meta.shiftCount} shifts in the current weekly map.`
     : undefined)
@@ -118,21 +117,20 @@ export default function Deck() {
     return () => window.removeEventListener('keydown', onKey)
   }, [index, go])
 
-  if (loading) {
-    return (
-      <div className="grid min-h-dvh place-items-center px-6" style={{ paddingTop: 'var(--topbar)' }} aria-busy="true" aria-label="Loading the current map">
-        <div className="w-full max-w-[420px] animate-pulse space-y-5" aria-hidden="true">
-          <div className="h-16 rounded-xl bg-black/10" />
-          <div className="h-20 rounded-xl bg-black/10" />
-        </div>
-      </div>
-    )
-  }
+  // No loading state. The intro panel is entirely static — headline, standfirst
+  // and four badges whose names come from DECK — so it renders on the first
+  // paint and the map streams in behind it.
+  //
+  // The skeleton it replaced was `min-h-dvh` PLUS `--topbar` of padding, where
+  // the deck is exactly `100dvh`. Swapping one for the other collapsed the
+  // document by 84px the instant the map arrived: a 0.082 layout shift on the
+  // first screen of the site, which is what the stutter was. Panels 2–5 arrive
+  // off-screen, so nothing the reader is looking at moves at all.
 
   if (unavailable) {
     const failure = failureState(error)
     return (
-      <div className="grid min-h-dvh place-items-center px-6 text-center" style={{ paddingTop: 'var(--topbar)' }}>
+      <div className="screen text-center">
         <div className="flex max-w-[390px] flex-col items-center gap-4">
           <p className="t-eyebrow" style={{ color: 'var(--color-ink-meta)' }}>{failure.eyebrow}</p>
           <h1 className="t-display text-[28px] font-bold" style={{ letterSpacing: '-0.03em' }}>{failure.title}</h1>
@@ -204,7 +202,6 @@ export default function Deck() {
           {active ? `${active.name}, panel ${index + 1} of ${count}` : `Intro, panel 1 of ${count}`}
         </span>
       </section>
-      <Footer />
     </>
   )
 }

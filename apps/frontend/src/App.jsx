@@ -10,7 +10,7 @@ import AboutPage from './pages/AboutPage'
 function NotFound() {
   useDocumentMeta('Page not found', undefined, { notFound: true })
   return (
-    <div className="grid min-h-dvh place-items-center px-6 text-center" style={{ paddingTop: 'var(--topbar)' }}>
+    <div className="screen text-center">
       <div className="flex max-w-[420px] flex-col items-center gap-4">
         <p className="t-eyebrow" style={{ color: 'var(--color-ink-meta)' }}>404 · Not found</p>
         <h1 className="t-display text-[32px] font-bold" style={{ letterSpacing: '-0.03em' }}>This shift has moved.</h1>

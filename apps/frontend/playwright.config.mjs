@@ -30,8 +30,15 @@ export default defineConfig({
     reducedMotion: 'reduce',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // `vite preview`, not `python3 -m http.server`, and the difference is history
+  // fallback. A static file server answers `/map/society` with its own 404 page,
+  // so every spec had to load `/` and click its way in — and a test that DID
+  // deep-link measured a perfectly still 404 and reported zero layout shift.
+  // Serving the same `out/` through the SPA fallback is what makes a direct hit
+  // on a reading page testable at all, which is the only way the loading
+  // behaviour a reader actually gets from a shared link is ever exercised.
   webServer: {
-    command: 'npm run build && python3 -m http.server 3100 --bind 127.0.0.1 --directory out',
+    command: 'npm run build && npx vite preview --host 127.0.0.1 --port 3100 --strictPort',
     url: 'http://127.0.0.1:3100',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
