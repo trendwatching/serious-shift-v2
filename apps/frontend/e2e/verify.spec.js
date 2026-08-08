@@ -1,5 +1,15 @@
 import { test, expect } from '@playwright/test'
-const O = 'https://backend-staging-1c16.up.railway.app'
+/**
+ * Smoke tests against a DEPLOYED origin, not against this commit.
+ *
+ * They are opt-in for exactly that reason: run inside CI they assert whatever
+ * staging happens to be serving, which is the previous commit until the deploy
+ * lands — so a correct change fails its own build. Run them after a deploy:
+ *
+ *   VERIFY_ORIGIN=https://backend-staging-1c16.up.railway.app npx playwright test e2e/verify.spec.js
+ */
+const O = process.env.VERIFY_ORIGIN
+test.skip(!O, 'set VERIFY_ORIGIN to smoke-test a deployed origin')
 
 const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')
 
@@ -51,6 +61,7 @@ test('desktop lines every module up on one of two axes', async ({ page }) => {
       band: box('.stat-surface'),
       list: box('.widen .sub-stack'),
       footer: box('footer'),
+      footerInner: box('footer .footer-inner'),
       hero: Math.round(document.querySelector('header').getBoundingClientRect().height),
       dots,
       overflow: document.documentElement.scrollWidth - window.innerWidth,
@@ -63,10 +74,12 @@ test('desktop lines every module up on one of two axes', async ({ page }) => {
   expect(seen.col.width).toBe(660)
   expect(seen.band.width).toBe(940)
   expect(seen.list.width).toBe(940)
-  expect(seen.footer.width).toBe(940)
+  // A footer band spans the page; only its contents take the measure.
+  expect(seen.footer.width).toBe(1440)
+  expect(seen.footerInner.width).toBe(940)
   // Centred on the same axis.
   const centre = (b) => b.left + b.width / 2
-  for (const b of [seen.col, seen.band, seen.list, seen.footer]) {
+  for (const b of [seen.col, seen.band, seen.list, seen.footerInner]) {
     expect(Math.abs(centre(b) - 720)).toBeLessThanOrEqual(1)
   }
   // The horizon dots ride their own cards, spread across the rail — they used
