@@ -224,10 +224,48 @@ anyone noticed.
 `./scripts/cutover-steps-2-to-5.sh` now refuses to call the content ready when
 it sees this, and prints why.
 
+There are two ways to fix it, and for **this** cutover the first is better.
+
+#### 6a. Promote staging's published content  ← recommended for Monday
+
+Staging already holds the map that all the committed artwork was drawn for, and
+that every editorial correction was applied to: 37 renames that removed 22
+duplicate names, the machine-suffixed `moat-migration-2` URL, real capitals in
+the data, US spellings, and the `organizations` sphere id. Copying it is free,
+takes minutes, and the art in the frontend image matches it exactly — so
+`preflight` passes without regenerating a single file.
+
+Copy the published document **and** the v2 tables it is exported from, or the
+next `--export-only` on production will re-derive the old names and undo it:
+
+```
+documents (id = 'map')          domain_synthesis_insights
+domains_v2                      domain_flows
+domain_key_trends               shift_module_visibility
+domain_sub_trends               shift_module_overrides
+                                shift_refs
+```
+
+Production's raw evidence — 45,988 claims, 2,233 sources, 10,279 predictions,
+all of it ahead of staging — is untouched by this. It lives in different tables,
+and the next synthesis on production still runs against the richer set.
+
+#### 6b. Run a fresh synthesis on production
+
 ```bash
 railway run --service pipeline --environment production -- \
   python -m serious_shift_pipeline.run synthesize
 ```
+
+This regenerates every name from the prompts, so it does **not** preserve the
+editorial pass above — the names come back as whatever the model produces this
+time, and the sub-shift naming prompt has no sight of its siblings, which is
+what produced 22 duplicates in the first place. The global uniqueness gate added
+on 2026-08-09 now catches that, but catching it means the run fails and
+publishes nothing: a paid run, spent, days before launch. It also renames shifts,
+which strands the committed artwork and forces the regeneration below.
+
+Right for the first weekly refresh **after** launch. Not for launch day.
 
 Publication is conditional: unique route slugs and references (globally, across
 spheres — that gate was per-sphere until 2026-08-09 and let 22 duplicate names
@@ -237,10 +275,11 @@ spelling, referential integrity, and evidence/voice/stat URLs. One bounded
 targeted repair is permitted. Failure leaves the current map untouched and exits
 non-zero — recovery is a free `--export-only`, not another paid run.
 
-**Then regenerate the artwork for the slugs it produced, and redeploy.** Hero
-posters, landscape cuts, preview cards and tile fragments are all slug-keyed and
-compiled into the image; a synthesis that renames a shift strands its art
-silently, and the fallback is the sphere gradient, which looks deliberate.
+**After 6b only — regenerate the artwork for the slugs it produced, and
+redeploy.** Hero posters, landscape cuts, preview cards and tile fragments are
+all slug-keyed and compiled into the image; a synthesis that renames a shift
+strands its art silently, and the fallback is the sphere gradient, which looks
+deliberate. After 6a the art already matches, and `preflight` will say so.
 
 ```bash
 cd apps/frontend
