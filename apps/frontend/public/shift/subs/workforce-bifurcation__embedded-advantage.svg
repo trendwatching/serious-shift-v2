@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>workforce-bifurcation/embedded-advantage</title>
+<defs>
+<linearGradient id="fworkforcebifurcationembeddedadvantage" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gworkforcebifurcationembeddedadvantage" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bworkforcebifurcationembeddedadvantage" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sworkforcebifurcationembeddedadvantage" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vworkforcebifurcationembeddedadvantage" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nworkforcebifurcationembeddedadvantage" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fworkforcebifurcationembeddedadvantage)"/>
+<rect width="640" height="640" fill="url(#gworkforcebifurcationembeddedadvantage)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bworkforcebifurcationembeddedadvantage)" filter="url(#sworkforcebifurcationembeddedadvantage)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><rect x="288.3" y="-32" width="30" height="30" transform="rotate(63.6 288.3 -32)"/><circle cx="362.9" cy="-20.8" r="14.8"/><rect x="43.1" y="-9.7" width="29.2" height="29.2" transform="rotate(72.3 43.1 -9.7)"/><circle cx="371.3" cy="1.5" r="14.4"/><rect x="289.9" y="12.7" width="28.5" height="28.5" transform="rotate(55 289.9 12.7)"/><rect x="474.3" y="23.9" width="28.1" height="28.1" transform="rotate(71.1 474.3 23.9)"/><circle cx="498.3" cy="35" r="13.9"/><rect x="189.2" y="46.2" width="27.3" height="27.3" transform="rotate(60.4 189.2 46.2)"/><rect x="319.5" y="57.4" width="27" height="27" transform="rotate(48.1 319.5 57.4)"/><rect x="308.3" y="68.6" width="26.6" height="26.6" transform="rotate(35.2 308.3 68.6)"/><circle cx="336.7" cy="79.7" r="13.1"/><circle cx="580.9" cy="90.9" r="12.9"/><circle cx="49.3" cy="102.1" r="12.7"/><circle cx="476.4" cy="113.3" r="12.5"/><rect x="385.3" y="124.4" width="24.7" height="24.7" transform="rotate(9.4 385.3 124.4)"/><rect x="229.6" y="135.6" width="24.3" height="24.3" transform="rotate(84.6 229.6 135.6)"/><rect x="49.6" y="146.8" width="23.9" height="23.9" transform="rotate(85.5 49.6 146.8)"/><circle cx="464.1" cy="158" r="11.8"/><rect x="516.9" y="169.1" width="23.1" height="23.1" transform="rotate(75.7 516.9 169.1)"/><rect x="76" y="180.3" width="22.8" height="22.8" transform="rotate(70.6 76 180.3)"/><rect x="136.4" y="191.5" width="22.4" height="22.4" transform="rotate(74.5 136.4 191.5)"/><circle cx="400.4" cy="202.7" r="11"/><rect x="450.3" y="213.8" width="21.6" height="21.6" transform="rotate(59.9 450.3 213.8)"/><rect x="355.9" y="225" width="21.2" height="21.2" transform="rotate(2.6 355.9 225)"/><rect x="536.2" y="236.2" width="20.9" height="20.9" transform="rotate(38.1 536.2 236.2)"/><circle cx="481.9" cy="247.4" r="10.2"/><rect x="161.3" y="258.5" width="20.1" height="20.1" transform="rotate(6.3 161.3 258.5)"/><rect x="532.9" y="269.7" width="19.7" height="19.7" transform="rotate(40.4 532.9 269.7)"/><circle cx="455.4" cy="280.9" r="9.7"/><rect x="538.2" y="292.1" width="19" height="19" transform="rotate(68.5 538.2 292.1)"/><rect x="517.5" y="303.2" width="18.6" height="18.6" transform="rotate(0.8 517.5 303.2)"/><circle cx="442.6" cy="314.4" r="9.1"/><rect x="197.4" y="325.6" width="17.8" height="17.8" transform="rotate(15.7 197.4 325.6)"/><rect x="545.7" y="336.8" width="17.4" height="17.4" transform="rotate(67.5 545.7 336.8)"/><rect x="94.9" y="347.9" width="17" height="17" transform="rotate(73.2 94.9 347.9)"/><rect x="375.4" y="359.1" width="16.7" height="16.7" transform="rotate(42.6 375.4 359.1)"/><circle cx="475.9" cy="370.3" r="8.1"/><rect x="501.3" y="381.5" width="15.9" height="15.9" transform="rotate(72.2 501.3 381.5)"/><rect x="315" y="392.6" width="15.5" height="15.5" transform="rotate(86.6 315 392.6)"/><circle cx="126.9" cy="403.8" r="7.6"/><circle cx="521.1" cy="415" r="7.4"/><rect x="115.4" y="426.2" width="14.4" height="14.4" transform="rotate(31 115.4 426.2)"/><rect x="207" y="437.3" width="14" height="14" transform="rotate(60.4 207 437.3)"/><rect x="105" y="448.5" width="13.6" height="13.6" transform="rotate(29.4 105 448.5)"/><rect x="235.6" y="459.7" width="13.2" height="13.2" transform="rotate(74.3 235.6 459.7)"/><circle cx="539.5" cy="470.9" r="6.4"/><rect x="418.4" y="482" width="12.5" height="12.5" transform="rotate(59 418.4 482)"/><circle cx="111.4" cy="493.2" r="6"/><rect x="545.2" y="504.4" width="11.7" height="11.7" transform="rotate(4.2 545.2 504.4)"/><rect x="388" y="515.6" width="11.3" height="11.3" transform="rotate(37.9 388 515.6)"/><circle cx="129.8" cy="526.7" r="5.5"/><rect x="298.1" y="537.9" width="10.6" height="10.6" transform="rotate(16.4 298.1 537.9)"/><rect x="344.9" y="549.1" width="10.2" height="10.2" transform="rotate(60.1 344.9 549.1)"/><circle cx="111.6" cy="560.3" r="4.9"/><rect x="433.3" y="571.4" width="9.4" height="9.4" transform="rotate(11.6 433.3 571.4)"/><circle cx="108.1" cy="582.6" r="4.5"/><circle cx="293.1" cy="593.8" r="4.3"/><rect x="414.9" y="605" width="8.3" height="8.3" transform="rotate(52.9 414.9 605)"/><rect x="162.2" y="616.1" width="7.9" height="7.9" transform="rotate(59.4 162.2 616.1)"/><rect x="175.4" y="627.3" width="7.5" height="7.5" transform="rotate(4.1 175.4 627.3)"/><circle cx="355.2" cy="638.5" r="3.6"/><circle cx="168.6" cy="649.7" r="3.4"/><rect x="325.2" y="660.8" width="6.4" height="6.4" transform="rotate(4.6 325.2 660.8)"/><circle cx="228.8" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vworkforcebifurcationembeddedadvantage)"/>
+<rect width="640" height="640" filter="url(#nworkforcebifurcationembeddedadvantage)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nworkforcebifurcationembeddedadvantage)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

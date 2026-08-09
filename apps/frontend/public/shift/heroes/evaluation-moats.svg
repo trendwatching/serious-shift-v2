@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>evaluation-moats</title>
+<defs>
+<linearGradient id="skyevaluationmoats" x1="0" y1="0" x2="0.55" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<linearGradient id="beamevaluationmoats" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.72"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<radialGradient id="discevaluationmoats">
+<stop offset="0.72" stop-color="#EFFAB4" stop-opacity="0.92"/>
+<stop offset="0.86" stop-color="#EFFAB4" stop-opacity="0.34"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="glowevaluationmoats" cx="52.3%" cy="34%" r="62%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="hazeevaluationmoats" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#4E9A62" stop-opacity="0"/>
+<stop offset="0.5" stop-color="#4E9A62" stop-opacity="0.42"/>
+<stop offset="1" stop-color="#4E9A62" stop-opacity="0"/>
+</linearGradient>
+<radialGradient id="vigevaluationmoats" cx="50%" cy="42%" r="72%">
+<stop offset="0.55" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.5"/>
+</radialGradient>
+<!-- Poster grain. Two frequencies: a fine tooth that sits on the whole field
+     and a coarse mottle that keeps the flat gradient from looking printed by a
+     browser. Both are filters on a rect, so they cost nothing to download. -->
+<filter id="softevaluationmoats" x="-20%" y="-20%" width="140%" height="140%">
+<feGaussianBlur stdDeviation="16"/>
+</filter>
+<filter id="fineevaluationmoats" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="7" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<filter id="coarseevaluationmoats" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" seed="19" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.7 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.22}.lit-stroke{stroke:#EFFAB4;stroke-opacity:0.85}</style>
+</defs>
+<rect width="800" height="1000" fill="url(#skyevaluationmoats)"/>
+<rect width="800" height="1000" fill="url(#glowevaluationmoats)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.17" stroke-opacity="0.17" ><rect x="-24.3" y="446.6" width="115.3" height="233.4"/><rect x="122" y="522.4" width="116" height="157.6"/><rect x="280.9" y="502" width="91.5" height="178"/><rect x="423.5" y="492.6" width="99.7" height="187.4"/><rect x="448.4" y="458.8" width="49.9" height="33.7"/><rect x="551.4" y="457.1" width="137.2" height="222.9"/><rect x="711.1" y="544.1" width="111.1" height="135.9"/><rect x="738.9" y="519.7" width="55.5" height="24.5"/></g>
+<rect x="0" y="360" width="800" height="300" fill="url(#hazeevaluationmoats)"/>
+<g filter="url(#softevaluationmoats)"><circle cx="418" cy="239.7" r="141.4" fill="url(#discevaluationmoats)"/><g fill="#EFFAB4" stroke="#EFFAB4" fill-opacity="0.14" stroke-opacity="0.14" ><path d="M 264 720 L -1052 1000" fill="none" stroke-width="2"/><path d="M 286 720 L -842 1000" fill="none" stroke-width="2"/><path d="M 308 720 L -632 1000" fill="none" stroke-width="2"/><path d="M 330 720 L -422 1000" fill="none" stroke-width="2"/><path d="M 352 720 L -212 1000" fill="none" stroke-width="2"/><path d="M 374 720 L -2 1000" fill="none" stroke-width="2"/><path d="M 396 720 L 208 1000" fill="none" stroke-width="2"/><path d="M 418 720 L 418 1000" fill="none" stroke-width="2"/><path d="M 440 720 L 628 1000" fill="none" stroke-width="2"/><path d="M 462 720 L 838 1000" fill="none" stroke-width="2"/><path d="M 484 720 L 1048 1000" fill="none" stroke-width="2"/><path d="M 506 720 L 1258 1000" fill="none" stroke-width="2"/><path d="M 528 720 L 1468 1000" fill="none" stroke-width="2"/><path d="M 550 720 L 1678 1000" fill="none" stroke-width="2"/><path d="M 572 720 L 1888 1000" fill="none" stroke-width="2"/><path d="M 0 725.7 L 800 725.7" fill="none" stroke-width="2"/><path d="M 0 742.9 L 800 742.9" fill="none" stroke-width="2"/><path d="M 0 771.4 L 800 771.4" fill="none" stroke-width="2"/><path d="M 0 811.4 L 800 811.4" fill="none" stroke-width="2"/><path d="M 0 862.9 L 800 862.9" fill="none" stroke-width="2"/><path d="M 0 925.7 L 800 925.7" fill="none" stroke-width="2"/><path d="M 0 1000 L 800 1000" fill="none" stroke-width="2"/></g><polygon points="290.8,239.7 545.3,239.7 757.3,1000 78.7,1000" fill="url(#beamevaluationmoats)" opacity="0.55"/></g>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.58" stroke-opacity="0.58" ><rect x="-10.3" y="576.1" width="83.4" height="183.9"/><rect x="10.6" y="543.1" width="41.7" height="33.1"/><rect x="99.8" y="665.9" width="108.9" height="94.1"/><rect x="152.8" y="635.1" width="3" height="30.8"/><rect x="235.5" y="658" width="83.2" height="102"/><rect x="256.3" y="639.7" width="41.6" height="18.4"/><rect x="343" y="577.5" width="114.1" height="182.5"/><rect x="398.5" y="546.7" width="3" height="30.8"/><rect x="471.6" y="654.2" width="102.4" height="105.8"/><rect x="497.3" y="635.2" width="51.2" height="19"/><rect x="521.4" y="623.4" width="3" height="30.8"/><rect x="599.1" y="577.5" width="93.2" height="182.5"/><rect x="720.1" y="572.6" width="96.9" height="187.4"/><rect x="744.3" y="538.8" width="48.5" height="33.7"/></g>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.94" stroke-opacity="0.94" ><rect x="94.9" y="474.7" width="183.5" height="285.3"/><rect x="124.3" y="412" width="124.8" height="68.5"/><rect x="308.3" y="553.8" width="183.5" height="206.2"/><rect x="337.6" y="508.4" width="124.8" height="49.5"/><rect x="521.6" y="584.8" width="183.5" height="175.2"/><rect x="551" y="546.3" width="124.8" height="42"/></g>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.72" stroke-opacity="0.72" ><circle cx="-40" cy="839" r="5.3"/><path d="M -53.5 1040 L -53.5 845.1 C -48.4 841.2 -44.3 839.8 -40 839.8 C -35.7 839.8 -31.6 841.2 -26.5 845.1 L -26.5 1040 Z"/><circle cx="4.2" cy="841.4" r="7.2"/><path d="M -14.1 1040 L -14.1 849.7 C -7.2 844.4 -1.6 842.5 4.2 842.5 C 9.9 842.5 15.5 844.4 22.4 849.7 L 22.4 1040 Z"/><circle cx="45.8" cy="878.5" r="5.5"/><path d="M 31.9 1040 L 31.9 884.8 C 37.2 880.8 41.4 879.3 45.8 879.3 C 50.2 879.3 54.5 880.8 59.8 884.8 L 59.8 1040 Z"/><circle cx="100.7" cy="892.5" r="6.1"/><path d="M 85.3 1040 L 85.3 899.5 C 91.2 895 95.8 893.4 100.7 893.4 C 105.6 893.4 110.3 895 116.2 899.5 L 116.2 1040 Z"/><circle cx="140.6" cy="838.6" r="5.4"/><path d="M 126.9 1040 L 126.9 844.8 C 132.1 840.8 136.3 839.4 140.6 839.4 C 145 839.4 149.1 840.8 154.4 844.8 L 154.4 1040 Z"/><circle cx="185.7" cy="843.3" r="7.2"/><path d="M 167.4 1040 L 167.4 851.6 C 174.3 846.3 179.9 844.4 185.7 844.4 C 191.5 844.4 197.1 846.3 204 851.6 L 204 1040 Z"/><circle cx="235.7" cy="831.6" r="7.8"/><path d="M 216 1040 L 216 840.5 C 223.5 834.8 229.5 832.7 235.7 832.7 C 242 832.7 248 834.8 255.5 840.5 L 255.5 1040 Z"/><circle cx="297.7" cy="871.3" r="7"/><path d="M 280.1 1040 L 280.1 879.3 C 286.8 874.2 292.1 872.4 297.7 872.4 C 303.3 872.4 308.6 874.2 315.3 879.3 L 315.3 1040 Z"/><circle cx="351.4" cy="857.1" r="5.8"/><path d="M 336.8 1040 L 336.8 863.8 C 342.3 859.5 346.8 858 351.4 858 C 356 858 360.5 859.5 366 863.8 L 366 1040 Z"/><circle cx="407.6" cy="856.4" r="7.3"/><path d="M 389 1040 L 389 864.8 C 396.1 859.4 401.7 857.5 407.6 857.5 C 413.4 857.5 419.1 859.4 426.1 864.8 L 426.1 1040 Z"/><circle cx="456.1" cy="870.7" r="7.9"/><path d="M 436.2 1040 L 436.2 879.8 C 443.7 874 449.8 871.9 456.1 871.9 C 462.3 871.9 468.4 874 476 879.8 L 476 1040 Z"/><circle cx="501.9" cy="844.1" r="7.2"/><path d="M 483.7 1040 L 483.7 852.4 C 490.6 847.1 496.1 845.2 501.9 845.2 C 507.6 845.2 513.1 847.1 520.1 852.4 L 520.1 1040 Z"/><circle cx="545.3" cy="865.4" r="6.3"/><path d="M 529.4 1040 L 529.4 872.6 C 535.4 868 540.2 866.4 545.3 866.4 C 550.3 866.4 555.1 868 561.1 872.6 L 561.1 1040 Z"/><circle cx="601.5" cy="882.2" r="7.9"/><path d="M 581.4 1040 L 581.4 891.3 C 589.1 885.5 595.2 883.4 601.5 883.4 C 607.8 883.4 613.9 885.5 621.5 891.3 L 621.5 1040 Z"/><circle cx="662.6" cy="876.7" r="6.1"/><path d="M 647.2 1040 L 647.2 883.7 C 653 879.3 657.7 877.6 662.6 877.6 C 667.4 877.6 672.1 879.3 678 883.7 L 678 1040 Z"/><circle cx="724.3" cy="883.4" r="7.2"/><path d="M 706 1040 L 706 891.7 C 713 886.4 718.6 884.5 724.3 884.5 C 730.1 884.5 735.7 886.4 742.7 891.7 L 742.7 1040 Z"/><circle cx="781" cy="839.8" r="5.8"/><path d="M 766.2 1040 L 766.2 846.5 C 771.8 842.3 776.3 840.7 781 840.7 C 785.6 840.7 790.1 842.3 795.7 846.5 L 795.7 1040 Z"/></g><g fill="#20260A" stroke="#20260A" fill-opacity="0.98" stroke-opacity="0.98" ><circle cx="-64" cy="923.3" r="19.1"/><path d="M -112.3 1040 L -112.3 945.3 C -94 931.3 -79.2 926.2 -64 926.2 C -48.7 926.2 -34 931.3 -15.6 945.3 L -15.6 1040 Z"/><circle cx="96.7" cy="878.1" r="24"/><path d="M 35.8 1040 L 35.8 905.7 C 58.9 888.1 77.5 881.7 96.7 881.7 C 115.9 881.7 134.5 888.1 157.6 905.7 L 157.6 1040 Z"/><circle cx="256.9" cy="891.8" r="21.9"/><path d="M 201.5 1040 L 201.5 917 C 222.5 900.9 239.4 895.1 256.9 895.1 C 274.4 895.1 291.2 900.9 312.3 917 L 312.3 1040 Z"/><circle cx="400.8" cy="906.2" r="18"/><path d="M 355.2 1040 L 355.2 926.9 C 372.5 913.7 386.4 908.9 400.8 908.9 C 415.2 908.9 429.1 913.7 446.4 926.9 L 446.4 1040 Z"/><circle cx="565.4" cy="919.6" r="21"/><path d="M 512.2 1040 L 512.2 943.7 C 532.4 928.3 548.6 922.7 565.4 922.7 C 582.2 922.7 598.4 928.3 618.6 943.7 L 618.6 1040 Z"/><circle cx="752.8" cy="890.1" r="21.6"/><path d="M 698.1 1040 L 698.1 914.9 C 718.9 899.1 735.5 893.4 752.8 893.4 C 770 893.4 786.7 899.1 807.4 914.9 L 807.4 1040 Z"/></g>
+<rect width="800" height="1000" fill="url(#vigevaluationmoats)"/>
+<rect width="800" height="1000" filter="url(#coarseevaluationmoats)" opacity="0.22" style="mix-blend-mode:overlay"/>
+<rect width="800" height="1000" filter="url(#fineevaluationmoats)" opacity="0.34" style="mix-blend-mode:multiply"/>
+<rect width="800" height="1000" filter="url(#fineevaluationmoats)" opacity="0.16" style="mix-blend-mode:screen"/>
+</svg>

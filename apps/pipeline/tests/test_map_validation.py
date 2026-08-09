@@ -419,9 +419,30 @@ def test_copy_must_be_us_spelling_and_free_of_slugs():
     assert 'british_spelling' in codes(british_description)
 
     def slug_in_prose(document):
-        target = document['sub_trends'][1]['slug'].rsplit('/', 1)[-1]
-        document['key_trends'][0]['subtitle'] = f'The {target} firms move first.'
+        # Three segments — see the note on _SLUGGISH. A two-segment slug cannot
+        # be told apart from ordinary hyphenated English.
+        document['sub_trends'][1]['slug'] = 'shift-1/labor-displacement-gradient'
+        document['sub_trends'][1]['name'] = 'Labor Displacement Gradient'
+        document['key_trends'][0]['subtitle'] = (
+            'The labor-displacement-gradient firms move first.')
     assert 'slug_in_prose' in codes(slug_in_prose)
+
+    # A two-segment slug in prose is just English and must NOT be flagged:
+    # "switching-cost", "vendor-lock" and "fact-flooding" are all real shift
+    # names AND ordinary compounds. Flagging them produced 54 false positives
+    # on the live map.
+    def two_segment_compound(document):
+        document['sub_trends'][1]['slug'] = 'shift-1/switching-cost'
+        document['sub_trends'][1]['name'] = 'Switching Cost'
+        document['key_trends'][0]['subtitle'] = 'A switching-cost problem, in prose.'
+    assert 'slug_in_prose' not in codes(two_segment_compound)
+
+    # A thinker's own words keep their own spelling. Americanising a quotation
+    # misquotes the person who said it.
+    def british_inside_a_quote(document):
+        document['key_trends'][0]['modules'].append(
+            {'type': 'pull_quote', 'data': {'quote': 'The labour market centre shifted.'}})
+    assert 'british_spelling' not in codes(british_inside_a_quote)
 
     # A capitalised British-looking word is a proper noun and must survive:
     # "Centre for AI Safety" is an organisation's name, not a spelling error.
@@ -429,6 +450,15 @@ def test_copy_must_be_us_spelling_and_free_of_slugs():
         document['sub_trends'][0]['description'] = (
             'The Centre for AI Safety published it. Labour markets shifted.')
     assert 'british_spelling' not in codes(proper_noun)
+
+    # Correct US English that LOOKS British to a greedy pattern. Running the
+    # first version of this over the live map produced 26 hits of which 20 were
+    # these — and a gate that rejects correct copy gets switched off.
+    def us_lookalikes(document):
+        document['sub_trends'][0]['description'] = (
+            'Optimism about the organism was realistic. The analyses drove '
+            'cancellation of the center program.')
+    assert 'british_spelling' not in codes(us_lookalikes)
 
     # Ordinary hyphenated copy is not a slug.
     def ordinary_hyphens(document):

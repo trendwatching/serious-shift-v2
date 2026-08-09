@@ -262,22 +262,44 @@ def _validate_modules(modules, scope: str, path: str, contract: dict) -> list[Va
 #: "organisation" sitting in published copy. It does not help that the prompt
 #: files are themselves written in British English — "synthesising",
 #: "recognise" — two lines above the rule telling the model not to.
+#: The suffixes are spelled out rather than left as `\w*`, because the greedy
+#: version fails on correct US English: `optimis\w*` matches "optimism" and
+#: "optimistic", `realis\w*` matches "realistic", `cancell\w*` matches
+#: "cancellation", and `organis\w*` matches "organism". Running it over the live
+#: map produced 26 hits of which 20 were false — a gate that rejects correct copy
+#: gets switched off. "analyses" is deliberately absent: it is both a British
+#: verb and the universal plural of "analysis", and there is no way to tell them
+#: apart here.
 _BRITISH = re.compile(
     r'\b('
-    r'organis\w*|catalogu\w*|behaviour\w*|programme\w*|centre[sd]?|'
-    r'recognis\w*|optimis\w*|realis\w*|utilis\w*|analys(?:e|ed|es|ing)|'
-    r'favourite\w*|colour\w*|labour\w*|defence|offence|licence|practis\w*|'
-    r'travell\w*|modell\w*|cancell\w*|marvell\w*|apologis\w*|prioritis\w*'
+    r'organis(?:e|es|ed|ing|ation|ations|ational)|'
+    r'catalogu(?:e|es|ed|ing)|behaviour(?:s|al|ally)?|programme(?:s|d)?|'
+    r'centre[sd]?|recognis(?:e|es|ed|ing|able)|'
+    r'optimis(?:e|es|ed|ing|ation|ations)|realis(?:e|es|ed|ing|ation)|'
+    r'utilis(?:e|es|ed|ing|ation)|analys(?:e|ed|ing)|'
+    r'favourite?s?|colour(?:s|ed|ing|ful)?|labour(?:s|ed|ing)?|'
+    r'defence|offence|licence[sd]?|practis(?:e|es|ed|ing)|'
+    r'travell(?:ed|ing|er|ers)|modell(?:ed|ing)|cancell(?:ed|ing)|'
+    r'apologis(?:e|es|ed|ing)|prioritis(?:e|es|ed|ing|ation)'
     r')\b'
 )
 
-#: A lowercase hyphenated token, i.e. slug-shaped. Digits are allowed because
-#: real slugs carry them — `moat-migration-2` is a published URL.
+#: A slug loose in prose. THREE segments minimum, and that bound is the whole
+#: design: a two-segment slug is indistinguishable from ordinary hyphenated
+#: English. Run over the live map, the two-segment version produced 54 hits and
+#: essentially all of them were real writing — "switching-cost", "vendor-lock",
+#: "fact-flooding" — that only matched because a shift happens to carry that
+#: name. It would have rejected correct copy on almost every page.
 #:
-#: Only reported when it matches a slug that actually exists in this document.
-#: Plenty of legitimate copy is hyphenated ("entry-level", "AI-assisted"), and
-#: only a token that IS a slug reads as a machine identifier loose in prose.
-_SLUGGISH = re.compile(r'\b[a-z0-9]+(?:-[a-z0-9]+)+\b')
+#: Three segments is rare enough in natural prose to be a signal:
+#: `labor-displacement-gradient` and `demographic-weaponization` are what a
+#: leaked identifier actually looks like. Digits allowed, because real slugs
+#: carry them — `moat-migration-2` was a published URL.
+_SLUGGISH = re.compile(r'\b[a-z0-9]+(?:-[a-z0-9]+){2,}\b')
+
+#: Fields that quote a human being. Their spelling is THEIRS: "correcting"
+#: labour to labor inside a quotation misquotes the person who said it.
+_QUOTED = frozenset({'quote'})
 
 
 def _copy_strings(row: dict, path: str):
@@ -292,15 +314,15 @@ def _copy_strings(row: dict, path: str):
             yield f'{path}.{field}', value
 
 
-def _prose_strings(value, path: str):
+def _prose_strings(value, path: str, skip=frozenset()):
     if isinstance(value, dict):
         for key, nested in value.items():
-            if key in NOT_PROSE:
+            if key in NOT_PROSE or key in skip:
                 continue
-            yield from _prose_strings(nested, f'{path}.{key}')
+            yield from _prose_strings(nested, f'{path}.{key}', skip)
     elif isinstance(value, list):
         for index, nested in enumerate(value):
-            yield from _prose_strings(nested, f'{path}[{index}]')
+            yield from _prose_strings(nested, f'{path}[{index}]', skip)
     elif isinstance(value, str):
         yield path, value
 
@@ -498,14 +520,17 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
             if not isinstance(row, dict):
                 continue
             base = f'{label}[{index}]'
-            texts = list(_copy_strings(row, base))
-            texts += list(_prose_strings(row.get('modules') or [], f'{base}.modules'))
-            for path, text in texts:
+            ours = list(_copy_strings(row, base))
+            ours += list(_prose_strings(row.get('modules') or [], f'{base}.modules', _QUOTED))
+            everything = list(_copy_strings(row, base))
+            everything += list(_prose_strings(row.get('modules') or [], f'{base}.modules'))
+            for path, text in ours:
                 british = _BRITISH.search(text)
                 if british:
                     issues.append(ValidationIssue(
                         'british_spelling', path,
                         f'{british.group(0)!r} is British spelling; the content spec is US', True))
+            for path, text in everything:
                 for match in _SLUGGISH.finditer(text):
                     if match.group(0) in known_slugs:
                         issues.append(ValidationIssue(
