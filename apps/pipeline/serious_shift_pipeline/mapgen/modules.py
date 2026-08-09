@@ -233,7 +233,9 @@ def _canonical_industries(items, sectors: list) -> list | None:
     """
     if not isinstance(items, list) or not sectors:
         return None
-    key = lambda name: re.sub(r'[^a-z0-9]', '', str(name or '').lower())
+    def key(name):
+        return re.sub(r'[^a-z0-9]', '', str(name or '').lower())
+
     by_name: dict = {}
     for item in items:
         if isinstance(item, dict) and item.get('name'):

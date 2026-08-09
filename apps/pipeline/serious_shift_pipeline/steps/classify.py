@@ -32,7 +32,7 @@ from dataclasses import replace
 from ..core import config, db, llm, observability
 from ..core.matching import (
     ACCEPT, FLOOR, MAX_KEY_LINKS, MAX_SUB_LINKS, SHORTLIST,
-    Corpus, InnovationDoc, ShiftDoc, choose, is_ambiguous, normalize,
+    Corpus, InnovationDoc, ShiftDoc, choose, is_ambiguous,
     score_all, weighted_terms,
 )
 from ..prompts import CLASSIFY_MODEL, classify_prompt

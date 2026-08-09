@@ -161,7 +161,7 @@ jobs:
           expect_code GET  /api/nonexistent          404
           expect_code GET  /api/v1/map/no-such-domain 404
           expect_code GET  /this-route-does-not-exist 404
-          expect_code GET  /map/society/test-shift  200
+          expect_code GET  /society/test-shift  200
           expect_code GET  /api/thinkers             401
           # The deprecated full map must not be a way around the inspection token:
           # unauthenticated it used to answer the whole publication, including the
@@ -191,7 +191,7 @@ jobs:
             done
           }
           check_headers /
-          check_headers /map/society/test-shift
+          check_headers /society/test-shift
           check_headers /test.txt
           check_headers /_next/static/test.js
           check_headers /api/v1/map
