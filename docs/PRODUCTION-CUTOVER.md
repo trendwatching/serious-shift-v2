@@ -235,20 +235,43 @@ the data, US spellings, and the `organizations` sphere id. Copying it is free,
 takes minutes, and the art in the frontend image matches it exactly — so
 `preflight` passes without regenerating a single file.
 
-Copy the published document **and** the v2 tables it is exported from, or the
-next `--export-only` on production will re-derive the old names and undo it:
-
-```
-documents (id = 'map')          domain_synthesis_insights
-domains_v2                      domain_flows
-domain_key_trends               shift_module_visibility
-domain_sub_trends               shift_module_overrides
-                                shift_refs
+```bash
+./scripts/promote-content.sh --from "$STAGING_DATABASE_URL" \
+                            --to   "$PROD_DATABASE_URL" --apply
 ```
 
-Production's raw evidence — 45,988 claims, 2,233 sources, 10,279 predictions,
-all of it ahead of staging — is untouched by this. It lives in different tables,
-and the next synthesis on production still runs against the richer set.
+It copies the published document **and** the v2 tables it is exported from — if
+only the document moved, the next `--export-only` would rebuild the old
+58-shift map from production's untouched tables and publish it over the good
+one, and nothing would say so.
+
+Production's raw evidence — 48,104 claims, all of it ahead of staging — is
+untouched. It lives in different tables, and the next synthesis on production
+runs against the richer set.
+
+**One table is deliberately not copied**, and it is worth understanding before
+you run this. `domain_sub_trend_claims` links each sub-shift to the claims its
+editorial cites, by claim id — and the two databases have independent id
+sequences over different corpora. Measured 2026-08-09: claim 415 is Herbert
+Simon on organisational AI in staging and youth anxiety in production; 539 and
+819 are likewise unrelated. Copying those links would satisfy the foreign key
+and attach entirely unrelated evidence to every sub-shift on the site, silently,
+in a product whose whole claim is that its evidence is traceable.
+
+The consequence, stated plainly: **after this, `--export-only` on production
+fails** — every sub-shift's editorial cites claims that are no longer in its
+(now empty) routed set. That is the safe direction. Publication is gated before
+promotion, so the failure leaves the served document untouched; it is loud, and
+it is far better than the alternative above. The first full `synthesize` clears
+it, because `reset_v2_tables` regenerates the taxonomy from production's own
+claims. Until then production is a publish-once database.
+
+**Rehearsed end to end on 2026-08-09**, against a restore of production's real
+dump into a matching Postgres 18: schema reconciliation applied cleanly
+(0001–0007 → baseline → 8 forward migrations), the promotion produced 51 key
+shifts with slugs and modules and 255 sub-shifts, a backend on that database
+served every page shape, `preflight-origin.mjs` passed, and `--export-only`
+failed with 2,004 issues while leaving the document at 51 key shifts.
 
 #### 6b. Run a fresh synthesis on production
 

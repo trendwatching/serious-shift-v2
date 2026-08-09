@@ -32,6 +32,8 @@ from .routing import route_claims_for_domain
 from .validation import PublicationValidationError, validate_map
 
 MAX_TARGETED_REPAIR_SHIFTS = int(os.environ.get('SS_MAX_TARGETED_REPAIR_SHIFTS', '12'))
+# How many validation issues reach the terminal. The rest stay on the run row.
+MAX_PRINTED_ISSUES = int(os.environ.get('SS_MAX_PRINTED_ISSUES', '25'))
 
 
 def _record_validation_failure(exc: PublicationValidationError) -> None:
@@ -41,7 +43,18 @@ def _record_validation_failure(exc: PublicationValidationError) -> None:
     if not os.environ.get('SS_RUN_ID'):
         run.start()
     run.finish(status='failed', detail=exc.detail())
-    print(json.dumps(exc.detail(), indent=2), file=sys.stderr)
+    # Capped. A stale taxonomy produces thousands of issues — 2,004 in one real
+    # case — and dumping them all buries the one line that says the work is
+    # recoverable under a screen-height of JSON nobody scrolls back through.
+    # The complete set is on the run row, which is what `detail` is for.
+    detail = exc.detail()
+    issues = detail['validation']['issues']
+    shown = issues[:MAX_PRINTED_ISSUES]
+    print(json.dumps({'validation': {'issue_count': detail['validation']['issue_count'],
+                                     'issues': shown}}, indent=2), file=sys.stderr)
+    if len(issues) > len(shown):
+        print(f'  … and {len(issues) - len(shown)} more — the full set is on '
+              f"pipeline_runs.detail WHERE run_id = '{run_id}'", file=sys.stderr)
     # The generation is NOT lost, and the message used not to say so. The gate
     # runs once, at the end, against the v2 tables — which are already written.
     # So the ~25 minutes and the API spend are still on disk, and recovery is a
@@ -72,6 +85,13 @@ def _open_export_run() -> tuple[str, RunLog | None]:
         return run_id, None
     run = RunLog(run_id, 'export')
     run.start()
+    # Publish this run as the ambient one, so a validation failure inside it
+    # attaches to THIS row instead of opening a second `synthesize` row for the
+    # same action. Without it one failed re-export left two rows in the history
+    # — `export failed` and `synthesize failed` — describing one event, which is
+    # precisely the kind of thing that made the history untrustworthy to begin
+    # with. `finish()` matches on run_id alone, so the stage stays `export`.
+    os.environ['SS_RUN_ID'] = run_id
     return run_id, run
 
 
@@ -350,4 +370,12 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except PublicationValidationError as exc:
+        # An expected outcome, not a crash. `_record_validation_failure` has
+        # already written the run row and printed the issues and the recovery;
+        # a Python traceback on top of that adds nothing, and it pushes the one
+        # line that says the work is recoverable off the bottom of the terminal.
+        print(f'\n✗ {exc}', file=sys.stderr)
+        sys.exit(1)
