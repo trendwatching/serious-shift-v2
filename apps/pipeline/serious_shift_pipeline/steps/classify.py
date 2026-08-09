@@ -338,7 +338,17 @@ def run(*, limit: int, do_all: bool, dry_run: bool, only: int | None) -> int:
                       + (', '.join(f'{p.ref} {p.confidence}' for p in picks) or '(none)'))
                 continue
 
-            db.execute(conn, RETRACT, (row['id'], ids))
+            # A pass that cannot escalate must not retract.
+            #
+            # The hourly cron runs with SS_CLASSIFY_MODEL=0, where the lexical
+            # scorer decides alone and anything it finds undecided is simply
+            # dropped. Retracting on that basis means every hour deletes the
+            # links the weekly model-assisted pass made, and every week puts
+            # them back: a card that appears and disappears on an editor's page
+            # with nothing in the history to explain it. Proposing is safe
+            # without the model; withdrawing is not.
+            if model_on:
+                db.execute(conn, RETRACT, (row['id'], ids))
             if ids:
                 db.execute(conn, UPSERT, (row['id'], AUTO_SORT_BASE, ids, confs, ranks, texts))
                 linked += len(ids)

@@ -215,3 +215,66 @@ def test_a_tagged_innovation_that_matches_no_facet_is_marked_down():
         corpus, innovation(text, tags={'basic-human-need': ['nutrition']}), no_sector,
     )[0].confidence
     assert mismatched < bare
+
+
+def _drive_run(monkeypatch, *, model_enabled):
+    """Run `classify.run()` against fakes, returning the SQL it issued.
+
+    Everything it touches is a module-level name, so the whole step can be
+    driven without a database: `load_corpus` supplies the shifts, `query`
+    answers the sweep and the ownership lookup, and `execute` records.
+    """
+    import contextlib
+
+    from serious_shift_pipeline.steps import classify as C
+
+    issued: list[str] = []
+
+    class FakeConn:
+        def commit(self):
+            pass
+
+    @contextlib.contextmanager
+    def fake_connect():
+        yield FakeConn()
+
+    def fake_query(conn, sql, params=None):
+        if sql is C.SWEEP:
+            return [{'id': 1, 'title': 'A thing', 'trendbite': '', 'body': '',
+                     'brands_list': [], 'tags': {}}]
+        return []          # OWNED: nothing curated, so both budgets are open
+
+    monkeypatch.setattr(C.db, 'connect', fake_connect)
+    monkeypatch.setattr(C.db, 'query', fake_query)
+    monkeypatch.setattr(C.db, 'execute', lambda conn, sql, params=None: issued.append(sql))
+    monkeypatch.setattr(C, 'load_corpus', lambda conn: (
+        m.Corpus([shift('key_trend:unrelated', 'Unrelated', 'nothing in common here')]),
+        'hash0', {'key_trend:unrelated': 10},
+    ))
+    monkeypatch.setattr(C, 'MODEL_ENABLED', model_enabled)
+    C.run(limit=10, do_all=True, dry_run=False, only=None)
+    return issued
+
+
+def test_a_pass_that_cannot_escalate_does_not_retract(monkeypatch):
+    """The hourly cron runs with SS_CLASSIFY_MODEL=0.
+
+    Without the model the lexical scorer decides alone, and anything it finds
+    undecided is dropped rather than escalated. If that pass is also allowed to
+    retract, every hour deletes the links the weekly model-assisted pass made
+    and every week puts them back — a card appearing and disappearing on an
+    editor's page, with nothing in the history to explain it. Proposing is safe
+    without the model; withdrawing is not.
+    """
+    with_model = _drive_run(monkeypatch, model_enabled=True)
+    assert any('DELETE FROM innovation_shift_links' in s for s in with_model), \
+        'a model-assisted pass still retracts what it no longer proposes'
+
+    without_model = _drive_run(monkeypatch, model_enabled=False)
+    assert not any('DELETE FROM innovation_shift_links' in s for s in without_model), \
+        'a lexical-only pass must not withdraw links it could not have proposed'
+
+    # Both passes still record that they looked, or the next sweep re-does the
+    # same work forever.
+    for issued in (with_model, without_model):
+        assert any('classified_corpus_hash' in s for s in issued)
