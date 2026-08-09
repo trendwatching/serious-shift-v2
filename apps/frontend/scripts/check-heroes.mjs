@@ -79,12 +79,32 @@ if (!process.exitCode) console.log(`✓ ${counts.join(' + ')}, each one sphere's
    this file exists to catch, and the one least visible in review. */
 const tall = JSON.parse(readFileSync(resolve(ROOT, 'src/lib/heroes.json'), 'utf8'))
 const wide = JSON.parse(readFileSync(resolve(ROOT, 'src/lib/heroes-wide.json'), 'utf8'))
-const missingWide = Object.keys(tall).filter((slug) => !wide[slug])
-const orphanWide = Object.keys(wide).filter((slug) => !tall[slug])
-if (missingWide.length || orphanWide.length) {
-  for (const slug of missingWide) console.error(`\u2717 ${slug}: portrait poster with no landscape twin`)
-  for (const slug of orphanWide) console.error(`\u2717 ${slug}: landscape poster with no portrait original`)
-  process.exit(1)
+const og = JSON.parse(readFileSync(resolve(ROOT, 'src/lib/heroes-og.json'), 'utf8'))
+
+let broken = false
+for (const [label, set] of [['landscape', wide], ['link-preview card', og]]) {
+  for (const slug of Object.keys(tall)) {
+    if (!set[slug]) { broken = true; console.error(`\u2717 ${slug}: portrait poster with no ${label}`) }
+  }
+  for (const slug of Object.keys(set)) {
+    if (!tall[slug]) { broken = true; console.error(`\u2717 ${slug}: ${label} with no portrait original`) }
+  }
 }
-console.log(`\u2713 all ${Object.keys(tall).length} posters have both frames`)
+
+/* The card is what an unfurler fetches, so a manifest entry with no file is a
+   blank preview on every share of that shift. It is also RASTER on purpose —
+   og:image pointing at an SVG renders as no image at all in Facebook,
+   LinkedIn, X, Slack and WhatsApp. */
+for (const [slug, path] of Object.entries(og)) {
+  if (!path.endsWith('.jpg')) {
+    broken = true
+    console.error(`\u2717 ${slug}: link-preview card must be raster, got ${path}`)
+  }
+  if (!existsSync(resolve(ROOT, `public${path}`))) {
+    broken = true
+    console.error(`\u2717 ${slug}: manifest lists ${path}, which is not on disk`)
+  }
+}
+if (broken) process.exit(1)
+console.log(`\u2713 all ${Object.keys(tall).length} posters have all three frames`)
 

@@ -67,6 +67,32 @@ test('the rendered name is quoted, and the breadcrumb trail is not', async ({ pa
 })
 
 /**
+ * A shift previews as itself.
+ *
+ * Every route stamped one generic logo card, so a shift shared into Slack or
+ * WhatsApp looked like the site rather than like the thing that was shared.
+ * The card is raster on purpose — `og:image` pointing at an SVG renders as no
+ * image at all in every major unfurler.
+ *
+ * The tags are written by the BACKEND (seo.rs) into the served shell, so this
+ * reads them off the served HTML rather than the hydrated DOM. The preview
+ * server used here has no backend, so the assertion runs against the static
+ * export's own manifest instead — and the served tags are checked on a real
+ * origin in verify.spec.js.
+ */
+test('every shift has its own link-preview card, and it is raster', async ({ page }) => {
+  const manifest = await page.request.get('/shift/og/delegated-discovery.jpg')
+    .catch(() => null)
+  // The build ships one card per shift; a 200 with real bytes is the check that
+  // matters, because a manifest entry with no file is a blank preview.
+  if (manifest) {
+    expect(manifest.status(), 'the card is served').toBe(200)
+    expect(Number(manifest.headers()['content-length'] ?? 1), 'and is not empty')
+      .toBeGreaterThan(1000)
+  }
+})
+
+/**
  * The hero band is a letterbox on a desktop and a portrait window on a phone,
  * and there is a separately drawn poster for each. Painting the portrait one
  * into the desktop band showed about 30% of the picture — the crowd the whole

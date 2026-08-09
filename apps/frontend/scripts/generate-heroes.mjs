@@ -67,6 +67,11 @@ const FRAMES = {
   // `u` under 1 because the frame is 2x wider but only 0.6x taller: figures
   // sized for the portrait would tower over a 600px-high scene.
   wide: { W: 1600, H: 600, u: 0.74, pop: 1.7, fx: 0.54 },
+  // The link-preview card. 1200x630 is what every unfurler crops to, and it is
+  // 1.905:1 — between the portrait and the desktop band, so the knobs sit
+  // between theirs too. Every route shared ONE generic logo card before this,
+  // so a shift shared into Slack previewed as the site rather than as itself.
+  og: { W: 1200, H: 630, u: 0.86, pop: 1.3, fx: 0.72 },
 }
 
 let W = FRAMES.tall.W

@@ -38,7 +38,7 @@ jobs:
         run: npm run check:layers
       - name: Sphere palettes agree
         run: npm run check:accents
-      - name: Hero posters match their manifest
+      - name: Hero posters match their manifest, in all three frames
         # A manifest entry with no file on disk ships a broken hero image, and
         # neither half of that pair is visible in a diff.
         run: npm run check:heroes

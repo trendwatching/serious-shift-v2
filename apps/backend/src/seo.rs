@@ -19,6 +19,15 @@ use serde_json::Value;
 pub struct PageMeta {
     pub title: String,
     pub description: String,
+    /// The link-preview card, when this route has one of its own.
+    ///
+    /// Every route shared one generic logo card, so a shift posted into Slack
+    /// previewed as "the site" rather than as itself. A shift's card is drawn
+    /// from the same seed as its hero (`scripts/render-og.mjs`), and a
+    /// sub-shift inherits its parent's — exactly as the hero already does.
+    /// `None` falls back to the generic card, which is right for `/`, `/about`
+    /// and the spheres, none of which are a single subject.
+    pub image: Option<String>,
 }
 
 /// Every canonical route in the map, with its metadata.
@@ -109,6 +118,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
     idx.add(
         "/".into(),
         PageMeta {
+            image: None,
             title: format!("{SITE_NAME} — Everything that is about to change"),
             description: clamp(&format!(
                 "{} domains and {} shifts in the current weekly map, told as stories. \
@@ -126,6 +136,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
     idx.add(
         "/about".into(),
         PageMeta {
+            image: None,
             title: format!("About — {SITE_NAME}"),
             description: "Why Serious Shift exists, how we build it, and who is behind it. \
                           Powered by TrendWatching."
@@ -150,6 +161,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
         idx.add(
             format!("/{id}"),
             PageMeta {
+                image: None,
                 title: format!("{name} — {SITE_NAME}"),
                 description: clamp(&desc),
             },
@@ -164,6 +176,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
         idx.add(
             format!("/{domain}/{slug}"),
             PageMeta {
+                image: Some(format!("/shift/og/{slug}.jpg")),
                 title: format!("{} — {SITE_NAME}", trend_title(&name)),
                 description: clamp(&s(&kt, "subtitle")),
             },
@@ -186,6 +199,13 @@ pub fn build_index(doc: &str) -> SiteIndex {
         idx.add(
             format!("/{domain}/{slug}"),
             PageMeta {
+                // A sub-shift's slug carries its parent, so the parent segment
+                // is the card — the same inheritance the hero art uses.
+                image: slug
+                    .split('/')
+                    .next()
+                    .filter(|parent| !parent.is_empty())
+                    .map(|parent| format!("/shift/og/{parent}.jpg")),
                 title: format!("{} — {SITE_NAME}", trend_title(&name)),
                 description: clamp(&desc),
             },
@@ -269,17 +289,18 @@ pub fn render(shell: &str, route: &str, meta: &PageMeta, origin: &str) -> String
             r#"<meta property="og:title" content="{title}"/>"#,
             r#"<meta property="og:description" content="{desc}"/>"#,
             r#"<meta property="og:url" content="{url}"/>"#,
-            r#"<meta property="og:image" content="{origin}/og.png"/>"#,
+            r#"<meta property="og:image" content="{origin}{image}"/>"#,
             r#"<meta name="twitter:card" content="summary_large_image"/>"#,
             r#"<meta name="twitter:title" content="{title}"/>"#,
             r#"<meta name="twitter:description" content="{desc}"/>"#,
-            r#"<meta name="twitter:image" content="{origin}/og.png"/>"#,
+            r#"<meta name="twitter:image" content="{origin}{image}"/>"#,
         ),
         url = attr_escape(&url),
         site = SITE_NAME,
         title = title,
         desc = desc,
         origin = attr_escape(origin),
+        image = attr_escape(meta.image.as_deref().unwrap_or("/og.png")),
     );
 
     match out.find("</head>") {
@@ -376,6 +397,44 @@ mod tests {
         assert_eq!(idx.pages["/about"].title, "About — Serious Shift");
     }
 
+    /// A shift previews as ITSELF, and a sub-shift as its parent.
+    ///
+    /// Every one of the ~347 routes stamped the same generic logo card, so a
+    /// shift shared into Slack or WhatsApp looked like the site rather than
+    /// like the thing that was shared. The card is drawn from the same seed as
+    /// the shift's hero. `/`, `/about` and the spheres keep the generic one —
+    /// none of them is a single subject.
+    #[test]
+    fn a_shift_previews_as_itself_and_a_sub_shift_as_its_parent() {
+        let idx = build_index(DOC);
+        assert_eq!(
+            idx.pages["/society/sovereign-collapse"].image.as_deref(),
+            Some("/shift/og/sovereign-collapse.jpg")
+        );
+        assert_eq!(
+            idx.pages["/society/sovereign-collapse/threshold-blindness"]
+                .image
+                .as_deref(),
+            Some("/shift/og/sovereign-collapse.jpg")
+        );
+        assert_eq!(idx.pages["/society"].image, None);
+        assert_eq!(idx.pages["/about"].image, None);
+        assert_eq!(idx.pages["/"].image, None);
+
+        // …and the fallback is the generic card, not an empty attribute.
+        let out = render(SHELL, "/", &idx.pages["/"], "https://x.test");
+        assert!(out.contains(r#"<meta property="og:image" content="https://x.test/og.png"/>"#));
+        let shift = render(
+            SHELL,
+            "/society/sovereign-collapse",
+            &idx.pages["/society/sovereign-collapse"],
+            "https://x.test",
+        );
+        assert!(shift.contains(
+            r#"<meta name="twitter:image" content="https://x.test/shift/og/sovereign-collapse.jpg"/>"#
+        ));
+    }
+
     /// Idempotent, because the naming prompt shows its examples already quoted
     /// and a name occasionally arrives carrying its own pair. Quoting a quoted
     /// name would ship `““NAME””`.
@@ -424,6 +483,7 @@ mod tests {
         let meta = PageMeta {
             title: "T".into(),
             description: "D".into(),
+            image: None,
         };
         let out = render(&shell, "/", &meta, "https://example.com");
 
@@ -523,6 +583,7 @@ mod tests {
         let meta = PageMeta {
             title: "T".into(),
             description: "D".into(),
+            image: None,
         };
         let out = render(shell, "/", &meta, "https://x.test");
         assert!(out.contains(r#"<script src="/_next/static/chunks/a.js"></script>"#));
@@ -533,10 +594,14 @@ mod tests {
         let meta = PageMeta {
             title: r#"He said "hi" & <b>left</b>"#.into(),
             description: r#"a "quoted" phrase"#.into(),
+            // A path is attribute-escaped like everything else, so a slug that
+            // somehow carried a quote could not break out of og:image either.
+            image: Some(r#"/shift/og/a"b.jpg"#.into()),
         };
         let out = render(SHELL, "/", &meta, "https://x.test");
         assert!(out.contains("&quot;hi&quot;"));
         assert!(out.contains("&lt;b&gt;"));
+        assert!(out.contains(r#"content="https://x.test/shift/og/a&quot;b.jpg""#));
         assert!(!out.contains(r#"content="a "quoted""#));
     }
 
