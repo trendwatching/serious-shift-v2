@@ -56,7 +56,16 @@ export function Breadcrumb({ items, crumb = 'var(--a-crumb)', className = '', st
       className={`inline-flex max-w-full items-center ${className}`}
       style={{ height: 'var(--crumb-h)', fontFamily: 'var(--font-display)', ...style }}
     >
-      <ol className="flex h-full max-w-full items-center">
+      {/* `items-stretch`, not `items-center`. The pill IS the <a>, and it sizes
+          itself with `h-full` — but `items-center` collapsed each <li> to its
+          text height, so `h-full` resolved against 15px and the pill never
+          reached `--crumb-h`. Every padding here is a fraction of `--crumb-h`,
+          so the chain rendered 26px of horizontal padding around 15px of pill:
+          cramped, and immune to the fluid ramp, which is why raising the token
+          for large screens changed nothing visible. It also left a 15px-tall
+          tap target inside a 26px lozenge — under the 24px minimum, and short
+          of the thing a reader is actually aiming at. */}
+      <ol className="flex h-full max-w-full items-stretch">
         {trail.map((crumbItem, i) => {
           const last = i === n - 1
           const content = (

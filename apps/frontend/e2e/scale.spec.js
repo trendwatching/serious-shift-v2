@@ -93,3 +93,41 @@ test('the sphere badges stay on one line at every desktop width', async ({ page 
     expect(offset, `${w}px`).toBe(0)
   }
 })
+
+/**
+ * The breadcrumb pill is the thing you tap, and it has to be as tall as it
+ * looks.
+ *
+ * Every dimension in Breadcrumb.jsx is a fraction of `--crumb-h` — the paddings,
+ * the gap, the type, the overlap between pills. The pill's own height was the
+ * one exception: it came from an `h-full` that resolved against an `<li>` which
+ * `items-center` had collapsed to text height. So the chain rendered a full
+ * crumb's worth of horizontal padding around ~17px of pill, and raising
+ * `--crumb-h` for large displays moved every measurement except the one anyone
+ * can see. It also left the tap target below the 24px minimum.
+ */
+test('the breadcrumb pill fills the crumb height at every width', async ({ page }) => {
+  await mockMap(page)
+  for (const w of [375, 768, 1280, 1920]) {
+    await page.setViewportSize({ width: w, height: 900 })
+    await page.goto('/society/trust-machines')
+    await page.locator('.crumb-float nav').waitFor()
+    // `a-expand` scales the article on entry; anything measured mid-flight is
+    // wrong by that factor.
+    await page.evaluate(() => document.getAnimations().forEach((a) => {
+      try { a.finish() } catch { /* infinite ambient loops cannot finish */ }
+    }))
+    const { navH, pills } = await page.evaluate(() => ({
+      navH: document.querySelector('.crumb-float nav').getBoundingClientRect().height,
+      pills: [...document.querySelectorAll('.crumb-float li > *')]
+        .map((p) => p.getBoundingClientRect().height),
+    }))
+    expect(pills.length, `${w}px`).toBeGreaterThan(1)
+    for (const h of pills) {
+      expect(h, `${w}px pill vs nav`).toBeCloseTo(navH, 0)
+      // WCAG 2.2 SC 2.5.8. The trail is navigation, not a link in a sentence,
+      // so the inline exception does not apply to it.
+      expect(h, `${w}px tap target`).toBeGreaterThanOrEqual(24)
+    }
+  }
+})
