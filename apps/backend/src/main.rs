@@ -249,6 +249,13 @@ impl RateLimiter {
 
 const DOC_CACHE_TTL: Duration = Duration::from_secs(60); // documents: refresh within 60s of a regen
 
+/// The public browsing bucket, in requests per minute. Named because
+/// `innovations.rs` advertises it in `ratelimit-limit` and in its 429s; writing
+/// the number down twice is exactly how the header came to claim 120 while the
+/// bucket allowed 600.
+pub(crate) const PUBLIC_V1_PER_MINUTE: u32 = 600;
+pub(crate) const PUBLIC_V1_BURST: u32 = 150;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().with_env_filter("info").init();
@@ -313,7 +320,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // 600/min with a 150 burst still refuses a scraper and still bounds the
         // memory the bucket map can take, while leaving ordinary browsing —
         // including several people at once — nowhere near the ceiling.
-        public_v1_limiter: Arc::new(RateLimiter::per_minute(600, 150)),
+        public_v1_limiter: Arc::new(RateLimiter::per_minute(
+            PUBLIC_V1_PER_MINUTE,
+            PUBLIC_V1_BURST,
+        )),
         ingest_limiter: Arc::new(RateLimiter::per_minute(60, 20)),
     };
 
@@ -1998,7 +2008,10 @@ mod tests {
             // 600/min with a 150 burst still refuses a scraper and still bounds the
             // memory the bucket map can take, while leaving ordinary browsing —
             // including several people at once — nowhere near the ceiling.
-            public_v1_limiter: Arc::new(RateLimiter::per_minute(600, 150)),
+            public_v1_limiter: Arc::new(RateLimiter::per_minute(
+                PUBLIC_V1_PER_MINUTE,
+                PUBLIC_V1_BURST,
+            )),
             ingest_limiter: Arc::new(RateLimiter::per_minute(60, 20)),
         };
 

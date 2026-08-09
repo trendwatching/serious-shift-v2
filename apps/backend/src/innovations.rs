@@ -76,6 +76,15 @@ const MAX_ITEMS_PER_SHIFT: i64 = 12;
 const DEFAULT_PAGE: i64 = 24;
 const MAX_PAGE: i64 = 100;
 
+/// What the public read routes advertise in `ratelimit-limit` and in a 429.
+///
+/// Taken from the limiter itself rather than restated. The header and
+/// `INNOVATIONS-API.md` both said 120/min while the bucket allowed 600, so a
+/// well-behaved client pacing itself against the documented number throttled
+/// itself to a fifth of its actual allowance — for no reason except that the
+/// number was written down twice.
+const PUBLIC_READ_LIMIT: u64 = crate::PUBLIC_V1_PER_MINUTE as u64;
+
 /// Canonical module order, mirrored from `packages/contracts/shift_modules.json`.
 ///
 /// It is duplicated rather than read, because the backend image copies only
@@ -1316,7 +1325,7 @@ pub async fn list(
     let remaining = s
         .public_v1_limiter
         .check(client_ip(&headers, peer))
-        .map_err(|seconds| AppError::rate_limited_with_limit(seconds, 120))?;
+        .map_err(|seconds| AppError::rate_limited_with_limit(seconds, PUBLIC_READ_LIMIT))?;
 
     let limit = q
         .get("limit")
@@ -1388,7 +1397,7 @@ pub async fn list(
         header::CACHE_CONTROL,
         HeaderValue::from_static(PUBLIC_CACHE_CONTROL),
     );
-    crate::insert_u64_header(response.headers_mut(), "ratelimit-limit", 120);
+    crate::insert_u64_header(response.headers_mut(), "ratelimit-limit", PUBLIC_READ_LIMIT);
     crate::insert_u64_header(
         response.headers_mut(),
         "ratelimit-remaining",
@@ -1407,7 +1416,7 @@ pub async fn detail(
     let remaining = s
         .public_v1_limiter
         .check(client_ip(&headers, peer))
-        .map_err(|seconds| AppError::rate_limited_with_limit(seconds, 120))?;
+        .map_err(|seconds| AppError::rate_limited_with_limit(seconds, PUBLIC_READ_LIMIT))?;
 
     let doc: Value = sqlx::query_scalar(RECORDS)
         .bind(1i64)
@@ -1436,7 +1445,7 @@ pub async fn detail(
         header::CACHE_CONTROL,
         HeaderValue::from_static(PUBLIC_CACHE_CONTROL),
     );
-    crate::insert_u64_header(response.headers_mut(), "ratelimit-limit", 120);
+    crate::insert_u64_header(response.headers_mut(), "ratelimit-limit", PUBLIC_READ_LIMIT);
     crate::insert_u64_header(
         response.headers_mut(),
         "ratelimit-remaining",
@@ -1576,6 +1585,18 @@ WITH page AS (
                     END,
              'mime', a.mime,
              'byte_size', a.byte_size),
+           -- Only shifts this innovation actually appears on.
+           --
+           -- The publication filter is the point. A shift's identity is its
+           -- slug, re-derived from its name at export, so a rename strands every
+           -- link to the old one: the row survives, the page stops showing the
+           -- innovation, and this endpoint went on advertising an `href` that
+           -- 404s. Measured on staging before this filter existed: every single
+           -- href it handed out was dead.
+           --
+           -- The row itself is kept — it is still the curator's record, and it
+           -- comes back to life if the slug returns — but a destination the site
+           -- will not render is not a destination worth publishing.
            'shifts', coalesce((
              SELECT json_agg(json_build_object(
                       'scope', sr.scope, 'slug', sr.slug, 'domain_id', sr.domain_id,
@@ -1585,7 +1606,9 @@ WITH page AS (
                       ORDER BY l.sort_order, sr.slug)
                FROM innovation_shift_links l
                JOIN shift_refs sr ON sr.id = l.shift_ref_id
-              WHERE l.innovation_id = i.id AND l.enabled), '[]'::json),
+              WHERE l.innovation_id = i.id AND l.enabled
+                AND sr.last_published_at
+                    = (SELECT max(last_published_at) FROM shift_refs)), '[]'::json),
            -- to_json renders RFC 3339 with a '+00:00' offset. to_char(…,'OF')
            -- emits '+00', which JavaScript's Date will not parse.
            'created_at', to_json(i.created_at),

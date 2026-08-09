@@ -131,7 +131,16 @@ def test_a_confident_single_winner_is_not_escalated():
 
 
 def test_a_plausible_but_unconvincing_top_pick_is_escalated():
-    assert m.is_ambiguous(scored(0.55, 0.30))
+    """Expressed relative to the thresholds, not as a literal.
+
+    This asserted `0.55`, which sat mid-band when ACCEPT was 0.72 and sits above
+    it now that ACCEPT is 0.50 — so the test broke on a change it was not
+    designed to be sensitive to. The band is `[FLOOR, ACCEPT)` whatever those
+    happen to be; that is the property worth pinning.
+    """
+    midband = (m.FLOOR + m.ACCEPT) / 2
+    assert m.FLOOR <= midband < m.ACCEPT
+    assert m.is_ambiguous(scored(midband, m.FLOOR - 0.10))
 
 
 def test_three_candidates_within_the_margin_is_a_tie_not_a_ranking():
@@ -163,6 +172,28 @@ def test_the_link_budget_is_respected():
     many = [m.Scored(f'key_trend:s{i}', 'key_trend', None, 0.95, 0, 0, 0) for i in range(6)]
     assert len(m.choose(many)) == m.MAX_KEY_LINKS
     assert len(m.choose(many, key_budget=1)) == 1
+
+
+def test_a_curated_parent_still_satisfies_the_parent_rule():
+    """A sub-shift link needs an accepted parent — and a parent a human already
+    linked is accepted, it just was not accepted by *this* pass.
+
+    Without this an innovation whose key shift is curated can never gain a
+    sub-shift link: its key_budget is spent, so `keys` is empty, so `parents` is
+    empty, and every child is rejected however well it scores.
+    """
+    child = m.Scored('sub_trend:parent/child', 'sub_trend', 'key_trend:parent', 0.95, 0, 0, 0)
+    # key_budget 0 because a curator already spent it on this very parent.
+    assert m.choose([child], key_budget=0, sub_budget=2) == []
+    assert m.choose([child], key_budget=0, sub_budget=2,
+                    owned_parents={'key_trend:parent'}) == [child]
+
+
+def test_an_over_subscribed_innovation_gains_nothing():
+    """`keys[:-1]` keeps every accepted shift but the last, which is the opposite
+    of "no room". Callers clamp at zero; this pins what zero must mean."""
+    many = [m.Scored(f'key_trend:s{i}', 'key_trend', None, 0.95, 0, 0, 0) for i in range(6)]
+    assert m.choose(many, key_budget=0) == []
 
 
 def test_nothing_below_accept_is_ever_linked():

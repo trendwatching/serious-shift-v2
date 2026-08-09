@@ -294,18 +294,53 @@ what appears.
 
 ## Classifier environment
 
-`steps/classify` runs last in `synthesize`. To also run it hourly, point a cron
-service at `python -m serious_shift_pipeline.steps.classify` with
-`SS_CLASSIFY_MODEL=0`, which makes it pure SQL and free on a quiet hour.
+`steps/classify` runs in two places, and they share one `ACCEPT`.
+
+- **Weekly, with the model**, last in `synthesize`. Resolves the ambiguous band.
+- **Daily at 03:00, deterministic** — `railway.classify.json`, a cron service on
+  the pipeline image. Without it a newly ingested innovation waits up to a week
+  for its links; this is what makes ingest feel immediate, at the cost of a
+  container running for a few seconds a day.
+
+**Set `SS_CLASSIFY_MODEL=0` on the daily service.** It is not just a cost
+setting: with the model off the pass also does not retract, which is what stops
+the daily deterministic run deleting the links the weekly model-assisted run
+made, every single day. Both halves of that were fixed together; do not remove
+one without the other.
+
+**Do not attach this config over a launch weekend.** Attaching a config is what
+arms its cron — the same rule that applies to `railway.ingest.json` and
+`railway.synthesize.json`.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `SS_CLASSIFY_MODEL` | `1` | `0` disables escalation entirely — deterministic only |
+| `SS_CLASSIFY_MODEL` | `1` | `0` disables escalation **and retraction** — deterministic only |
 | `SS_CLASSIFY_MODEL_ID` | `claude-haiku-4-5` | the escalation model |
 | `SS_CLASSIFY_BUDGET_USD` | `2.00` | per-run spend ceiling; hitting it finishes deterministically rather than aborting |
 | `SS_CLASSIFY_MODEL_CALLS_MAX` | `200` | count guard, independent of price |
-| `SS_CLASSIFY_ACCEPT` | `0.72` | confidence at or above which a link is written |
+| `SS_CLASSIFY_ACCEPT` | `0.50` | confidence at or above which a link is written |
 | `SS_CLASSIFY_FLOOR` | `0.45` | below this nothing is ever linked, not even the model's pick |
+| `SS_CLASSIFY_MAX_LINK_RATE` | `0.60` | circuit breaker: stop the pass if more than this share of a sample links |
+| `SS_CLASSIFY_BREAKER_SAMPLE` | `25` | how many innovations the breaker judges before it can fire |
 
-First run on an existing corpus: `--dry-run` prints the ranking and writes
-nothing, so the thresholds can be sanity-checked before anything reaches a page.
+### Choosing `SS_CLASSIFY_ACCEPT`
+
+Do not guess at it, and do not read the default as settled — it was 0.72 for a
+year, which was the value that made a *two-shift* unit-test fixture pass. Against
+the real 306-shift corpus nothing could reach it, so the classifier linked
+nothing and reported `0 model call(s), $0.0000` while doing so.
+
+```bash
+DATABASE_URL=... python -m serious_shift_pipeline.tools.calibrate_classifier
+```
+
+It scores every active innovation against the live corpus and prints what each
+candidate threshold would decide, with the lexical / facet / brand contributions
+separated. Run it before moving the number and whenever the upstream pushes a
+batch; `--record` writes the fixture the DB-free calibration test replays, so the
+fixture diff is the review.
+
+`--dry-run` on the classifier itself prints the deterministic ranking and writes
+nothing. It never escalates — it marks the rows that *would* have gone to the
+model rather than paying for them — so read `(none)` as "the arithmetic found
+nothing", not "the model agreed".

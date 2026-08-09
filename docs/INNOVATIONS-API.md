@@ -301,8 +301,13 @@ client holding `If-None-Match` is correctly told the page has changed.
 
 ## 5. Public reads
 
-Rate limit 120/minute, burst 30. `Cache-Control: public, max-age=60,
+Rate limit 600/minute, burst 150. `Cache-Control: public, max-age=60,
 stale-while-revalidate=300`.
+
+(This said 120/30 for a while, and so did the `ratelimit-limit` header, while the
+bucket actually allowed 600 — a client pacing itself against the documented
+number was throttling itself to a fifth of its allowance. The figure now comes
+from the limiter itself, so the two cannot disagree again.)
 
 ### `GET /api/v1/innovations`
 
@@ -411,6 +416,17 @@ stops showing the innovation. Publication reports this:
 ```
 
 Re-point them with `PUT /api/innovations/{id}/shifts` using the new slug.
+
+**A stranded link is omitted from `GET /api/v1/innovations`.** The `shifts[]`
+array lists only shifts in the current publication, because a link the site will
+not render is not a destination worth advertising — the endpoint used to hand out
+an `href` that 404s, and on staging every href it returned was dead. The row
+itself survives, so a re-point (or the slug returning) brings it straight back.
+
+The classifier repairs this on its own for links it owns: a rename changes the
+corpus hash, the innovation is re-swept, and `source='auto'` links move to the
+new slug. `ingest` and `editor` links are never touched by it — that is the
+provenance guarantee — so those are the ones that need the PUT above.
 
 ---
 

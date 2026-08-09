@@ -1,0 +1,176 @@
+{
+ "innovations": [
+  {
+   "facet_share_at_top1": 0.625,
+   "facets_carried": 3,
+   "id": 4,
+   "key_budget": 2,
+   "owned": [],
+   "scale": 0.85,
+   "scored": [
+    {
+     "brand": 0.0,
+     "conf": 0.237,
+     "facet": 0.625,
+     "lex": 0.058,
+     "parent_ref": null,
+     "ref": "key_trend:brain-drain-reversal",
+     "scope": "key_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.186,
+     "facet": 0.625,
+     "lex": 0.025,
+     "parent_ref": "key_trend:open-parity",
+     "ref": "sub_trend:open-parity/cost-parity",
+     "scope": "sub_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.183,
+     "facet": 0.625,
+     "lex": 0.023,
+     "parent_ref": "key_trend:moat-migration",
+     "ref": "sub_trend:moat-migration/temporal-moats",
+     "scope": "sub_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.17,
+     "facet": 0.625,
+     "lex": 0.013,
+     "parent_ref": "key_trend:moat-migration",
+     "ref": "sub_trend:moat-migration/agent-permanence",
+     "scope": "sub_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.063,
+     "facet": 0.375,
+     "lex": 0.028,
+     "parent_ref": "key_trend:brain-drain-reversal",
+     "ref": "sub_trend:brain-drain-reversal/asylum-science",
+     "scope": "sub_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.062,
+     "facet": 0.375,
+     "lex": 0.027,
+     "parent_ref": "key_trend:infrastructure-arbitrage",
+     "ref": "sub_trend:infrastructure-arbitrage/capability-arbitrage",
+     "scope": "sub_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.061,
+     "facet": 0.375,
+     "lex": 0.025,
+     "parent_ref": null,
+     "ref": "key_trend:provenance-premium",
+     "scope": "key_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.061,
+     "facet": 0.375,
+     "lex": 0.025,
+     "parent_ref": "key_trend:linguistic-hierarchy",
+     "ref": "sub_trend:linguistic-hierarchy/dialect-penalty",
+     "scope": "sub_trend"
+    }
+   ],
+   "sub_budget": 2,
+   "title": "Patagonia resells your gear back to you"
+  },
+  {
+   "facet_share_at_top1": 1.0,
+   "facets_carried": 5,
+   "id": 5,
+   "key_budget": 2,
+   "owned": [],
+   "scale": 1.0,
+   "scored": [
+    {
+     "brand": 0.0,
+     "conf": 0.536,
+     "facet": 1.0,
+     "lex": 0.091,
+     "parent_ref": null,
+     "ref": "key_trend:institutional-collapse",
+     "scope": "key_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.426,
+     "facet": 1.0,
+     "lex": 0.035,
+     "parent_ref": null,
+     "ref": "key_trend:democratized-counsel",
+     "scope": "key_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.421,
+     "facet": 1.0,
+     "lex": 0.032,
+     "parent_ref": null,
+     "ref": "key_trend:agentic-privacy",
+     "scope": "key_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.413,
+     "facet": 1.0,
+     "lex": 0.028,
+     "parent_ref": null,
+     "ref": "key_trend:cognitive-surrender",
+     "scope": "key_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.411,
+     "facet": 1.0,
+     "lex": 0.027,
+     "parent_ref": null,
+     "ref": "key_trend:manipulation-blindspot",
+     "scope": "key_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.394,
+     "facet": 1.0,
+     "lex": 0.018,
+     "parent_ref": null,
+     "ref": "key_trend:craft-divergence",
+     "scope": "key_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.304,
+     "facet": 0.857,
+     "lex": 0.045,
+     "parent_ref": null,
+     "ref": "key_trend:power-geometry",
+     "scope": "key_trend"
+    },
+    {
+     "brand": 0.0,
+     "conf": 0.304,
+     "facet": 0.857,
+     "lex": 0.045,
+     "parent_ref": null,
+     "ref": "key_trend:science-privatized",
+     "scope": "key_trend"
+    }
+   ],
+   "sub_budget": 2,
+   "title": "South Africa launches multilingual AI chatbot for public services"
+  }
+ ],
+ "meta": {
+  "corpus_hash": "6aa39af526c8fe7abbd521de20146a14331ab2f28824f289d7bd25a2139232bd",
+  "shifts": 306
+ }
+}

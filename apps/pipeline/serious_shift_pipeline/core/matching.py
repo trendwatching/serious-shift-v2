@@ -30,7 +30,31 @@ W_LEX, W_FACET, W_BRAND = 0.55, 0.30, 0.15
 #: raw .24 → .19 | .32 → .43 | .34 → .50 | .41 → .72 | .45 → .83 | .55 → .95
 SIG_MID, SIG_K = 0.34, 0.07
 
-ACCEPT = 0.72       # link it
+#: Link it. This is `confidence(SIG_MID)` exactly — the midpoint the scorer was
+#: centred on, three lines above, in code written before any of the evidence
+#: below existed. "Link at or above your own calibration centre" is the whole
+#: justification, and it does not depend on any particular corpus.
+#:
+#: It was 0.72, and 0.72 was an artifact. It is the value that makes
+#: `test_a_textbook_example_clears_accept` pass on a TWO-shift corpus where the
+#: innovation restates the shift almost verbatim: with n=2 the IDF is flat and
+#: the cosine is enormous. Across 306 AI-about-AI shifts an IDF-weighted cosine
+#: between two ~200-word documents structurally lives at 0.1–0.4, so 0.72 could
+#: not be reached by a real match and the classifier linked nothing at all.
+#:
+#: Measured on staging's real corpus, the best genuine match scored 0.536
+#: (a multilingual public-services chatbot → "Institutional Collapse") with the
+#: runner-up at 0.426; the clearest non-match topped out at 0.237. So the usable
+#: band is (0.426, 0.536]: above it the good match stops linking, at or below it
+#: a second, weaker shift joins. 0.50 sits inside with room either side.
+#: `tests/test_classifier_calibration.py` derives that band from the recorded
+#: scores and fails if this constant leaves it.
+#:
+#: Do NOT pair this with a margin/gap rule: measured, the non-match had the
+#: LARGER gap to its runner-up (0.176 vs 0.110), because a gap measures the
+#: runner-up's weakness, not the winner's strength. On a corpus of overlapping
+#: shifts a near-tie is evidence the scorer is working.
+ACCEPT = 0.50
 FLOOR = 0.45        # below this, never link — not even the model's pick
 TIE_MARGIN = 0.06   # three candidates this close is a tie, not a ranking
 MAX_KEY_LINKS, MAX_SUB_LINKS = 2, 2
@@ -125,6 +149,12 @@ class ShiftDoc:
     sector_text: dict = field(default_factory=dict)
     needs_text: str = ''
     territories_text: str = ''
+    #: The from→to pair, which the escalation prompt calls the shift's spine.
+    #: `from_text` existed nowhere, so the catalogue sent to the model hardcoded
+    #: `'from': ''` — the prompt asked whether an innovation sits on the `to`
+    #: side rather than merely illustrating the `from`, and then withheld the
+    #: `from`.
+    from_text: str = ''
     to_text: str = ''
     audience_text: str = ''
     raw_lower: str = ''
@@ -222,7 +252,14 @@ class Scored:
 
     @property
     def note(self) -> str:
-        return f'auto: lex {self.lexical:.2f} facet {self.facet:.2f}'
+        """Stored on the link, so a curator can see why the machine proposed it.
+
+        Carries the threshold in force, because that number has moved once and
+        will move again: without it, a row written at 0.50 is indistinguishable
+        from one written at 0.72 and nobody can answer "why is this card here"
+        six months later.
+        """
+        return f'auto@{ACCEPT:.2f}: lex {self.lexical:.2f} facet {self.facet:.2f}'
 
 
 def available_weight(innovation: InnovationDoc) -> float:
@@ -268,6 +305,11 @@ def is_ambiguous(keys: list[Scored], *, accept=ACCEPT, floor=FLOOR, margin=TIE_M
     Two shapes qualify: a best guess that is plausible but not convincing, and a
     photo finish between three or more. Everything else the arithmetic already
     answers, and paying for a second opinion on an obvious case is waste.
+
+    Since `ACCEPT` moved to 0.50 the first branch spans only [0.45, 0.50) and
+    rarely fires. That is deliberate, and it leaves escalation the job it is
+    better at: the tie. "Which of these three" is a judgement a model can make;
+    "is 0.61 good enough" is arithmetic that does not need one.
     """
     if not keys:
         return False
@@ -278,16 +320,28 @@ def is_ambiguous(keys: list[Scored], *, accept=ACCEPT, floor=FLOOR, margin=TIE_M
 
 
 def choose(scored: list[Scored], *, key_budget=MAX_KEY_LINKS, sub_budget=MAX_SUB_LINKS,
-           accept=ACCEPT) -> list[Scored]:
+           accept=ACCEPT, owned_parents=()) -> list[Scored]:
     """The deterministic pick: accepted key shifts, plus sub-shifts *beneath an
     accepted parent only*.
 
     That parent rule is the one that keeps the pages coherent. Without it an
     innovation can surface on a child page whose parent page does not show it,
     which reads to a reader as a bug in the site rather than a judgement call.
+
+    `owned_parents` are key-shift refs a curator or the upstream has ALREADY
+    linked and that are still published. They satisfy the parent rule just as
+    well as a pick made in this pass — the parent page does show the innovation,
+    it simply shows it because a human said so. Without them, an innovation whose
+    key shift is curated could never gain a sub-shift link: its `key_budget` is
+    spent, so `keys` is empty, so `parents` is empty, so every child is rejected
+    however well it scores.
+
+    Note `key_budget` must not be negative. `keys[:-1]` drops the last accepted
+    shift and keeps the others, which is the opposite of "no room"; callers clamp
+    at zero.
     """
     keys = [s for s in scored if s.scope == 'key_trend' and s.confidence >= accept][:key_budget]
-    parents = {s.ref for s in keys}
+    parents = {s.ref for s in keys} | set(owned_parents)
     subs = [
         s for s in scored
         if s.scope == 'sub_trend' and s.parent_ref in parents and s.confidence >= accept

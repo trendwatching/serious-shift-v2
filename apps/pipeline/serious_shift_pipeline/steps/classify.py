@@ -9,11 +9,17 @@ retries on timeout. Worse, it could only ever score the one innovation in front
 of it — and the thing that most often invalidates a classification is the
 *shifts* changing, which happens weekly and touches every innovation at once.
 
-So: a sweep. It runs hourly with the model disabled (pure Python and SQL; the
-driving query returns zero rows when nothing has changed, so a quiet hour costs
-one round trip), and once a week after `mapgen` with escalation enabled.
-Upstream already has a zero-latency path when it knows the answer — the
-`shifts` array in the ingest payload, written with source='ingest'.
+So: a sweep. It runs daily with the model disabled (pure Python and SQL; the
+driving query returns zero rows when nothing has changed, so a quiet day costs
+one round trip — see `railway.classify.json`), and once a week after `mapgen`
+with escalation enabled. Upstream already has a zero-latency path when it knows
+the answer — the `shifts` array in the ingest payload, written with
+source='ingest'.
+
+The two passes share one `ACCEPT`, deliberately. If the daily pass linked at a
+lower threshold than the weekly one, `RETRACT` would delete the week's daily
+links every Monday and the next day would put them back — a card appearing and
+disappearing on an editor's page for no reason anybody could see.
 
 Two SQL statements do the writing, and their WHERE clauses are the whole safety
 story: an editor's link and an upstream link are untouchable, and a *disabled*
@@ -43,6 +49,12 @@ ACCEPT_AT = float(os.environ.get('SS_CLASSIFY_ACCEPT', str(ACCEPT)))
 FLOOR_AT = float(os.environ.get('SS_CLASSIFY_FLOOR', str(FLOOR)))
 
 BUDGET = config.Budget(per_phase_usd={'classify': float(os.environ.get('SS_CLASSIFY_BUDGET_USD', '2'))})
+
+#: Circuit breaker. If more than this share of a sample links, stop the pass.
+#: Guards against a threshold that is too low turning a backlog into noise on
+#: every shift page overnight — the sample is what bounds the damage.
+MAX_LINK_RATE = float(os.environ.get('SS_CLASSIFY_MAX_LINK_RATE', '0.60'))
+BREAKER_SAMPLE = int(os.environ.get('SS_CLASSIFY_BREAKER_SAMPLE', '25'))
 
 #: Auto links sort after curated ones. `BY_SHIFT` caps a shift's card grid, so
 #: when a shift is oversubscribed the editor's picks are the ones that survive.
@@ -125,6 +137,7 @@ def _shift_doc(row: dict, scope: str, parent_ref=None) -> ShiftDoc:
         domain_id=row.get('domain_id') or '', name=row.get('name') or '',
         parent_ref=parent_ref, terms=terms, sector_text=sector_text,
         needs_text=needs_text, territories_text=territories_text,
+        from_text=from_to.get('from') or '',
         to_text=from_to.get('to') or '', audience_text=tension.get('quote') or '',
         raw_lower=raw.lower(),
     )
@@ -205,10 +218,22 @@ SELECT %s, ref_id, 'auto', conf, %s + rank, note
  WHERE innovation_shift_links.source = 'auto'
 """
 
+# A curated link reserves one of this innovation's slots — but only while the
+# shift it points at is still published.
+#
+# `last_published_at` used to be absent here, and that is what stopped the
+# classifier ever repairing a rename. A shift's identity is its slug, re-derived
+# from its name at export, so a rename strands every link to the old slug. Those
+# dead rows still counted against MAX_KEY_LINKS, so `key_budget` went to zero (or
+# negative) on exactly the innovations that had just lost their links, and
+# `choose` returned nothing. Measured on staging: four of five innovations at
+# `key_budget <= 0`, all of them with every link pointing at a shift that no
+# longer existed.
 OWNED = """
 SELECT r.scope, r.slug, l.source
   FROM innovation_shift_links l JOIN shift_refs r ON r.id = l.shift_ref_id
  WHERE l.innovation_id = %s AND l.source IN ('ingest', 'editor')
+   AND r.last_published_at = (SELECT max(last_published_at) FROM shift_refs)
 """
 
 
@@ -239,7 +264,8 @@ def _escalate(row, corpus, keys, cost):
         if shift:
             catalogue.append({
                 'ref': shift.ref, 'domain': shift.domain_id, 'name': shift.name,
-                'framing': shift.audience_text, 'from': '', 'to': shift.to_text,
+                'framing': shift.audience_text,
+                'from': shift.from_text, 'to': shift.to_text,
             })
     if not catalogue:
         return []
@@ -289,16 +315,24 @@ def run(*, limit: int, do_all: bool, dry_run: bool, only: int | None) -> int:
 
         cost = observability.CostTracker(budget=BUDGET, phase='classify')
         calls = linked = 0
+        swept = with_links = 0
+        tops: list[float] = []
         model_on = MODEL_ENABLED
         for row in rows:
             innovation = _innovation_doc(row)
             owned = {f"{r['scope']}:{r['slug']}" for r in db.query(conn, OWNED, (row['id'],))}
-            key_budget = MAX_KEY_LINKS - sum(1 for r in owned if r.startswith('key_trend:'))
-            sub_budget = MAX_SUB_LINKS - sum(1 for r in owned if r.startswith('sub_trend:'))
+            # Clamped at zero. A negative budget is not "no room" to
+            # `choose` — `keys[:-3]` is a slice that silently drops the LAST
+            # three accepted shifts and keeps the rest, so an innovation with
+            # more curated links than the cap would still gain auto links.
+            key_budget = max(0, MAX_KEY_LINKS - sum(1 for r in owned if r.startswith('key_trend:')))
+            sub_budget = max(0, MAX_SUB_LINKS - sum(1 for r in owned if r.startswith('sub_trend:')))
             picks, notes = [], {}
             if key_budget > 0 or sub_budget > 0:
                 scored = score_all(corpus, innovation, sector_of, exclude=owned)
                 keys = [s for s in scored if s.scope == 'key_trend']
+                if keys:
+                    tops.append(keys[0].confidence)
                 escalate = (
                     model_on and not dry_run and calls < MODEL_CALLS_MAX
                     and is_ambiguous(keys, accept=ACCEPT_AT, floor=FLOOR_AT)
@@ -316,7 +350,13 @@ def run(*, limit: int, do_all: bool, dry_run: bool, only: int | None) -> int:
                         model_on = False
                         verdict = None
                 if verdict is None:
-                    picks = choose(scored, key_budget=key_budget, sub_budget=sub_budget, accept=ACCEPT_AT)
+                    picks = choose(
+                        scored, key_budget=key_budget, sub_budget=sub_budget,
+                        accept=ACCEPT_AT,
+                        # Live curated key links satisfy the parent rule — the
+                        # parent page really does show this innovation.
+                        owned_parents={r for r in owned if r.startswith('key_trend:')},
+                    )
                 else:
                     by_ref = {s.ref: s for s in scored}
                     picks = [replace(by_ref[ref], confidence=conf) for ref, conf, _ in verdict
@@ -334,8 +374,17 @@ def run(*, limit: int, do_all: bool, dry_run: bool, only: int | None) -> int:
                 texts.append(notes.get(pick.ref) or pick.note)
 
             if dry_run:
+                # A dry run never escalates — it must not spend money — so its
+                # answer is the DETERMINISTIC one, and saying so matters. Read
+                # without this note, `→ (none)` looks like "the model agrees
+                # there is no match" when the model was never asked.
+                would = (' [would escalate]' if (model_on and calls < MODEL_CALLS_MAX
+                                                 and is_ambiguous(keys, accept=ACCEPT_AT,
+                                                                  floor=FLOOR_AT))
+                         else '')
                 print(f'  · {row["id"]} {row["title"][:52]!r} → '
-                      + (', '.join(f'{p.ref} {p.confidence}' for p in picks) or '(none)'))
+                      + (', '.join(f'{p.ref} {p.confidence}' for p in picks) or '(none)')
+                      + would)
                 continue
 
             # A pass that cannot escalate must not retract.
@@ -357,9 +406,37 @@ def run(*, limit: int, do_all: bool, dry_run: bool, only: int | None) -> int:
                        (corpus_hash, row['id']))
             conn.commit()
 
+            # Circuit breaker on the link RATE, not the link count.
+            #
+            # The failure mode of a threshold that is too low is not one wrong
+            # card, it is a backlog of hundreds landing overnight and every shift
+            # page filling with noise. Each row is committed as it goes, so this
+            # cannot roll anything back — it stops, leaving the damage bounded at
+            # the sample size rather than the whole queue.
+            swept += 1
+            if ids:
+                with_links += 1
+            if swept >= BREAKER_SAMPLE and with_links / swept > MAX_LINK_RATE:
+                print(f'  ⚠  {with_links}/{swept} innovations linked '
+                      f'({with_links / swept:.0%}, ceiling {MAX_LINK_RATE:.0%}) — stopping.\n'
+                      f'     Either the corpus changed or SS_CLASSIFY_ACCEPT is too low. '
+                      f'Check with:\n'
+                      f'       python -m serious_shift_pipeline.tools.calibrate_classifier')
+                break
+
         verb = 'would link' if dry_run else 'linked'
         print(f'  ✓  {len(rows)} innovation(s) swept, {verb} {linked}, {calls} model call(s), '
               f'${cost.cost:.4f}')  # CostTracker exposes `.cost`, not `.total_usd`
+        # The distribution, every run. A daily cron that quietly starts linking
+        # 0% or 90% of what it sees is the failure this makes visible without
+        # anyone thinking to run the calibration tool.
+        if tops:
+            ordered = sorted(tops)
+            pct = lambda q: ordered[min(len(ordered) - 1, int(q * len(ordered)))]  # noqa: E731
+            print(f'     top-1 confidence  p10 {pct(0.10):.3f}  p50 {pct(0.50):.3f}  '
+                  f'p90 {pct(0.90):.3f}   (accept {ACCEPT_AT:.2f})')
+        if swept:
+            print(f'     link rate  {with_links}/{swept} ({with_links / swept:.0%})')
         return 0
 
 
