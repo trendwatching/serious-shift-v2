@@ -149,7 +149,7 @@ describe('route-scoped data', () => {
   it('clears stale canonical metadata and marks client-side unknown routes noindex', async () => {
     document.head.innerHTML = '<link rel="canonical" href="https://example.test/old"><meta property="og:url" content="https://example.test/old">'
     render(<MemoryRouter initialEntries={['/not-real']}><App /></MemoryRouter>)
-    await waitFor(() => expect(document.title).toBe('Page not found · Serious Shi(f)t'))
+    await waitFor(() => expect(document.title).toBe('Page not found · Serious Shift'))
     expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
     expect(document.querySelector('link[rel="canonical"]')).toBeNull()
     expect(document.querySelector('meta[property="og:url"]')).toBeNull()

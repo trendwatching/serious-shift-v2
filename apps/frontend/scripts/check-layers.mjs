@@ -174,6 +174,12 @@ const WRITES = {
   transform: ['transform'],
   'flex-wrap': ['flexWrap'],
   'padding-top': ['padding', 'paddingBlock', 'paddingTop'],
+  // The hero art. Without these three the guard was a no-op for exactly the
+  // property the desktop layer now depends on: an inline `backgroundImage`
+  // would have won at runtime and reported clean.
+  'background-image': ['background', 'backgroundImage'],
+  'background-position': ['background', 'backgroundPosition'],
+  'background-size': ['background', 'backgroundSize'],
 }
 
 for (const file of files.filter((f) => /\.jsx?$/.test(f))) {

@@ -184,7 +184,7 @@
       ]
     },
     "from_to_solid": {
-      "summary": "From/To pair with solid green/pink fills (sub-shift variant).",
+      "summary": "From/To pair, solid fills: the destination lit in the sphere's sunset, the state being left quiet (sub-shift variant).",
       "data": {
         "from": "string",
         "to": "string"

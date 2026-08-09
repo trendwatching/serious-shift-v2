@@ -70,8 +70,6 @@
   --color-pink-wash: #FBEAF3;   /* sub-shift pill fill              */
   --color-pink-lit:  #F6D6E6;   /* horizon lit state                */
   --color-pink-abyss:#4A0027;   /* horizon lit ink                  */
-  --color-green:     #1F7A4D;
-  --color-green-deep:#10502F;
   --color-menu-on:   #FBF3F7;   /* breadcrumb-menu active row       */
 }
 
@@ -194,7 +192,6 @@
      the sphere's sunset — the build really does use two different fills. */
   --grad-threatened: linear-gradient(180deg, #FF007A 0%, #C8006B 55%, #8E0049 100%);
 
-  --grad-green:  linear-gradient(180deg, #1F7A4D 0%, #10502F 100%);
   --grad-grey:   linear-gradient(180deg, #F7F7F7 0%, #F1F1F3 100%);
   --grad-yellow: linear-gradient(180deg, #FDFF85 0%, #FEFFC6 62%, #FFFFFF 100%);
 
@@ -219,9 +216,18 @@
   --a-shadow: rgba(94, 0, 51, 0.24);
   --a-eyebrow: var(--color-yellow);
 
-  --pos:      #1F7A4D;
-  --pos-deep: #10502F;
-  --pos-shadow: rgba(16, 80, 47, 0.24);
+  /* There is deliberately no green here any more. It used to be `--pos`, and it
+     filled four unrelated things: the FROM card, the "unlocked" need, the
+     counter-signals panel and the "argue for" voices. Three different axes —
+     temporal, human, rhetorical — all wearing the one hue a reader arrives
+     already knowing the meaning of. Green says "correct", "go", "this is the
+     right situation", so on the FROM card it endorsed the state we are moving
+     away from, and on the counter panel it endorsed the case against.
+
+     Colour marks WHERE A THING IS GOING now, never whether it is good: the
+     destination is lit in the sphere's own ramp and the state being left is a
+     quiet surface. One rule, four modules. `--color-whatsapp` stays — that is a
+     platform's logo colour in the chrome, not an editorial signal. */
 }
 
 [data-domain='economy'] {
@@ -255,13 +261,6 @@
      exact exception on the deck panel; it applies to every eyebrow that
      sits on the domain's own gradient. */
   --a-eyebrow: #FFFFFF;
-
-  /* NOTE: no --pos override here, deliberately. It used to shift to teal on
-     the grounds that green beside olive reads muddy — but --pos does not mean
-     "this sphere", it means "the side you are moving away from": the From card,
-     the unlocked need. A reader who learns that green on Society and meets teal
-     on Organizations has to learn it twice. The design uses one green
-     throughout; whatever this costs on olive, consistency is worth more. */
 }
 
 [data-domain='consumers'] {
@@ -286,7 +285,6 @@
      freezes Society's accent into itself and every sphere inherits pink. Each
      domain block re-declares these, so each resolves against its own `--a`. */
   --a-grad: linear-gradient(180deg, var(--a) 0%, var(--a-deep) 100%);
-  --pos-grad: linear-gradient(180deg, var(--pos) 0%, var(--pos-deep) 100%);
 
   /* ── Stat band ────────────────────────────────────────────────────────
    * The design ships this as one artwork, stat-band-gradient.jpg — a grainy

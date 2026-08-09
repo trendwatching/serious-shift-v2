@@ -1,5 +1,6 @@
 /** The non-interactive modules. Every value here is the design's. */
 import { Link } from '../lib/router'
+import { quoted } from '../lib/theme'
 
 export const Eyebrow = ({ children, right }) => (
   <div className="flex items-baseline" style={{ gap: 10 }}>
@@ -26,53 +27,99 @@ export const RichText = ({ data }) => (
 )
 
 /**
- * From / To — two cards whose gradient fills cross-fade past each other on one
- * 8s clock while the ink inverts with them.
+ * From / To. The destination is lit; the state being left behind is not.
  *
- * No scrim over the gradient. The previous build laid 38% black on both cards,
- * which is why the pair read muddy instead of luminous.
+ * Both cards used to carry the SAME domain gradient and cross-fade past each
+ * other on one 8s clock, which meant the module gave the destination no
+ * emphasis at all — for four seconds out of every eight it actively emphasised
+ * the thing we are moving away from. A reader glancing at it learned nothing
+ * about direction, which is the only thing a From/To pair exists to say.
+ *
+ * So the fill is the signal now and it does not move: FROM is a quiet surface,
+ * TO carries the sphere. No scrim over the gradient — the previous build laid
+ * 38% black on both cards, which is why the pair read muddy instead of
+ * luminous.
  */
 export const FromTo = ({ data, ctx }) => {
   if (!data.from || !data.to) return null
-  const card = (label, text, panel, ink) => (
+  const card = (label, text, lit) => (
     <div
-      className="relative overflow-hidden bg-white"
-      style={{ borderRadius: 22, border: '1px solid var(--color-line)', minHeight: 208, boxShadow: '0 6px 18px rgba(27,22,32,0.06)' }}
+      className="relative overflow-hidden"
+      style={{
+        borderRadius: 22,
+        border: lit ? '1px solid transparent' : '1px solid var(--color-line)',
+        minHeight: 208,
+        // `backgroundColor`, never the `background` SHORTHAND: React writes the
+        // keys in object order and the shorthand resets background-image, so a
+        // `background` beside a `backgroundImage` silently wiped the gradient
+        // and the lit card rendered white text on white.
+        backgroundImage: lit ? ctx.domain.grad : 'none',
+        backgroundColor: lit ? 'transparent' : 'var(--color-paper)',
+        boxShadow: lit ? '0 10px 24px var(--a-shadow)' : '0 6px 18px rgba(27,22,32,0.06)',
+      }}
     >
-      <div className="absolute inset-0" style={{ backgroundImage: ctx.domain.grad, animation: `${panel} 8s ease-in-out infinite` }} />
       <div
         className="relative box-border flex flex-col items-center justify-center text-center"
-        style={{ height: 208, padding: '20px 15px', gap: 10, animation: `${ink} 8s ease-in-out infinite` }}
+        style={{ height: 208, padding: '20px 15px', gap: 10, color: lit ? '#fff' : 'var(--color-ink-strong)' }}
       >
-        <span className="t-display" style={{ fontSize: 'var(--t-stat)', fontWeight: 700, letterSpacing: '-0.02em' }}>{label}</span>
+        <span
+          className="t-display"
+          style={{
+            fontSize: 'var(--t-stat)', fontWeight: 700, letterSpacing: '-0.02em',
+            color: lit ? '#fff' : 'var(--color-ink-soft)',
+          }}
+        >{label}</span>
         <span style={{ fontSize: 13.5, lineHeight: 1.42 }}>{text}</span>
       </div>
     </div>
   )
   return (
     <section className="grid grid-cols-2" style={{ gap: 12, margin: '2px 0 4px' }} aria-label="From and to">
-      {card('From', data.from, 'ssPanelA', 'ssInkA')}
-      {card('To', data.to, 'ssPanelB', 'ssInkB')}
+      {card('From', data.from, false)}
+      {card('To', data.to, true)}
     </section>
   )
 }
 
-/** The sub-shift variant: green "from", sunset "to", solid fills, tiny labels. */
+/**
+ * The sub-shift variant: quiet "from", sunset "to", solid fills, tiny labels.
+ *
+ * FROM used to be a flat forest green. Green is the one hue a reader arrives
+ * already knowing the meaning of — "correct", "go" — so painting it onto the
+ * state we are leaving said the opposite of what the module means. It is a
+ * receding surface now, and the only lit card is the one naming where this is
+ * heading.
+ */
 export const FromToSolid = ({ data }) => {
   if (!data.from || !data.to) return null
-  const card = (label, text, grad) => (
-    <div className="box-border flex min-w-0 flex-1 flex-col text-white" style={{ borderRadius: 18, padding: 16, gap: 8, backgroundImage: grad }}>
-      <span className="t-eyebrow" style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '0.12em' }}>{label}</span>
+  const card = (label, text, lit) => (
+    <div
+      className="box-border flex min-w-0 flex-1 flex-col"
+      style={{
+        borderRadius: 18, padding: 16, gap: 8,
+        backgroundImage: lit ? 'var(--grad-sunset)' : 'none',
+        backgroundColor: lit ? 'transparent' : 'var(--color-paper)',
+        border: lit ? '1px solid transparent' : '1px solid var(--color-line)',
+        color: lit ? '#fff' : 'var(--color-ink-strong)',
+      }}
+    >
+      <span
+        className="t-eyebrow"
+        style={{
+          fontSize: 11.5, fontWeight: 800, letterSpacing: '0.12em',
+          color: lit ? '#fff' : 'var(--color-ink-soft)',
+        }}
+      >{label}</span>
       <span className="text-pretty" style={{ fontSize: 13.5, lineHeight: 1.45 }}>{text}</span>
     </div>
   )
   return (
     <section className="flex items-stretch" style={{ gap: 10 }} aria-label="From and to">
-      {card('From', data.from, 'var(--pos-grad)')}
+      {card('From', data.from, false)}
       {/* Sunset, not the domain accent: a sub-shift is a level down, and
           tinting its spine with the parent's colour is what made the two
           levels indistinguishable. */}
-      {card('To', data.to, 'var(--grad-sunset)')}
+      {card('To', data.to, true)}
     </section>
   )
 }
@@ -212,7 +259,7 @@ export const RelatedShifts = ({ data }) => {
         {items.map((r) => (
           <Link key={r.href} to={r.href} className="flex flex-col" style={{ gap: 6, padding: '14px 0', borderBottom: '1px solid var(--color-line)' }}>
             <span className="t-eyebrow" style={{ fontSize: 10, letterSpacing: '0.12em', color: 'var(--a-ink)' }}>{r.relationship}</span>
-            <span className="t-title" style={{ fontSize: 16, lineHeight: 1.2, letterSpacing: '0.005em', color: '#3D1152' }}>{r.title}</span>
+            <span className="t-title" style={{ fontSize: 16, lineHeight: 1.2, letterSpacing: '0.005em', color: '#3D1152' }}>{quoted(r.title)}</span>
             {r.reasoning && <span style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-mid)' }}>{r.reasoning}</span>}
           </Link>
         ))}

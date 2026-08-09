@@ -2,6 +2,7 @@ import { Link, useParams } from '../lib/router'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { cssUrl } from '../lib/safeUrl'
 import { useResolved } from '../lib/useDomains'
+import { quoted } from '../lib/theme'
 import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Loading, Missing, Unavailable } from './states'
@@ -80,7 +81,7 @@ export default function DomainPage() {
             >
               <span className="t-mono" style={{ fontSize: 12, color: 'var(--color-ink-num)', paddingTop: 4 }}>{s.num}</span>
               <span className="flex flex-1 flex-col" style={{ gap: 6 }}>
-                <span className="t-title" style={{ fontSize: 19, lineHeight: 1.2, letterSpacing: '0.005em' }}>{s.title}</span>
+                <span className="t-title" style={{ fontSize: 19, lineHeight: 1.2, letterSpacing: '0.005em' }}>{quoted(s.title)}</span>
                 <span style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-row)' }}>{s.dek}</span>
                 <span style={{ fontSize: 12, color: 'var(--color-ink-meta)' }}>Key shift · {s.read}</span>
               </span>

@@ -42,6 +42,13 @@ jobs:
         # A manifest entry with no file on disk ships a broken hero image, and
         # neither half of that pair is visible in a diff.
         run: npm run check:heroes
+      - name: Portrait posters still redraw byte-identically
+        # poster() gained a frame so it could draw the landscape cut too, and
+        # every absolute length in it is now multiplied by a knob. The knobs are
+        # 1 in the portrait frame, so the 51 committed SVGs must not move — and
+        # the failure is silent, because a shifted rng stream changes every
+        # poster just subtly enough to pass review.
+        run: npm run check:frame
       - run: npm run build
       - name: Every class in the source styles something
         # `w-prose` is not a Tailwind class. It sat in five places on /about,

@@ -144,6 +144,22 @@
     .hero-short { min-height: clamp(380px, 242.86px + 13.39vw, 500px); }
     .hero-sub   { min-height: clamp(330px, 215.71px + 11.16vw, 430px); }
 
+    /* The desktop band is a letterbox — 2.23:1 at 1024, 2.70 at 1440 — and the
+       poster is 0.8:1. Painted with `cover` it scaled 1.8x and showed about 30%
+       of the picture: the ring and the tops of the towers, with the crowd the
+       whole composition lands on cropped clean off the bottom. No
+       `background-position` can reveal what the box does not contain, so a
+       landscape cut of the same seed is drawn and swapped in here.
+
+       Falls through to `--art` when a shift has no wide twin — the two
+       hand-made JPGs and anything the pipeline supplies directly.
+
+       Separate rules, not a comma list: check-layers derives its guard from
+       this file and only registers the LAST class in a selector, so a comma
+       would leave the first one unguarded. */
+    .hero-art { background-image: var(--art-wide, var(--art, none)); background-position: center 74%; }
+    .hero-art-sub { background-position: center 74%; }
+
     /* The four sphere badges are primary navigation, not prose, so they are
        the one block in the intro that does not take the reading column's cap.
        Grown to a desktop size they needed 678px of a 660px column, and the

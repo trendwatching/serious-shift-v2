@@ -1,0 +1,122 @@
+import { test, expect } from '@playwright/test'
+import { mockMap } from './fixtures.js'
+
+/**
+ * The two things a stakeholder reads before they read anything else: the name of
+ * the trend, and the name of the site.
+ *
+ * Both were wrong in the link preview. The wordmark carried the logo's "(f)" in
+ * running text, and the trend name arrived in title case with no quotation marks
+ * — because the page's CAPS is `text-transform`, which is presentational and
+ * never reaches the tab, the unfurl, or a copy-paste. So the page said
+ * “DELEGATED DISCOVERY” and the WhatsApp card next to it said
+ * `Delegated Discovery`.
+ */
+const SHIFT = '/map/society/trust-machines'
+const SUB = '/map/society/trust-machines/sub-1'
+
+test('the wordmark never carries the logo’s (f) in running text', async ({ page }) => {
+  await mockMap(page)
+  for (const path of ['/', '/about', '/map/society', SHIFT, SUB]) {
+    await page.goto(path)
+    await page.waitForFunction(() => document.title && !document.title.startsWith('Vite'))
+    const { title, og } = await page.evaluate(() => ({
+      title: document.title,
+      og: document.querySelector('meta[property="og:title"]')?.content ?? '',
+    }))
+    expect(title, `${path} <title>`).not.toContain('Shi(f)t')
+    expect(title, `${path} <title>`).toContain('Serious Shift')
+    if (og) expect(og, `${path} og:title`).not.toContain('Shi(f)t')
+  }
+})
+
+test('a trend name reaches the tab in caps, in quotes — a sphere name does not', async ({ page }) => {
+  await mockMap(page)
+
+  await page.goto(SHIFT)
+  await page.waitForFunction(() => document.title.includes('—'))
+  expect(await page.title()).toBe('“TRUST MACHINES” — Serious Shift')
+
+  await page.goto(SUB)
+  await page.waitForFunction(() => document.title.includes('—'))
+  expect(await page.title()).toBe('“SUB SHIFT 1” — Serious Shift')
+
+  // A sphere is a section of the site, not the name of a trend.
+  await page.goto('/map/society')
+  await page.waitForFunction(() => document.title.includes('—'))
+  expect(await page.title()).toBe('Society — Serious Shift')
+})
+
+test('the rendered name is quoted, and the breadcrumb trail is not', async ({ page }) => {
+  await mockMap(page)
+  await page.goto(SHIFT)
+  const h1 = page.getByRole('heading', { level: 1 })
+  await expect(h1).toContainText('Trust Machines')
+  // The characters have to be in the DOM — `text-transform` is not, which is
+  // the whole reason the meta surfaces disagreed with the page.
+  expect(await h1.textContent()).toBe('“Trust Machines”')
+
+  // The trail is navigation. The delivered design strips quotes there and a
+  // quoted pill reads as clutter, so this exception is deliberate.
+  const crumb = page.locator('.crumb-float')
+  expect(await crumb.textContent()).not.toContain('“')
+
+  // The sphere page's row list carries them too.
+  await page.goto('/map/society')
+  await expect(page.locator('.t-title').first()).toHaveText(/^“.+”$/)
+})
+
+/**
+ * The hero band is a letterbox on a desktop and a portrait window on a phone,
+ * and there is a separately drawn poster for each. Painting the portrait one
+ * into the desktop band showed about 30% of the picture — the crowd the whole
+ * composition lands on was cropped clean off.
+ */
+test('the hero takes the poster cut for the shape of its band', async ({ page }) => {
+  // A slug that actually has generated art. The shared fixture's `trust-machines`
+  // is not in heroes.json, so its hero falls back to the gradient and there is no
+  // `.hero-art` element at all — which is correct behaviour, and useless here.
+  const slug = 'autonomous-infection'
+  const path = `/map/society/${slug}`
+  await page.route('**/api/v1/map**', async (route) => {
+    const url = new URL(route.request().url()).pathname
+    const domain = { id: 'society', name: 'Society', horizon: '2028', short_description: 'Society shifts', key_shift_count: 1 }
+    const shift = {
+      id: 'kt-a', domain_id: 'society', slug, name: 'Autonomous Infection',
+      subtitle: 'Software spreads itself.', read_time: '5 min read',
+      modules: [{ type: 'lede', data: { text: 'Body.' } }],
+    }
+    const body = url === '/api/v1/map'
+      ? { updated: '2026-08-02', totals: { domains: 1, key_shifts: 1 }, domains: [domain] }
+      : url === path.replace('/map/', '/api/v1/map/')
+        ? { updated: '2026-08-02', domain, shift, siblings: [shift], sub_shifts: [] }
+        : null
+    await route.fulfill({
+      status: body ? 200 : 404,
+      contentType: 'application/json',
+      body: JSON.stringify(body || { error: { code: 'not_found' } }),
+    })
+  })
+
+  const art = () => page.evaluate(() => {
+    const el = document.querySelector('.hero-art')
+    return el ? getComputedStyle(el).backgroundImage : null
+  })
+
+  await page.setViewportSize({ width: 393, height: 852 })
+  await page.goto(path)
+  await page.waitForSelector('.hero-art')
+  expect(await art(), 'phone takes the portrait cut').toContain('/shift/heroes/')
+
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(path)
+  await page.waitForSelector('.hero-art')
+  expect(await art(), 'desktop takes the landscape cut').toContain('/shift/heroes-wide/')
+
+  // …and the swap is a CSS rule, which only works because nothing paints
+  // `background-image` inline. An inline style would beat the layer silently.
+  const inline = await page.evaluate(
+    () => document.querySelector('.hero-art').getAttribute('style') ?? '',
+  )
+  expect(inline).not.toMatch(/background-image|background:/)
+})

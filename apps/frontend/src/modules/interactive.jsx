@@ -4,6 +4,7 @@ import { useId, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from '../lib/router'
 import { Eyebrow } from './blocks'
 import { cssUrl, safeHref } from '../lib/safeUrl'
+import { quoted } from '../lib/theme'
 
 /**
  * The peel-tab stack — two cards in one place, one on top.
@@ -170,10 +171,15 @@ export function HumanNeeds({ data, ctx }) {
     <section className="flex flex-col" style={{ marginTop: 6, gap: 10 }}>
       <Eyebrow>Human needs</Eyebrow>
       <div className="needs-pair flex items-stretch" style={{ gap: 10 }}>
-        {card('u', 'Unlocked', data.unlocked, 'var(--pos-grad)', '0 12px 26px var(--pos-shadow)')}
-        {/* On a key shift this is its own pink ramp; on a sub-shift it is
-            sunset, like everything else one level down. */}
-        {card('t', 'Threatened', data.threatened, sub ? 'var(--grad-sunset)' : 'var(--grad-threatened)', '0 12px 26px var(--a-shadow)')}
+        {/* Neither of these is the good one. They are two consequences of the
+            same shift, so they are told apart by TEMPERATURE — sunset opens
+            toward warm light, the threatened ramp closes toward the sphere's
+            deep — rather than by a green that reads as "this is fine" on the
+            card that also happens to be open by default.
+            Both scopes now use the same pair. Threatened was sunset on a
+            sub-shift, which is why Unlocked cannot take sunset only there. */}
+        {card('u', 'Unlocked', data.unlocked, 'var(--grad-sunset)', '0 12px 26px var(--a-shadow)')}
+        {card('t', 'Threatened', data.threatened, 'var(--grad-threatened)', '0 12px 26px var(--a-shadow)')}
       </div>
     </section>
   )
@@ -316,7 +322,7 @@ export function SubShiftList({ ctx }) {
                   }}
                 />
                 <span className="box-border flex min-w-0 flex-1 flex-col justify-center" style={{ padding: '16px 16px 16px 15px', gap: 7 }}>
-                  <span className="t-display uppercase" style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.18, letterSpacing: '-0.01em' }}>{s.title}</span>
+                  <span className="t-display uppercase" style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.18, letterSpacing: '-0.01em' }}>{quoted(s.title)}</span>
                   <span className="text-pretty" style={{ fontSize: 11.5, lineHeight: 1.42, color: 'var(--color-ink-mid)' }}>{short}</span>
                 </span>
               </Link>
@@ -343,7 +349,7 @@ export function SubShiftList({ ctx }) {
                   style={{ width: 22, height: 22, borderRadius: 999, background: 'var(--a-wash)', color: 'var(--a-ink)', fontSize: 13 }}
                 >↗</span>
               </span>
-              <span className="t-display uppercase" style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.01em' }}>{s.title}</span>
+              <span className="t-display uppercase" style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.01em' }}>{quoted(s.title)}</span>
               <span className="text-pretty" style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-mid)' }}>{s.dek}</span>
             </Link>
           )
@@ -415,17 +421,31 @@ export function Innovations({ data }) {
   )
 }
 
-/** Numbered evidence and the honest case against, on their own panels. */
+/**
+ * Numbered evidence and the honest case against, on their own panels.
+ *
+ * The counter panel used to be green, which read as the endorsed one — the
+ * case AGAINST the shift, in the colour of approval. The claim is lit in the
+ * sphere's accent and its counter is quiet: the same device the From/To pair
+ * uses, so a reader learns one rule rather than three.
+ */
 export function SignalList({ data, tone }) {
   const items = (data.items || []).filter(Boolean)
   if (!items.length) return null
-  const positive = tone === 'counter'
+  const counter = tone === 'counter'
   return (
     <section
       className="flex flex-col"
-      style={{ borderRadius: 18, padding: 24, gap: 18, backgroundImage: positive ? 'var(--pos-grad)' : 'var(--a-grad)' }}
+      style={{
+        borderRadius: 18, padding: 24, gap: 18,
+        backgroundImage: counter ? 'none' : 'var(--a-grad)',
+        backgroundColor: counter ? 'var(--color-paper)' : 'transparent',
+        border: counter ? '1px solid var(--color-line)' : '1px solid transparent',
+      }}
     >
-      <h2 className="t-eyebrow text-white">{positive ? 'Counter-signals' : 'Signals'}</h2>
+      <h2 className="t-eyebrow" style={{ color: counter ? 'var(--color-ink-soft)' : '#fff' }}>
+        {counter ? 'Counter-signals' : 'Signals'}
+      </h2>
       <div className="flex flex-col" style={{ gap: 12 }}>
         {items.map((text, i) => (
           <div key={i} className="flex items-center bg-white" style={{ borderRadius: 10, padding: 16, gap: 14 }}>
@@ -438,11 +458,11 @@ export function SignalList({ data, tone }) {
   )
 }
 
-/** Who is saying this: for on green, against on the accent. */
+/** Who is saying this: the case lit in the sphere's accent, the pushback quiet. */
 export function Voices({ data }) {
   const groups = [
-    { label: 'Argue for', people: (data.proponents || []).filter((p) => p?.name && p?.quote), grad: 'var(--pos-grad)' },
-    { label: 'Push back', people: (data.skeptics || []).filter((p) => p?.name && p?.quote), grad: 'var(--a-grad)' },
+    { label: 'Argue for', people: (data.proponents || []).filter((p) => p?.name && p?.quote), lit: true },
+    { label: 'Push back', people: (data.skeptics || []).filter((p) => p?.name && p?.quote), lit: false },
   ].filter((g) => g.people.length)
   if (!groups.length) return null
   const total = groups.reduce((n, g) => n + g.people.length, 0)
@@ -451,8 +471,16 @@ export function Voices({ data }) {
       <Eyebrow right={`${total} voices`}>Who is saying this</Eyebrow>
       <div className="sub-stack">
         {groups.map((g) => (
-          <div key={g.label} className="flex flex-col" style={{ borderRadius: 14, padding: 22, gap: 14, backgroundImage: g.grad }}>
-            <span className="t-eyebrow text-white" style={{ letterSpacing: '0.14em' }}>{g.label}</span>
+          <div
+            key={g.label} className="flex flex-col"
+            style={{
+              borderRadius: 14, padding: 22, gap: 14,
+              backgroundImage: g.lit ? 'var(--a-grad)' : 'none',
+              backgroundColor: g.lit ? 'transparent' : 'var(--color-paper)',
+              border: g.lit ? '1px solid transparent' : '1px solid var(--color-line)',
+            }}
+          >
+            <span className="t-eyebrow" style={{ letterSpacing: '0.14em', color: g.lit ? '#fff' : 'var(--color-ink-soft)' }}>{g.label}</span>
             {g.people.map((p, i) => (
               <div key={`${p.name}-${i}`} className="flex flex-col bg-white" style={{ borderRadius: 10, padding: 18, gap: 6 }}>
                 <span className="t-display" style={{ fontSize: 15, fontWeight: 600 }}>{p.name}</span>

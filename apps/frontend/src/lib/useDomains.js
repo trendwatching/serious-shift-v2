@@ -2,6 +2,7 @@
 import CONTRACT from '../../../../packages/contracts/shift_modules.json'
 import HERO_GENERATED from './heroes.json'
 import SUB_GENERATED from './sub-art.json'
+import HERO_WIDE from './heroes-wide.json'
 import { useMemo } from 'react'
 import { useLocation } from './router'
 import { useData } from './useData'
@@ -118,6 +119,12 @@ function toSubShift(src, i, parentSlug) {
     dek: src.description || src.subtitle || '',
     modules: inReadingOrder(nonEmpty(src.modules) || projectStModules(src), 'sub_shift'),
     heroImage: src.hero_image || SUB_HERO_ART[slug] || HERO_GEN[parentSlug] || null,
+    // Only the GENERATED poster has a landscape twin. The pipeline's own art and
+    // the two hand-made JPGs do not, so the wide slot stays null and the CSS
+    // falls back to the portrait rather than 404ing on a file that was never
+    // drawn. Note a sub-shift page inherits its PARENT's poster — the 640px
+    // fragment is tile art and stays square.
+    heroImageWide: !src.hero_image && !SUB_HERO_ART[slug] ? HERO_WIDE[parentSlug] || null : null,
     tileImage: SUB_GEN[`${parentSlug}/${slug}`] || null,
   }
 }
@@ -142,6 +149,7 @@ function toShift(src, i, domain) {
     // Absent is the normal case and the hero falls back to its gradient, which
     // is a finished design rather than a placeholder.
     heroImage: src.hero_image || HERO_ART[src.slug] || HERO_GEN[src.slug] || null,
+    heroImageWide: !src.hero_image && !HERO_ART[src.slug] ? HERO_WIDE[src.slug] || null : null,
     subshifts: subs.map((s, k) => toSubShift(s, k, first(src.slug, slugify(title)))),
   }
 }

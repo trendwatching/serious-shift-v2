@@ -23,6 +23,8 @@ const SETS = [
   // `<key>__<sub>.svg`, so the path cannot be derived from the key by string
   // substitution alone — which is exactly why this checks the pair.
   { dir: 'public/shift/subs', manifest: 'src/lib/sub-art.json', base: '/shift/subs', label: 'sub-shift fragments' },
+  // The landscape cut of the same 51 posters, for the desktop hero band.
+  { dir: 'public/shift/heroes-wide', manifest: 'src/lib/heroes-wide.json', base: '/shift/heroes-wide', label: 'key-shift posters (wide)' },
 ]
 
 /** The hot stop of each sphere's ramp — enough to identify which one was used. */
@@ -70,3 +72,19 @@ for (const set of SETS) {
 }
 
 if (!process.exitCode) console.log(`✓ ${counts.join(' + ')}, each one sphere's ramp, all manifested`)
+
+/* Every portrait poster must have a landscape twin, and vice versa.
+   Without this a half-completed run ships some shifts with a landscape hero and
+   some with a portrait one stretched across the same band — the exact failure
+   this file exists to catch, and the one least visible in review. */
+const tall = JSON.parse(readFileSync(resolve(ROOT, 'src/lib/heroes.json'), 'utf8'))
+const wide = JSON.parse(readFileSync(resolve(ROOT, 'src/lib/heroes-wide.json'), 'utf8'))
+const missingWide = Object.keys(tall).filter((slug) => !wide[slug])
+const orphanWide = Object.keys(wide).filter((slug) => !tall[slug])
+if (missingWide.length || orphanWide.length) {
+  for (const slug of missingWide) console.error(`\u2717 ${slug}: portrait poster with no landscape twin`)
+  for (const slug of orphanWide) console.error(`\u2717 ${slug}: landscape poster with no portrait original`)
+  process.exit(1)
+}
+console.log(`\u2713 all ${Object.keys(tall).length} posters have both frames`)
+

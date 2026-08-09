@@ -59,7 +59,29 @@ export const readTimeOf = (...parts) => {
  *  or two call sites that want them and left bare everywhere else. */
 export const unquote = (s) => String(s ?? '').trim().replace(/^[“”"'\s]+|[“”"'\s]+$/g, '').trim()
 
+/**
+ * A trend name as the house style writes it, in prose: “DELEGATED DISCOVERY”.
+ *
+ * `quoted` is for the page, where CSS has already done the casing and adding
+ * `text-transform` twice would be redundant. `trendTitle` is for the places CSS
+ * cannot reach — the `<title>`, the OG card, a copy-paste — which is why a shift
+ * shared into WhatsApp unfurled as `Delegated Discovery` while the page it
+ * linked to said `DELEGATED DISCOVERY`.
+ *
+ * This must stay byte-identical to `trend_title` in apps/backend/src/seo.rs.
+ * The backend renders the title into the shell and this re-stamps it after
+ * hydration; if they disagree the tab text visibly changes a beat after load.
+ *
+ * Both strip before they quote: the naming prompt shows its examples already
+ * quoted (packages/prompts/map/key_trends.txt), so a name occasionally arrives
+ * carrying a pair of its own and `““NAME””` is one edit away.
+ */
 export const quoted = (s) => {
   const t = unquote(s)
   return t ? `“${t}”` : ''
+}
+
+export const trendTitle = (s) => {
+  const t = unquote(s)
+  return t ? `“${t.toUpperCase()}”` : ''
 }

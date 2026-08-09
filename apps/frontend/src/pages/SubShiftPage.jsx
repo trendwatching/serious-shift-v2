@@ -6,7 +6,7 @@ import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Modules } from '../modules'
 import { Loading, Missing, Unavailable } from './states'
-import { unquote } from '../lib/theme'
+import { quoted, trendTitle, unquote } from '../lib/theme'
 
 /**
  * A sub-shift has no sibling rail, no related shifts and no next pager, so the
@@ -23,7 +23,8 @@ import { unquote } from '../lib/theme'
 export default function SubShiftPage() {
   const { domainSlug, ktSlug, subSlug } = useParams()
   const { domain, shift, sub, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug, subSlug })
-  useDocumentMeta(sub?.title, sub?.dek)
+  // See the note in ShiftPage — CSS casing never reaches the tab or the unfurl.
+  useDocumentMeta(trendTitle(sub?.title), sub?.dek)
 
   // Gated on the modules — see the note in DomainPage. The index can satisfy
   // `!sub` before the body arrives.
@@ -54,8 +55,8 @@ export default function SubShiftPage() {
       >
         {image && (
           <span
-            aria-hidden="true" className="absolute inset-0 z-0"
-            style={{ backgroundImage: cssUrl(image), backgroundSize: 'cover', backgroundPosition: 'center 22%' }}
+            aria-hidden="true" className="hero-art hero-art-sub absolute inset-0 z-0"
+            style={{ '--art': cssUrl(image), '--art-wide': cssUrl(sub.heroImageWide) }}
           />
         )}
         <span
@@ -67,7 +68,7 @@ export default function SubShiftPage() {
             className="t-display uppercase"
             style={{ margin: 0, fontSize: 'var(--t-sub)', fontWeight: 800, lineHeight: 1.06, letterSpacing: '-0.015em' }}
           >
-            {sub.title}
+            {quoted(sub.title)}
           </h1>
         </div>
       </header>

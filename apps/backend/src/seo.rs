@@ -31,10 +31,37 @@ pub struct SiteIndex {
     pub updated: String,
 }
 
-const SITE_NAME: &str = "Serious Shi(f)t";
+/// The wordmark in running text. NOT "Shi(f)t" — the parenthetical is a device
+/// that belongs to the logo alone, and this string is prose: it is the browser
+/// tab, the Slack unfurl, the search result. The logo lock-up in `og.png` and
+/// the two header/footer images keep the "(f)" because they are the logo.
+const SITE_NAME: &str = "Serious Shift";
 /// Descriptions longer than this are cut at a word boundary. Search engines
 /// truncate around 155-160 characters; a sentence cut mid-word reads as broken.
 const MAX_DESC: usize = 155;
+
+/// A trend name as the house style writes it: caps, in double quotation marks.
+///
+/// The page has always done the caps in CSS, which is presentational only — it
+/// never reaches the `<title>`, the OG card, or anything a reader copies. So a
+/// shift shared into WhatsApp unfurled as `Delegated Discovery` while the page
+/// it linked to said `DELEGATED DISCOVERY`. This is the one place that can fix
+/// it server-side, and `useDocumentMeta.js` applies the identical rule on the
+/// client so the title does not change under hydration.
+///
+/// Strip first, then re-apply: the naming prompt shows its examples already
+/// quoted (`packages/prompts/map/key_trends.txt`), so a name occasionally
+/// arrives carrying a pair of its own. Stripping makes this idempotent.
+fn trend_title(name: &str) -> String {
+    let bare = name
+        .trim()
+        .trim_matches(|c| matches!(c, '\u{201C}' | '\u{201D}' | '"' | '\'' | ' '))
+        .trim();
+    if bare.is_empty() {
+        return String::new();
+    }
+    format!("\u{201C}{}\u{201D}", bare.to_uppercase())
+}
 
 fn s(v: &Value, k: &str) -> String {
     v.get(k)
@@ -137,7 +164,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
         idx.add(
             format!("/map/{domain}/{slug}"),
             PageMeta {
-                title: format!("{name} — {SITE_NAME}"),
+                title: format!("{} — {SITE_NAME}", trend_title(&name)),
                 description: clamp(&s(&kt, "subtitle")),
             },
         );
@@ -159,7 +186,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
         idx.add(
             format!("/map/{domain}/{slug}"),
             PageMeta {
-                title: format!("{name} — {SITE_NAME}"),
+                title: format!("{} — {SITE_NAME}", trend_title(&name)),
                 description: clamp(&desc),
             },
         );
@@ -271,7 +298,7 @@ pub fn render_not_found(shell: &str) -> String {
         shell,
         "<title>",
         "</title>",
-        "Page not found · Serious Shi(f)t",
+        "Page not found · Serious Shift",
     );
     out = replace_meta_description(
         &out,
@@ -330,6 +357,39 @@ mod tests {
     }"#;
 
     const SHELL: &str = r#"<!DOCTYPE html><html><head><meta charSet="utf-8"/><title>Old Title</title><meta name="description" content="Four domains, eight shifts this week."/></head><body>x</body></html>"#;
+
+    /// A trend name reaches the tab and the unfurl in the house style, and a
+    /// sphere name does not. The distinction is the whole point: `Society` is a
+    /// section of the site, `"SOVEREIGN COLLAPSE"` is the name of a trend.
+    #[test]
+    fn trend_titles_are_capsed_and_quoted_but_spheres_are_not() {
+        let idx = build_index(DOC);
+        assert_eq!(
+            idx.pages["/map/society/sovereign-collapse"].title,
+            "\u{201C}SOVEREIGN COLLAPSE\u{201D} — Serious Shift"
+        );
+        assert_eq!(
+            idx.pages["/map/society/sovereign-collapse/threshold-blindness"].title,
+            "\u{201C}THRESHOLD BLINDNESS\u{201D} — Serious Shift"
+        );
+        assert_eq!(idx.pages["/map/society"].title, "Society — Serious Shift");
+        assert_eq!(idx.pages["/about"].title, "About — Serious Shift");
+    }
+
+    /// Idempotent, because the naming prompt shows its examples already quoted
+    /// and a name occasionally arrives carrying its own pair. Quoting a quoted
+    /// name would ship `““NAME””`.
+    #[test]
+    fn trend_title_strips_whatever_quoting_it_arrived_with() {
+        assert_eq!(trend_title("Delegated Discovery"), "\u{201C}DELEGATED DISCOVERY\u{201D}");
+        assert_eq!(trend_title("\"Delegated Discovery\""), "\u{201C}DELEGATED DISCOVERY\u{201D}");
+        assert_eq!(
+            trend_title("\u{201C}Delegated Discovery\u{201D}"),
+            "\u{201C}DELEGATED DISCOVERY\u{201D}"
+        );
+        assert_eq!(trend_title("   "), "");
+        assert_eq!(trend_title(""), "");
+    }
 
     /// Renders the REAL shipped shell, not a fixture.
     ///
@@ -438,7 +498,7 @@ mod tests {
             &idx.pages["/map/society"],
             "https://x.test",
         );
-        assert!(out.contains("<title>Society — Serious Shi(f)t</title>"));
+        assert!(out.contains("<title>Society — Serious Shift</title>"));
         assert!(!out.contains("Old Title"));
         assert!(out.contains("How AGI rewrites the social contract."));
         assert!(!out.contains("eight shifts this week"));
@@ -513,7 +573,7 @@ mod tests {
     #[test]
     fn not_found_metadata_replaces_the_build_defaults_and_is_not_canonical() {
         let out = render_not_found(SHELL);
-        assert!(out.contains("<title>Page not found · Serious Shi(f)t</title>"));
+        assert!(out.contains("<title>Page not found · Serious Shift</title>"));
         assert!(out.contains(r#"content="noindex, nofollow""#));
         assert!(!out.contains("canonical"));
         assert!(!out.contains("Old Title"));

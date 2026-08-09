@@ -66,7 +66,7 @@ export function Header() {
           background: 'var(--color-black)',
         }}
       >
-        <Link to="/" aria-label="Serious Shi(f)t — home" className="flex shrink-0 items-center">
+        <Link to="/" aria-label="Serious Shift — home" className="flex shrink-0 items-center">
           {/* Sized as a FRACTION of the band, not in pixels. The lock-up is
               74×214 in an 84px bar, so it keeps 88% of the band's height and
               its own 2.892 aspect at every width — which is what stops a

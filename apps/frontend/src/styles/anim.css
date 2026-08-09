@@ -30,12 +30,11 @@
 @keyframes ssOrb2 { 0%,100% { transform: translate(0,0) scale(1); } 30% { transform: translate(-72px,66px) scale(0.92); } 62% { transform: translate(58px,104px) scale(1.16); } }
 @keyframes ssOrb3 { 0%,100% { transform: translate(0,0) scale(1); } 40% { transform: translate(62px,88px) scale(1.1); } 72% { transform: translate(-88px,26px) scale(0.94); } }
 
-/* From/To cross-fade: the two panels trade their gradient while the ink
-   inverts with it, on one shared 8s clock. */
-@keyframes ssPanelA { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
-@keyframes ssPanelB { 0%, 45% { opacity: 0; } 50%, 95% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes ssInkA   { 0%, 45% { color: #fff; } 50%, 95% { color: #1B1620; } 100% { color: #fff; } }
-@keyframes ssInkB   { 0%, 45% { color: #1B1620; } 50%, 95% { color: #fff; } 100% { color: #1B1620; } }
+/* The From/To cross-fade (ssPanelA/B, ssInkA/B) is gone. Both cards carried the
+   same gradient and traded it on an 8s clock, so for half of every cycle the
+   module emphasised the state being moved AWAY from — and a reader glancing at
+   it learned nothing about direction, which is the only thing a From/To pair
+   exists to say. The fill is the signal now, and it holds still. */
 
 /* Horizon sweep: the lit card walks Today → Next → Beyond on a 12s loop.
    The lit colours read the accent in scope, so the sweep is the domain's. */

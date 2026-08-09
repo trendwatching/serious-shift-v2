@@ -124,6 +124,23 @@
   .hero-short { min-height: 500px; }
   .hero-sub   { min-height: 400px; }
 
+  /* The hero's artwork.
+     `background-image` lives HERE, not inline, and that is the whole reason the
+     desktop swap can exist: an inline style beats every layer, so an inline
+     `backgroundImage` would silently discard the rule below that reaches for the
+     landscape cut. The per-shift VALUE is data and comes in as a custom property
+     (`--art`), which no layer competes for; the per-breakpoint RULE is layout and
+     belongs in CSS. If `--art` is unset the declaration is invalid at computed
+     value time, `background-image` falls back to `none`, and the header's own
+     gradient shows — which is the designed fallback for a shift with no poster. */
+  .hero-art {
+    background-image: var(--art, none);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center 30%;
+  }
+  .hero-art-sub { background-position: center 22%; }
+
   /* The horizon spine and its dots. Their geometry lives here rather than
      inline because desktop.css turns the rail from a vertical spine into a
      horizontal one and has to move both — and an inline style beats any rule,

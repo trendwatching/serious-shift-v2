@@ -7,7 +7,7 @@ import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Modules } from '../modules'
 import { Loading, Missing, Unavailable } from './states'
-import { unquote } from '../lib/theme'
+import { quoted, trendTitle, unquote } from '../lib/theme'
 
 /**
  * Shrink the hero as the page scrolls: 660 → 360px, and the title 46 → 29px.
@@ -58,7 +58,12 @@ function useHeroShrink(ref, enabled) {
 export default function ShiftPage() {
   const { domainSlug, ktSlug } = useParams()
   const { domain, shift, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug })
-  useDocumentMeta(shift?.title, shift?.dek)
+  // `trendTitle`, not the raw name: CSS uppercases the heading on the page but
+  // `text-transform` never reaches the tab, the unfurl or a copy-paste, so a
+  // shift shared into WhatsApp read `Delegated Discovery` while the page it
+  // opened said `DELEGATED DISCOVERY`. Matches `trend_title` in seo.rs, or the
+  // title would visibly change a beat after load.
+  useDocumentMeta(trendTitle(shift?.title), shift?.dek)
   const heroRef = useRef(null)
   useHeroShrink(heroRef, Boolean(shift?.heroImage))
 
@@ -99,9 +104,13 @@ export default function ShiftPage() {
       >
         {image && (
           <>
+            {/* The URLs are custom properties, not `backgroundImage`. An inline
+                style beats every layer, so painting it here would silently
+                discard the desktop rule that swaps in the landscape cut —
+                `.hero-art` in components.css owns the painting. */}
             <span
-              aria-hidden="true" className="absolute inset-0 z-0"
-              style={{ backgroundImage: cssUrl(image), backgroundSize: 'cover', backgroundPosition: 'center 30%' }}
+              aria-hidden="true" className="hero-art absolute inset-0 z-0"
+              style={{ '--art': cssUrl(image), '--art-wide': cssUrl(shift.heroImageWide) }}
             />
             <span
               aria-hidden="true" className="absolute inset-0 z-[1]"
@@ -127,7 +136,7 @@ export default function ShiftPage() {
             className="t-title"
             style={{ margin: 0, fontSize: `var(--hero-fs, var(${image ? '--t-hero' : '--t-sub'}))`, lineHeight: 1.1, letterSpacing: '0.005em' }}
           >
-            {shift.title}
+            {quoted(shift.title)}
           </h1>
         </div>
       </header>

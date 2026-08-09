@@ -15,7 +15,10 @@ import { useEffect } from 'react'
  * So the server handles first paint and no-JS clients; this handles everything
  * after. Both read the same map document, so they agree.
  */
-const SITE = 'Serious Shi(f)t'
+// NOT 'Shi(f)t'. The parenthetical belongs to the logo alone; this string is
+// prose — the browser tab, the Slack unfurl, the search result. Must match
+// SITE_NAME in apps/backend/src/seo.rs.
+const SITE = 'Serious Shift'
 const DEFAULT_TITLE = `${SITE} — Everything that is about to change`
 const DEFAULT_DESCRIPTION = 'What is about to change, and who is saying so. An evidence-led trend map updated weekly.'
 

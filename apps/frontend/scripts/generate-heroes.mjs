@@ -33,9 +33,60 @@ const OUT_DIR = resolve(ROOT, 'public/shift/heroes')
 const MANIFEST = resolve(ROOT, 'src/lib/heroes.json')
 const SUB_DIR = resolve(ROOT, 'public/shift/subs')
 const SUB_MANIFEST = resolve(ROOT, 'src/lib/sub-art.json')
+/* The landscape cut of the same 51 posters, for the desktop hero band. There is
+   deliberately no wide set for the sub-shift fragments: those are TILE art, shown
+   in a 152px square box, and a sub-shift PAGE inherits its parent's poster
+   (see SUB_GEN in src/lib/useDomains.js). One wide set serves both pages. */
+const WIDE_DIR = resolve(ROOT, 'public/shift/heroes-wide')
+const WIDE_MANIFEST = resolve(ROOT, 'src/lib/heroes-wide.json')
 
-const W = 800
-const H = 1000
+/* ── The frame ────────────────────────────────────────────────────────────
+ * A poster is drawn twice: portrait for the phone, landscape for the desktop
+ * hero band, which is a letterbox roughly 2.7:1. Painting the portrait art into
+ * that band with `cover` scaled it 1.8x and showed about 30% of the picture —
+ * the ring and the tops of the towers, with the crowd the whole composition
+ * lands on cropped clean off the bottom. No `background-position` can reveal
+ * what the box does not contain, so the second frame has to be drawn.
+ *
+ * `poster()` already expresses every position as a fraction of W and H, so the
+ * composition recomposes on its own. What does NOT recompose is absolute size:
+ * a 38px shoulder is a person at 800 wide and a speck at 1600. So each absolute
+ * length is multiplied by the knob that governs it.
+ *
+ * EVERY KNOB IS EXACTLY 1 IN THE PORTRAIT FRAME. That is the contract that
+ * keeps the 51 committed SVGs byte-identical: `x * 1` is `x` bit-for-bit, so a
+ * multiplied expression is unchanged, whereas a rewritten one (`W*0.21` as
+ * `H*0.168`) is not. Multiply; never re-derive. scripts/check-frame.mjs proves
+ * it by hashing the portrait output against what is on disk.
+ * --------------------------------------------------------------------- */
+const FRAMES = {
+  // The design canvas. Knobs are 1 by definition.
+  tall: { W: 800, H: 1000, u: 1, pop: 1, fx: 1 },
+  // 2.667:1. The desktop band runs 2.23:1 at 1024 through 2.70 at 1440 to
+  // 3.10 at 1920, so this sits on the common laptop with a 1% crop.
+  // `u` under 1 because the frame is 2x wider but only 0.6x taller: figures
+  // sized for the portrait would tower over a 600px-high scene.
+  wide: { W: 1600, H: 600, u: 0.74, pop: 1.7, fx: 0.54 },
+}
+
+let W = FRAMES.tall.W
+let H = FRAMES.tall.H
+// Horizontal and vertical unit, derived; `u` sizes world objects, `pop` scales
+// counts of things repeating across the frame, `fx` the ring and its beam.
+// `fx`, not `focal`: poster() declares a local `focal` for the focal SVG, which
+// silently shadowed the knob and multiplied every radius by an empty string.
+// The ring came out r="0" on all 51 posters.
+let ux = 1
+let uy = 1
+let u = 1
+let pop = 1
+let fx = 1
+
+function setFrame(frame) {
+  ;({ W, H, u, pop, fx } = frame)
+  ux = W / FRAMES.tall.W
+  uy = H / FRAMES.tall.H
+}
 
 /* ── Palettes ───────────────────────────────────────────────────────────
  * The four stops are each sphere's sunset ramp from styles/tokens.css, so a
@@ -102,14 +153,16 @@ function colonnade(x, y, w, h, r) {
   s += `<rect x="${n(x - w * 0.1)}" y="${n(y + h - stepH)}" width="${n(w * 1.2)}" height="${n(stepH)}"/>`
   // The flagpole. Small, but it is what makes the block read as civic.
   const px = x + w * 0.12
-  s += `<rect x="${n(px)}" y="${n(y - h * 0.42)}" width="3" height="${n(h * 0.42)}"/>`
-  s += `<polygon points="${n(px + 3)},${n(y - h * 0.42)} ${n(px + w * 0.2)},${n(y - h * 0.36)} ${n(px + 3)},${n(y - h * 0.3)}"/>`
+  s += `<rect x="${n(px)}" y="${n(y - h * 0.42)}" width="${n(3 * ux)}" height="${n(h * 0.42)}"/>`
+  s += `<polygon points="${n(px + 3 * ux)},${n(y - h * 0.42)} ${n(px + w * 0.2)},${n(y - h * 0.36)} ${n(px + 3 * ux)},${n(y - h * 0.3)}"/>`
   return s
 }
 
 /** A skyline block: slabs, a few setbacks, the odd mast. */
 function towers(x, y, w, h, r, lit) {
-  const count = 5 + Math.floor(r() * 4)
+  // `pop` on the count, not on the width: a wider frame wants MORE slabs of
+  // the same size, not the same five stretched across it.
+  const count = Math.max(2, Math.round((5 + Math.floor(r() * 4)) * pop))
   const unit = w / count
   let s = ''
   for (let i = 0; i < count; i += 1) {
@@ -122,16 +175,16 @@ function towers(x, y, w, h, r, lit) {
       const sw = bw * 0.5
       s += `<rect x="${n(bx + (bw - sw) / 2)}" y="${n(by - bh * 0.18)}" width="${n(sw)}" height="${n(bh * 0.18)}"/>`
     }
-    if (r() > 0.75) s += `<rect x="${n(bx + bw / 2 - 1.5)}" y="${n(by - h * 0.14)}" width="3" height="${n(h * 0.14)}"/>`
+    if (r() > 0.75) s += `<rect x="${n(bx + bw / 2 - 1.5 * ux)}" y="${n(by - h * 0.14)}" width="${n(3 * ux)}" height="${n(h * 0.14)}"/>`
     // Windows are the only place light gets to sit inside a silhouette. Sparse
     // on purpose: a fully gridded tower stops being a silhouette.
     if (lit) {
-      const rows = Math.floor(bh / 26)
-      const colsW = Math.max(2, Math.floor(bw / 18))
+      const rows = Math.floor(bh / (26 * uy))
+      const colsW = Math.max(2, Math.floor(bw / (18 * ux)))
       for (let ry = 1; ry < rows; ry += 1) {
         for (let cx = 0; cx < colsW; cx += 1) {
           if (r() > 0.89) {
-            s += `<rect class="lit" x="${n(bx + 6 + cx * 18)}" y="${n(by + 12 + ry * 26)}" width="6" height="9"/>`
+            s += `<rect class="lit" x="${n(bx + 6 * ux + cx * 18 * ux)}" y="${n(by + 12 * uy + ry * 26 * uy)}" width="${n(6 * ux)}" height="${n(9 * uy)}"/>`
           }
         }
       }
@@ -150,9 +203,9 @@ function board(x, y, w, h, r) {
     v += between(r, -0.03, 0.13)
     pts.push(`${n(x + w * 0.08 + (w * 0.62 * i) / steps)},${n(y + h * 0.3 + Math.min(h * 0.52, h * v))}`)
   }
-  s += `<polyline class="lit-stroke" points="${pts.join(' ')}" fill="none" stroke-width="4"/>`
+  s += `<polyline class="lit-stroke" points="${pts.join(' ')}" fill="none" stroke-width="${n(4 * ux)}"/>`
   for (let i = 0; i < 5; i += 1) {
-    s += `<rect class="lit" x="${n(x + w * 0.78)}" y="${n(y + h * 0.26 + i * h * 0.13)}" width="${n(w * 0.14)}" height="5"/>`
+    s += `<rect class="lit" x="${n(x + w * 0.78)}" y="${n(y + h * 0.26 + i * h * 0.13)}" width="${n(w * 0.14)}" height="${n(5 * uy)}"/>`
   }
   return s
 }
@@ -179,14 +232,14 @@ function monoliths(x, y, w, h, r) {
 
 /** A network: nodes on a loose grid, orthogonal links, a few of them lit. */
 function lattice(x, y, w, h, r) {
-  const cols = 5
+  const cols = Math.max(2, Math.round(5 * pop))
   const rows = 3
   const nodes = []
   for (let cy = 0; cy < rows; cy += 1) {
     for (let cx = 0; cx < cols; cx += 1) {
       nodes.push({
-        x: x + (w * (cx + 0.5)) / cols + between(r, -14, 14),
-        y: y + (h * (cy + 0.5)) / rows + between(r, -12, 12),
+        x: x + (w * (cx + 0.5)) / cols + between(r, -14, 14) * ux,
+        y: y + (h * (cy + 0.5)) / rows + between(r, -12, 12) * uy,
       })
     }
   }
@@ -197,13 +250,13 @@ function lattice(x, y, w, h, r) {
     const down = nodes[i + cols]
     for (const b of [right, down]) {
       if (!b || r() > 0.72) continue
-      s += `<path d="M ${n(a.x)} ${n(a.y)} L ${n(b.x)} ${n(a.y)} L ${n(b.x)} ${n(b.y)}" fill="none" stroke-width="2.5"/>`
+      s += `<path d="M ${n(a.x)} ${n(a.y)} L ${n(b.x)} ${n(a.y)} L ${n(b.x)} ${n(b.y)}" fill="none" stroke-width="${n(2.5 * ux)}"/>`
     }
   }
   for (const p of nodes) {
     s += r() > 0.78
-      ? `<circle class="lit" cx="${n(p.x)}" cy="${n(p.y)}" r="6"/>`
-      : `<circle cx="${n(p.x)}" cy="${n(p.y)}" r="5"/>`
+      ? `<circle class="lit" cx="${n(p.x)}" cy="${n(p.y)}" r="${n(6 * u)}"/>`
+      : `<circle cx="${n(p.x)}" cy="${n(p.y)}" r="${n(5 * u)}"/>`
   }
   return s
 }
@@ -221,7 +274,7 @@ function ring(cx, cy, rx) {
   let s = ''
   const chain = rx * 0.74
   for (const dx of [-chain, chain]) {
-    s += `<path d="M ${n(cx + dx * 0.38)} 0 L ${n(cx + dx)} ${n(cy)}" fill="none" stroke-width="5"/>`
+    s += `<path d="M ${n(cx + dx * 0.38)} 0 L ${n(cx + dx)} ${n(cy)}" fill="none" stroke-width="${n(5 * ux)}"/>`
   }
   // The rim, then the front of the band, so the hoop has depth.
   s += `<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(rx)}" ry="${n(ry)}" fill="none" stroke-width="${n(band)}"/>`
@@ -247,16 +300,16 @@ function crowd(baseY, r) {
    * read as a person, so it gets clear air above the shoulders.
    */
   const figure = (x, y, scale) => {
-    const hr = 15 * scale
-    const sw = 38 * scale
-    const sy = y - 34 * scale
+    const hr = 15 * scale * u
+    const sw = 38 * scale * u
+    const sy = y - 34 * scale * u
     const hy = sy - hr * 1.15
     return (
       `<circle cx="${n(x)}" cy="${n(hy)}" r="${n(hr)}"/>` +
-      `<path d="M ${n(x - sw)} ${H + 40} L ${n(x - sw)} ${n(sy)}` +
-      ` C ${n(x - sw * 0.62)} ${n(sy - 11 * scale)} ${n(x - hr * 0.8)} ${n(sy - 15 * scale)} ${n(x)} ${n(sy - 15 * scale)}` +
-      ` C ${n(x + hr * 0.8)} ${n(sy - 15 * scale)} ${n(x + sw * 0.62)} ${n(sy - 11 * scale)} ${n(x + sw)} ${n(sy)}` +
-      ` L ${n(x + sw)} ${H + 40} Z"/>`
+      `<path d="M ${n(x - sw)} ${n(H + 40 * u)} L ${n(x - sw)} ${n(sy)}` +
+      ` C ${n(x - sw * 0.62)} ${n(sy - 11 * scale * u)} ${n(x - hr * 0.8)} ${n(sy - 15 * scale * u)} ${n(x)} ${n(sy - 15 * scale * u)}` +
+      ` C ${n(x + hr * 0.8)} ${n(sy - 15 * scale * u)} ${n(x + sw * 0.62)} ${n(sy - 11 * scale * u)} ${n(x + sw)} ${n(sy)}` +
+      ` L ${n(x + sw)} ${n(H + 40 * u)} Z"/>`
     )
   }
 
@@ -266,12 +319,12 @@ function crowd(baseY, r) {
   // like. The near rank is roughly three times the far one, so the two ranks
   // are unmistakably at different distances rather than merely different sizes.
   let far = ''
-  for (let x = -40; x < W + 40; x += between(r, 34, 62)) {
-    far += figure(x, baseY - between(r, 34, 96), between(r, 0.34, 0.54))
+  for (let x = -40 * u; x < W + 40 * u; x += between(r, 34, 62) * u) {
+    far += figure(x, baseY - between(r, 34, 96) * u, between(r, 0.34, 0.54))
   }
   let near = ''
-  for (let x = -60; x < W + 60; x += between(r, 118, 176)) {
-    near += figure(x + between(r, -18, 18), baseY + between(r, 10, 46), between(r, 1.2, 1.7))
+  for (let x = -60 * u; x < W + 60 * u; x += between(r, 118, 176) * u) {
+    near += figure(x + between(r, -18, 18) * u, baseY + between(r, 10, 46) * u, between(r, 1.2, 1.7))
   }
   return { far, near }
 }
@@ -279,14 +332,14 @@ function crowd(baseY, r) {
 /** The fall: matter leaving the suspended thing and thinning as it descends. */
 function particles(cx, top, bottom, r) {
   let s = ''
-  const rows = 26
+  const rows = Math.max(2, Math.round(26 * uy))
   for (let i = 0; i < rows; i += 1) {
     const t = i / (rows - 1)
     const y = top + (bottom - top) * t
-    const spread = 26 + t * t * 150
+    const spread = 26 * u + t * t * 150 * u
     const per = Math.max(1, Math.round(6 - t * 4))
     for (let k = 0; k < per; k += 1) {
-      const size = Math.max(1.5, 6 - t * 4) * between(r, 0.7, 1.3)
+      const size = Math.max(1.5 * u, 6 * u - t * 4 * u) * between(r, 0.7, 1.3)
       const x = cx + between(r, -spread, spread)
       s += r() > 0.4
         ? `<rect x="${n(x)}" y="${n(y)}" width="${n(size)}" height="${n(size)}" transform="rotate(${n(between(r, 0, 90))} ${n(x)} ${n(y)})"/>`
@@ -300,18 +353,21 @@ function particles(cx, top, bottom, r) {
 function groundGrid(y, vanishX) {
   let s = ''
   for (let i = -7; i <= 7; i += 1) {
-    s += `<path d="M ${n(vanishX + i * 22)} ${n(y)} L ${n(vanishX + i * 210)} ${H}" fill="none" stroke-width="2"/>`
+    s += `<path d="M ${n(vanishX + i * 22 * ux)} ${n(y)} L ${n(vanishX + i * 210 * ux)} ${H}" fill="none" stroke-width="${n(2 * ux)}"/>`
   }
   for (let i = 1; i <= 7; i += 1) {
     const ly = y + ((H - y) * i * i) / 49
-    s += `<path d="M 0 ${n(ly)} L ${W} ${n(ly)}" fill="none" stroke-width="2"/>`
+    s += `<path d="M 0 ${n(ly)} L ${W} ${n(ly)}" fill="none" stroke-width="${n(2 * ux)}"/>`
   }
   return s
 }
 
 /* ── Composition ─────────────────────────────────────────────────────── */
 
-function poster(slug, sphere) {
+function poster(slug, sphere, frame = FRAMES.tall) {
+  // Before anything reads W/H or draws — every position below is a fraction
+  // of the frame, so this one call recomposes the whole poster.
+  setFrame(frame)
   const r = rng(slug)
   const p = PALETTE[sphere] ?? PALETTE.society
   const pillar = PILLARS[Math.floor(r() * PILLARS.length)]
@@ -347,7 +403,7 @@ function poster(slug, sphere) {
 
   if (pillar === 'descent') {
     const ringY = H * between(r, 0.19, 0.25)
-    const rx = W * between(r, 0.21, 0.27)
+    const rx = W * between(r, 0.21, 0.27) * fx
     light = `<polygon points="${n(cx - rx * 0.55)},${n(ringY)} ${n(cx + rx * 0.55)},${n(ringY)} ${n(cx + rx * 2.1)},${H} ${n(cx - rx * 2.1)},${H}" fill="url(#beam${id})"/>`
     focal = draw(ring(cx, ringY, rx), p.dark, 0.96)
     focal += draw(particles(cx, ringY + rx * 0.34, H * 0.9, r), p.dark, 0.82)
@@ -358,7 +414,7 @@ function poster(slug, sphere) {
     mid += draw(builtForm(W * 0.64, H * 0.47, W * 0.42, H * 0.3, true), p.dark, 0.93)
   } else if (pillar === 'horizon') {
     const discY = H * between(r, 0.19, 0.27)
-    const dr = W * between(r, 0.15, 0.21)
+    const dr = W * between(r, 0.15, 0.21) * fx
     light = `<circle cx="${n(cx)}" cy="${n(discY)}" r="${n(dr)}" fill="url(#disc${id})"/>`
     light += draw(groundGrid(H * 0.72, cx), p.light, 0.14)
     focal = draw(builtForm(W * 0.1, H * 0.42, W * 0.8, H * 0.34, true), p.dark, 0.94)
@@ -367,7 +423,7 @@ function poster(slug, sphere) {
     light += `<polygon points="${n(cx - dr * 0.9)},${n(discY)} ${n(cx + dr * 0.9)},${n(discY)} ${n(cx + dr * 2.4)},${H} ${n(cx - dr * 2.4)},${H}" fill="url(#beam${id})" opacity="0.55"/>`
   } else {
     const topY = H * 0.14
-    light = `<polygon points="${n(cx - W * 0.11)},${n(topY)} ${n(cx + W * 0.11)},${n(topY)} ${n(cx + W * 0.44)},${H} ${n(cx - W * 0.44)},${H}" fill="url(#beam${id})"/>`
+    light = `<polygon points="${n(cx - W * 0.11 * fx)},${n(topY)} ${n(cx + W * 0.11 * fx)},${n(topY)} ${n(cx + W * 0.44 * fx)},${H} ${n(cx - W * 0.44 * fx)},${H}" fill="url(#beam${id})"/>`
     focal = draw(builtForm(W * 0.08, topY, W * 0.84, H * 0.54, true), p.dark, 0.95)
     mid = draw(lattice(W * 0.04, H * 0.18, W * 0.92, H * 0.24, r), p.light, 0.28)
     focal += draw(particles(cx, H * 0.5, H * 0.9, r), p.dark, 0.6)
@@ -410,14 +466,14 @@ function poster(slug, sphere) {
      and a coarse mottle that keeps the flat gradient from looking printed by a
      browser. Both are filters on a rect, so they cost nothing to download. -->
 <filter id="soft${id}" x="-20%" y="-20%" width="140%" height="140%">
-<feGaussianBlur stdDeviation="16"/>
+<feGaussianBlur stdDeviation="${n(16 * ux)}"/>
 </filter>
 <filter id="fine${id}" x="0" y="0" width="100%" height="100%">
-<feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="7" result="t"/>
+<feTurbulence type="fractalNoise" baseFrequency="${0.85 / ux}" numOctaves="3" seed="7" result="t"/>
 <feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
 </filter>
 <filter id="coarse${id}" x="0" y="0" width="100%" height="100%">
-<feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" seed="19" result="t"/>
+<feTurbulence type="fractalNoise" baseFrequency="${0.05 / ux}" numOctaves="4" seed="19" result="t"/>
 <feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.7 0 0 0 0"/>
 </filter>
 <style>.lit{fill:${p.light};stroke:none;fill-opacity:0.22}.lit-stroke{stroke:${p.light};stroke-opacity:0.85}</style>
@@ -731,30 +787,47 @@ async function subShifts(keyShifts) {
   return out
 }
 
-const list = await shifts()
-if (!list.length) throw new Error('no key shifts published — refusing to wipe existing art')
-const subs = await subShifts(list)
+async function main() {
+    const list = await shifts()
+  if (!list.length) throw new Error('no key shifts published — refusing to wipe existing art')
+  const subs = await subShifts(list)
 
-// Rewrite the directories wholesale. Art is derived, so a stale file for a shift
-// that no longer exists is worse than no file: the manifest would not list it
-// but it would still be sitting in the deploy.
-for (const dir of [OUT_DIR, SUB_DIR]) {
-  if (existsSync(dir)) for (const f of readdirSync(dir)) rmSync(resolve(dir, f))
-  mkdirSync(dir, { recursive: true })
+  // Rewrite the directories wholesale. Art is derived, so a stale file for a shift
+  // that no longer exists is worse than no file: the manifest would not list it
+  // but it would still be sitting in the deploy.
+  for (const dir of [OUT_DIR, WIDE_DIR, SUB_DIR]) {
+    if (existsSync(dir)) for (const f of readdirSync(dir)) rmSync(resolve(dir, f))
+    mkdirSync(dir, { recursive: true })
+  }
+
+  const manifest = {}
+  const wide = {}
+  for (const { slug, sphere } of list) {
+    writeFileSync(resolve(OUT_DIR, `${slug}.svg`), poster(slug, sphere, FRAMES.tall))
+    manifest[slug] = `/shift/heroes/${slug}.svg`
+    writeFileSync(resolve(WIDE_DIR, `${slug}.svg`), poster(slug, sphere, FRAMES.wide))
+    wide[slug] = `/shift/heroes-wide/${slug}.svg`
+  }
+  writeFileSync(MANIFEST, `${JSON.stringify(manifest, Object.keys(manifest).sort(), 2)}\n`)
+  writeFileSync(WIDE_MANIFEST, `${JSON.stringify(wide, Object.keys(wide).sort(), 2)}\n`)
+
+  const subManifest = {}
+  for (const { key, file, sphere, index } of subs) {
+    writeFileSync(resolve(SUB_DIR, `${file}.svg`), fragment(key, sphere, index))
+    subManifest[key] = `/shift/subs/${file}.svg`
+  }
+  writeFileSync(SUB_MANIFEST, `${JSON.stringify(subManifest, Object.keys(subManifest).sort(), 2)}\n`)
+
+  console.log(
+    `${list.length} posters → public/shift/heroes (+ heroes-wide), `
+    + `${subs.length} fragments → public/shift/subs`,
+  )
 }
 
-const manifest = {}
-for (const { slug, sphere } of list) {
-  writeFileSync(resolve(OUT_DIR, `${slug}.svg`), poster(slug, sphere))
-  manifest[slug] = `/shift/heroes/${slug}.svg`
-}
-writeFileSync(MANIFEST, `${JSON.stringify(manifest, Object.keys(manifest).sort(), 2)}\n`)
+/* Importable so scripts/check-frame.mjs can redraw the portrait set in-process
+   and hash it against what is committed, without the network this CLI needs. */
+export { poster, fragment, FRAMES }
 
-const subManifest = {}
-for (const { key, file, sphere, index } of subs) {
-  writeFileSync(resolve(SUB_DIR, `${file}.svg`), fragment(key, sphere, index))
-  subManifest[key] = `/shift/subs/${file}.svg`
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main()
 }
-writeFileSync(SUB_MANIFEST, `${JSON.stringify(subManifest, Object.keys(subManifest).sort(), 2)}\n`)
-
-console.log(`${list.length} posters → public/shift/heroes, ${subs.length} fragments → public/shift/subs`)

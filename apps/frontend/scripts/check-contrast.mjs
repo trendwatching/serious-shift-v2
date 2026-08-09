@@ -82,8 +82,12 @@ const normalTextPairs = [
   ['Economy surface', WHITE, '#0A6FBF'],
   ['Organisations surface', WHITE, '#737425'],
   ['Consumers surface', WHITE, '#C93B05'],
-  ['positive surface', WHITE, token('--color-green')],
-  ['teal positive surface', WHITE, '#126E63'],
+  // The green "positive surface" pairs are gone with the token. What replaced
+  // them is the quiet surface the From card, the counter-signals panel and the
+  // pushback voices now use — and unlike a saturated fill it carries ink, not
+  // white, so both of its text roles have to be checked here.
+  ['quiet surface body', token('--color-ink-strong'), token('--color-paper')],
+  ['quiet surface label', token('--color-ink-soft'), token('--color-paper')],
   ['yellow pill', token('--color-ink'), token('--color-yellow')],
 ]
 
