@@ -1515,8 +1515,13 @@ mod tests {
 
     #[test]
     fn route_snapshot_has_distinct_scoped_documents_and_etags() {
-        let snapshot =
-            build_snapshot(sample_map(), "2026-08-02 14:00:00+00", &no_innovations(), &default_policy()).unwrap();
+        let snapshot = build_snapshot(
+            sample_map(),
+            "2026-08-02 14:00:00+00",
+            &no_innovations(),
+            &default_policy(),
+        )
+        .unwrap();
         let index = snapshot.routes.get("").unwrap();
         let domain = snapshot.routes.get("society").unwrap();
         let shift = snapshot.routes.get("society/trust-machines").unwrap();
@@ -1625,8 +1630,13 @@ mod tests {
 
     #[test]
     fn a_linked_innovation_reaches_the_shift_fragment() {
-        let snapshot =
-            build_snapshot(sample_map(), "2026-08-02 14:00:00+00|i0", &one_innovation(), &default_policy()).unwrap();
+        let snapshot = build_snapshot(
+            sample_map(),
+            "2026-08-02 14:00:00+00|i0",
+            &one_innovation(),
+            &default_policy(),
+        )
+        .unwrap();
         let shift: Value =
             serde_json::from_str(&snapshot.routes.get("society/trust-machines").unwrap().body)
                 .unwrap();
@@ -1665,8 +1675,13 @@ mod tests {
     #[test]
     fn linking_an_innovation_changes_every_affected_etag() {
         let published = "2026-08-02 14:00:00+00";
-        let before =
-            build_snapshot(sample_map(), &format!("{published}|i0"), &no_innovations(), &default_policy()).unwrap();
+        let before = build_snapshot(
+            sample_map(),
+            &format!("{published}|i0"),
+            &no_innovations(),
+            &default_policy(),
+        )
+        .unwrap();
         let after = build_snapshot(
             sample_map(),
             &format!("{published}|i1cf2"),
@@ -1718,7 +1733,11 @@ mod tests {
             .iter()
             .map(|m| m["type"].as_str().unwrap())
             .collect();
-        assert_eq!(types, ["dek"], "society keeps only the modules the design renders");
+        assert_eq!(
+            types,
+            ["dek"],
+            "society keeps only the modules the design renders"
+        );
 
         // `authored` is stripped from the response, not merely ignored.
         assert!(body["shift"].get("authored").is_none());
@@ -1757,7 +1776,11 @@ mod tests {
             .iter()
             .map(|m| m["type"].as_str().unwrap())
             .collect();
-        assert_eq!(types, ["dek", "industries"], "an override outranks the sphere rule");
+        assert_eq!(
+            types,
+            ["dek", "industries"],
+            "an override outranks the sphere rule"
+        );
     }
 
     /// Mirrors `linking_an_innovation_changes_every_affected_etag`. The version
@@ -1792,7 +1815,13 @@ mod tests {
 
     #[test]
     fn matching_etag_returns_304_without_a_body() {
-        let snapshot = build_snapshot(sample_map(), "version", &no_innovations(), &default_policy()).unwrap();
+        let snapshot = build_snapshot(
+            sample_map(),
+            "version",
+            &no_innovations(),
+            &default_policy(),
+        )
+        .unwrap();
         let fragment = snapshot.routes.get("society").unwrap();
         let mut headers = HeaderMap::new();
         headers.insert(header::IF_NONE_MATCH, fragment.etag.clone());
@@ -1805,7 +1834,13 @@ mod tests {
     fn route_fragments_fit_compressed_response_budgets() {
         use std::io::Write;
 
-        let snapshot = build_snapshot(sample_map(), "version", &no_innovations(), &default_policy()).unwrap();
+        let snapshot = build_snapshot(
+            sample_map(),
+            "version",
+            &no_innovations(),
+            &default_policy(),
+        )
+        .unwrap();
         for (route, budget) in [
             ("", 25 * 1024),
             ("society", 75 * 1024),
@@ -1849,17 +1884,17 @@ mod tests {
             legacy_map_limiter: Arc::new(RateLimiter::per_minute(10, 2)),
             legacy_map_concurrency: Arc::new(tokio::sync::Semaphore::new(2)),
             // 120/min with a 30 burst was too tight for the thing it protects. A
-        // reading route costs two calls (index + fragment), the response is a
-        // slice of one cached document, and the bucket is keyed by IP — so a
-        // room of people behind one office NAT shares it. Walking the map at a
-        // normal pace tripped it on 120 of 310 routes in a crawl; the client
-        // retries on Retry-After and recovers, so it showed as a stall rather
-        // than an error, which is worse to debug and worse to demo.
-        //
-        // 600/min with a 150 burst still refuses a scraper and still bounds the
-        // memory the bucket map can take, while leaving ordinary browsing —
-        // including several people at once — nowhere near the ceiling.
-        public_v1_limiter: Arc::new(RateLimiter::per_minute(600, 150)),
+            // reading route costs two calls (index + fragment), the response is a
+            // slice of one cached document, and the bucket is keyed by IP — so a
+            // room of people behind one office NAT shares it. Walking the map at a
+            // normal pace tripped it on 120 of 310 routes in a crawl; the client
+            // retries on Retry-After and recovers, so it showed as a stall rather
+            // than an error, which is worse to debug and worse to demo.
+            //
+            // 600/min with a 150 burst still refuses a scraper and still bounds the
+            // memory the bucket map can take, while leaving ordinary browsing —
+            // including several people at once — nowhere near the ceiling.
+            public_v1_limiter: Arc::new(RateLimiter::per_minute(600, 150)),
             ingest_limiter: Arc::new(RateLimiter::per_minute(60, 20)),
         };
 

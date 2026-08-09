@@ -381,8 +381,14 @@ mod tests {
     /// name would ship `““NAME””`.
     #[test]
     fn trend_title_strips_whatever_quoting_it_arrived_with() {
-        assert_eq!(trend_title("Delegated Discovery"), "\u{201C}DELEGATED DISCOVERY\u{201D}");
-        assert_eq!(trend_title("\"Delegated Discovery\""), "\u{201C}DELEGATED DISCOVERY\u{201D}");
+        assert_eq!(
+            trend_title("Delegated Discovery"),
+            "\u{201C}DELEGATED DISCOVERY\u{201D}"
+        );
+        assert_eq!(
+            trend_title("\"Delegated Discovery\""),
+            "\u{201C}DELEGATED DISCOVERY\u{201D}"
+        );
         assert_eq!(
             trend_title("\u{201C}Delegated Discovery\u{201D}"),
             "\u{201C}DELEGATED DISCOVERY\u{201D}"
@@ -421,7 +427,10 @@ mod tests {
         };
         let out = render(&shell, "/", &meta, "https://example.com");
 
-        assert!(out.contains("<div id=\"root\""), "the mount point must survive");
+        assert!(
+            out.contains("<div id=\"root\""),
+            "the mount point must survive"
+        );
         let head = out.split("<body").next().unwrap();
         assert!(
             head.contains("<script") && head.contains("/assets/"),

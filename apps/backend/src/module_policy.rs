@@ -46,16 +46,87 @@ use crate::innovations::{fnv1a, Scope};
 const DEFAULT_HIDDEN: [(&str, &str, &[&str]); 8] = [
     // Key shifts: the four modules the build never renders, plus the two that are
     // Consumers-only.
-    ("key_trend", "society", &["pull_quote", "tension_band", "voices", "related_shifts", "industries", "territories"]),
-    ("key_trend", "economy", &["pull_quote", "tension_band", "voices", "related_shifts", "industries", "territories"]),
-    ("key_trend", "organisations", &["pull_quote", "tension_band", "voices", "related_shifts", "industries", "territories"]),
-    ("key_trend", "consumers", &["pull_quote", "tension_band", "voices", "related_shifts"]),
+    (
+        "key_trend",
+        "society",
+        &[
+            "pull_quote",
+            "tension_band",
+            "voices",
+            "related_shifts",
+            "industries",
+            "territories",
+        ],
+    ),
+    (
+        "key_trend",
+        "economy",
+        &[
+            "pull_quote",
+            "tension_band",
+            "voices",
+            "related_shifts",
+            "industries",
+            "territories",
+        ],
+    ),
+    (
+        "key_trend",
+        "organisations",
+        &[
+            "pull_quote",
+            "tension_band",
+            "voices",
+            "related_shifts",
+            "industries",
+            "territories",
+        ],
+    ),
+    (
+        "key_trend",
+        "consumers",
+        &["pull_quote", "tension_band", "voices", "related_shifts"],
+    ),
     // Sub-shifts: the three the build never renders, plus the two that are
     // Consumers-only.
-    ("sub_trend", "society", &["signals", "counter_signals", "evidence", "human_needs", "territories"]),
-    ("sub_trend", "economy", &["signals", "counter_signals", "evidence", "human_needs", "territories"]),
-    ("sub_trend", "organisations", &["signals", "counter_signals", "evidence", "human_needs", "territories"]),
-    ("sub_trend", "consumers", &["signals", "counter_signals", "evidence"]),
+    (
+        "sub_trend",
+        "society",
+        &[
+            "signals",
+            "counter_signals",
+            "evidence",
+            "human_needs",
+            "territories",
+        ],
+    ),
+    (
+        "sub_trend",
+        "economy",
+        &[
+            "signals",
+            "counter_signals",
+            "evidence",
+            "human_needs",
+            "territories",
+        ],
+    ),
+    (
+        "sub_trend",
+        "organisations",
+        &[
+            "signals",
+            "counter_signals",
+            "evidence",
+            "human_needs",
+            "territories",
+        ],
+    ),
+    (
+        "sub_trend",
+        "consumers",
+        &["signals", "counter_signals", "evidence"],
+    ),
 ];
 
 /// Every explicit row, plus a hash of the query result.
@@ -273,7 +344,13 @@ mod tests {
         Policy::default().apply(&mut modules, Scope::KeyTrend, "society");
         assert_eq!(
             types(&modules),
-            ["dek", "from_to", "stat_band", "innovations", "sub_shift_list"],
+            [
+                "dek",
+                "from_to",
+                "stat_band",
+                "innovations",
+                "sub_shift_list"
+            ],
         );
     }
 
