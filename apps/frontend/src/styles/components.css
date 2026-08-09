@@ -20,11 +20,15 @@
    * un-overridable.
    * ------------------------------------------------------------------- */
 
-  /* Key-shift and domain-row titles. Suez One ships 400 only. */
+  /* Key-shift and domain-row titles. Suez One ships 400 only.
+     No `text-transform`: a trend name is uppercase in the DATA now, because
+     CSS casing never reaches a copy-paste, a screen reader or a crawler — the
+     page said DELEGATED DISCOVERY while everything reading the DOM saw
+     Delegated Discovery. The only non-name this class carries is the stat
+     figure, which is a number. */
   .t-title {
     font-family: var(--font-title);
     font-weight: 400;
-    text-transform: uppercase;
   }
 
   /* Everything structural: headings, labels, buttons, card titles. */

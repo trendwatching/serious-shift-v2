@@ -63,7 +63,7 @@ def test_the_matrix_matches_the_delivered_design():
     is deliberate and is the single easiest thing to invert by accident."""
     hidden = _contract()["visibility"]["hidden"]
 
-    for sphere in ("society", "economy", "organisations"):
+    for sphere in ("society", "economy", "organizations"):
         assert "industries" in hidden["key_trend"][sphere]
         assert "territories" in hidden["key_trend"][sphere]
         assert "human_needs" in hidden["sub_trend"][sphere]

@@ -173,7 +173,7 @@
    * ------------------------------------------------------------------- */
   --grad-society:       linear-gradient(135deg, #FF0B85 0%, #ED026B 46%, #9A0046 100%);
   --grad-economy:       linear-gradient(135deg, #0F91EE 0%, #0A7FDA 46%, #04528B 100%);
-  --grad-organisations: linear-gradient(135deg, #ADB03A 0%, #9A9A43 42%, #5F6E13 100%);
+  --grad-organizations: linear-gradient(135deg, #ADB03A 0%, #9A9A43 42%, #5F6E13 100%);
   --grad-consumers:     linear-gradient(135deg, #F65510 0%, #E74707 46%, #922E03 100%);
 
   /* ── Sunset — one per sphere ──────────────────────────────────────────
@@ -264,7 +264,7 @@
   --a-shadow: rgba(4, 82, 139, 0.24);
 }
 
-[data-domain='organisations'] {
+[data-domain='organizations'] {
   --a-hot:   #ADB03A;
   --a:       #737425;   /* readable olive; bright olive stays decorative */
   --a-deep:  #5F6E13;

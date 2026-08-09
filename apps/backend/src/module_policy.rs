@@ -42,7 +42,7 @@ use crate::innovations::{fnv1a, Scope};
 /// the Docker build. `default_visibility_matches_the_contract` reads the JSON and
 /// fails if the two drift.
 ///
-/// `organisations` is the database id, spelled with an s here and only here.
+/// `organizations` — US spelling, the same everywhere since the sphere rename.
 const DEFAULT_HIDDEN: [(&str, &str, &[&str]); 8] = [
     // Key shifts: the four modules the build never renders, plus the two that are
     // Consumers-only.
@@ -72,7 +72,7 @@ const DEFAULT_HIDDEN: [(&str, &str, &[&str]); 8] = [
     ),
     (
         "key_trend",
-        "organisations",
+        "organizations",
         &[
             "pull_quote",
             "tension_band",
@@ -113,7 +113,7 @@ const DEFAULT_HIDDEN: [(&str, &str, &[&str]); 8] = [
     ),
     (
         "sub_trend",
-        "organisations",
+        "organizations",
         &[
             "signals",
             "counter_signals",

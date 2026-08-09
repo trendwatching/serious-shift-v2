@@ -18,7 +18,7 @@ CONTRACT = json.loads(
     (Path(__file__).resolve().parents[3] / 'packages/contracts/shift_modules.json').read_text()
 )
 SECTORS = CONTRACT['industry_sectors']
-DOMAINS = ['society', 'economy', 'consumers', 'organisations']
+DOMAINS = ['society', 'economy', 'consumers', 'organizations']
 
 
 def valid_map() -> dict:
@@ -363,7 +363,7 @@ def test_two_spheres_naming_a_shift_the_same_get_distinct_slugs():
 
     rows = [
         {'id': 19, 'domain_id': 'economy', 'name': 'Moat Migration'},
-        {'id': 48, 'domain_id': 'organisations', 'name': 'Moat Migration'},
+        {'id': 48, 'domain_id': 'organizations', 'name': 'Moat Migration'},
         {'id': 60, 'domain_id': 'society', 'name': 'Moat Migration'},
     ]
     seen: dict = {}

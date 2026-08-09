@@ -11,7 +11,7 @@ import Orbs from './Orbs'
  */
 export default function HomePanel({ width, active, count, domains, onJump }) {
   // Falls back to DECK, not to a capitalised id: the id is the database
-  // spelling ("organisations") and the badge would render "Organisations" until
+  // spelling ("organizations") and the badge would render "Organisations" until
   // the map arrived and then reflow to "Organizations". One letter, but it is a
   // visible twitch on the first screen anyone sees.
   const nameOf = (id) => domains.find((d) => d.id === id)?.name

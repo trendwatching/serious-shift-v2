@@ -89,7 +89,7 @@ describe('route-scoped data', () => {
       return <output>{state.shift?.title}|{state.shiftSiblings.next?.title}</output>
     }
 
-    render(<MemoryRouter initialEntries={['/map/society/trust-machines']}><Probe /></MemoryRouter>)
+    render(<MemoryRouter initialEntries={['/society/trust-machines']}><Probe /></MemoryRouter>)
     await waitFor(() => expect(screen.getByText('Trust Machines|Synthetic Belonging')).toBeInTheDocument())
     expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/api/v1/map', '/api/v1/map/society/trust-machines'])
     expect(fetch).not.toHaveBeenCalledWith('/api/map', expect.anything())
@@ -103,14 +103,16 @@ describe('route-scoped data', () => {
     // was a dropdown.
     global.fetch = vi.fn((url) => response(url === '/api/v1/map' ? indexFixture : subFixture))
     render(
-      <MemoryRouter initialEntries={['/map/society/trust-machines/sub-1']}>
-        <Routes><Route path="/map/:domainSlug/:ktSlug/:subSlug" element={<SubShiftPage />} /></Routes>
+      <MemoryRouter initialEntries={['/society/trust-machines/sub-1']}>
+        <Routes><Route path="/:domainSlug/:ktSlug/:subSlug" element={<SubShiftPage />} /></Routes>
       </MemoryRouter>,
     )
     const trail = await screen.findByRole('navigation', { name: 'Breadcrumb' })
-    expect(within(trail).getByRole('link', { name: 'Home' })).toBeInTheDocument()
-    expect(within(trail).getByRole('link', { name: /Trust Machines/ }))
-      .toHaveAttribute('href', '/map/society/trust-machines')
+    // The accessible names are UPPERCASE because the caps are characters now,
+    // not `text-transform` — the page and a copy-paste of it have to agree.
+    expect(within(trail).getByRole('link', { name: 'HOME' })).toBeInTheDocument()
+    expect(within(trail).getByRole('link', { name: /TRUST MACHINES/ }))
+      .toHaveAttribute('href', '/society/trust-machines')
     expect(screen.queryByRole('navigation', { name: 'Adjacent sub-shifts' })).not.toBeInTheDocument()
   })
 
@@ -134,8 +136,8 @@ describe('route-scoped data', () => {
     }
     global.fetch = vi.fn((url) => response(url === '/api/v1/map' ? indexFixture : scrambled))
     render(
-      <MemoryRouter initialEntries={['/map/society/trust-machines']}>
-        <Routes><Route path="/map/:domainSlug/:ktSlug" element={<ShiftPage />} /></Routes>
+      <MemoryRouter initialEntries={['/society/trust-machines']}>
+        <Routes><Route path="/:domainSlug/:ktSlug" element={<ShiftPage />} /></Routes>
       </MemoryRouter>,
     )
     await screen.findByText('A dek.')
@@ -156,7 +158,7 @@ describe('route-scoped data', () => {
   })
 
   it('treats malformed percent-encoded paths as not found instead of crashing', async () => {
-    render(<MemoryRouter initialEntries={['/map/%E0%A4%A']}><App /></MemoryRouter>)
+    render(<MemoryRouter initialEntries={['/%E0%A4%A']}><App /></MemoryRouter>)
     expect(await screen.findByRole('heading', { name: 'This shift has moved.' })).toBeInTheDocument()
   })
 })
@@ -218,7 +220,7 @@ describe('URLs the site did not author', () => {
     expect(safeHref('JaVaScRiPt:alert(1)')).toBeUndefined()
     expect(safeHref('data:text/html,x')).toBeUndefined()
     expect(safeHref('https://ok.test/x')).toBe('https://ok.test/x')
-    expect(safeHref('/map/society')).toBe('/map/society')
+    expect(safeHref('/society')).toBe('/society')
   })
 })
 
@@ -226,13 +228,13 @@ describe('the deck', () => {
   it('orders the panels the way the badges are drawn', async () => {
     // HomePanel draws the badges in DOMAIN_ORDER and jumps by PANEL index, so
     // the panels must be in that order too. They followed the published
-    // document's order instead — society, economy, consumers, organisations —
+    // document's order instead — society, economy, consumers, organizations —
     // so the Consumers badge opened Organizations, the Organizations badge
     // opened Consumers, and the deck counted 01, 02, 04, 03.
     const { orderDomains } = await import('../src/lib/useDomains')
     const { DOMAIN_ORDER } = await import('../src/lib/theme')
 
-    const published = ['society', 'economy', 'consumers', 'organisations']
+    const published = ['society', 'economy', 'consumers', 'organizations']
     expect(published).not.toEqual(DOMAIN_ORDER)
     expect(orderDomains(published)).toEqual(DOMAIN_ORDER)
 

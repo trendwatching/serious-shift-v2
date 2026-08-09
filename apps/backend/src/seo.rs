@@ -148,7 +148,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
             }
         };
         idx.add(
-            format!("/map/{id}"),
+            format!("/{id}"),
             PageMeta {
                 title: format!("{name} — {SITE_NAME}"),
                 description: clamp(&desc),
@@ -162,7 +162,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
             continue;
         }
         idx.add(
-            format!("/map/{domain}/{slug}"),
+            format!("/{domain}/{slug}"),
             PageMeta {
                 title: format!("{} — {SITE_NAME}", trend_title(&name)),
                 description: clamp(&s(&kt, "subtitle")),
@@ -184,7 +184,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
             }
         };
         idx.add(
-            format!("/map/{domain}/{slug}"),
+            format!("/{domain}/{slug}"),
             PageMeta {
                 title: format!("{} — {SITE_NAME}", trend_title(&name)),
                 description: clamp(&desc),
@@ -365,14 +365,14 @@ mod tests {
     fn trend_titles_are_capsed_and_quoted_but_spheres_are_not() {
         let idx = build_index(DOC);
         assert_eq!(
-            idx.pages["/map/society/sovereign-collapse"].title,
+            idx.pages["/society/sovereign-collapse"].title,
             "\u{201C}SOVEREIGN COLLAPSE\u{201D} — Serious Shift"
         );
         assert_eq!(
-            idx.pages["/map/society/sovereign-collapse/threshold-blindness"].title,
+            idx.pages["/society/sovereign-collapse/threshold-blindness"].title,
             "\u{201C}THRESHOLD BLINDNESS\u{201D} — Serious Shift"
         );
-        assert_eq!(idx.pages["/map/society"].title, "Society — Serious Shift");
+        assert_eq!(idx.pages["/society"].title, "Society — Serious Shift");
         assert_eq!(idx.pages["/about"].title, "About — Serious Shift");
     }
 
@@ -460,9 +460,9 @@ mod tests {
         let idx = build_index(DOC);
         for r in [
             "/",
-            "/map/society",
-            "/map/society/sovereign-collapse",
-            "/map/society/sovereign-collapse/threshold-blindness",
+            "/society",
+            "/society/sovereign-collapse",
+            "/society/sovereign-collapse/threshold-blindness",
         ] {
             assert!(idx.pages.contains_key(r), "missing {r}");
         }
@@ -501,12 +501,7 @@ mod tests {
     #[test]
     fn render_replaces_title_and_description() {
         let idx = build_index(DOC);
-        let out = render(
-            SHELL,
-            "/map/society",
-            &idx.pages["/map/society"],
-            "https://x.test",
-        );
+        let out = render(SHELL, "/society", &idx.pages["/society"], "https://x.test");
         assert!(out.contains("<title>Society — Serious Shift</title>"));
         assert!(!out.contains("Old Title"));
         assert!(out.contains("How AGI rewrites the social contract."));
@@ -516,13 +511,8 @@ mod tests {
     #[test]
     fn render_adds_canonical_and_social_tags() {
         let idx = build_index(DOC);
-        let out = render(
-            SHELL,
-            "/map/society",
-            &idx.pages["/map/society"],
-            "https://x.test",
-        );
-        assert!(out.contains(r#"<link rel="canonical" href="https://x.test/map/society"/>"#));
+        let out = render(SHELL, "/society", &idx.pages["/society"], "https://x.test");
+        assert!(out.contains(r#"<link rel="canonical" href="https://x.test/society"/>"#));
         assert!(out.contains(r#"<meta property="og:title""#));
         assert!(out.contains(r#"<meta name="twitter:card" content="summary_large_image"/>"#));
     }
@@ -555,7 +545,7 @@ mod tests {
         let idx = build_index(DOC);
         let xml = idx.sitemap("https://x.test");
         assert_eq!(xml.matches("<url>").count(), idx.routes.len());
-        assert!(xml.contains("<loc>https://x.test/map/society</loc>"));
+        assert!(xml.contains("<loc>https://x.test/society</loc>"));
         assert!(xml.contains("<lastmod>2026-08-01</lastmod>"));
     }
 
@@ -576,7 +566,7 @@ mod tests {
     fn entries_without_a_slug_are_skipped_not_rendered_as_bare_paths() {
         let doc = r#"{"domains":[],"key_trends":[{"domain_id":"society","name":"No Slug"}],"sub_trends":[]}"#;
         let idx = build_index(doc);
-        assert!(idx.routes.iter().all(|r| r != "/map/society/"));
+        assert!(idx.routes.iter().all(|r| r != "/society/"));
     }
 
     #[test]

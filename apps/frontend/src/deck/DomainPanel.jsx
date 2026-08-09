@@ -56,7 +56,7 @@ export default function DomainPanel({ domain, width, active, position, count, to
           {/* The arrow points DOWN. The shift list is the next thing on this
               journey; a right arrow read as "a different site over there". */}
           <Link
-            to={`/map/${domain.slug}`}
+            to={`/${domain.slug}`}
             onClick={(e) => { if (!active) e.preventDefault() }}
             tabIndex={active ? 0 : -1}
             className="pill-yellow self-start"

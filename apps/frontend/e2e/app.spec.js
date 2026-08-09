@@ -40,11 +40,11 @@ test('navigation, keyboard modules, source safety, and axe', async ({ page }) =>
 
   // The sphere page: its row numbers are the lightest text on the site, and it
   // was the one page type this walk never visited.
-  await clientNavigate(page, '/map/society')
+  await clientNavigate(page, '/society')
   await expect(page.getByRole('heading', { level: 1, name: /Society/i })).toBeVisible()
   await expectNoSeriousAxe(page)
 
-  await clientNavigate(page, '/map/society/trust-machines')
+  await clientNavigate(page, '/society/trust-machines')
   const why = page.getByRole('tab', { name: 'Why now' })
   await why.focus()
   await page.keyboard.press('ArrowRight')
@@ -60,7 +60,7 @@ test('navigation, keyboard modules, source safety, and axe', async ({ page }) =>
   await expect(subLinks.first()).toBeVisible()
   await expectNoSeriousAxe(page)
 
-  await clientNavigate(page, '/map/society/trust-machines/sub-1')
+  await clientNavigate(page, '/society/trust-machines/sub-1')
   // A sub-shift has no sibling rail and no next pager, so the breadcrumb IS the
   // way out — and it has to name the parent, not just the page you are on.
   const trail = page.getByRole('navigation', { name: 'Breadcrumb' })
@@ -85,7 +85,7 @@ test('a route change lands at the top, and a nav anchor lands on its section', a
   // Deep enough into a key shift that keeping the offset would drop the reader
   // into the middle of the next page — which is what used to happen, because
   // nothing reset it.
-  await clientNavigate(page, '/map/society/trust-machines')
+  await clientNavigate(page, '/society/trust-machines')
   await expect(page.getByRole('heading', { level: 1, name: /Trust Machines/i })).toBeVisible()
   await page.evaluate(() => window.scrollTo(0, 1200))
   await page.getByRole('link', { name: /Sub Shift 1/i }).first().click()

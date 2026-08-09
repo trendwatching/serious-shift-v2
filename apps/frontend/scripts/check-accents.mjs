@@ -27,7 +27,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const TOKENS = readFileSync(resolve(ROOT, 'src/styles/tokens.css'), 'utf8')
 const THEME = readFileSync(resolve(ROOT, 'src/lib/theme.js'), 'utf8')
 
-const SPHERES = ['society', 'economy', 'organisations', 'consumers']
+const SPHERES = ['society', 'economy', 'organizations', 'consumers']
 
 const fail = (m) => {
   console.error(`✗ ${m}`)

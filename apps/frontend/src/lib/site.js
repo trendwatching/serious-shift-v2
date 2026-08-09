@@ -35,7 +35,7 @@ export const DECK = [
     intro: 'Capability has stopped being scarce and verification has started. Value is migrating from producing work to proving a human judged it — and pricing is following.',
   },
   {
-    id: 'organisations', name: 'Organizations', num: '03', horizon: '2026',
+    id: 'organizations', name: 'Organizations', num: '03', horizon: '2026',
     blurb: 'How institutions decide, hire and defend themselves when speed is free.',
     intro: 'Speed is free, so deliberation is the differentiator. The bottleneck has moved from making the work to finding anyone qualified to review it.',
   },

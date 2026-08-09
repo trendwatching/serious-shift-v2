@@ -145,10 +145,13 @@ DOMAINS = [
                           'delegat', 'trust'],
     },
     {
-        # The id stays British: it is the URL segment, the shift_refs key and the
-        # domains_v2 primary key, so renaming it would 404 every published link.
-        # Everything the reader sees is US spelling, per the content spec.
-        'id':    'organisations',
+        # US spelling, including the id. It stayed British for a long time
+        # because it is the URL segment, the shift_refs key and the domains_v2
+        # primary key — renaming it 404s every published link. That was worth
+        # paying once: /map/organizations was a 404 a reader could reach by
+        # typing the name they see on the page. Migrated together with the
+        # `/map` prefix drop, so every URL moved once rather than twice.
+        'id':    'organizations',
         'name':  'Organizations',
         'label': 'AI × Organizations',
         'short_description': (
@@ -184,7 +187,7 @@ DOMAIN_FLOWS_PRESET = [
     {'source': 'society',       'target': 'economy',       'strength': 'high',   'description': 'Societal legitimacy crises and governance failures shape economic confidence and policy responses.'},
     {'source': 'society',       'target': 'consumers',     'strength': 'high',   'description': 'Cultural shifts in identity, trust, and meaning drive consumer expectations and behavioural norms.'},
     {'source': 'economy',       'target': 'consumers',     'strength': 'high',   'description': 'Economic disruption — displacement, inequality, new income models — redefines consumer purchasing power and priorities.'},
-    {'source': 'economy',       'target': 'organisations', 'strength': 'high',   'description': 'Macro-economic pressures, labor cost dynamics, and capital flows directly determine organizational strategy.'},
-    {'source': 'consumers',     'target': 'organisations', 'strength': 'high',   'description': 'Shifting consumer expectations and agent-mediated purchase patterns force organizational redesign.'},
-    {'source': 'organisations', 'target': 'economy',       'strength': 'medium', 'description': 'Corporate adoption of AI at scale drives productivity, employment patterns, and market concentration.'},
+    {'source': 'economy',       'target': 'organizations', 'strength': 'high',   'description': 'Macro-economic pressures, labor cost dynamics, and capital flows directly determine organizational strategy.'},
+    {'source': 'consumers',     'target': 'organizations', 'strength': 'high',   'description': 'Shifting consumer expectations and agent-mediated purchase patterns force organizational redesign.'},
+    {'source': 'organizations', 'target': 'economy',       'strength': 'medium', 'description': 'Corporate adoption of AI at scale drives productivity, employment patterns, and market concentration.'},
 ]

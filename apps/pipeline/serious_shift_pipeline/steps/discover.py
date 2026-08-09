@@ -25,7 +25,7 @@ DOMAIN_QUERIES = {
     "society":       "artificial intelligence society governance trust democracy",
     "economy":       "artificial intelligence economy productivity labor growth",
     "consumers":     "artificial intelligence consumer behavior adoption marketing",
-    "organisations": "artificial intelligence enterprise organizations management work",
+    "organizations": "artificial intelligence enterprise organizations management work",
 }
 ARXIV_CATEGORIES = ["cs.AI", "cs.CL", "cs.LG", "cs.CY", "econ.GN"]
 

@@ -1432,9 +1432,9 @@ mod tests {
         // Slugs strip punctuation, so no route's last segment contains a dot.
         for p in [
             "/",
-            "/map/society",
-            "/map/society/sovereign-collapse",
-            "/map/society/sovereign-collapse/threshold-blindness",
+            "/society",
+            "/society/sovereign-collapse",
+            "/society/sovereign-collapse/threshold-blindness",
             "/some/deep/path",
         ] {
             assert!(!looks_like_asset(p), "{p} is a route, not an asset");

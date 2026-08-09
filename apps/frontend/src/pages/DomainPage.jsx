@@ -2,7 +2,7 @@ import { Link, useParams } from '../lib/router'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { cssUrl } from '../lib/safeUrl'
 import { useResolved } from '../lib/useDomains'
-import { quoted } from '../lib/theme'
+import { isSphere, quoted } from '../lib/theme'
 import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Loading, Missing, Unavailable } from './states'
@@ -11,6 +11,9 @@ const HERO_IMAGE = { society: '/shift/domain-society-bg.jpg' }
 
 export default function DomainPage() {
   const { domainSlug } = useParams()
+  // Not a sphere — `/:domainSlug` matches any single segment now, so this is
+  // an unknown path and has to 404 rather than render a sphere.
+  if (!isSphere(domainSlug)) return <Missing />
   const { domain, loading, unavailable, error, retry } = useResolved({ domainSlug })
   useDocumentMeta(domain?.name, domain?.blurb)
 
@@ -54,8 +57,12 @@ export default function DomainPage() {
           style={{ backgroundImage: 'linear-gradient(180deg, rgba(27,22,32,0) 34%, rgba(27,22,32,0.34) 100%)' }}
         />
         <div className="canvas gutter relative z-[2] mt-auto">
-          <h1 className="t-display uppercase" style={{ fontSize: 'var(--t-hero)', fontWeight: 700, lineHeight: 0.98, letterSpacing: '-0.03em' }}>
-            {domain.name}
+          {/* Uppercase in the DOM, not by CSS — the breadcrumb directly above
+              this already carries its caps as characters, and a page whose
+              title copy-pastes differently from its own trail is the bug this
+              whole pass is about. */}
+          <h1 className="t-display" style={{ fontSize: 'var(--t-hero)', fontWeight: 700, lineHeight: 0.98, letterSpacing: '-0.03em' }}>
+            {String(domain.name ?? '').toUpperCase()}
           </h1>
           <p className="measure" style={{ '--measure': '290px', marginTop: 14, fontSize: 15, lineHeight: 1.5, opacity: 0.94 }}>{domain.blurb}</p>
         </div>
@@ -72,7 +79,7 @@ export default function DomainPage() {
           {domain.keyShifts.map((s, i) => (
             <Link
               key={s.id}
-              to={`/map/${domain.slug}/${s.slug}`}
+              to={`/${domain.slug}/${s.slug}`}
               className="flex"
               style={{
                 gap: 16, padding: '22px 0', borderBottom: '1px solid var(--color-line-row)',

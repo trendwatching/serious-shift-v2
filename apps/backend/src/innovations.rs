@@ -711,7 +711,7 @@ pub async fn ingest(
         .filter_map(|link| {
             let domain = link.get("domain_id").and_then(Value::as_str)?;
             let slug = link.get("slug").and_then(Value::as_str)?;
-            Some(json!(format!("/map/{domain}/{slug}")))
+            Some(json!(format!("/{domain}/{slug}")))
         })
         .collect();
 
@@ -1581,7 +1581,7 @@ WITH page AS (
                       'scope', sr.scope, 'slug', sr.slug, 'domain_id', sr.domain_id,
                       'source', l.source,
                       'href', CASE WHEN sr.domain_id IS NOT NULL
-                                   THEN '/map/' || sr.domain_id || '/' || sr.slug END)
+                                   THEN '/' || sr.domain_id || '/' || sr.slug END)
                       ORDER BY l.sort_order, sr.slug)
                FROM innovation_shift_links l
                JOIN shift_refs sr ON sr.id = l.shift_ref_id

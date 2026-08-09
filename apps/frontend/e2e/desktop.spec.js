@@ -14,8 +14,8 @@ import { mockMap } from './fixtures.js'
  * `--wide` is now `--col + 160px`, which is what these assertions protect: at
  * most two measures, 80px between them, both on the page's own axis.
  */
-const SHIFT = '/map/society/trust-machines'
-const SUB = '/map/society/trust-machines/sub-1'
+const SHIFT = '/society/trust-machines'
+const SUB = '/society/trust-machines/sub-1'
 const WIDTHS = [1024, 1280, 1440, 1920]
 
 const geometry = (page) => page.evaluate(() => {

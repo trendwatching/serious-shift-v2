@@ -47,7 +47,7 @@ ALTER TABLE public.domains_v2
 
 CREATE TABLE public.shift_module_visibility (
     scope       text NOT NULL,
-    -- A sphere id ('society' | 'economy' | 'consumers' | 'organisations'), or
+    -- A sphere id ('society' | 'economy' | 'consumers' | 'organizations'), or
     -- '*' meaning every sphere. An exact match beats '*'; '*' beats the
     -- contract default.
     domain_id   text NOT NULL,

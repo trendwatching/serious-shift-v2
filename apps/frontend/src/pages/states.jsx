@@ -54,13 +54,30 @@ export function Loading({ hero = 'hero-short', sheet = false }) {
   )
 }
 
+/**
+ * The one 404.
+ *
+ * There used to be two — this and a near-identical `NotFound` in App.jsx — and
+ * which one a reader met depended on how many segments their URL had. Dropping
+ * the `/map` prefix made that visible: `/:domainSlug` matches any single
+ * segment, so `/not-a-real-route` stopped hitting the catch-all route and
+ * started rendering a sphere page that then had to 404 on its own.
+ *
+ * `what` names the thing that is missing when we know it ("shift",
+ * "sub-shift"); the bare form is for an address that matches nothing at all.
+ */
 export function Missing({ what }) {
   useDocumentMeta('Page not found', undefined, { notFound: true })
   return (
     <Shell>
-      <p className="t-eyebrow" style={{ color: 'var(--color-ink-meta)' }}>Not found</p>
-      <h1 className="t-display text-[26px] font-bold" style={{ letterSpacing: '-0.03em' }}>We couldn’t find that {what}.</h1>
-      <Link to="/" className="pill-yellow">Back to the domains</Link>
+      <p className="t-eyebrow" style={{ color: 'var(--color-ink-meta)' }}>404 · Not found</p>
+      <h1 className="t-display text-[32px] font-bold" style={{ letterSpacing: '-0.03em' }}>This shift has moved.</h1>
+      <p style={{ color: 'var(--color-ink-row)' }}>
+        {what
+          ? `We couldn’t find that ${what}.`
+          : 'The address does not match anything in the current weekly map.'}
+      </p>
+      <Link to="/" className="pill-yellow">Back to the shifts</Link>
     </Shell>
   )
 }

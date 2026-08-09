@@ -97,18 +97,18 @@ function setFrame(frame) {
 const PALETTE = {
   society:       { hot: '#FF007A', mid: '#E8006F', warm: '#F2734A', light: '#FDFF85', dark: '#39001F' },
   economy:       { hot: '#0FA6FF', mid: '#0A7FDA', warm: '#23B9A6', light: '#E6FF9C', dark: '#022638' },
-  organisations: { hot: '#C2C64F', mid: '#9A9A43', warm: '#4E9A62', light: '#EFFAB4', dark: '#20260A' },
+  organizations: { hot: '#C2C64F', mid: '#9A9A43', warm: '#4E9A62', light: '#EFFAB4', dark: '#20260A' },
   consumers:     { hot: '#FF6A1F', mid: '#E74707', warm: '#F2A03A', light: '#FDFF85', dark: '#3B1101' },
 }
 
 /* Which built forms belong to which sphere. A society shift gets institutions,
-   an economy shift gets a trading board, organisations get slabs and networks,
+   an economy shift gets a trading board, organizations get slabs and networks,
    consumers get the street. This is the only place the four differ in shape
    rather than only in colour. */
 const FORMS = {
   society:       ['colonnade', 'towers'],
   economy:       ['board', 'towers'],
-  organisations: ['monoliths', 'lattice'],
+  organizations: ['monoliths', 'lattice'],
   consumers:     ['towers', 'board'],
 }
 
@@ -528,7 +528,7 @@ const F = 640
 const FRAGMENTS = {
   society:       ['cornice', 'rim', 'figures', 'fall', 'shaft'],
   economy:       ['descent', 'shaft', 'fall', 'slabs', 'rim'],
-  organisations: ['slabs', 'shaft', 'rim', 'cornice', 'fall'],
+  organizations: ['slabs', 'shaft', 'rim', 'cornice', 'fall'],
   consumers:     ['figures', 'fall', 'shaft', 'rim', 'descent'],
 }
 
@@ -729,7 +729,7 @@ const ORIGIN = originArg > -1
   ? process.argv[originArg + 1]
   : process.env.MAP_ORIGIN || 'https://backend-staging-1c16.up.railway.app'
 
-const SPHERES = ['society', 'economy', 'organisations', 'consumers']
+const SPHERES = ['society', 'economy', 'organizations', 'consumers']
 
 const tail = (slug) => (typeof slug === 'string' ? slug.split('/').filter(Boolean).at(-1) : '')
 

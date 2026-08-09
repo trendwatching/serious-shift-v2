@@ -12,12 +12,12 @@ import { mockMap } from './fixtures.js'
  * “DELEGATED DISCOVERY” and the WhatsApp card next to it said
  * `Delegated Discovery`.
  */
-const SHIFT = '/map/society/trust-machines'
-const SUB = '/map/society/trust-machines/sub-1'
+const SHIFT = '/society/trust-machines'
+const SUB = '/society/trust-machines/sub-1'
 
 test('the wordmark never carries the logo’s (f) in running text', async ({ page }) => {
   await mockMap(page)
-  for (const path of ['/', '/about', '/map/society', SHIFT, SUB]) {
+  for (const path of ['/', '/about', '/society', SHIFT, SUB]) {
     await page.goto(path)
     await page.waitForFunction(() => document.title && !document.title.startsWith('Vite'))
     const { title, og } = await page.evaluate(() => ({
@@ -42,7 +42,7 @@ test('a trend name reaches the tab in caps, in quotes — a sphere name does not
   expect(await page.title()).toBe('“SUB SHIFT 1” — Serious Shift')
 
   // A sphere is a section of the site, not the name of a trend.
-  await page.goto('/map/society')
+  await page.goto('/society')
   await page.waitForFunction(() => document.title.includes('—'))
   expect(await page.title()).toBe('Society — Serious Shift')
 })
@@ -51,10 +51,10 @@ test('the rendered name is quoted, and the breadcrumb trail is not', async ({ pa
   await mockMap(page)
   await page.goto(SHIFT)
   const h1 = page.getByRole('heading', { level: 1 })
-  await expect(h1).toContainText('Trust Machines')
-  // The characters have to be in the DOM — `text-transform` is not, which is
-  // the whole reason the meta surfaces disagreed with the page.
-  expect(await h1.textContent()).toBe('“Trust Machines”')
+  // UPPERCASE characters, not `text-transform`. This is the assertion the whole
+  // change exists for: the page said DELEGATED DISCOVERY while every consumer
+  // of the DOM — copy-paste, screen reader, crawler — saw Delegated Discovery.
+  expect(await h1.textContent()).toBe('“TRUST MACHINES”')
 
   // The trail is navigation. The delivered design strips quotes there and a
   // quoted pill reads as clutter, so this exception is deliberate.
@@ -62,8 +62,8 @@ test('the rendered name is quoted, and the breadcrumb trail is not', async ({ pa
   expect(await crumb.textContent()).not.toContain('“')
 
   // The sphere page's row list carries them too.
-  await page.goto('/map/society')
-  await expect(page.locator('.t-title').first()).toHaveText(/^“.+”$/)
+  await page.goto('/society')
+  await expect(page.locator('.t-title').first()).toHaveText(/^“[^a-z]+”$/)
 })
 
 /**
@@ -77,7 +77,7 @@ test('the hero takes the poster cut for the shape of its band', async ({ page })
   // is not in heroes.json, so its hero falls back to the gradient and there is no
   // `.hero-art` element at all — which is correct behaviour, and useless here.
   const slug = 'autonomous-infection'
-  const path = `/map/society/${slug}`
+  const path = `/society/${slug}`
   await page.route('**/api/v1/map**', async (route) => {
     const url = new URL(route.request().url()).pathname
     const domain = { id: 'society', name: 'Society', horizon: '2028', short_description: 'Society shifts', key_shift_count: 1 }
@@ -88,7 +88,7 @@ test('the hero takes the poster cut for the shape of its band', async ({ page })
     }
     const body = url === '/api/v1/map'
       ? { updated: '2026-08-02', totals: { domains: 1, key_shifts: 1 }, domains: [domain] }
-      : url === path.replace('/map/', '/api/v1/map/')
+      : url === path.replace('/', '/api/v1/map/')
         ? { updated: '2026-08-02', domain, shift, siblings: [shift], sub_shifts: [] }
         : null
     await route.fulfill({

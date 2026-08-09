@@ -6,7 +6,7 @@ import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Modules } from '../modules'
 import { Loading, Missing, Unavailable } from './states'
-import { quoted, trendTitle, unquote } from '../lib/theme'
+import { isSphere, quoted, trendTitle, unquote } from '../lib/theme'
 
 /**
  * A sub-shift has no sibling rail, no related shifts and no next pager, so the
@@ -22,6 +22,9 @@ import { quoted, trendTitle, unquote } from '../lib/theme'
  */
 export default function SubShiftPage() {
   const { domainSlug, ktSlug, subSlug } = useParams()
+  // Not a sphere — `/:domainSlug` matches any single segment now, so this is
+  // an unknown path and has to 404 rather than render a sphere.
+  if (!isSphere(domainSlug)) return <Missing />
   const { domain, shift, sub, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug, subSlug })
   // See the note in ShiftPage — CSS casing never reaches the tab or the unfurl.
   useDocumentMeta(trendTitle(sub?.title), sub?.dek)
@@ -41,7 +44,7 @@ export default function SubShiftPage() {
           crumb={domain.crumb}
           items={[
             { label: 'Home', to: '/' },
-            { label: unquote(shift.title), to: `/map/${domain.slug}/${shift.slug}` },
+            { label: unquote(shift.title), to: `/${domain.slug}/${shift.slug}` },
             { label: unquote(sub.title) },
           ]}
         />
@@ -67,7 +70,7 @@ export default function SubShiftPage() {
         />
         <div className="canvas gutter relative z-[3] mt-auto" style={{ animation: 'ssRise 0.6s var(--ease-out) 0.14s' }}>
           <h1
-            className="t-display uppercase"
+            className="t-display"
             style={{ margin: 0, fontSize: 'var(--t-sub)', fontWeight: 800, lineHeight: 1.06, letterSpacing: '-0.015em' }}
           >
             {quoted(sub.title)}

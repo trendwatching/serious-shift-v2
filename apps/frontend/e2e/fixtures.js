@@ -9,7 +9,7 @@
 const domains = [
   ['society', 'Society', '2028'],
   ['economy', 'Economy', '2027'],
-  ['organisations', 'Organisations', '2026'],
+  ['organizations', 'Organizations', '2026'],
   ['consumers', 'Consumers', '2026'],
 ].map(([id, name, horizon]) => ({ id, name, horizon, short_description: `${name} shifts`, key_shift_count: id === 'society' ? 2 : 1 }))
 

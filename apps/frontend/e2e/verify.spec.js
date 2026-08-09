@@ -16,10 +16,10 @@ const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).joi
 test('the stat band is lit by its own sphere', async ({ page }) => {
   const ramps = {}
   for (const [sphere, path] of [
-    ['society', '/map/society/pacing-panic'],
-    ['economy', '/map/economy/entry-erasure'],
-    ['organisations', '/map/organisations/agent-saturation'],
-    ['consumers', '/map/consumers/provenance-premium'],
+    ['society', '/society/pacing-panic'],
+    ['economy', '/economy/entry-erasure'],
+    ['organizations', '/organizations/agent-saturation'],
+    ['consumers', '/consumers/provenance-premium'],
   ]) {
     await page.goto(O + path, { waitUntil: 'domcontentloaded' })
     await page.waitForFunction(() => document.querySelector('h1')?.textContent?.trim())
@@ -44,7 +44,7 @@ test('the stat band is lit by its own sphere', async ({ page }) => {
 
 test('desktop lines every module up on one of two axes', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
-  await page.goto(`${O}/map/economy/entry-erasure`, { waitUntil: 'domcontentloaded' })
+  await page.goto(`${O}/economy/entry-erasure`, { waitUntil: 'domcontentloaded' })
   await page.waitForFunction(() => document.querySelector('h1')?.textContent?.trim())
   await page.waitForTimeout(1200)
 

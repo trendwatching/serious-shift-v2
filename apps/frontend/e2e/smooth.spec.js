@@ -23,9 +23,9 @@ import { mockMap } from './fixtures.js'
  */
 for (const [name, path] of [
   ['home', '/'],
-  ['domain', '/map/society'],
-  ['shift', '/map/society/trust-machines'],
-  ['sub', '/map/society/trust-machines/sub-1'],
+  ['domain', '/society'],
+  ['shift', '/society/trust-machines'],
+  ['sub', '/society/trust-machines/sub-1'],
   ['about', '/about'],
 ]) {
   test(`${name} does not shift while it loads`, async ({ page }) => {
@@ -62,7 +62,7 @@ test('the homepage is the whole app, with no footer and nothing to scroll', asyn
   expect(await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight))
     .toBeLessThanOrEqual(0)
   // …and it is still there on a reading page.
-  await page.goto('/map/society', { waitUntil: 'domcontentloaded' })
+  await page.goto('/society', { waitUntil: 'domcontentloaded' })
   await page.waitForFunction(() => document.querySelector('footer'))
   expect(await page.locator('footer').count()).toBe(1)
 })

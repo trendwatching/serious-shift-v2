@@ -86,8 +86,9 @@
     "design build renders none of them. They are kept rather than cut so that",
     "turning one on later is one row and no model spend.",
     "",
-    "domain_id is the database id, so Organisations is spelled with an s here and",
-    "only here. Everything a reader sees is US spelling."
+    "domain_id is the database id, and it is US spelling like everything else",
+    "since the sphere rename — /organizations was a 404 a reader could reach by",
+    "typing the name printed on the page."
   ],
   "visibility": {
     "hidden": {
@@ -108,7 +109,7 @@
           "industries",
           "territories"
         ],
-        "organisations": [
+        "organizations": [
           "pull_quote",
           "tension_band",
           "voices",
@@ -138,7 +139,7 @@
           "human_needs",
           "territories"
         ],
-        "organisations": [
+        "organizations": [
           "signals",
           "counter_signals",
           "evidence",

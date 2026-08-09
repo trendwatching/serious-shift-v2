@@ -61,8 +61,10 @@ export function Breadcrumb({ items, crumb = 'var(--a-crumb)', className = '', st
           const last = i === n - 1
           const content = (
             <>
-              <span className="block min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap uppercase tracking-[0.04em]">
-                {crumbItem.label}
+              {/* Uppercased here, not by CSS — the trail is part of the name surface and
+                  a copy-paste of it should read the way the page does. */}
+              <span className="block min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap tracking-[0.04em]">
+                {String(crumbItem.label ?? '').toUpperCase()}
               </span>
               {!last && <span className="flex-none opacity-50" style={{ fontSize: px(K.text) }} aria-hidden="true">›</span>}
             </>

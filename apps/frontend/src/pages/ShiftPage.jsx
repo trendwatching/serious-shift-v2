@@ -7,7 +7,7 @@ import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Modules } from '../modules'
 import { Loading, Missing, Unavailable } from './states'
-import { quoted, trendTitle, unquote } from '../lib/theme'
+import { isSphere, quoted, trendTitle, unquote } from '../lib/theme'
 
 /**
  * Shrink the hero as the page scrolls: 660 → 360px, and the title 46 → 29px.
@@ -57,6 +57,9 @@ function useHeroShrink(ref, enabled) {
 
 export default function ShiftPage() {
   const { domainSlug, ktSlug } = useParams()
+  // Not a sphere — `/:domainSlug` matches any single segment now, so this is
+  // an unknown path and has to 404 rather than render a sphere.
+  if (!isSphere(domainSlug)) return <Missing />
   const { domain, shift, loading, unavailable, error, retry } = useResolved({ domainSlug, ktSlug })
   // `trendTitle`, not the raw name: CSS uppercases the heading on the page but
   // `text-transform` never reaches the tab, the unfurl or a copy-paste, so a
@@ -84,7 +87,7 @@ export default function ShiftPage() {
           crumb={domain.crumb}
           items={[
             { label: 'Home', to: '/' },
-            { label: domain.name, to: `/map/${domain.slug}` },
+            { label: domain.name, to: `/${domain.slug}` },
             { label: unquote(shift.title) },
           ]}
         />
@@ -152,7 +155,7 @@ export default function ShiftPage() {
             domain,
             subs: shift.subshifts,
             subCardStyle: 'tile',
-            basePath: `/map/${domain.slug}/${shift.slug}`,
+            basePath: `/${domain.slug}/${shift.slug}`,
           }}
         />
       </div>

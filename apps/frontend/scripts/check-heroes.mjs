@@ -28,7 +28,7 @@ const SETS = [
 ]
 
 /** The hot stop of each sphere's ramp — enough to identify which one was used. */
-const HOT = { society: '#FF007A', economy: '#0FA6FF', organisations: '#C2C64F', consumers: '#FF6A1F' }
+const HOT = { society: '#FF007A', economy: '#0FA6FF', organizations: '#C2C64F', consumers: '#FF6A1F' }
 
 const fail = (m) => {
   console.error(`✗ ${m}`)

@@ -7,7 +7,7 @@ import { useMemo } from 'react'
 import { useLocation } from './router'
 import { useData } from './useData'
 import { DECK } from './site'
-import { DOMAIN_ORDER, themeFor, pad2, slugify, readTimeOf } from './theme'
+import { DOMAIN_ORDER, isSphere, themeFor, pad2, slugify, readTimeOf } from './theme'
 
 const first = (...v) => v.find((x) => x !== undefined && x !== null && x !== '')
 const nonEmpty = (v) => (Array.isArray(v) && v.length ? v : null)
@@ -161,7 +161,7 @@ function toShift(src, i, domain) {
  * Fixed information architecture, like the four names: Society, Economy,
  * Organizations, Consumers — numbered 01 to 04 by the design. The published
  * document lists them in the pipeline's own order (society, economy, consumers,
- * organisations), and following that put the panels in one order while
+ * organizations), and following that put the panels in one order while
  * HomePanel drew its badges in another: the Consumers badge opened
  * Organizations, the Organizations badge opened Consumers, and the deck counted
  * 01, 02, 04, 03.
@@ -178,8 +178,14 @@ export function orderDomains(published = []) {
 }
 
 function routeSegments(pathname) {
-  if (!pathname.startsWith('/map/')) return []
-  return pathname.slice('/map/'.length).split('/').filter(Boolean).slice(0, 3)
+  // The `/map` prefix is gone: a sphere is `/consumers`, a shift
+  // `/consumers/delegated-discovery`. That means `/:domainSlug` matches ANY
+  // single segment, so the first one is checked against the local sphere list
+  // before anything is fetched — otherwise `/about`, `/robots.txt` and every
+  // typo would each cost a fragment request that can only 404.
+  const segments = pathname.split('/').filter(Boolean).slice(0, 3)
+  if (!segments.length || !isSphere(segments[0])) return []
+  return segments
 }
 
 export function useDomains() {

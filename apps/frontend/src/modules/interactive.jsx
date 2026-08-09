@@ -278,7 +278,7 @@ export function Territories({ data, ctx }) {
           }}
         >
           <span className="t-eyebrow" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--color-yellow)' }}>Work with us</span>
-          <span className="t-title" style={{ fontSize: 21, lineHeight: 1.14, textTransform: 'none' }}>Don’t see your angle here?</span>
+          <span className="t-title" style={{ fontSize: 21, lineHeight: 1.14 }}>Don’t see your angle here?</span>
           <span className="text-pretty" style={{ fontSize: 13, lineHeight: 1.48, opacity: 0.94 }}>
             These territories are starting points, not limits. We work with organizations to find where a shift like this creates real commercial space for their specific context.
           </span>
@@ -328,7 +328,7 @@ export function SubShiftList({ ctx }) {
                   }}
                 />
                 <span className="box-border flex min-w-0 flex-1 flex-col justify-center" style={{ padding: '16px 16px 16px 15px', gap: 7 }}>
-                  <span className="t-display uppercase" style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.18, letterSpacing: '-0.01em' }}>{quoted(s.title)}</span>
+                  <span className="t-display" style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.18, letterSpacing: '-0.01em' }}>{quoted(s.title)}</span>
                   <span className="text-pretty" style={{ fontSize: 11.5, lineHeight: 1.42, color: 'var(--color-ink-mid)' }}>{short}</span>
                 </span>
               </Link>
@@ -355,7 +355,7 @@ export function SubShiftList({ ctx }) {
                   style={{ width: 22, height: 22, borderRadius: 999, background: 'var(--a-wash)', color: 'var(--a-ink)', fontSize: 13 }}
                 >↗</span>
               </span>
-              <span className="t-display uppercase" style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.01em' }}>{quoted(s.title)}</span>
+              <span className="t-display" style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.01em' }}>{quoted(s.title)}</span>
               <span className="text-pretty" style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-mid)' }}>{s.dek}</span>
             </Link>
           )
