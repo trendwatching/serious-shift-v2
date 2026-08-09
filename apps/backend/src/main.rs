@@ -79,8 +79,9 @@ fn static_dir() -> String {
 ///
 /// index.html is deliberately NOT cached here: it names the current hashed
 /// bundles, so caching it is what makes a deploy invisible to a returning
-/// browser. The immutable assets are handled separately — see
-/// `immutable_assets`.
+/// browser. The cacheable assets are handled by the `/assets` and `/shift`
+/// nests registered ahead of this one; whatever reaches here gets
+/// `STATIC_DEFAULT`.
 fn static_service() -> ServeDir {
     let dir = static_dir();
     let index = Path::new(&dir).join("index.html");
@@ -125,13 +126,29 @@ fn public_origin() -> String {
         .unwrap_or_default()
 }
 
-/// `Cache-Control` for the content-addressed bundles under /_next/static.
+/// `Cache-Control` for the content-addressed bundles under /assets.
 ///
-/// Next puts a content hash in every filename there, so a changed file is a
-/// changed URL and a stale entry is impossible. Without this header the browser
-/// revalidated every chunk on every navigation — a round trip per asset to be
-/// told nothing had changed.
+/// Vite puts a content hash in every filename there — `index-DAHsYQgs.js`, the
+/// stylesheet, all five font faces — so a changed file is a changed URL and a
+/// stale entry is impossible.
 const IMMUTABLE: &str = "public, max-age=31536000, immutable";
+
+/// `Cache-Control` for the generated artwork under /shift.
+///
+/// Deliberately NOT immutable: these filenames are keyed by slug, not by
+/// content, so regenerating the art reuses the URL. `immutable` would pin a
+/// stale poster in every browser that had ever loaded it, for a year, with no
+/// way to evict it. A day of freshness plus a week of serve-stale-while-you-
+/// revalidate gets the CDN benefit and still lets a republish land.
+const ARTWORK: &str = "public, max-age=86400, stale-while-revalidate=604800";
+
+/// `Cache-Control` for everything else static — the favicons, the wordmark, the
+/// generic share card, the web manifest. Stable URLs, rarely edited, and small.
+///
+/// Applied `if_not_present` so it defaults only responses that did not set the
+/// header themselves: the SPA shell keeps its own `no-cache`, which is what
+/// makes a deploy visible to a returning browser.
+const STATIC_DEFAULT: &str = "public, max-age=3600, stale-while-revalidate=86400";
 
 #[derive(Clone)]
 struct RouteFragment {
@@ -361,20 +378,52 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(state)
         // Hashed bundles, cached for a year. Registered before the fallback so
         // these paths never reach the un-cached index.html handler.
+        //
+        // This nest was `/_next/static` — a path the Next export used and this
+        // Vite build has never emitted, so it matched nothing and every asset on
+        // the site was served with NO `Cache-Control` at all. Browsers then fall
+        // back to heuristic freshness, which is a fraction of the file's age;
+        // right after a deploy every file's age is ~0, so the heuristic is ~0 and
+        // the bundle, the stylesheet, the five fonts and all 408 artwork files
+        // revalidated on every single navigation. Worst on launch day, when
+        // nothing is warm.
         .nest_service(
-            "/_next/static",
+            "/assets",
             ServiceBuilder::new()
                 .layer(SetResponseHeaderLayer::overriding(
                     header::CACHE_CONTROL,
                     HeaderValue::from_static(IMMUTABLE),
                 ))
-                .service(ServeDir::new(Path::new(&static_dir()).join("_next/static"))),
+                .service(ServeDir::new(Path::new(&static_dir()).join("assets"))),
         )
-        // Static files first (real assets under /shift, /logo.png, …); anything
+        .nest_service(
+            "/shift",
+            ServiceBuilder::new()
+                .layer(SetResponseHeaderLayer::overriding(
+                    header::CACHE_CONTROL,
+                    HeaderValue::from_static(ARTWORK),
+                ))
+                .service(ServeDir::new(Path::new(&static_dir()).join("shift"))),
+        )
+        // Static files first (real assets: /logo.png, /favicon.ico, …); anything
         // they do not have falls through to `spa`, which serves index.html with
         // this route's metadata stamped in. Registered last so every /api route
         // above wins.
-        .fallback_service(static_service().fallback(get(spa).with_state(state_for_spa)))
+        .fallback_service(
+            ServiceBuilder::new()
+                .layer(SetResponseHeaderLayer::if_not_present(
+                    header::CACHE_CONTROL,
+                    HeaderValue::from_static(STATIC_DEFAULT),
+                ))
+                .service(static_service().fallback(get(spa).with_state(state_for_spa))),
+        )
+        // Keep staging out of the search index. `None` on the published site
+        // inserts nothing; see seo::robots_header for why the header is needed
+        // alongside robots.txt rather than instead of it.
+        .layer(SetResponseHeaderLayer::overriding(
+            HeaderName::from_static("x-robots-tag"),
+            seo::robots_header(&public_origin()).and_then(|v| HeaderValue::from_str(v).ok()),
+        ))
         // Baseline security headers. These intentionally wrap the completed
         // router, including ServeDir and the SPA fallback.
         .layer(SetResponseHeaderLayer::overriding(

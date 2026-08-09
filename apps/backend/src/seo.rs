@@ -247,10 +247,50 @@ impl SiteIndex {
     }
 }
 
+/// Is this origin the published site, or a staging/preview copy of it?
+///
+/// It matters because staging carries a COMPLETE copy of the editorial content
+/// — the same 312 URLs, the same prose — and was serving `Allow: /` with a full
+/// sitemap. That is indexable duplicate content competing with the real domain
+/// for its own text, on a hostname nobody would want to rank. Nothing links
+/// there publicly yet, which is the only reason it has not happened.
+///
+/// Derived from the canonical origin rather than a separate flag, deliberately:
+/// the origin is already the thing that decides what every canonical URL and
+/// sitemap entry claims to be, so this cannot drift away from it. It also fails
+/// safe — a new preview environment that sets nothing stays out of the index,
+/// and only a real custom domain opts in.
+fn is_published_origin(origin: &str) -> bool {
+    let host = origin.trim();
+    !host.is_empty()
+        && !host.contains(".up.railway.app")
+        && !host.contains("localhost")
+        && !host.contains("127.0.0.1")
+}
+
 pub fn robots(origin: &str) -> String {
-    // Deliberately open: this is a public publication. The only thing worth
-    // keeping crawlers out of is the JSON API, which is not content.
+    if !is_published_origin(origin) {
+        // No sitemap line: advertising 312 URLs is the opposite of the intent.
+        return "User-agent: *\nDisallow: /\n".to_string();
+    }
+    // The published site is deliberately open: it is a public publication. The
+    // only thing worth keeping crawlers out of is the JSON API, not content.
     format!("User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: {origin}/sitemap.xml\n")
+}
+
+/// `X-Robots-Tag` for this origin, or `None` on the published site.
+///
+/// Belt and braces with `robots()`, and not redundant: `Disallow` stops a
+/// crawler fetching a page but does not stop the URL itself being indexed when
+/// it is discovered elsewhere — Google will list a disallowed URL with no
+/// snippet. The header is what actually says "do not index", and it applies to
+/// crawlers that were already given the URL, or that ignore robots.txt.
+pub fn robots_header(origin: &str) -> Option<&'static str> {
+    if is_published_origin(origin) {
+        None
+    } else {
+        Some("noindex, nofollow")
+    }
 }
 
 fn xml_escape(s: &str) -> String {
@@ -639,6 +679,37 @@ mod tests {
         let r = robots("https://x.test");
         assert!(r.contains("Sitemap: https://x.test/sitemap.xml"));
         assert!(r.contains("Disallow: /api/"));
+    }
+
+    /// Staging is a complete copy of the publication. Served as it was — with
+    /// `Allow: /` and a 312-URL sitemap — it is indexable duplicate content
+    /// competing with the real domain for the same prose.
+    #[test]
+    fn only_the_published_domain_invites_crawlers() {
+        for staging in [
+            "https://backend-staging-1c16.up.railway.app",
+            "https://backend-production-d723.up.railway.app", // still a preview host
+            "http://localhost:8080",
+            "", // origin never configured: not a site we can name, so not one we advertise
+        ] {
+            let r = robots(staging);
+            assert!(r.contains("Disallow: /"), "{staging} should be closed: {r}");
+            assert!(
+                !r.contains("Sitemap:"),
+                "{staging} should not advertise a sitemap: {r}"
+            );
+            assert_eq!(
+                robots_header(staging),
+                Some("noindex, nofollow"),
+                "{staging}"
+            );
+        }
+
+        // The published site stays fully open — this is a public publication.
+        let r = robots("https://www.seriousshift.ai");
+        assert!(r.contains("Allow: /"));
+        assert!(r.contains("Sitemap: https://www.seriousshift.ai/sitemap.xml"));
+        assert_eq!(robots_header("https://www.seriousshift.ai"), None);
     }
 
     #[test]

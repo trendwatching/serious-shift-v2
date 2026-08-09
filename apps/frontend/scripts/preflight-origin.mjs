@@ -108,6 +108,54 @@ if (orphanArt.length) {
   note(`(${orphanArt.length} art file(s) in the build are not published — harmless, just weight)`)
 }
 
+// Caching. Not cosmetic: this origin served EVERY static file with no
+// `Cache-Control` at all, because the immutable-asset nest was still pointed at
+// `/_next/static` from the Next export. With no directive a browser falls back
+// to heuristic freshness — a fraction of the file's age — and right after a
+// deploy every file's age is ~0, so the bundle, the stylesheet, the fonts and
+// all the artwork revalidate on every navigation. Launch day is the worst case,
+// because nothing is warm.
+{
+  const shell = await fetch(origin + '/').then((r) => r.text()).catch(() => '')
+  const bundle = shell.match(/\/assets\/[^"']+\.js/)?.[0]
+  const someArt = published.kt.find((k) => k.slug && heroes[k.slug])
+  const cc = async (path) =>
+    (await fetch(origin + path)).headers.get('cache-control') ?? '(none)'
+
+  if (bundle) {
+    const v = await cc(bundle)
+    note(`cache  ${bundle.padEnd(34)} ${v}`)
+    // Vite content-hashes this filename, so a changed file is a changed URL and
+    // a stale entry cannot happen — anything short of immutable is money left
+    // on the table.
+    if (!v.includes('immutable')) {
+      problems.push(`the hashed bundle is served with '${v}' — expected `
+        + `'immutable'. The /assets nest is not matching; check it against `
+        + `Vite's output dir in apps/backend/src/main.rs`)
+    }
+  }
+  if (someArt) {
+    const path = `/shift/heroes/${someArt.slug}.svg`
+    const v = await cc(path)
+    note(`cache  ${'artwork'.padEnd(34)} ${v}`)
+    if (v === '(none)') problems.push(`artwork is served with no Cache-Control`)
+    // Art filenames are slug-keyed, not content-hashed, so a republish reuses
+    // the URL. `immutable` here would pin a stale poster for a year.
+    if (v.includes('immutable')) {
+      problems.push(`artwork is 'immutable', but its filenames are keyed by slug `
+        + `and reused on republish — a regenerated poster could never evict the `
+        + `old one`)
+    }
+  }
+  const shellCc = await cc('/')
+  note(`cache  ${'index.html'.padEnd(34)} ${shellCc}`)
+  if (!/no-cache|no-store|max-age=0/.test(shellCc)) {
+    problems.push(`the shell is cached ('${shellCc}') — it names the current `
+      + `hashed bundles, so caching it makes a deploy invisible to a returning `
+      + `browser`)
+  }
+}
+
 // A page each, end to end: the shapes a reader actually hits.
 if (published.kt.length && published.kt[0].slug) {
   const k = published.kt[0]

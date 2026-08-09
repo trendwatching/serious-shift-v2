@@ -45,6 +45,15 @@ railway variables --set FRONTEND_ORIGIN=https://www.seriousshift.ai \
 it they fall back to the first `FRONTEND_ORIGIN` entry, which is the same here.
 Set a strong `INSPECTION_TOKEN` separately.
 
+**`PUBLIC_ORIGIN` now also decides whether the site is indexable**, so getting it
+right matters more than it used to. Any origin that is still a `*.up.railway.app`
+host — or is unset — serves `Disallow: /` and `X-Robots-Tag: noindex`, because
+staging carries a complete copy of the same 312 URLs and would otherwise compete
+with the real domain for its own prose. A custom domain opts in. That is the
+right default in both directions, but it means **a production deploy with
+`PUBLIC_ORIGIN` unset is a production deploy nobody can find**. Step 7 checks it
+on the real hostname, after the flip.
+
 `INGEST_TOKEN` and `CURATION_TOKEN` gate the innovations write and curation
 routes; each route is a 404 while its token is absent. Leave both absent for the
 cutover itself — nothing about moving the domain depends on them — and set them
@@ -237,6 +246,25 @@ window where the domain is resolving to the new service.
 
 **This is the point of no return for users.** Everything before it is
 invisible to them.
+
+Then check the two things that can only be checked on the real hostname — both
+are decided by `PUBLIC_ORIGIN`, and both are silent when wrong:
+
+```bash
+curl -s https://www.seriousshift.ai/robots.txt
+curl -sI https://www.seriousshift.ai/ | grep -i x-robots-tag
+```
+
+Expect `Allow: /` with a `Sitemap:` line, and **no** `X-Robots-Tag`. If you see
+`Disallow: /` or a `noindex`, `PUBLIC_ORIGIN` did not take — the site is up and
+invisible to search. Fix the variable and redeploy; nothing else is wrong.
+
+And confirm the canonical names the real domain rather than the Railway host,
+which is what tells Google which copy is the original:
+
+```bash
+curl -s https://www.seriousshift.ai/society/pacing-panic | grep -o '<link rel="canonical"[^>]*>'
+```
 
 ### 8. Remove the frontend service
 
