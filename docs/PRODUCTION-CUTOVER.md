@@ -180,7 +180,56 @@ this point. Check:
   Back-fill it before enabling ingest — see
   [`INNOVATIONS-API.md`](INNOVATIONS-API.md#first-time-setup-back-fill-shift_refs).
 
-### 6. Move the domain  ← the visible flip
+### 6. Refresh the content — **before the domain moves, not after**
+
+**This step used to be numbered 8 and run after the flip. That ordering ships a
+broken site.** Checked 2026-08-09, production's map is the pre-rebuild schema:
+58 key shifts and 290 sub-shifts with **no `slug` and no `modules` on any of
+them**, and a sphere still called `organisations`. `seo.rs` registers a shift
+route only for a non-empty slug, so moving the domain onto that database serves
+348 pages of 404 with every image missing — on a site whose homepage and
+`/about` render perfectly, which is exactly how it would reach a reader before
+anyone noticed.
+
+`./scripts/cutover-steps-2-to-5.sh` now refuses to call the content ready when
+it sees this, and prints why.
+
+```bash
+railway run --service pipeline --environment production -- \
+  python -m serious_shift_pipeline.run synthesize
+```
+
+Publication is conditional: unique route slugs and references (globally, across
+spheres — that gate was per-sphere until 2026-08-09 and let 22 duplicate names
+through), five sub-shifts, the ordered 16-industry contract, module shape and
+order, route-owned editorial citations, concise copy, duplicate prose, US
+spelling, referential integrity, and evidence/voice/stat URLs. One bounded
+targeted repair is permitted. Failure leaves the current map untouched and exits
+non-zero — recovery is a free `--export-only`, not another paid run.
+
+**Then regenerate the artwork for the slugs it produced, and redeploy.** Hero
+posters, landscape cuts, preview cards and tile fragments are all slug-keyed and
+compiled into the image; a synthesis that renames a shift strands its art
+silently, and the fallback is the sphere gradient, which looks deliberate.
+
+```bash
+cd apps/frontend
+npm run heroes -- --origin https://backend-production-d723.up.railway.app
+npm run heroes:og
+git add public/shift src/lib/heroes*.json && git commit && git push   # redeploys
+```
+
+Finally, prove the two halves agree. This is the gate for step 7:
+
+```bash
+node scripts/preflight-origin.mjs https://backend-production-d723.up.railway.app
+```
+
+It checks that every published shift has a slug, that every published slug has
+hero, landscape and card art in this build, that the sphere ids match the ones
+the bundle will accept, and that a page of each shape returns 200.
+
+### 7. Move the domain  ← the visible flip
 
 Remove `www.seriousshift.ai` (and the apex) from the **frontend** service, add
 it to the **backend** service. Railway reissues the certificate; expect a short
@@ -189,33 +238,15 @@ window where the domain is resolving to the new service.
 **This is the point of no return for users.** Everything before it is
 invisible to them.
 
-### 7. Remove the frontend service
+### 8. Remove the frontend service
 
 Only once the domain is live on the backend and verified. It has no other role
 — the backend image builds and serves the export itself.
 
-### 8. Refresh the content
-
-Run a controlled synthesis after the application deployment so the newly
-enforced module and provenance contract is applied to the live candidate.
-
-```bash
-# ingest is optional here — production's claims are already ahead of staging.
-railway run --service synthesize --environment production -- \
-  python -m serious_shift_pipeline.run synthesize
-```
-
-Publication is conditional: validate unique route
-slugs/references, five sub-shifts, the ordered 16-industry contract, module
-shape/order, route-owned editorial citations, concise copy, duplicate prose,
-referential integrity, and evidence/voice/stat URLs before promotion. One
-bounded targeted repair is permitted. Failure must leave the current map
-untouched and exit non-zero.
-
 ## Rollback
 
-Before step 6, rollback is: point the domain back at the `frontend` service.
-After step 7, roll application code back to the previous successful Railway
+Before step 7, rollback is: point the domain back at the `frontend` service.
+After step 8, roll application code back to the previous successful Railway
 deployment. Roll editorial data back by atomically promoting
 `documents['map:previous']`; do not rerun synthesis during an incident.
 

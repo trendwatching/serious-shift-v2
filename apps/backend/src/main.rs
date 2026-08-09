@@ -395,8 +395,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ))
         .layer(SetResponseHeaderLayer::overriding(
             header::CONTENT_SECURITY_POLICY,
+            // `script-src` does NOT allow 'unsafe-inline'. The shipped shell has
+            // zero inline <script> blocks — one external bundle and nothing
+            // else — so the allowance bought nothing and cost the policy its
+            // main protection: with 'unsafe-inline' present, any injected
+            // <script> in the page executes, which is the exact class of attack
+            // a CSP is for. `style-src` keeps it, because React writes inline
+            // `style` attributes on nearly every element in this design.
             HeaderValue::from_static(
-                "default-src 'self'; script-src 'self' 'unsafe-inline'; \
+                "default-src 'self'; script-src 'self'; \
                  style-src 'self' 'unsafe-inline'; img-src 'self' data:; \
                  font-src 'self'; connect-src 'self'; frame-ancestors 'none'; \
                  object-src 'none'; media-src 'none'; worker-src 'none'; \

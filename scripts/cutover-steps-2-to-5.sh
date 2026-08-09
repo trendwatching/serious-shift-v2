@@ -28,7 +28,10 @@ RAILWAY="${RAILWAY:-$HOME/.railway/bin/railway}"
 : "${PROD_DATABASE_URL:?set PROD_DATABASE_URL to the production Postgres DATABASE_PUBLIC_URL}"
 
 say()  { printf '\n\033[1m%s\033[0m\n' "$*"; }
-run()  { if $APPLY; then "$@"; else printf '  would run: %s\n' "$*"; fi; }
+# The dry run prints the command it WOULD run, and $PROD_DATABASE_URL carries
+# the password. Runbook output gets pasted into tickets and chat, so mask it.
+mask() { printf '%s' "${*//$PROD_DATABASE_URL/\$PROD_DATABASE_URL}"; }
+run()  { if $APPLY; then "$@"; else printf '  would run: %s\n' "$(mask "$*")"; fi; }
 
 # ── Preflight ───────────────────────────────────────────────────────────────
 say "0. Preflight"
@@ -40,6 +43,45 @@ case "$migrations" in
   *20250101000000*) echo "  already reconciled — skipping to step 3"; SKIP_DB=true ;;
   0001,0002,0003,0004,0005,0006) SKIP_DB=false ;;
   *) echo "  UNEXPECTED state. Stop and re-read docs/PRODUCTION-CUTOVER.md §2." >&2; exit 1 ;;
+esac
+
+# ── Is the CONTENT deployable at all? ──────────────────────────────────────
+#
+# Checked 2026-08-09: production's map document is the PRE-REBUILD schema — 58
+# key shifts and 290 sub-shifts with no `slug` and no `modules` on any of them,
+# and a sphere still called `organisations`. seo.rs registers a shift route only
+# for a non-empty slug, so that document is 348 pages of 404 with every image
+# missing, on a site whose homepage and /about render perfectly. Nothing else in
+# this script would have noticed.
+say "0b. Is the published map deployable?"
+doc_stats=$(psql "$PROD_DATABASE_URL" -Atc "
+  SELECT coalesce((SELECT (body->>'updated') || '|' ||
+      (SELECT count(*) FROM jsonb_array_elements(body->'key_trends')) || '|' ||
+      (SELECT count(*) FROM jsonb_array_elements(body->'key_trends') e
+        WHERE coalesce(e->>'slug','') <> '') || '|' ||
+      (SELECT count(*) FROM jsonb_array_elements(body->'key_trends') e
+        WHERE e ? 'modules') || '|' ||
+      (SELECT string_agg(d->>'id', ',') FROM jsonb_array_elements(body->'domains') d)
+    FROM documents WHERE key='map'), 'NO-MAP')")
+IFS='|' read -r m_updated m_kt m_slug m_mod m_spheres <<<"$doc_stats"
+echo "  updated=$m_updated  key_shifts=$m_kt  with-slug=$m_slug  with-modules=$m_mod"
+echo "  spheres=$m_spheres"
+if [[ "$doc_stats" == "NO-MAP" || "${m_slug:-0}" -eq 0 ]]; then
+  cat >&2 <<'WARN'
+  ⚠  This map cannot serve a single shift page: no slugs.
+     The domain must NOT move until a synthesis has run against this database
+     with the current pipeline, the artwork has been regenerated for the slugs
+     it produces, and the backend has been redeployed with that artwork.
+     See docs/PRODUCTION-CUTOVER.md §8 — which now runs BEFORE §6.
+WARN
+  CONTENT_READY=false
+else
+  CONTENT_READY=true
+fi
+case ",$m_spheres," in
+  *,organisations,*) echo "  ⚠  sphere id is the British spelling; the frontend bundle only" >&2
+                     echo "     accepts 'organizations', so that sphere 404s in the browser." >&2
+                     CONTENT_READY=false ;;
 esac
 
 # The reconciliation drops five concept-graph tables. It refuses if any has
@@ -102,7 +144,7 @@ if $APPLY; then
     [[ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/health")" == "200" ]] && break
     sleep 20
   done
-  for path in /health / /map/society /robots.txt /sitemap.xml /api/v1/map /api/nonsense; do
+  for path in /health / /society /robots.txt /sitemap.xml /api/v1/map /api/nonsense; do
     printf '  %-22s %s\n' "$path" "$(curl -s -o /dev/null -w '%{http_code}' "$URL$path")"
   done
   echo "  title: $(curl -s "$URL/" | grep -o '<title>[^<]*</title>' | head -1)"
@@ -111,10 +153,18 @@ if $APPLY; then
   echo "  shift_refs must NOT be zero before enabling ingest:"
   psql "$PROD_DATABASE_URL" -Atc "SELECT count(*) FROM shift_refs;" | sed 's/^/    /'
 else
-  echo "  would curl $URL for /health, /, /map/society, robots, sitemap, /api/v1/map"
+  echo "  would curl $URL for /health, /, /society, robots, sitemap, /api/v1/map"
 fi
 
 say "Done — steps 2 to 5."
 echo "  www.seriousshift.ai is still served by the frontend service."
 echo "  Step 6 (moving the domain) and step 7 (removing that service) are"
 echo "  deliberately not in this script. See docs/PRODUCTION-CUTOVER.md."
+echo
+if [[ "${CONTENT_READY:-true}" == true ]]; then
+  echo "  Before step 6, prove the data and the build agree:"
+else
+  echo "  ⚠  THE CONTENT IS NOT READY (see 0b). Do not move the domain. After"
+  echo "     synthesising and regenerating art, prove it with:"
+fi
+echo "     (cd apps/frontend && node scripts/preflight-origin.mjs $URL)"

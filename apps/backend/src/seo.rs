@@ -496,6 +496,26 @@ mod tests {
             head.contains("<script") && head.contains("/assets/"),
             "the entry script must survive the head rewrite: {head}",
         );
+
+        // The CSP sends `script-src 'self'` with NO 'unsafe-inline', which is
+        // only safe while the shell has no inline script. If a build ever emits
+        // one — Vite's modulepreload polyfill is the likely candidate — the
+        // browser silently refuses to run it and the page renders nothing at
+        // all. Fail here instead, where the reason is legible.
+        let mut rest = out.as_str();
+        while let Some(at) = rest.find("<script") {
+            rest = &rest[at..];
+            let tag_end = rest.find('>').map(|i| i + 1).unwrap_or(rest.len());
+            let (tag, after) = rest.split_at(tag_end);
+            if !tag.contains(" src=") {
+                let body = after.split("</script>").next().unwrap_or("");
+                assert!(
+                    body.trim().is_empty(),
+                    "inline <script> in the shell, which `script-src 'self'` blocks: {body}",
+                );
+            }
+            rest = after;
+        }
         // Every comment that opens must close before the body starts.
         assert_eq!(
             head.matches("<!--").count(),

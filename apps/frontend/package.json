@@ -22,6 +22,7 @@
     "heroes:og": "node scripts/render-og.mjs",
     "check:heroes": "node scripts/check-heroes.mjs",
     "check:frame": "node scripts/check-frame.mjs",
+    "preflight": "node scripts/preflight-origin.mjs",
     "check:accents": "node scripts/check-accents.mjs",
     "test:e2e:linux": "bash scripts/e2e-linux.sh"
   },
