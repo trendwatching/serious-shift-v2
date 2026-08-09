@@ -39,6 +39,11 @@ class Log:
         self.stats = {'found': 0, 'fetched': 0, 'skipped': 0, 'failed': 0}
         self.entries = []
         self.source_results = []
+        # Same counters as `stats`, bucketed per source. The run-wide totals
+        # cannot tell a misconfigured source from a quiet week: in one real run
+        # three sources produced 74 of 115 fetch failures and nothing in the
+        # summary said so.
+        self.by_source: dict = {}
         self.proxy_requests = 0
         self.proxy_cost_usd = 0.0
         self._lock = threading.Lock()   # log() is called from worker threads
@@ -52,6 +57,12 @@ class Log:
                 'title': title[:80],
             })
             self.stats[action] = self.stats.get(action, 0) + 1
+            bucket = self.by_source.setdefault(
+                f"{thinker}|{platform}",
+                {'thinker': thinker, 'platform': platform,
+                 'found': 0, 'fetched': 0, 'skipped': 0, 'failed': 0},
+            )
+            bucket[action] = bucket.get(action, 0) + 1
 
     def proxy_request(self):
         """Record one proxied YouTube HTTP operation without logging its URL."""
@@ -308,11 +319,18 @@ def main():
         'errors': error_log.count,
         'source_success_rate': round(source_ok / source_total, 4) if source_total else None,
         'sources': log.source_results,
+        'by_source': list(log.by_source.values()),
         'proxy_requests': log.proxy_requests,
         'proxy_cost_usd': round(log.proxy_cost_usd, 6),
     }})
     if not orchestrated:
         run.finish(status='ok')
 
-    print(f"\n  Errors: {error_log.count}"
-          + (f" — query pipeline_errors WHERE run_id = '{run_id}'" if error_log.count else ""))
+    # Stage-scoped, and said so. This printed the scrape stage's own count
+    # beside a run-scoped query, so `Errors: 72` sat next to a SELECT that
+    # returned 173 — the scrape count plus the extraction count, both correct,
+    # neither matching the other. The run-wide total is printed once, by
+    # `run.py`, where it is actually run-wide.
+    print(f"\n  Errors (scrape stage): {error_log.count}"
+          + (f" — query pipeline_errors WHERE run_id = '{run_id}' AND step = 'scrape'"
+             if error_log.count else ""))

@@ -207,6 +207,107 @@ def notify(title: str, message: str, urgency: str = 'info') -> None:
         print(f'[ALERT] webhook delivery failed: {e}', flush=True)
 
 
+def source_health(run_row: dict | None, errors: list[dict],
+                  claims_by_thinker: dict) -> list[dict]:
+    """One row per source: found, fetched, too-small, failed, claims.
+
+    Everything here is derived from what the run already recorded — the scrape
+    detail on `pipeline_runs`, the rows in `pipeline_errors`, and the claims
+    themselves. Nothing keeps a parallel tally, deliberately: the printed
+    numbers disagreeing with the table is the defect this is fixing (I6), and
+    the surest way to reintroduce it is a second counter that can drift.
+
+    Why per source at all: run-wide totals cannot tell a misconfigured source
+    from a quiet week. In one real run, three sources produced 74 of 115 fetch
+    failures and 70 files were discarded as too small — both facts were in the
+    database and neither was in the summary anyone read.
+    """
+    scrape = ((run_row or {}).get('detail') or {}).get('scrape') or {}
+    rows: dict = {}
+
+    def row(name):
+        return rows.setdefault(name, {
+            'thinker': name, 'found': 0, 'fetched': 0,
+            'too_small': 0, 'failed': 0, 'claims': 0,
+        })
+
+    for bucket in scrape.get('by_source') or []:
+        r = row(bucket.get('thinker') or '—')
+        r['found'] += bucket.get('found', 0)
+        r['fetched'] += bucket.get('fetched', 0)
+        r['failed'] += bucket.get('failed', 0)
+
+    for err in errors:
+        name = err.get('thinker') or '—'
+        # `size_filter` is its own step precisely so it can be counted apart
+        # from a real failure: a 900-byte file is usually a nav shell, but it
+        # is sometimes a genuinely short post, and the two are worth telling
+        # apart before anyone tunes the 1500-byte threshold.
+        if err.get('step') == 'size_filter':
+            row(name)['too_small'] += 1
+        elif err.get('step') in ('scrape', 'extract', 'write'):
+            row(name)['failed'] += 1
+
+    for name, count in (claims_by_thinker or {}).items():
+        row(name)['claims'] += count
+
+    return sorted(
+        rows.values(),
+        # Worst first: most failures, then fewest claims. The top of this list
+        # is the list of things to look at.
+        key=lambda r: (-(r['failed'] + r['too_small']), r['claims'], r['thinker']),
+    )
+
+
+def print_source_health(rows: list[dict], limit: int = 12) -> None:
+    if not rows:
+        return
+    notable = [r for r in rows if r['failed'] or r['too_small'] or not r['claims']]
+    if not notable:
+        print('\n  ── Source health ──  every source produced claims, no failures')
+        return
+    print(f"\n  ── Source health ── {len(notable)} of {len(rows)} sources need a look")
+    print(f"    {'source':<28}{'found':>7}{'fetched':>9}{'too small':>11}"
+          f"{'failed':>8}{'claims':>8}")
+    for r in notable[:limit]:
+        print(f"    {r['thinker'][:27]:<28}{r['found']:>7}{r['fetched']:>9}"
+              f"{r['too_small']:>11}{r['failed']:>8}{r['claims']:>8}")
+    if len(notable) > limit:
+        print(f"    … and {len(notable) - limit} more")
+
+
+def silent_sources(current: list[dict], previous_runs: list[dict],
+                   stage: str | None) -> list[str]:
+    """Sources that produced nothing this run AND nothing the run before.
+
+    One empty run is a quiet week. Two in a row, for a source whose peers are
+    still producing, is a source that has stopped working — a moved feed, a
+    changed layout, an IP block — and nothing said so until someone went
+    looking at a thinker page and found it hadn't moved in a month.
+    """
+    if stage not in ('ingest', 'full'):
+        return []
+    prior = next((r for r in previous_runs if r.get('stage') == stage), None)
+    if not prior:
+        return []
+    prior_scrape = ((prior.get('detail') or {}).get('scrape') or {})
+    prior_by_source = {
+        b.get('thinker'): b for b in (prior_scrape.get('by_source') or [])
+    }
+    if not prior_by_source:
+        return []
+    out = []
+    for r in current:
+        if r['fetched'] or r['claims']:
+            continue
+        was = prior_by_source.get(r['thinker'])
+        # Absent from the previous run's buckets means it was not attempted
+        # then, which is not the same as having produced nothing.
+        if was is not None and not was.get('fetched'):
+            out.append(r['thinker'])
+    return sorted(out)
+
+
 def check_escalation(
     *,
     errors: list[dict],
@@ -214,6 +315,7 @@ def check_escalation(
     run_row: dict | None,
     previous_runs: list[dict],
     failed_sources: int,
+    quiet_sources: list[str] | None = None,
     no_notify: bool = False,
     _notify_fn=None,     # injectable for tests
 ) -> list[str]:
@@ -225,6 +327,7 @@ def check_escalation(
       2. >PROCESS_FAIL_RATE_THRESHOLD of extraction attempts failed
       3. >= FAILED_SOURCES_THRESHOLD sources in 'failed' state
       4. Zero new claims AND the previous run also processed nothing
+      5. Individual sources silent for two consecutive runs of this stage
     """
     _fn = _notify_fn or notify
     alerts: list[str] = []
@@ -261,6 +364,16 @@ def check_escalation(
         if same_stage and (same_stage[0].get('files_processed') or 0) == 0:
             alerts.append(
                 f"Zero new claims this {stage} run AND the previous one — possible silent breakage")
+
+    # The same idea one level down. The whole-run check above only fires when
+    # EVERY source is silent, which is the rare case — a single dead feed hides
+    # behind 40 healthy ones indefinitely.
+    if quiet_sources:
+        shown = ', '.join(quiet_sources[:5])
+        more = f" and {len(quiet_sources) - 5} more" if len(quiet_sources) > 5 else ''
+        alerts.append(
+            f"{len(quiet_sources)} source(s) produced nothing this run and the "
+            f"previous one: {shown}{more}")
 
     if alerts and not no_notify:
         urgency = 'critical' if len(alerts) > 1 else 'warning'
@@ -461,6 +574,22 @@ def main() -> int:
             r for r in observability.recent_runs(conn, limit=5)
             if r['run_id'] != run_id
         ]
+        # Claims attributed to each source, for this run only. Counted from the
+        # claims themselves rather than from a tally kept alongside them, so
+        # the summary cannot drift from the data it describes.
+        claims_by_thinker = {
+            r['name']: r['n'] for r in db.query(
+                conn,
+                """SELECT t.name AS name, count(*) AS n
+                     FROM claims c JOIN thinkers t ON t.id = c.thinker_id
+                    WHERE c.created_at >= %s
+                    GROUP BY t.name""",
+                ((run_row or {}).get('started_at'),),
+            )
+        } if run_row and run_row.get('started_at') else {}
+
+    health = source_health(run_row, errors, claims_by_thinker)
+    quiet = silent_sources(health, previous, (run_row or {}).get('stage'))
 
     print(f"\n{'=' * 60}")
     print(f"  RUN COMPLETE  —  {elapsed}s elapsed")
@@ -481,6 +610,12 @@ def main() -> int:
         print(f"\n  Full detail: SELECT * FROM pipeline_errors WHERE run_id = '{run_id}'")
     else:
         print('  Errors:       0')
+
+    print_source_health(health)
+    if quiet:
+        print(f"\n  {len(quiet)} source(s) silent for two runs running: "
+              f"{', '.join(quiet[:8])}"
+              + (f" … and {len(quiet) - 8} more" if len(quiet) > 8 else ''))
     print('=' * 60)
 
     blocked = count_blocked_sources()
@@ -494,6 +629,7 @@ def main() -> int:
         run_row=run_row,
         previous_runs=previous,
         failed_sources=count_failed_sources(),
+        quiet_sources=quiet,
         no_notify=args.no_notify,
     )
     if alerts:

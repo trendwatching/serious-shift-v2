@@ -482,7 +482,9 @@ def main():
     print(f"  Claims extracted: {total_claims}")
     print(f"  Predictions:      {total_preds}")
     cost_tracker.report()
-    print(f"\n  Errors: {error_log.count} (run {run_id})")
+    # Stage-scoped — see the matching note in scraper/runner.py. The run-wide
+    # figure is printed once, by run.py.
+    print(f"\n  Errors (extract stage): {error_log.count} (run {run_id})")
     if cost_cap_hit:
         print(f"  Run halted at cost cap (${args.cost_cap:.2f}). Re-run to continue.")
     return total_claims

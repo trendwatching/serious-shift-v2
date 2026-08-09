@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import re
 from datetime import datetime
+from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -27,6 +28,36 @@ SKIP_PATTERNS = [
     'login', 'signup', 'sign-in', 'sign_in', 'logout', 'contact', 'about-us',
     'tag/', 'category/', 'author/', 'search', 'page/', '#',
 ]
+
+# Extensions that are never an article.
+#
+# SKIP_PATTERNS matches path substrings and has no extension rule, so a link
+# harvested from a blog index — `BobTagxedoSmall.jpg`, a zip, an mp4 — was
+# queued as an article, fetched, and recorded as a failure. That was 23 of 115
+# fetch failures in one run: noise that makes the real failures (I2) harder to
+# see, and paid requests for bytes we cannot read.
+#
+# `.pdf` is deliberately NOT here. For the academic sources a PDF *is* the
+# content, and skipping it silently at the door would bury that rather than fix
+# it — see I5 in docs/AUDIT-2026-08-08.md. It still gets dropped, loudly, where
+# it can be counted.
+SKIP_EXTENSIONS = frozenset({
+    # images
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'tif', 'tiff',
+    'avif', 'heic',
+    # archives and binaries
+    'zip', 'gz', 'tgz', 'bz2', 'xz', '7z', 'rar', 'dmg', 'exe', 'pkg', 'deb',
+    'rpm', 'iso',
+    # media
+    'mp3', 'mp4', 'm4a', 'm4v', 'mov', 'avi', 'mkv', 'webm', 'wav', 'flac',
+    'ogg', 'aac',
+    # documents we have no extractor for
+    'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'epub', 'mobi',
+    # page furniture and feeds — a feed is fetched by its own handler, never as
+    # an article
+    'css', 'js', 'mjs', 'json', 'xml', 'rss', 'atom', 'woff', 'woff2', 'ttf',
+    'otf', 'eot',
+})
 
 
 class ScrapeFetchError(Exception):
@@ -124,9 +155,30 @@ def in_range(date_str, since, until):
     except Exception:
         return True
 
+def url_extension(url):
+    """The extension of a URL's last path segment, lowercased, or ''.
+
+    Taken from the PATH only. A query string must not be able to hide an
+    extension (`/dl?f=x.jpg` is a page, not an image) nor invent one
+    (`/some-post?ref=a.png` is an article).
+    """
+    try:
+        last = urlparse(url).path.rsplit('/', 1)[-1]
+    except Exception:
+        return ''
+    _, dot, ext = last.rpartition('.')
+    # `rpartition` returns ('', '', last) when there is no dot at all, and a
+    # leading-dot name like `.gitignore` has no stem — neither is an extension.
+    if not dot or not _:
+        return ''
+    return ext.lower()
+
+
 def should_skip_url(url):
     lower = url.lower()
-    return any(p in lower for p in SKIP_PATTERNS)
+    if any(p in lower for p in SKIP_PATTERNS):
+        return True
+    return url_extension(url) in SKIP_EXTENSIONS
 
 def extract_date_from_url(url: str) -> str | None:
     """
