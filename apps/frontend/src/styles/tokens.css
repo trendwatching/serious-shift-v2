@@ -132,6 +132,22 @@
   --t-cta:        clamp(15px, 14.23px + 0.196vw, 18px);    /* WhatsApp CTA   */
   --cta-h:        clamp(50px, 46.91px + 0.786vw, 62px);    /* …and its pill  */
   --t-badge:      clamp(13.5px, 12.6px + 0.229vw, 17px);   /* deck badge     */
+
+  /* ── Furniture ────────────────────────────────────────────────────────
+   * Labels, counters, chips and pills. These were literal pixels at every
+   * width, which is why a 1920 display showed an 11px eyebrow next to a 92px
+   * headline. `--t-eyebrow` alone carries seventeen call sites.
+   * A handful of sites override these DOWNWARD (10, 10.5, 11.5, 12); those
+   * are multipliers of the token now, not new literals, so the whole set
+   * moves together. Body copy is deliberately absent — see the note above.
+   * ------------------------------------------------------------------- */
+  --t-eyebrow:  clamp(11px, 10.228px + 0.196vw, 14px);     /* section label  */
+  --t-meta:     clamp(11.5px, 10.857px + 0.164vw, 14px);   /* counters, hints */
+  --t-label:    clamp(15px, 14.228px + 0.196vw, 18px);     /* card titles    */
+  --t-chip:     clamp(12.5px, 11.857px + 0.164vw, 15px);   /* chips, tags    */
+  --chip-h:     clamp(34px, 31.941px + 0.524vw, 42px);     /* …their height  */
+  --t-figure:   clamp(58px, 53.367px + 1.179vw, 76px);     /* the stat figure */
+  --crumb-h:    clamp(26px, 23.941px + 0.524vw, 34px);     /* breadcrumb chain */
   --badge-h:      clamp(40px, 36.91px + 0.786vw, 52px);    /* …and its pill  */
 
   /* Height of the black bar's own band, before the status-bar inset. The
@@ -145,7 +161,11 @@
      breadcrumb on the site inherited the 20px error. Everything INSIDE the
      bar reads `--bar-h`, so the logo and the hamburger grow with the band
      rather than rattling around in it. */
-  --bar-h: clamp(84px, 75.764px + 2.096vw, 116px);
+  /* Retargeted from a 116px ceiling, which read as too heavy a band on a
+     desktop — the bar is chrome, and at 116 it was taking more of the screen
+     than the thing it sits above deserves. The FLOOR is untouched, so the
+     phone is still exactly 84px with a 74px lock-up. */
+  --bar-h: clamp(84px, 79.882px + 1.048vw, 100px);
   --topbar: calc(max(0px, env(safe-area-inset-top)) + var(--bar-h));
 
   /* ── Per-domain gradients ─────────────────────────────────────────────

@@ -37,7 +37,7 @@
      all sixteen places it appears. */
   .t-eyebrow {
     font-family: var(--font-display);
-    font-size: 11px;
+    font-size: var(--t-eyebrow);
     font-weight: 700;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -76,7 +76,7 @@
     place-items: center;
     min-height: calc(100dvh - var(--topbar));
     margin-top: var(--topbar);
-    padding-inline: 24px;
+    padding-inline: var(--gutter);
   }
 
   /* A footer band fills its parent; this measures what is inside it, on the
@@ -299,7 +299,10 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    height: 44px;
+    /* Derived from the Footer's CTA, which already solved this shape with
+       `--cta-h`. These two pills are the copies that never adopted it and so
+       stayed 44 and 40px tall while the one beside them grew. */
+    height: calc(var(--cta-h) * 0.88);
     padding: 0 20px;
     border-radius: 999px;
     background: var(--color-yellow);
@@ -321,7 +324,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    height: 40px;
+    height: calc(var(--cta-h) * 0.8);
     padding: 0 16px;
     border-radius: 999px;
     background: var(--color-yellow);

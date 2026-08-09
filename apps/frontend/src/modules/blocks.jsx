@@ -5,7 +5,7 @@ import { quoted } from '../lib/theme'
 export const Eyebrow = ({ children, right }) => (
   <div className="flex items-baseline" style={{ gap: 10 }}>
     <h2 className="t-eyebrow">{children}</h2>
-    {right && <span className="ml-auto" style={{ fontSize: 11.5, color: 'var(--color-ink-meta)' }}>{right}</span>}
+    {right && <span className="ml-auto" style={{ fontSize: 'var(--t-meta)', color: 'var(--color-ink-meta)' }}>{right}</span>}
   </div>
 )
 
@@ -106,7 +106,7 @@ export const FromToSolid = ({ data }) => {
       <span
         className="t-eyebrow"
         style={{
-          fontSize: 11.5, fontWeight: 800, letterSpacing: '0.12em',
+          fontSize: 'calc(var(--t-eyebrow) * 1.045)', fontWeight: 800, letterSpacing: '0.12em',
           color: lit ? '#fff' : 'var(--color-ink-soft)',
         }}
       >{label}</span>
@@ -127,7 +127,9 @@ export const FromToSolid = ({ data }) => {
 /** Full-bleed statistic. The background is the design's own artwork. */
 export const StatBand = ({ data, ctx }) => {
   if (!data.value) return null
-  const big = ctx.scope === 'sub_shift' ? 52 : 58
+  // `--t-figure` is the key-shift size; a sub-shift's is 0.897 of it, which is
+  // the 52/58 the design draws. Both were literals while the token sat unused.
+  const big = ctx.scope === 'sub_shift' ? 'calc(var(--t-figure) * 0.897)' : 'var(--t-figure)'
   return (
     <section
       className="bleed stat-surface box-border flex items-center text-white"
@@ -159,7 +161,7 @@ export const StatBand = ({ data, ctx }) => {
           band past the viewport. */}
       <span className="flex min-w-0 flex-1 flex-col" style={{ gap: 8 }}>
         <span className="text-pretty" style={{ fontSize: 13.5, lineHeight: 1.45 }}>{data.text}</span>
-        {data.source && <span style={{ fontSize: 11, lineHeight: 1.4, opacity: 0.75 }}>{data.source}</span>}
+        {data.source && <span style={{ fontSize: 'var(--t-meta)', lineHeight: 1.4, opacity: 0.75 }}>{data.source}</span>}
       </span>
     </section>
   )
@@ -236,7 +238,7 @@ export const Timeline = ({ data, ctx }) => {
             />
             <span className="flex items-baseline" style={{ gap: 10 }}>
               <span className="t-display" style={{ fontSize: 14.5, fontWeight: 700, letterSpacing: '-0.005em' }}>{s.label}</span>
-              <span className="t-mono ml-auto" style={{ fontSize: 11, opacity: 0.75 }}>
+              <span className="t-mono ml-auto" style={{ fontSize: 'var(--t-meta)', opacity: 0.75 }}>
                 {['0–12 months', '1–3 years', '3–10 years'][i] || ''}
               </span>
             </span>
@@ -258,8 +260,8 @@ export const RelatedShifts = ({ data }) => {
       <div className="sub-stack" style={{ '--stack-gap': '0px' }}>
         {items.map((r) => (
           <Link key={r.href} to={r.href} className="flex flex-col" style={{ gap: 6, padding: '14px 0', borderBottom: '1px solid var(--color-line)' }}>
-            <span className="t-eyebrow" style={{ fontSize: 10, letterSpacing: '0.12em', color: 'var(--a-ink)' }}>{r.relationship}</span>
-            <span className="t-title" style={{ fontSize: 16, lineHeight: 1.2, letterSpacing: '0.005em', color: '#3D1152' }}>{quoted(r.title)}</span>
+            <span className="t-eyebrow" style={{ fontSize: 'calc(var(--t-eyebrow) * 0.91)', letterSpacing: '0.12em', color: 'var(--a-ink)' }}>{r.relationship}</span>
+            <span className="t-title" style={{ fontSize: 'calc(var(--t-label) * 1.067)', lineHeight: 1.2, letterSpacing: '0.005em', color: '#3D1152' }}>{quoted(r.title)}</span>
             {r.reasoning && <span style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-mid)' }}>{r.reasoning}</span>}
           </Link>
         ))}

@@ -13,12 +13,22 @@
  *
  * So the layer is built on two widths and everything lines up with one of them:
  *
- *   --col   the reading column — prose, cards, the peel stack
- *   --wide  lists, bands and the hero's inner content
+ *   --col   the reading column — prose and single-focus blocks
+ *   --wide  lists and grids, the bands, and the hero's inner content
  *
- * `--wide` is only 1.4× `--col`, not 2.6×, so a list feels like the same page
- * opening up rather than a different one. Both are centred on the same axis,
- * which is what makes the page read as a column at all.
+ * WHICH BLOCK GETS WHICH is a rule, not a per-component choice, because leaving
+ * it to each module is what produced a page that changed width five times in
+ * eight blocks:
+ *
+ *   column   prose and one thing to read — dek, lede, rich_text, pull_quote,
+ *            peel_tabs, from_to, from_to_solid, signals / counter_signals
+ *   wide     anything that is a LIST or a GRID — sub_shift_list, timeline,
+ *            industries, territories, innovations, voices, evidence,
+ *            related_shifts, human_needs
+ *   bleed    full-width bands — stat_band, tension_band
+ *
+ * `--wide` is `--col` plus 160px, so the step is 80px per side and both are
+ * centred on the same axis. That is what makes the page read as a column.
  *
  * scripts/check-layers.mjs fails the build if `md:` or `lg:` appears anywhere
  * under src/ outside this file.
@@ -39,21 +49,36 @@
 
   @media (min-width: 64rem) {
     :root {
-      /* --col does NOT scale, and that is a decision rather than an omission.
-         It is the reading measure: 660px of 16px prose is already ~85
-         characters, at the top of the comfortable range. Growing it with the
-         display would buy nothing but longer lines to track back along. A
-         bigger screen earns bigger CHROME and more room for grids — not wider
-         paragraphs, which is why body copy is off the ramp too. */
-      --col: 660px;
-
-      /* --wide does scale: it carries rails, grids and bands, where extra room
-         means another card in the row instead of a longer line. It still yields
-         to the viewport, so the band never touches the edge. */
-      --wide: min(clamp(940px, 665.71px + 26.79vw, 1180px), calc(100vw - 96px));
+      /* ══ The two measures, and the ONE step between them ═══════════════
+       * Both of these are CONTENT widths. That distinction is the bug this
+       * replaces: `--col` used to be a border box carrying the gutter as
+       * padding while `--wide` was a raw width, so the two were never
+       * comparable. The note here claimed a 1.4x contrast; the real one was
+       * 1.78x at 1440 and 2.03x at 1920, because the gutter ramp ate into
+       * `--col` while `--wide` grew away from it. A page alternating between
+       * them stepped 230px per side at 1440 and 300px at 1920 — five width
+       * changes in eight blocks on a Society key shift, three of them single
+       * blocks marooned between wide ones.
+       *
+       * `--wide` is now DERIVED from `--col` rather than given its own ramp,
+       * which is the whole point: the step is a constant 80px per side at
+       * every viewport and the two cannot drift apart again.
+       *
+       *   1024   660 / 820      1440   688 / 848      1920   720 / 880
+       *
+       * The 720px cap on the reading measure is what keeps prose inside a
+       * comfortable line length; body copy itself stays off the ramp. The
+       * trade is that rails run 3-up instead of 4-up — each card is LARGER
+       * (275px at 1440, against 254 before), there are simply fewer per row.
+       * ------------------------------------------------------------------ */
+      --col: clamp(660px, 591.43px + 6.7vw, 720px);
+      --wide: min(calc(var(--col) + 160px), calc(100vw - 2 * var(--gutter)));
     }
 
-    .canvas { max-width: var(--col); }
+    /* `--col` is the CONTENT width, so the box has to carry the gutter on top
+       of it. Setting `max-width: var(--col)` is what made the two measures
+       incommensurable in the first place. */
+    .canvas { max-width: calc(var(--col) + 2 * var(--gutter)); }
 
     /* A wide block has to BREAK OUT of the canvas, not merely be allowed to be
        wider than it: `max-width` alone can never exceed the parent's width, so
@@ -69,9 +94,10 @@
     }
 
     /* A full-bleed band keeps its own inset once it is no longer running to a
-       phone's edge — otherwise the copy sits hard against the corner. */
+       phone's edge — otherwise the copy sits hard against the corner. The inset
+       is the page gutter rather than a literal, so it tracks everything else. */
     .bleed {
-      padding-inline: 34px;
+      padding-inline: var(--gutter);
       border-radius: 22px;
     }
 
@@ -118,6 +144,11 @@
        keep their own tighter gap: `.widen .rail` matches them too, and 12px
        between pills that small reads as a gappy row rather than a set. */
     .widen .chips {
+      /* `display` FIRST, and it is load-bearing: `.widen .rail` above turns
+         every rail into a card grid, and the chips carry `rail` too — so they
+         inherited `grid` and `flex-wrap` below was inert. Sixteen pills came
+         out as stretched 257px grid tracks instead of shrink-wrapping. */
+      display: flex;
       gap: 8px;
       flex-wrap: wrap;
       overflow: visible;
@@ -216,6 +247,9 @@
     /* The breadcrumb floats over the hero at the gutter on a phone, which puts
        it in the far corner of a wide screen. It rides the reading column. */
     .crumb-float {
+      /* Released: the pills were capped at 112/150px so a long sphere name would
+         not push the trail off a phone. There is room here. */
+      --crumb-cap: none;
       left: 50%;
       transform: translateX(calc(var(--col) / -2));
       /* The trail stops being truncated the moment there is room for it —

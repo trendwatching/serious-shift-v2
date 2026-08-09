@@ -87,7 +87,7 @@ export function PeelTabs({ data, ctx }) {
             >
               <span
                 className="t-display whitespace-nowrap uppercase"
-                style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.04em', color: on ? '#fff' : 'var(--color-ink)', transition: 'color 0.3s ease' }}
+                style={{ fontSize: 'calc(var(--t-eyebrow) * 1.18)', fontWeight: 800, letterSpacing: '0.04em', color: on ? '#fff' : 'var(--color-ink)', transition: 'color 0.3s ease' }}
               >
                 {card.label}
               </span>
@@ -140,7 +140,10 @@ export function HumanNeeds({ data, ctx }) {
       <button
         type="button" onClick={() => setPick(key)} onMouseEnter={() => setPick(key)}
         aria-expanded={on} aria-controls={`${id}-${key}`}
-        className="box-border flex min-w-0 flex-col overflow-hidden text-left text-white"
+        // No `min-w-0`: desktop.css sets `.needs-pair > * { min-width: 190px }`
+        // and a utility beats it, so the computed floor was 0 and the collapsed
+        // card rendered as a 161px sliver. The layer owns this.
+        className="box-border flex flex-col overflow-hidden text-left text-white"
         style={{
           flex: on ? '3 1 0%' : '1 1 0%',
           borderRadius: 18, padding: '18px 16px', gap: 10,
@@ -151,7 +154,7 @@ export function HumanNeeds({ data, ctx }) {
           transition: 'flex-grow 0.45s var(--ease-out), opacity 0.35s ease, box-shadow 0.35s ease',
         }}
       >
-        <span className="t-eyebrow whitespace-nowrap" style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>{label}</span>
+        <span className="t-eyebrow whitespace-nowrap" style={{ fontSize: 'calc(var(--t-eyebrow) * 1.09)', fontWeight: 800, letterSpacing: '0.12em' }}>{label}</span>
         <span
           id={`${id}-${key}`} aria-hidden={!on}
           className="text-pretty"
@@ -168,7 +171,10 @@ export function HumanNeeds({ data, ctx }) {
   }
 
   return (
-    <section className="flex flex-col" style={{ marginTop: 6, gap: 10 }}>
+    /* Wide, with the other lists. A two-card pair is not prose, and left in
+       the reading column it was the one narrow block sitting between two wide
+       ones — the single worst crossing on the page. */
+    <section className="widen flex flex-col" style={{ marginTop: 6, gap: 10 }}>
       <Eyebrow>Human needs</Eyebrow>
       <div className="needs-pair flex items-stretch" style={{ gap: 10 }}>
         {/* Neither of these is the good one. They are two consequences of the
@@ -209,7 +215,7 @@ export function Industries({ data }) {
               key={item.name} type="button" role="tab" aria-selected={on} onClick={() => setPick(i)}
               className="t-display box-border flex shrink-0 cursor-pointer items-center whitespace-nowrap"
               style={{
-                scrollSnapAlign: 'center', height: 34, padding: '0 14px', borderRadius: 999,
+                scrollSnapAlign: 'center', height: 'var(--chip-h)', padding: '0 calc(var(--chip-h) * 0.412)', borderRadius: 999,
                 border: `1px solid ${on ? '#1B1620' : 'var(--color-line-chip)'}`,
                 background: on ? '#1B1620' : '#fff',
                 color: on ? '#fff' : 'var(--color-ink-soft)',

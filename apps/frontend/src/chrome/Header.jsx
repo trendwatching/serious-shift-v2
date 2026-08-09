@@ -87,7 +87,10 @@ export function Header() {
           aria-label={open ? 'Close navigation' : 'Open navigation'}
           aria-expanded={open} aria-controls="site-nav"
           className="flex cursor-pointer flex-col items-end"
-          style={{ padding: '4px 0 10px 14px', gap: 'calc(var(--bar-h) * 0.0595)' }}
+          style={{
+            padding: `calc(var(--bar-h) * 0.048) 0 calc(var(--bar-h) * 0.119) calc(var(--bar-h) * 0.167)`,
+            gap: 'calc(var(--bar-h) * 0.0595)',
+          }}
         >
           {/* Three bars of falling width. They do not morph on open — the
               design's hamburger is static and the panel's presence is the
@@ -119,7 +122,7 @@ export function Header() {
             const body = (
               <>
                 <span className="t-display font-semibold tracking-[-0.01em]" style={{ fontSize: 'var(--t-nav)' }}>{link.label}</span>
-                <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                <span className="ml-auto" style={{ fontSize: 'calc(var(--t-nav) * 0.6)', color: 'rgba(255,255,255,0.5)' }}>
                   {link.meta ?? (meta.shiftCount ? `${meta.shiftCount} key shifts` : 'Every domain')}
                 </span>
               </>

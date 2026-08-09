@@ -51,7 +51,9 @@ export default function SubShiftPage() {
           Both say the same thing: you are a level down. */}
       <header
         className="hero-sub relative box-border flex flex-col overflow-hidden text-white"
-        style={{ padding: '226px 0 30px', backgroundImage: 'var(--grad-sunset)' }}
+        // 226 was `--topbar` plus 142, written out — so it stopped clearing the bar
+        // the moment the bar became fluid. Every sibling page derives this.
+        style={{ padding: 'calc(var(--topbar) + 142px) 0 30px', backgroundImage: 'var(--grad-sunset)' }}
       >
         {image && (
           <span

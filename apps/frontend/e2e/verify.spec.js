@@ -58,6 +58,15 @@ test('desktop lines every module up on one of two axes', async ({ page }) => {
     const dots = [...document.querySelectorAll('.horizon-dot')].map((d) => Math.round(d.getBoundingClientRect().left))
     return {
       col: box('.canvas.gutter'),
+      // The canvas CONTENT box — `--col` is a content measure now, and the
+      // gutter sits on top of it. Conflating the two is what made the step
+      // between the measures 230px instead of the intended 80.
+      colContent: (() => {
+        const el = document.querySelector('.canvas.gutter')
+        const cs = getComputedStyle(el)
+        return Math.round(el.getBoundingClientRect().width
+          - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight))
+      })(),
       wide: box('.widen'),
       band: box('.stat-surface'),
       list: box('.widen .sub-stack'),
@@ -80,15 +89,18 @@ test('desktop lines every module up on one of two axes', async ({ page }) => {
 
   // Two widths, and everything is one of them.
   //
-  // The wide one is read off the page rather than written down. It used to be
-  // asserted as a literal 940, which is what it was while every measure was
-  // fixed — and this spec is opt-in, so when `--wide` became a ramp (940 at
-  // 1024 → 1180 at 1920, and 1051 here) nothing failed and the contract just
-  // went stale. The invariant was never the number: it is that every wide
-  // block shares ONE measure and sits on the same axis as the column.
-  expect(seen.col.width).toBe(660)
-  expect(seen.wide.width).toBeGreaterThanOrEqual(940)
-  expect(seen.wide.width).toBeLessThanOrEqual(1180)
+  // Read off the page rather than written down. This was asserted as a literal
+  // 940 once, and because the spec is opt-in nobody noticed when `--wide` became
+  // a ramp — the contract just went quietly stale. The invariant was never the
+  // number: every wide block shares ONE measure, and the STEP between the two
+  // measures is what decides whether the page reads as a column.
+  //
+  // 80px per side, by construction: `--wide` is `--col + 160px`. It used to be
+  // 230px here and 300px at 1920, which is what made the page look like blocks
+  // from different documents.
+  const gutter = (seen.col.width - seen.colContent) / 2
+  expect(seen.wide.width - seen.colContent, 'the step between the two measures').toBe(160)
+  expect(gutter, 'the canvas carries the page gutter').toBeGreaterThan(20)
   expect(seen.band.width).toBe(seen.wide.width)
   expect(seen.list.width).toBe(seen.wide.width)
   // A footer band spans the page; only its contents take the measure.

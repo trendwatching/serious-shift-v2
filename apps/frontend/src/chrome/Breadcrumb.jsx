@@ -6,11 +6,30 @@
  * page's pill is filled with the domain's darkest tint: it has to stay legible
  * on top of a photograph.
  *
- * The pills overlap by 17px and descend in z-index, so the chain reads as one
+ * The pills overlap and descend in z-index, so the chain reads as one
  * continuous lozenge cut into segments rather than as separate chips. That is
  * also why every pill but the first carries a wider left pad — the overlap eats
  * it.
+ *
+ * EVERY dimension here is a fraction of `--crumb-h`, the way the header's
+ * lock-up is a fraction of `--bar-h`. The chain used to be a flat 26px carrying
+ * 11px type at every width: on a 1920 display that is a ribbon of unreadable
+ * capitals under a 92px headline, and it was the first thing anyone pointed at.
+ * The fractions are exact at the 26px design height, so the phone is unchanged.
  */
+const K = {
+  text: 0.423,     // 11px
+  gap: 0.231,      //  6px
+  overlap: 0.654,  // 17px of overlap between pills
+  capNarrow: 4.308, // 112px cap when the trail has been collapsed
+  capWide: 5.769,  // 150px otherwise
+  padEnd: 0.5,     // 13px
+  padLast: 0.808,  // 21px lead-in on the current page's pill
+  padTight: 0.385, // 10px
+  padFirst: 0.5,   // 13px
+  padMid: 0.846,   // 22px — swallows the overlap
+}
+const px = (k) => `calc(var(--crumb-h) * ${k})`
 import { Link } from '../lib/router'
 
 /**
@@ -34,8 +53,8 @@ export function Breadcrumb({ items, crumb = 'var(--a-crumb)', className = '', st
   return (
     <nav
       aria-label="Breadcrumb"
-      className={`inline-flex h-[26px] max-w-full items-center ${className}`}
-      style={{ fontFamily: 'var(--font-display)', ...style }}
+      className={`inline-flex max-w-full items-center ${className}`}
+      style={{ height: 'var(--crumb-h)', fontFamily: 'var(--font-display)', ...style }}
     >
       <ol className="flex h-full max-w-full items-center">
         {trail.map((crumbItem, i) => {
@@ -45,18 +64,29 @@ export function Breadcrumb({ items, crumb = 'var(--a-crumb)', className = '', st
               <span className="block min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap uppercase tracking-[0.04em]">
                 {crumbItem.label}
               </span>
-              {!last && <span className="flex-none text-[11px] opacity-50" aria-hidden="true">›</span>}
+              {!last && <span className="flex-none opacity-50" style={{ fontSize: px(K.text) }} aria-hidden="true">›</span>}
             </>
           )
           const shared = {
-            className: 'relative box-border flex h-full items-center gap-[6px] rounded-full text-[11px] tracking-[-0.005em]',
+            className: 'relative box-border flex h-full items-center rounded-full tracking-[-0.005em]',
             style: {
               zIndex: n - i,
               flex: last ? '1 1 auto' : '0 0 auto',
               minWidth: 0,
-              maxWidth: last ? 'none' : n > 2 ? '112px' : '150px',
-              padding: last ? '0 13px 0 21px' : i === 0 ? '0 10px 0 13px' : '0 10px 0 22px',
-              marginLeft: i === 0 ? 0 : '-17px',
+              fontSize: px(K.text),
+              gap: px(K.gap),
+              // A custom property, not a literal, so desktop.css can release it:
+              // the cap is a phone constraint and it was truncating "CONSUMERS"
+              // to "CONSUMER…" on a 1920 screen with 500px of room to spare.
+              // An inline `maxWidth` cannot be beaten by any rule; a custom
+              // property can.
+              maxWidth: last ? 'none' : `var(--crumb-cap, ${px(n > 2 ? K.capNarrow : K.capWide)})`,
+              padding: last
+                ? `0 ${px(K.padEnd)} 0 ${px(K.padLast)}`
+                : i === 0
+                  ? `0 ${px(K.padTight)} 0 ${px(K.padFirst)}`
+                  : `0 ${px(K.padTight)} 0 ${px(K.padMid)}`,
+              marginLeft: i === 0 ? 0 : `calc(var(--crumb-h) * -${K.overlap})`,
               background: last ? crumb : '#fff',
               color: last ? '#fff' : 'var(--color-ink)',
               fontWeight: last ? 650 : 600,

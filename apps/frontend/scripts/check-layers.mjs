@@ -146,6 +146,14 @@ for (const block of desktop.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
   const classes = [...selector.matchAll(/\.([A-Za-z_][\w-]*)/g)].map((m) => m[1])
   if (!classes.length) continue
   const target = classes[classes.length - 1]
+  // NOTE the blind spot this still has. `.needs-pair > * { min-width: 190px }`
+  // styles CHILDREN, so the utility that beats it (`min-w-0`) sits on an element
+  // that never carries `needs-pair` — and both this check and (3) look at the
+  // element wearing the class. A file-scoped heuristic was tried and produced
+  // eight false positives, because it cannot tell which `min-w-0` belongs to
+  // which parent; a check that cries wolf gets worked around. The exact version
+  // of this assertion is at runtime, in e2e/desktop.spec.js, which reads the
+  // computed value off a real desktop render.
   for (const decl of block[2].split(';')) {
     const prop = decl.split(':')[0]?.trim()
     if (!prop || prop.startsWith('--')) continue
