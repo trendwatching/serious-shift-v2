@@ -98,8 +98,22 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     # publishable taxonomy. The contract is *exactly* five sub-shifts per shift;
     # a shift that gets none has no sub-shift pages at all and fails the gate for
     # the whole run, so it is worth a second and third ask.
+    # Seeded with every KEY SHIFT name, so a sub-shift cannot be born wearing its
+    # own parent's — or another shift's — name. Sub-shift names are added as
+    # collisions are resolved below; the calls themselves run concurrently, so no
+    # single call can see what its siblings are inventing at the same moment.
+    # That is the whole reason the duplicates happened.
+    # Matched case-insensitively, shown to the model in its original casing.
+    display: dict[str, str] = {}
+    for _, kt, _ in work:
+        name = str(kt.get('name') or '').strip()
+        if name:
+            display.setdefault(name.lower(), name)
+    taken: set[str] = set(display)
+
     prompt_of = lambda item: prompt_sub_trends(  # noqa: E731 — matches the call below
-        item[1]['name'], item[1].get('subtitle', ''), item[2])
+        item[1]['name'], item[1].get('subtitle', ''), item[2],
+        taken=[display[key] for key in sorted(taken)])
     describe = lambda item: item[1]['name'][:30]  # noqa: E731
 
     def usable(item, result) -> bool:
@@ -116,6 +130,39 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         retried = generate_json([work[i] for i in pending], prompt_of,
                                 default=lambda: {'sub_trends': []}, describe=describe)
         for index, result in zip(pending, retried):
+            if usable(work[index], result):
+                results[index] = result
+
+    # ── Collision pass ────────────────────────────────────────────────────
+    #
+    # Walk the results in a fixed order, claiming names as we go. A shift whose
+    # sub-trends collide with anything already claimed is re-asked with the
+    # accumulated list, which is the only point at which a call can know what
+    # every other call produced. Deterministic order so a rerun makes the same
+    # decisions; validation.py hard-fails anything that survives.
+    for attempt in range(1, MAX_CLUSTER_ATTEMPTS + 1):
+        clashing = []
+        for index, (item, result) in enumerate(zip(work, results)):
+            names = [str(sub.get('name') or '').strip()
+                     for sub in (result.get('sub_trends') or [])]
+            keys = [n.lower() for n in names if n]
+            if any(k in taken for k in keys) or len(set(keys)) != len(keys):
+                clashing.append(index)
+                continue
+            for name, key in zip(names, keys):
+                taken.add(key)
+                display.setdefault(key, name)
+        if not clashing:
+            break
+        if attempt == MAX_CLUSTER_ATTEMPTS:
+            print(f'    {len(clashing)} shift(s) still carry a duplicate sub-trend name — '
+                  'publication will reject them')
+            break
+        print(f'    {len(clashing)} shift(s) reused a name — re-asking with '
+              f'{len(taken)} taken (attempt {attempt}/{MAX_CLUSTER_ATTEMPTS})')
+        retried = generate_json([work[i] for i in clashing], prompt_of,
+                                default=lambda: {'sub_trends': []}, describe=describe)
+        for index, result in zip(clashing, retried):
             if usable(work[index], result):
                 results[index] = result
 

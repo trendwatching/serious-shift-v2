@@ -25,7 +25,7 @@ RULES:
     signal        — extremely substantive and worth keeping, but expected, directional, or already widely argued. This is the normal grade; most claims belong here.
     background    — true and relevant context that supports another claim rather than standing on its own.
   Do not use "noise" — anything that weak should not be extracted at all.
-- US English spelling throughout (behavior, organization, analyze — not behaviour/organisation/analyse).
+- US English spelling throughout (behavior, organization, analyze — not behavior/organization/analyze).
 - has_statistic: true ONLY when the claim contains a specific, dated, attributable number. When true, put that number and its attribution in "statistic", e.g. "34% of US consumers used an AI tool to shortlist a purchase, Q1 2025 (Webb)". Otherwise has_statistic=false and statistic="".
 - consumer_implication must answer specifically: how does this affect how people buy, live, work, or expect things? A vague answer fails.
 - Only create predictions for specific, falsifiable future statements.

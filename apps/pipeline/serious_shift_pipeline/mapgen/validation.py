@@ -253,6 +253,58 @@ def _validate_modules(modules, scope: str, path: str, contract: dict) -> list[Va
     return issues
 
 
+#: British spellings the content spec forbids. Matched LOWERCASE only, because
+#: the capitalised forms are almost always proper nouns we must not rewrite —
+#: "Centre for AI Safety", "Ministry of Defence", "the Labour Party".
+#:
+#: `voice.txt` has said "US spelling only" all along; it is instruction, and
+#: instruction is not a gate. The 2026-08-09 crawl found "catalogued" and
+#: "organisation" sitting in published copy. It does not help that the prompt
+#: files are themselves written in British English — "synthesising",
+#: "recognise" — two lines above the rule telling the model not to.
+_BRITISH = re.compile(
+    r'\b('
+    r'organis\w*|catalogu\w*|behaviour\w*|programme\w*|centre[sd]?|'
+    r'recognis\w*|optimis\w*|realis\w*|utilis\w*|analys(?:e|ed|es|ing)|'
+    r'favourite\w*|colour\w*|labour\w*|defence|offence|licence|practis\w*|'
+    r'travell\w*|modell\w*|cancell\w*|marvell\w*|apologis\w*|prioritis\w*'
+    r')\b'
+)
+
+#: A lowercase hyphenated token, i.e. slug-shaped. Digits are allowed because
+#: real slugs carry them — `moat-migration-2` is a published URL.
+#:
+#: Only reported when it matches a slug that actually exists in this document.
+#: Plenty of legitimate copy is hyphenated ("entry-level", "AI-assisted"), and
+#: only a token that IS a slug reads as a machine identifier loose in prose.
+_SLUGGISH = re.compile(r'\b[a-z0-9]+(?:-[a-z0-9]+)+\b')
+
+
+def _copy_strings(row: dict, path: str):
+    """The three published fields no check has ever looked at, plus module prose.
+
+    `sub_trends[].description` is the meta description seo.rs publishes verbatim,
+    and until now nothing validated it at all.
+    """
+    for field in ('name', 'subtitle', 'description'):
+        value = row.get(field)
+        if isinstance(value, str) and value.strip():
+            yield f'{path}.{field}', value
+
+
+def _prose_strings(value, path: str):
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            if key in NOT_PROSE:
+                continue
+            yield from _prose_strings(nested, f'{path}.{key}')
+    elif isinstance(value, list):
+        for index, nested in enumerate(value):
+            yield from _prose_strings(nested, f'{path}[{index}]')
+    elif isinstance(value, str):
+        yield path, value
+
+
 def validate_map(document: dict, contract: dict | None = None) -> list[ValidationIssue]:
     """Return every publication issue; an empty list is safe to promote."""
     contract = contract or _load_contract()
@@ -281,15 +333,17 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
     for duplicate in sorted(_duplicates(shift_ids)):
         issues.append(ValidationIssue('duplicate_shift_id', 'key_trends', f'duplicate shift id {duplicate!r}'))
     shift_routes = {
-        f"/map/{shift.get('domain_id')}/{shift.get('slug')}"
+        f"/{shift.get('domain_id')}/{shift.get('slug')}"
         for shift in shifts if isinstance(shift, dict)
     }
-    for domain_id in domain_ids:
-        slugs = [shift.get('slug') for shift in shifts
-                 if isinstance(shift, dict) and shift.get('domain_id') == domain_id]
-        for duplicate in sorted(_duplicates(slugs)):
-            issues.append(ValidationIssue('duplicate_shift_slug', f'domains.{domain_id}',
-                                          f'duplicate shift slug {duplicate!r}'))
+    # GLOBAL, not grouped by sphere. Grouping was the hole: two spheres each
+    # naming a shift "Moat Migration" produced no issue here, and export.py
+    # quietly disambiguated the second one to `moat-migration-2` — a machine
+    # slug in a published URL that nobody chose.
+    for duplicate in sorted(_duplicates([shift.get('slug') for shift in shifts
+                                         if isinstance(shift, dict)])):
+        issues.append(ValidationIssue('duplicate_shift_slug', 'key_trends',
+                                      f'duplicate shift slug {duplicate!r}'))
 
     subs_by_parent: dict[str, list[dict]] = {}
     for index, sub in enumerate(subs):
@@ -316,12 +370,28 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
                                           'sub-shift references do not match ordered children'))
         issues.extend(_validate_modules(shift.get('modules'), 'key_trend', path, contract))
 
+    # Also global. Grouping by parent meant six sub-shifts called "Provenance
+    # Premium" under six different key shifts produced six disjoint lists and no
+    # issue at all — seven pages carrying one name, since the key shift had it
+    # too. A sub-shift's URL is unique beneath its parent, so this does not break
+    # routing; it breaks the reader's ability to tell two pages apart.
+    for duplicate in sorted(_duplicates([str(sub.get('slug') or '').rsplit('/', 1)[-1]
+                                         for sub in subs if isinstance(sub, dict)])):
+        issues.append(ValidationIssue('duplicate_sub_shift_slug', 'sub_trends',
+                                      f'duplicate sub-shift slug {duplicate!r}'))
+
+    # And across the two levels: a sub-shift must not wear a key shift's name.
+    shift_slugs = {str(shift.get('slug') or '') for shift in shifts if isinstance(shift, dict)}
+    for sub in subs:
+        if not isinstance(sub, dict):
+            continue
+        tail = str(sub.get('slug') or '').rsplit('/', 1)[-1]
+        if tail and tail in shift_slugs:
+            issues.append(ValidationIssue('sub_shift_shadows_shift', f'sub_trends.{tail}',
+                                          f'sub-shift {tail!r} has the same name as a key shift'))
+
     for parent_id, children in subs_by_parent.items():
         parent = shift_by_id.get(parent_id)
-        slugs = [str(sub.get('slug') or '').rsplit('/', 1)[-1] for sub in children]
-        for duplicate in sorted(_duplicates(slugs)):
-            issues.append(ValidationIssue('duplicate_sub_shift_slug', f'key_trends.{parent_id}',
-                                          f'duplicate sub-shift slug {duplicate!r}'))
         for index, sub in enumerate(children):
             path = f'sub_trends[{sub.get("id", index)}]'
             if parent is None:
@@ -401,7 +471,7 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
                         prose_seen[normalized] = here
 
     valid_routes = shift_routes | {
-        f"/map/{sub.get('domain_id')}/{sub.get('slug')}"
+        f"/{sub.get('domain_id')}/{sub.get('slug')}"
         for sub in subs if isinstance(sub, dict)
     }
     for shift_index, shift in enumerate(shifts):
@@ -416,6 +486,32 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
                         f'key_trends[{shift_index}].modules[{module_index}].data.items[{item_index}].href',
                         f'unknown related route {href!r}',
                     ))
+
+    # ── Copy: US spelling, and no slug wearing the clothes of a word ──────
+    known_slugs = {str(shift.get('slug') or '') for shift in shifts if isinstance(shift, dict)}
+    known_slugs |= {str(sub.get('slug') or '').rsplit('/', 1)[-1]
+                    for sub in subs if isinstance(sub, dict)}
+    known_slugs.discard('')
+
+    for label, rows in (('key_trends', shifts), ('sub_trends', subs)):
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                continue
+            base = f'{label}[{index}]'
+            texts = list(_copy_strings(row, base))
+            texts += list(_prose_strings(row.get('modules') or [], f'{base}.modules'))
+            for path, text in texts:
+                british = _BRITISH.search(text)
+                if british:
+                    issues.append(ValidationIssue(
+                        'british_spelling', path,
+                        f'{british.group(0)!r} is British spelling; the content spec is US', True))
+                for match in _SLUGGISH.finditer(text):
+                    if match.group(0) in known_slugs:
+                        issues.append(ValidationIssue(
+                            'slug_in_prose', path,
+                            f'{match.group(0)!r} is a URL slug, not a name', True))
+                        break
     return issues
 
 

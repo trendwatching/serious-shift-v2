@@ -10,7 +10,7 @@ never fully any one of them.
 
 VOICE
 - Specific over vague, always. Name the company, the date, the country, the
-  number, the thinker. Never write a vague generalisation ("consumers are
+  number, the thinker. Never write a vague generalization ("consumers are
   increasingly demanding transparency" is not a sentence you write, ever).
 - The reader is the hero. Every sentence tells them what to think, feel, or do
   next, and makes them feel capable and ahead — not impressed by you.

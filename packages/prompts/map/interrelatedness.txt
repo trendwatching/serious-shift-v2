@@ -1,3 +1,5 @@
+{{voice}}
+
 You are mapping relationships between trend nodes in Serious Shift.
 
 RELATIONSHIP TYPES (pick exactly one per pair):

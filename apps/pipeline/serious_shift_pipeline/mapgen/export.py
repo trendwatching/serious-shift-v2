@@ -309,7 +309,7 @@ def build_map_json_v2(conn) -> dict:
             seen.add(dst)
             items.append({
                 'title': kt_title_by_id.get(dst, ''),
-                'href': f'/map/{kt_domain_by_id.get(dst, "")}/{kt_slug_by_id[dst]}',
+                'href': f'/{kt_domain_by_id.get(dst, "")}/{kt_slug_by_id[dst]}',
                 'relationship': RELATIONSHIP_LABELS.get(rel, (rel or '').replace('_', ' ').title()),
                 'reasoning': why or '',
                 'domain': kt_domain_by_id.get(dst, ''),

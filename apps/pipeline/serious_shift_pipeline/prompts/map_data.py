@@ -69,13 +69,24 @@ def prompt_domain_key_trends(domain: dict, claims: list, min_kts: int = MIN_KTS_
 
 # ── Phase 5: Sub-trend clustering per KT ───────────────────────────────────
 
-def prompt_sub_trends(kt_name: str, kt_subtitle: str, claims: list) -> str:
+def prompt_sub_trends(kt_name: str, kt_subtitle: str, claims: list,
+                      taken: list[str] | None = None) -> str:
+    """`taken` is every name already spoken for anywhere in the map.
+
+    Without it each of the ~51 calls invents five memorable two-word names from
+    overlapping evidence with no sight of the others, which is precisely how the
+    2026-08-09 crawl found 22 names spread over 58 pages — "Provenance Premium"
+    on seven of them. The list is advisory to the model and enforced by
+    validation.py; the caller re-asks with a longer list when a collision
+    survives.
+    """
     return load_and_render(
         "map/sub_trends.txt",
         voice=VOICE,
         kt_name=kt_name,
         kt_subtitle=kt_subtitle,
         claim_count=len(claims),
+        taken='\n'.join(f'- {name}' for name in sorted(taken or [])) or '- (none yet)',
         evidence=fmt_claims_block(claims, max_per=90),
     )
 
@@ -161,7 +172,12 @@ def prompt_interrelatedness_batch(pairs: list) -> str:
         f"  Pair ({p['id_a']}, {p['id_b']}): [{p['type_a']}] {p['name_a']} | [{p['type_b']}] {p['name_b']}"
         for p in pairs
     ]
-    return load_and_render("map/interrelatedness.txt", pairs='\n'.join(lines))
+    # `voice` matters here even though this prompt only picks a relationship
+    # type: its `reasoning` string is published verbatim into the related_shifts
+    # module (export.py), so it is reader-facing copy and has to follow the same
+    # US-spelling rule as everything else. It was the one published surface the
+    # voice block never reached.
+    return load_and_render("map/interrelatedness.txt", voice=VOICE, pairs='\n'.join(lines))
 
 
 # ── Phase 8: Synthesis insights per domain ──────────────────────────────────

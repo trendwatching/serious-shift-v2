@@ -39,8 +39,12 @@ def valid_map() -> dict:
                 'id': sub_id,
                 'key_trend_id': shift_id,
                 'domain_id': domain_id,
-                'slug': f'{shift_slug}/sub-{sub_index + 1}',
-                'name': f'Sub {sub_index + 1}',
+                # Unique across the WHOLE document, not just beneath the parent.
+                # These used to be sub-1..sub-5 under every shift, which is
+                # exactly the shape that put six "Provenance Premium" pages and
+                # seven "Governance Gap" pages on the live site.
+                'slug': f'{shift_slug}/sub-{domain_index + 1}-{sub_index + 1}',
+                'name': f'Sub {domain_index + 1}-{sub_index + 1}',
                 'claim_ids': [f'c_{claim_id}' for claim_id in claim_ids],
                 'modules': [
                     {'type': 'lede', 'data': {'text': 'Lede'}},
@@ -350,6 +354,87 @@ def test_export_conformance_fixes_a_document_without_regenerating_it():
     conformed = conform_modules(over_limit)
     issues = _validate_modules(conformed, 'sub_trend', 'sub_trends[x]', CONTRACT)
     assert [issue for issue in issues if issue.code == 'editorial_length'] == []
+
+
+def test_a_name_used_twice_anywhere_fails_publication():
+    """The crawl of 2026-08-09 found 22 names spread over 58 pages: "Provenance
+    Premium" was a key shift AND a sub-shift under six different parents, so
+    seven pages carried one name. Nothing rejected it, because the slug checks
+    were grouped — shifts by sphere, sub-shifts by parent — so each duplicate
+    landed in its own bucket and `_duplicates` never saw a pair.
+
+    Export then HID the collision rather than surfacing it: a second identically
+    named key shift is silently disambiguated to `-2`, which is how
+    `/organisations/moat-migration-2` reached production."""
+    from serious_shift_pipeline.mapgen.validation import validate_map
+
+    def codes(mutate):
+        document = valid_map()
+        mutate(document)
+        return {issue.code for issue in validate_map(document, CONTRACT)}
+
+    # Two key shifts in DIFFERENT spheres sharing a slug.
+    def same_shift_slug(document):
+        document['key_trends'][1]['slug'] = document['key_trends'][0]['slug']
+    assert 'duplicate_shift_slug' in codes(same_shift_slug)
+
+    # Two sub-shifts under DIFFERENT parents sharing a name.
+    def same_sub_slug(document):
+        first = document['sub_trends'][0]['slug'].rsplit('/', 1)[-1]
+        other = next(s for s in document['sub_trends']
+                     if s['key_trend_id'] != document['sub_trends'][0]['key_trend_id'])
+        other['slug'] = f"{other['slug'].rsplit('/', 1)[0]}/{first}"
+    assert 'duplicate_sub_shift_slug' in codes(same_sub_slug)
+
+    # A sub-shift wearing a key shift's name — the "Provenance Premium" shape.
+    def sub_shadows_shift(document):
+        shift_slug = document['key_trends'][0]['slug']
+        sub = document['sub_trends'][-1]
+        sub['slug'] = f"{sub['slug'].rsplit('/', 1)[0]}/{shift_slug}"
+    assert 'sub_shift_shadows_shift' in codes(sub_shadows_shift)
+
+    # …and the fixture itself is clean, or none of the above proves anything.
+    assert validate_map(valid_map(), CONTRACT) == []
+
+
+def test_copy_must_be_us_spelling_and_free_of_slugs():
+    """Neither of these had any gate at all. `voice.txt` says "US spelling only"
+    and the prompt files are themselves written in British English two lines
+    above the rule; the 2026-08-09 crawl duly found "catalogued" and
+    "organisation" in published copy, and `pilot-plateau` used as an adjective
+    in three different pages' prose.
+
+    `sub_trends[].description` is the worst of it: seo.rs publishes it verbatim
+    as the meta description, and until now nothing validated it."""
+    from serious_shift_pipeline.mapgen.validation import validate_map
+
+    def codes(mutate):
+        document = valid_map()
+        mutate(document)
+        return {issue.code for issue in validate_map(document, CONTRACT)}
+
+    def british_description(document):
+        document['sub_trends'][0]['description'] = (
+            'Firms catalogued their models. The organisation pays for it later.')
+    assert 'british_spelling' in codes(british_description)
+
+    def slug_in_prose(document):
+        target = document['sub_trends'][1]['slug'].rsplit('/', 1)[-1]
+        document['key_trends'][0]['subtitle'] = f'The {target} firms move first.'
+    assert 'slug_in_prose' in codes(slug_in_prose)
+
+    # A capitalised British-looking word is a proper noun and must survive:
+    # "Centre for AI Safety" is an organisation's name, not a spelling error.
+    def proper_noun(document):
+        document['sub_trends'][0]['description'] = (
+            'The Centre for AI Safety published it. Labour markets shifted.')
+    assert 'british_spelling' not in codes(proper_noun)
+
+    # Ordinary hyphenated copy is not a slug.
+    def ordinary_hyphens(document):
+        document['sub_trends'][0]['description'] = (
+            'Entry-level and AI-assisted work diverged. Brands must re-plan.')
+    assert 'slug_in_prose' not in codes(ordinary_hyphens)
 
 
 def test_two_spheres_naming_a_shift_the_same_get_distinct_slugs():

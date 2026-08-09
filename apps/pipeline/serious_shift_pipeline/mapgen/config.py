@@ -185,7 +185,7 @@ DOMAINS = [
 # Preset domain flows (directional influence arrows between domains)
 DOMAIN_FLOWS_PRESET = [
     {'source': 'society',       'target': 'economy',       'strength': 'high',   'description': 'Societal legitimacy crises and governance failures shape economic confidence and policy responses.'},
-    {'source': 'society',       'target': 'consumers',     'strength': 'high',   'description': 'Cultural shifts in identity, trust, and meaning drive consumer expectations and behavioural norms.'},
+    {'source': 'society',       'target': 'consumers',     'strength': 'high',   'description': 'Cultural shifts in identity, trust, and meaning drive consumer expectations and behavioral norms.'},
     {'source': 'economy',       'target': 'consumers',     'strength': 'high',   'description': 'Economic disruption — displacement, inequality, new income models — redefines consumer purchasing power and priorities.'},
     {'source': 'economy',       'target': 'organizations', 'strength': 'high',   'description': 'Macro-economic pressures, labor cost dynamics, and capital flows directly determine organizational strategy.'},
     {'source': 'consumers',     'target': 'organizations', 'strength': 'high',   'description': 'Shifting consumer expectations and agent-mediated purchase patterns force organizational redesign.'},

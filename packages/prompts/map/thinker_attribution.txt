@@ -1,4 +1,4 @@
-You are analysing thinker stances for Serious Shift.
+You are analyzing thinker stances for Serious Shift.
 
 TASK
 From the evidence below (grouped by thinker), identify:
