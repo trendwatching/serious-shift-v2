@@ -11,6 +11,22 @@
  * Also asserts each poster is well-formed and carries exactly one sphere's ramp,
  * because the whole point of generating per sphere is that a Consumers hero is
  * not lit with Society's pink.
+ *
+ * What this CANNOT check, and where that is checked instead
+ * --------------------------------------------------------
+ * Whether the manifest covers the slugs actually PUBLISHED. That is the failure
+ * that matters — a synthesis renames a shift, the exporter re-derives its slug
+ * from the new name, and the artwork keyed to the old one is stranded behind a
+ * sphere gradient that looks deliberate. But the published slugs live in
+ * Postgres, and this runs in a build with no database; both inputs here come
+ * out of the same generator run, so they agree by construction and would agree
+ * just as happily about a map neither of them has seen.
+ *
+ * Two places have both halves, and both check it:
+ *   • `scripts/preflight-origin.mjs <origin>` — the cutover gate, run by hand.
+ *   • the backend, on every map refresh (`report_art_coverage` in main.rs).
+ *     This is the one that catches the real case: the weekly cron republishes
+ *     into a container nobody redeployed, so no script runs at all.
  */
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'

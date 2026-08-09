@@ -1131,9 +1131,57 @@ async fn fetch_snapshot(s: &AppState) -> Result<Arc<MapSnapshot>, AppError> {
         "{published}|i{:016x}|p{:016x}",
         innovations.revision, policy.revision
     );
-    build_snapshot(body, &version, &innovations.by_shift, &policy)
+    let snapshot = build_snapshot(body, &version, &innovations.by_shift, &policy)
         .map(Arc::new)
-        .map_err(|error| AppError::internal(format!("invalid published map JSON: {error}")))
+        .map_err(|error| AppError::internal(format!("invalid published map JSON: {error}")))?;
+    report_art_coverage(&snapshot);
+    Ok(snapshot)
+}
+
+/// Warn when the published map names shifts this image has no artwork for.
+///
+/// The two halves of the site are versioned separately: editorial content is a
+/// row in Postgres, artwork is compiled into the frontend build. A synthesis
+/// that renames a shift moves its slug — the exporter re-derives every slug from
+/// the name — and the artwork, which is keyed by slug, is left behind. The page
+/// then falls back to its sphere gradient, which looks deliberate, so nobody
+/// reports it.
+///
+/// This is checked here rather than in CI because CI cannot see it: the build
+/// has no database, so `check-heroes` can only compare the manifest against the
+/// directory, and both of those come out of the same generator run. It is
+/// checked at runtime rather than at startup because the failure arrives with
+/// the *data*, not with the deploy — the weekly cron republishes into a
+/// container nobody redeployed, and this is the moment that becomes visible.
+///
+/// A warning, not an error. Missing artwork is cosmetic; failing the map
+/// refresh over it would take a working site down to protect a background
+/// image.
+fn report_art_coverage(snapshot: &MapSnapshot) {
+    let dir = Path::new(&static_dir()).join("shift/heroes");
+    if !dir.is_dir() {
+        return; // API-only deploy, or the static build is absent — not this check's business.
+    }
+    let missing: Vec<&str> = snapshot
+        .site_index
+        .shift_slugs
+        .iter()
+        .filter(|slug| !dir.join(format!("{slug}.svg")).is_file())
+        .map(String::as_str)
+        .collect();
+    let total = snapshot.site_index.shift_slugs.len();
+    if missing.is_empty() {
+        tracing::info!(shifts = total, "all published shifts have hero artwork");
+        return;
+    }
+    tracing::warn!(
+        missing = missing.len(),
+        of = total,
+        slugs = %missing.iter().take(8).copied().collect::<Vec<_>>().join(", "),
+        "published shifts have no hero artwork in this build — a rename since the \
+         last art regeneration. Run `npm run heroes` against this origin, then \
+         `npm run heroes:og`, commit and redeploy."
+    );
 }
 
 /// Current snapshot, with one refresh under concurrent misses. If Postgres is

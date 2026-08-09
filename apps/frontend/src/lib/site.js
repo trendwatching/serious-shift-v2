@@ -59,11 +59,8 @@ export const LOGOS = [
 export const ABOUT_URL = 'https://info.trendwatching.com/serious-shift/about'
 export const METHODOLOGY_URL = `${ABOUT_URL}#methodology`
 export const SUBSCRIBE_URL = `${ABOUT_URL}#subscribe`
-export const SERVICES_URL = `${ABOUT_URL}#services`
 export const TRENDWATCHING_URL = `${ABOUT_URL}#trendwatching`
 export const CONTACT_URL = 'mailto:hello@trendwatching.com'
-export const LINKEDIN_URL = 'https://www.linkedin.com/company/trendwatching-com/'
-
 export const WHATSAPP_URL = `${ABOUT_URL}#whatsapp`
 
 /*
@@ -91,14 +88,4 @@ export const MENU_LINKS = [
   { label: 'Services', meta: 'Reports & workshops', href: '/about#services', internal: true },
   { label: 'TrendWatching', meta: '20+ years', href: '/about#trendwatching', internal: true },
   { label: 'About', meta: 'Why & who & what', href: '/about', internal: true },
-]
-
-export const FOOTER_LINKS = [
-  { label: 'Who is it for?', href: ABOUT_URL },
-  { label: 'Who am I reading?', href: METHODOLOGY_URL },
-  { label: 'What else you’d like?', href: CONTACT_URL },
-]
-
-export const SOCIALS = [
-  { label: 'LinkedIn', mark: 'in', href: LINKEDIN_URL },
 ]

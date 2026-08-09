@@ -36,6 +36,13 @@ pub struct SiteIndex {
     pub pages: HashMap<String, PageMeta>,
     /// Canonical routes, in document order — the sitemap's contents.
     pub routes: Vec<String>,
+    /// Every published KEY-shift slug, in document order.
+    ///
+    /// Kept apart from `routes` because artwork is keyed by the bare slug, not
+    /// by the route: `/society/pacing-panic` and `pacing-panic.svg`. Sub-shifts
+    /// are excluded deliberately — they inherit their parent's hero rather than
+    /// carrying one of their own.
+    pub shift_slugs: Vec<String>,
     /// `updated` from the document, used as the sitemap's lastmod.
     pub updated: String,
 }
@@ -181,6 +188,7 @@ pub fn build_index(doc: &str) -> SiteIndex {
                 description: clamp(&s(&kt, "subtitle")),
             },
         );
+        idx.shift_slugs.push(slug);
     }
 
     for st in arr("sub_trends") {
@@ -684,6 +692,34 @@ mod tests {
     /// Staging is a complete copy of the publication. Served as it was — with
     /// `Allow: /` and a 312-URL sitemap — it is indexable duplicate content
     /// competing with the real domain for the same prose.
+    /// The two halves of the site are versioned separately, and only one of
+    /// them can see this list: the frontend build has no database, so
+    /// `check-heroes` can compare the manifest against the directory and
+    /// nothing else. The backend has both, which is why the coverage warning
+    /// lives there — and why the index has to expose the bare slugs artwork is
+    /// keyed by, rather than the routes readers use.
+    #[test]
+    fn the_index_exposes_the_bare_slugs_artwork_is_keyed_by() {
+        let idx = build_index(DOC);
+        // The bare slug, not the route: the file is `sovereign-collapse.svg`
+        // while the page is `/society/sovereign-collapse`.
+        assert_eq!(idx.shift_slugs, vec!["sovereign-collapse".to_string()]);
+        assert!(idx.pages.contains_key("/society/sovereign-collapse"));
+
+        // A sub-shift inherits its parent's hero rather than carrying one, so
+        // it must not appear here — it has a page in the index but would be
+        // reported as missing artwork on every single refresh, forever.
+        assert!(idx
+            .pages
+            .contains_key("/society/sovereign-collapse/threshold-blindness"));
+        assert!(!idx.shift_slugs.iter().any(|s| s.contains('/')));
+
+        // A shift with no slug is never published, so it cannot be expected to
+        // have art — the same reason `build_index` skips its route.
+        let unslugged = r#"{"domains":[],"key_trends":[{"domain_id":"society","slug":"","name":"Nameless"}],"sub_trends":[]}"#;
+        assert!(build_index(unslugged).shift_slugs.is_empty());
+    }
+
     #[test]
     fn only_the_published_domain_invites_crawlers() {
         for staging in [
