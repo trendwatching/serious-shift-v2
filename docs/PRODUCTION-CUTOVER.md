@@ -146,6 +146,27 @@ images copy `packages/`, which sits outside `apps/`.
 
 The `synthesize` service needs `DATABASE_URL` and `ANTHROPIC_API_KEY`.
 
+> **Attach the two pipeline configs AFTER launch is verified, not before.**
+>
+> Both carry a cron in the file itself — `railway.ingest.json` is `0 22 * * 0`
+> (Sun 22:00) and `railway.synthesize.json` is `0 2 * * 1` (**Mon 02:00**).
+> Attaching the config is what arms them, so doing this over the launch weekend
+> schedules a full re-synthesis for a few hours before the site goes live.
+>
+> That is not a harmless refresh. `synthesize` regenerates every shift name from
+> the prompts, and `mapgen/export.py` re-derives each slug from the name at
+> export time — so any name that comes back different moves its URL. Artwork is
+> keyed by slug and committed into the frontend image, so a rename silently
+> strands the hero, the landscape cut and the share card for that shift; the page
+> falls back to its sphere gradient, which looks deliberate. Regenerating art is
+> a manual step (`npm run heroes`, `npm run heroes:og`, commit, redeploy), and
+> nothing in CI catches the drift: `check-heroes` compares the manifest against
+> what is on disk, not against what is actually published.
+>
+> The detector is `npm run preflight -- <origin>`, which checks art coverage per
+> *published* slug. Run it after any synthesis, on any environment. The same
+> exposure applies to staging, whose cron is already armed.
+
 ### 4. Deploy the backend — without touching the live site
 
 Two ways, and the second is safer:
