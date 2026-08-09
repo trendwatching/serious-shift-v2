@@ -81,9 +81,37 @@ def test_map_export_is_unchanged(request):
         pytest.skip(f"no golden recorded yet — run with --update-golden ({GOLDEN})")
 
     expected = json.loads(GOLDEN.read_text())
-    # Compare the summary first: a digest mismatch alone is undiagnosable, and
-    # nine times out of ten the summary already shows what moved.
-    assert actual["summary"] == expected["summary"], "export structure changed"
+
+    # ── The durable half: SHAPE ──────────────────────────────────────────────
+    # Field names and top-level keys are what a refactor of the exporter breaks,
+    # and they survive a content refresh. This is the assertion the docstring
+    # describes: catches a changed field, not just a changed count.
+    for key in ("kt_fields", "st_fields", "top_level_keys"):
+        assert actual["summary"][key] == expected["summary"][key], (
+            f"exporter shape changed: {key}. If intentional, re-record with "
+            f"--update-golden."
+        )
+    for key in ("domains", "key_trends", "sub_trends"):
+        assert actual["summary"][key] > 0, f"export produced no {key}"
+
+    # ── The volatile half: CONTENT ───────────────────────────────────────────
+    # The digest is over the document body, so it changes every time the map is
+    # regenerated — which is weekly. Asserting it unconditionally made this test
+    # fail on any database whose content had moved on since the golden was
+    # recorded, which is every database after one Monday. It is still exactly
+    # what you want across a refactor, where the data is fixed and only the code
+    # moved, so it runs when the counts say the data has not changed.
+    same_data = all(
+        actual["summary"][k] == expected["summary"][k]
+        for k in ("domains", "key_trends", "sub_trends", "synthesis_insights", "links")
+    )
+    if not same_data:
+        pytest.skip(
+            "map content has changed since the golden was recorded "
+            f"({expected['summary']['key_trends']}→{actual['summary']['key_trends']} "
+            "key shifts) — shape asserted, content digest not comparable. "
+            "Re-record with --update-golden to restore it."
+        )
     assert actual["digest"] == expected["digest"], (
         "export content changed while its structure stayed the same — a field "
         "value differs. If intentional, re-record with --update-golden."

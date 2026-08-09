@@ -1,9 +1,10 @@
 {
-  "digest": "d0e3c76af752ebc3d95c7ec6c4ea36f914a8a757e76f573f39048c679338a84f",
+  "digest": "aa3c43ce9e3b8c7750369ff28772602fda1353e139a7ef3d0df80238bea58559",
   "summary": {
     "domains": 4,
-    "key_trends": 64,
+    "key_trends": 51,
     "kt_fields": [
+      "authored",
       "db_id",
       "description",
       "domain_id",
@@ -21,9 +22,10 @@
       "subtitle",
       "velocity"
     ],
-    "kt_modules": 64,
-    "links": 298,
+    "kt_modules": 631,
+    "links": 194,
     "st_fields": [
+      "authored",
       "claim_ids",
       "db_id",
       "description",
@@ -35,8 +37,8 @@
       "slug",
       "subtitle"
     ],
-    "st_modules": 320,
-    "sub_trends": 320,
+    "st_modules": 2656,
+    "sub_trends": 255,
     "synthesis_insights": 16,
     "top_level_keys": [
       "architecture",

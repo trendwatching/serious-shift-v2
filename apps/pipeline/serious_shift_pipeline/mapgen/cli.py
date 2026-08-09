@@ -42,6 +42,42 @@ def _record_validation_failure(exc: PublicationValidationError) -> None:
         run.start()
     run.finish(status='failed', detail=exc.detail())
     print(json.dumps(exc.detail(), indent=2), file=sys.stderr)
+    # The generation is NOT lost, and the message used not to say so. The gate
+    # runs once, at the end, against the v2 tables — which are already written.
+    # So the ~25 minutes and the API spend are still on disk, and recovery is a
+    # free re-export once the underlying issue is fixed. Someone who does not
+    # know that reaches for a full rebuild and pays for the same map twice.
+    print(
+        '\n  The map in the v2 tables is intact — this failed at the gate, not '
+        'during generation.\n'
+        '  Fix the issues above (most are data, not code), then re-publish for '
+        'free with:\n'
+        '      python -m serious_shift_pipeline.mapgen.cli --export-only\n'
+        '  A full re-run would regenerate every name from the prompts and cost '
+        'the same again.',
+        file=sys.stderr,
+    )
+
+
+def _open_export_run() -> tuple[str, RunLog | None]:
+    """Open a `pipeline_runs` row for a standalone re-export.
+
+    Returns (run_id, run) with `run` None when the orchestrator owns the row —
+    it exports SS_RUN_ID and closes the row itself, and closing it twice would
+    stamp `finished_at` before the later steps have run.
+    """
+    orchestrated = bool(os.environ.get('SS_RUN_ID'))
+    run_id = os.environ.get('SS_RUN_ID') or observability.new_run_id('export')
+    if orchestrated:
+        return run_id, None
+    run = RunLog(run_id, 'export')
+    run.start()
+    return run_id, run
+
+
+def _close_export_run(run: RunLog | None, *, status: str, detail: dict | None = None) -> None:
+    if run is not None:
+        run.finish(status=status, detail=detail)
 
 
 def _issue_shift_ids(out: dict, issues) -> set[str]:
@@ -215,11 +251,28 @@ def main():
     # ── Export-only ──────────────────────────────────────────────────────────
     if args.export_only:
         print('--export-only: reading existing v2 data…')
-        out = build_map_json_v2(conn)
-        out = _publish_candidate(conn, out)
+        # A re-export publishes, so it belongs in the history. It used not to
+        # open a row at all, which left `status` reporting "last synthesize:
+        # failed" while the map on the site was fresh — an outage that was not
+        # happening, reported during the one window where someone is already
+        # anxious about the content.
+        run_id, run = _open_export_run()
+        try:
+            out = build_map_json_v2(conn)
+            out = _publish_candidate(conn, out)
+        except BaseException:
+            _close_export_run(run, status='failed')
+            raise
+        _close_export_run(run, status='ok', detail={'export': {
+            'domains': len(out.get('domains', [])),
+            'key_trends': len(out.get('key_trends', [])),
+            'sub_trends': len(out.get('sub_trends', [])),
+            'links': len(out.get('links', [])),
+        }})
         print("✓  map written → documents['map']")
         print(f'   {len(out["domains"])} domains · {len(out["key_trends"])} KTs · '
               f'{len(out["sub_trends"])} sub-trends · {len(out["links"])} links')
+        print(f'   recorded as pipeline_runs stage=export run_id={run_id}')
         conn.close(); return
 
     # ── Always reset v2 tables ───────────────────────────────────────────────

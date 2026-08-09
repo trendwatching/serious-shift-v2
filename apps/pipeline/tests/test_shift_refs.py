@@ -131,7 +131,107 @@ def test_a_link_to_a_renamed_shift_is_reported(capsys):
         _publish_shift_refs(conn, renamed)
         out = capsys.readouterr().out
         assert "innovation link(s) point at" in out
-        assert "key_trend:trust-machines" in out
+
+        # Asserted against the data, not against the printed line. The message
+        # shows the first five names only, so looking for this slug in it passed
+        # on an empty CI database and failed on any real one that already had
+        # five stranded refs — a test that only works when there is nothing to
+        # find is not testing the thing it names.
+        stranded = conn.execute(
+            """SELECT 1 FROM innovation_shift_links l
+                 JOIN shift_refs sr ON sr.id = l.shift_ref_id
+                WHERE l.enabled AND sr.scope = 'key_trend'
+                  AND sr.slug = 'trust-machines'
+                  AND sr.last_published_at
+                      < (SELECT max(last_published_at) FROM shift_refs)"""
+        ).fetchone()
+        assert stranded, "the renamed shift's link should now be stranded"
+    finally:
+        conn.rollback()
+        conn.close()
+
+
+@pytest.mark.skipif(not os.environ.get("DATABASE_URL"), reason="DATABASE_URL not set")
+def test_publication_prunes_stale_identities_that_nothing_points_at():
+    """The table only ever grew: 676 rows describing 306 published shifts.
+
+    A stale ref with no link carries nothing — `classify` only considers refs
+    from the latest publication, `first_seen_at` is read by nobody, and if the
+    slug returns the upsert simply recreates the row.
+    """
+    from serious_shift_pipeline.core import db
+
+    conn = db.raw_connect()
+    try:
+        _publish_shift_refs(conn, DOCUMENT)
+        before = conn.execute(
+            "SELECT count(*) AS n FROM shift_refs WHERE slug = 'capability-arrives'"
+        ).fetchone()["n"]
+        assert before == 1
+
+        # A publication that no longer carries it.
+        _publish_shift_refs(conn, {
+            "key_trends": [
+                {"slug": "trust-machines", "domain_id": "society", "name": "Trust Machines"}
+            ],
+            "sub_trends": [],
+        })
+        after = conn.execute(
+            "SELECT count(*) AS n FROM shift_refs WHERE slug = 'capability-arrives'"
+        ).fetchone()["n"]
+        assert after == 0, "a stale identity nothing points at should not survive"
+        # The one still being published is untouched.
+        assert conn.execute(
+            "SELECT count(*) AS n FROM shift_refs WHERE slug = 'trust-machines'"
+        ).fetchone()["n"] == 1
+    finally:
+        conn.rollback()
+        conn.close()
+
+
+@pytest.mark.skipif(not os.environ.get("DATABASE_URL"), reason="DATABASE_URL not set")
+def test_pruning_spares_identities_with_a_link_including_a_disabled_one():
+    """`innovation_shift_links.shift_ref_id` is ON DELETE CASCADE.
+
+    A disabled auto link is an editor's veto, and the tombstone is what stops
+    the next classifier sweep resurrecting it. Pruning its ref would cascade the
+    tombstone away and quietly overturn the veto — so the check is `NOT EXISTS
+    any link`, not `no enabled link`.
+    """
+    from serious_shift_pipeline.core import db
+
+    conn = db.raw_connect()
+    try:
+        _publish_shift_refs(conn, DOCUMENT)
+        ref_id = conn.execute(
+            "SELECT id FROM shift_refs WHERE scope='key_trend' AND slug='capability-arrives'"
+        ).fetchone()["id"]
+        innovation_id = conn.execute(
+            """INSERT INTO innovations (source_innovation_id, article_url, title, payload)
+               VALUES (-2, 'https://example.com/veto', 'Vetoed', '{}'::jsonb)
+               ON CONFLICT (source_innovation_id) DO UPDATE SET title = EXCLUDED.title
+               RETURNING id"""
+        ).fetchone()["id"]
+        conn.execute(
+            """INSERT INTO innovation_shift_links
+                   (innovation_id, shift_ref_id, source, enabled)
+               VALUES (%s, %s, 'auto', false) ON CONFLICT DO NOTHING""",
+            (innovation_id, ref_id),
+        )
+
+        _publish_shift_refs(conn, {
+            "key_trends": [
+                {"slug": "trust-machines", "domain_id": "society", "name": "Trust Machines"}
+            ],
+            "sub_trends": [],
+        })
+        assert conn.execute(
+            "SELECT count(*) AS n FROM shift_refs WHERE id = %s", (ref_id,)
+        ).fetchone()["n"] == 1, "a ref carrying an editor's veto must survive"
+        assert conn.execute(
+            "SELECT count(*) AS n FROM innovation_shift_links WHERE shift_ref_id = %s",
+            (ref_id,),
+        ).fetchone()["n"] == 1, "and so must the tombstone it protects"
     finally:
         conn.rollback()
         conn.close()

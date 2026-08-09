@@ -170,6 +170,12 @@ class RecordingConnection:
         self.statements.append((' '.join(statement.split()), params))
         return self
 
+    # psycopg's `connection.execute()` hands back a cursor, and promotion reads
+    # `rowcount` off the reconciliation DELETE to report how many stale
+    # identities it pruned. Zero is the honest answer with no database behind
+    # this, and it keeps the test about statement *ordering*.
+    rowcount = 0
+
     def fetchall(self):
         # Promotion also records shift identities and then asks which curated
         # innovation links point at a shift that is no longer published. With no

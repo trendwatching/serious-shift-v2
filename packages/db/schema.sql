@@ -431,7 +431,7 @@ CREATE TABLE public.pipeline_runs (
     output_tokens bigint DEFAULT 0 NOT NULL,
     cost_usd numeric(12,6) DEFAULT 0 NOT NULL,
     detail jsonb,
-    CONSTRAINT pipeline_runs_stage_check CHECK ((stage = ANY (ARRAY['ingest'::text, 'synthesize'::text, 'full'::text]))),
+    CONSTRAINT pipeline_runs_stage_check CHECK ((stage = ANY (ARRAY['ingest'::text, 'synthesize'::text, 'full'::text, 'export'::text]))),
     CONSTRAINT pipeline_runs_status_check CHECK ((status = ANY (ARRAY['running'::text, 'ok'::text, 'failed'::text, 'aborted'::text])))
 );
 
@@ -1554,4 +1554,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260805094500'),
     ('20260807100000'),
     ('20260807100100'),
-    ('20260809080000');
+    ('20260809080000'),
+    ('20260809140000');

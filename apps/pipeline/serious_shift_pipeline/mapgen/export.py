@@ -534,11 +534,17 @@ def _publish_shift_refs(conn, out: dict) -> None:
     weekly. The durable identity is the URL slug — the same key
     `shift_module_overrides` uses, and for the same reason.
 
-    Rows are upserted, never deleted. A shift that leaves the map keeps its row
-    with a now-stale `last_published_at`, so a link survives a shift being renamed
-    and renamed back, and that staleness is what the warning below detects. Runs
-    in the same transaction as the document promotion above: the identities and
-    the document they came from must not be able to disagree.
+    A shift that leaves the map keeps its row with a now-stale
+    `last_published_at`, so a link survives a shift being renamed and renamed
+    back, and that staleness is what the warning below detects. Runs in the same
+    transaction as the document promotion above: the identities and the document
+    they came from must not be able to disagree.
+
+    Rows used to be upserted and *never* deleted, which meant the table only
+    grew: 676 rows describing 306 published shifts, 370 of them stale. The
+    reconciliation below keeps the property that matters — a ref anything points
+    at is immortal — and drops the rest, which carry no information beyond "this
+    slug existed once" and are read by nothing.
     """
     rows = [
         ('key_trend', kt.get('slug'), kt.get('domain_id'), kt.get('name'))
@@ -570,6 +576,30 @@ def _publish_shift_refs(conn, out: dict) -> None:
           last_published_at = EXCLUDED.last_published_at
     """, (scopes, slugs, domains, titles))
     print(f'  ✓  {len(rows)} shift identities published.')
+
+    # Reconcile: drop refs this publication did not carry AND that nothing
+    # points at.
+    #
+    # `NOT EXISTS` covers disabled links too, not just enabled ones. A disabled
+    # auto link is an editor's veto, and the tombstone is what stops the next
+    # classifier sweep resurrecting it — deleting its ref would cascade the
+    # tombstone away and quietly overturn the veto. The FK is ON DELETE CASCADE,
+    # so this is not theoretical.
+    #
+    # No grace window. A stale ref with no link carries nothing a grace window
+    # could protect: `classify` only considers refs from the latest publication,
+    # `first_seen_at` is written and read by nobody, and if the slug comes back
+    # the upsert above simply recreates the row.
+    pruned = conn.execute("""
+        DELETE FROM shift_refs sr
+         WHERE sr.last_published_at IS DISTINCT FROM
+               (SELECT max(last_published_at) FROM shift_refs)
+           AND NOT EXISTS (SELECT 1 FROM innovation_shift_links l
+                            WHERE l.shift_ref_id = sr.id)
+    """).rowcount
+    if pruned:
+        print(f'  ✓  {pruned} stale shift identity/identities pruned '
+              f'(nothing linked to them).')
 
     # A curated innovation whose shift was renamed is the one failure here that
     # is otherwise silent: the link is still in the DB, the page just stops
