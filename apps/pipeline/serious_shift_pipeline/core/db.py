@@ -130,19 +130,28 @@ def connect():
         conn.close()
 
 
-def query(conn, sql: str, params: tuple | list | None = None) -> list[dict]:
+#: psycopg takes a MAPPING for named placeholders (`%(name)s`) as well as a
+#: sequence for positional ones, and several callers use the named form —
+#: steps/classify.py's SWEEP among them. The annotation said tuple|list|None,
+#: which made every one of those calls a type error; it went unreported because
+#: an accidental `# type:` comment elsewhere was aborting mypy before it got
+#: this far.
+Params = tuple | list | dict | None
+
+
+def query(conn, sql: str, params: Params = None) -> list[dict]:
     with conn.cursor() as cur:
         cur.execute(sql, params or ())
         return cur.fetchall()
 
 
-def query_one(conn, sql: str, params: tuple | list | None = None) -> dict | None:
+def query_one(conn, sql: str, params: Params = None) -> dict | None:
     with conn.cursor() as cur:
         cur.execute(sql, params or ())
         return cur.fetchone()
 
 
-def scalar(conn, sql: str, params: tuple | list | None = None):
+def scalar(conn, sql: str, params: Params = None):
     """First column of the single row a query is expected to return.
 
     For aggregates (`SELECT COUNT(*) …`), which always produce exactly one row.
@@ -159,7 +168,7 @@ def scalar(conn, sql: str, params: tuple | list | None = None):
         return next(iter(row.values()))
 
 
-def execute(conn, sql: str, params: tuple | list | None = None) -> None:
+def execute(conn, sql: str, params: Params = None) -> None:
     with conn.cursor() as cur:
         cur.execute(sql, params or ())
 

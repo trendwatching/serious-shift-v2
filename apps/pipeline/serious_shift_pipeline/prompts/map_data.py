@@ -173,10 +173,13 @@ def prompt_interrelatedness_batch(pairs: list) -> str:
         for p in pairs
     ]
     # `voice` matters here even though this prompt only picks a relationship
-    # type: its `reasoning` string is published verbatim into the related_shifts
+    # kind. Its `reasoning` string is published verbatim into the related_shifts
     # module (export.py), so it is reader-facing copy and has to follow the same
-    # US-spelling rule as everything else. It was the one published surface the
-    # voice block never reached.
+    # US-spelling rule as everything else — the one published surface the voice
+    # block never reached.
+    #
+    # (That second line said "# type: its ..." until mypy read it as a PEP 484
+    # type comment and reported the whole file as a syntax error.)
     return load_and_render("map/interrelatedness.txt", voice=VOICE, pairs='\n'.join(lines))
 
 
