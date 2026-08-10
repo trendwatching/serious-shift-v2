@@ -17,8 +17,9 @@ SYNTHESIS_MODEL = 'claude-sonnet-4-6'
 # Synthesis insights — the most editorially demanding, lowest-volume phase — runs on Opus 4.7.
 INSIGHTS_MODEL = os.environ.get('INSIGHTS_MODEL', 'claude-sonnet-4-6')
 
-# Default number of Key Trends to ask for per domain (the step may override).
-MIN_KTS_PER_DOM = 8
+# Single source of truth for how many Key Trends a domain carries — a range,
+# owned by mapgen (which also gates on it at publication).
+from ..mapgen.config import MAX_KTS_PER_DOM, MIN_KTS_PER_DOM  # noqa: E402
 
 
 def fmt_claims_block(claims: list, max_per: int | None = None) -> str:
@@ -55,13 +56,21 @@ def fmt_claims_block(claims: list, max_per: int | None = None) -> str:
 
 # ── Phase 3: Key Trend generation per domain ───────────────────────────────
 
-def prompt_domain_key_trends(domain: dict, claims: list, min_kts: int = MIN_KTS_PER_DOM) -> str:
+def prompt_domain_key_trends(domain: dict, claims: list,
+                             min_kts: int = MIN_KTS_PER_DOM,
+                             max_kts: int = MAX_KTS_PER_DOM,
+                             taken: list[str] | None = None) -> str:
+    """`taken` carries the Key Trend names other domains already claimed this
+    run, so the four phase-3 calls (now sequential) cannot mint near-twins of
+    each other — the same advisory-ledger pattern `prompt_sub_trends` uses."""
     return load_and_render(
         "map/key_trends.txt",
         voice=VOICE,
         domain_name=domain['name'],
         domain_description=domain['description'][:400],
         min_kts=min_kts,
+        max_kts=max_kts,
+        taken='\n'.join(f'- {name}' for name in sorted(taken or [])) or '- (none yet)',
         claim_count=len(claims),
         evidence=fmt_claims_block(claims, max_per=180),
     )
@@ -98,7 +107,13 @@ def prompt_sub_trends(kt_name: str, kt_subtitle: str, claims: list,
 # so that a long editorial answer can never truncate the taxonomy it hangs off —
 # and so a failure here degrades a page to hero + dek instead of losing the shift.
 
-def prompt_kt_editorial(kt_name: str, kt_subtitle: str, domain_name: str, claims: list) -> str:
+def _fmt_avoid(avoid: list | None) -> str:
+    """The "already the centerpiece elsewhere" ledger, rendered like `taken`."""
+    return '\n'.join(f'- {entry}' for entry in (avoid or [])) or '- (none yet)'
+
+
+def prompt_kt_editorial(kt_name: str, kt_subtitle: str, domain_name: str,
+                        claims: list, avoid: list | None = None) -> str:
     return load_and_render(
         "map/kt_editorial.txt",
         voice=VOICE,
@@ -106,12 +121,13 @@ def prompt_kt_editorial(kt_name: str, kt_subtitle: str, domain_name: str, claims
         kt_subtitle=kt_subtitle,
         domain_name=domain_name,
         claim_count=len(claims),
+        avoid=_fmt_avoid(avoid),
         evidence=fmt_claims_block(claims, max_per=90),
     )
 
 
 def prompt_st_editorial(kt_name: str, kt_subtitle: str, sub_trends: list,
-                        claims_by_sub: dict) -> str:
+                        claims_by_sub: dict, avoid: list | None = None) -> str:
     sections = []
     total = 0
     for st in sub_trends:
@@ -127,6 +143,7 @@ def prompt_st_editorial(kt_name: str, kt_subtitle: str, sub_trends: list,
         voice=VOICE,
         kt_name=kt_name,
         kt_subtitle=kt_subtitle,
+        avoid=_fmt_avoid(avoid),
         sub_trend_evidence='\n\n'.join(sections),
         claim_count=total,
     )

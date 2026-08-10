@@ -6,10 +6,11 @@ import re
 from dataclasses import asdict, dataclass
 from urllib.parse import urlparse
 
-from .config import DOMAINS
+from .config import DOMAINS, MAX_KTS_PER_DOM, MIN_KTS_PER_DOM
 from .modules import (_LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE,
                       FIELD_WORD_LIMITS, LIST_ITEM_WORD_LIMITS, PAIR_TEXT_WORD_LIMITS,
                       STEP_TEXT_WORD_LIMIT, count_words)
+from .phases.hero_stats import stat_matches_shift
 
 #: A stat band displays a statistic, and a statistic contains a number.
 _HAS_DIGIT = re.compile(r'\d')
@@ -302,6 +303,115 @@ _SLUGGISH = re.compile(r'\b[a-z0-9]+(?:-[a-z0-9]+){2,}\b')
 _QUOTED = frozenset({'quote'})
 
 
+# ── Content gates (2026-08-10) ────────────────────────────────────────────────
+#
+# Everything above validates FORM; the checks below validate CONTENT. Each one
+# encodes a defect class the 2026-08-10 audit found in the published map, so
+# that class of document can never promote again. Population-level checks
+# (counts, distributions, cross-page frequency) engage only when the document
+# is map-sized — the unit-test fixtures are four shifts and would trip them
+# meaninglessly.
+
+#: Below this many key shifts, population-level gates stay quiet.
+FULL_MAP_MIN_SHIFTS = 10
+
+#: A velocity distribution where one bucket holds more than this share of
+#: shifts is prompt-anchoring, not grading ("accelerating" × 51).
+VELOCITY_MAX_SHARE = 0.8
+
+#: At least this share of key shifts must carry a stat_band. 22/51 shipped.
+STAT_COVERAGE_FLOOR = 0.6
+
+#: A proper-noun bigram may headline at most this many pages ("Adam Raine"
+#: carried 16); a bare figure gets more slack (different 40%s exist).
+CRUTCH_ENTITY_PAGE_LIMIT = 4
+CRUTCH_FIGURE_PAGE_LIMIT = 6
+
+#: Everyday bigrams/figures that legitimately recur across an AGI map.
+CRUTCH_WHITELIST = frozenset({
+    'artificial intelligence', 'united states', 'serious shift', 'new york',
+    'silicon valley', 'san francisco',
+})
+
+#: Centerpiece fields per module type: the prose that headlines a page. Body
+#: fields (signals, industries, timeline) may legitimately share supporting
+#: facts; centerpieces may not.
+_CENTERPIECE_FIELDS = {
+    'dek': ('text',), 'lede': ('text',), 'pull_quote': ('quote',),
+    'tension_band': ('quote',), 'stat_band': ('value', 'text'),
+    'peel_tabs': ('whats_changing', 'why_now'),
+}
+
+#: Internal vocabulary that must never reach a reader. "sub-trend" is the
+#: pipeline's name; published surfaces say "sub-shift". One published lede
+#: opened "The two allowed evidence records for this sub-trend cover…".
+#: Calibrated against the 2026-08-09 live map: "prompt injection" and a
+#: litigation sentence about "isolated evidence records" are legitimate AI/legal
+#: prose, so the patterns match the self-referential phrasings, not the nouns.
+_META_LANGUAGE = re.compile(
+    r'\b(sub-?trends?|allowed evidence|assigned evidence|'
+    r'evidence records? for|evidence blocks?|'
+    r'claim pool|routed (?:claims?|to sibling)|word (?:limit|cap)s?|'
+    r'editorial body|this dataset)\b', re.IGNORECASE)
+
+#: Sector notes that say "this page has nothing for you" in a paid product.
+#: An EMPTY note is legal (the canonical fill) and the reading view skips it;
+#: prose that names its own irrelevance is filler wearing content's clothes.
+_INDUSTRY_FILLER = re.compile(
+    r'^\s*(?:peripheral|not directly|minimal(?:ly)?|'
+    r'limited (?:direct )?(?:impact|relevance)|largely (?:unaffected|peripheral))',
+    re.IGNORECASE)
+
+_FIGURE_TOKEN = re.compile(r'[$€£]?\d[\d,]*(?:\.\d+)?%?')
+_PROPER_BIGRAM = re.compile(r'\b([A-Z][a-z]+ [A-Z][a-z]+)\b')
+
+
+def _norm_prose(value) -> str:
+    return ' '.join(re.findall(r'[a-z0-9]+', str(value or '').lower()))
+
+
+def _centerpiece_text(row: dict) -> str:
+    parts = []
+    hero = row.get('hero_stat')
+    if isinstance(hero, dict):
+        parts += [str(hero.get('value') or ''), str(hero.get('text') or '')]
+    for module in row.get('modules') or []:
+        if not isinstance(module, dict):
+            continue
+        fields = _CENTERPIECE_FIELDS.get(str(module.get('type') or ''))
+        if not fields:
+            continue
+        data = module.get('data') or {}
+        parts += [str(data.get(field) or '') for field in fields]
+    # Newline-joined so a bigram can never straddle two fields — "Change" at
+    # the end of one field and "Now" at the start of the next is not an entity.
+    return '\n'.join(parts)
+
+
+def _crutch_signatures(text: str) -> set[str]:
+    """The distinctive tokens a page's centerpiece leans on."""
+    signatures: set[str] = set()
+    for match in _PROPER_BIGRAM.finditer(text):
+        bigram = match.group(1).lower()
+        if bigram not in CRUTCH_WHITELIST:
+            signatures.add(f'entity:{bigram}')
+    for token in _FIGURE_TOKEN.findall(text):
+        token = token.rstrip(',.')
+        bare = token.strip('$€£')
+        digits = re.sub(r'\D', '', token)
+        # A signature figure must carry a UNIT — %, currency, a decimal, or a
+        # thousands separator — or be 5+ digits. Bare small integers ("30",
+        # "88") collide across unrelated pages by coincidence, and bare years
+        # are just evidence dating; calibrated on the 2026-08-09 live map,
+        # where "2026," alone produced 42 false hits.
+        distinctive = ('%' in token or token[0] in '$€£' or '.' in bare
+                       or (',' in bare and len(digits) >= 4) or len(digits) >= 5)
+        if not distinctive or re.fullmatch(r'(19|20)\d\d', digits):
+            continue
+        signatures.add(f'figure:{token.lower()}')
+    return signatures
+
+
 def _copy_strings(row: dict, path: str):
     """The three published fields no check has ever looked at, plus module prose.
 
@@ -537,6 +647,164 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
                             'slug_in_prose', path,
                             f'{match.group(0)!r} is a URL slug, not a name', True))
                         break
+
+    # ── Content gates: what the 2026-08-10 audit found, made unpublishable ──
+
+    # Hero statistics: exclusive across shifts, and about the shift they front.
+    hero_seen: dict[tuple, str] = {}
+    subtree_urls: dict[str, set] = {}
+    for parent_id, children in subs_by_parent.items():
+        urls = set()
+        for child in children:
+            for value in child.get('claim_ids') or []:
+                number = _claim_number(value)
+                url = claim_sources.get(number) if number is not None else None
+                # NB _http_url here is a validity predicate (bool), not a
+                # normalizer like export.py's namesake — compare raw strings.
+                if url and _http_url(url):
+                    urls.add(str(url))
+        subtree_urls[parent_id] = urls
+
+    for index, shift in enumerate(shifts):
+        if not isinstance(shift, dict):
+            continue
+        hero = shift.get('hero_stat')
+        if not isinstance(hero, dict) or not hero.get('value'):
+            continue
+        path = f'key_trends[{index}].hero_stat'
+        key = (_norm_prose(hero.get('value')), str(hero.get('url') or ''))
+        if key in hero_seen:
+            issues.append(ValidationIssue(
+                'duplicate_hero_claim', path,
+                f'hero statistic already fronts {hero_seen[key]} — one claim, one shift', True))
+        else:
+            hero_seen[key] = f'key_trends[{shifts.index(shift)}]'
+        hero_url = str(hero.get('url') or '')
+        if hero_url and _http_url(hero_url) \
+                and hero_url not in subtree_urls.get(str(shift.get('id') or ''), set()):
+            issues.append(ValidationIssue(
+                'hero_topicality', path,
+                'hero statistic cites a source none of this shift\'s own claims carry', True))
+        if not stat_matches_shift(shift.get('name'), shift.get('subtitle'),
+                                  hero.get('value'), hero.get('text')):
+            issues.append(ValidationIssue(
+                'hero_topicality', path,
+                'hero statistic shares no topical vocabulary with the shift it fronts', True))
+
+    # dek must be its own sentence, not the subtitle republished.
+    for index, shift in enumerate(shifts):
+        if not isinstance(shift, dict):
+            continue
+        subtitle = _norm_prose(shift.get('subtitle'))
+        for module in shift.get('modules') or []:
+            if isinstance(module, dict) and module.get('type') == 'dek':
+                dek = _norm_prose((module.get('data') or {}).get('text'))
+                if dek and subtitle and dek == subtitle:
+                    issues.append(ValidationIssue(
+                        'dek_recycles_subtitle', f'key_trends[{index}].modules.dek',
+                        'dek is the subtitle verbatim — the page says one sentence twice', True))
+
+    # No amputated prose, no internal vocabulary, no self-declared filler.
+    for label, rows in (('key_trends', shifts), ('sub_trends', subs)):
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                continue
+            base = f'{label}[{index}]'
+            for path, text in _prose_strings(row.get('modules') or [],
+                                             f'{base}.modules',
+                                             _QUOTED | {'source', 'label'}):
+                stripped = text.rstrip()
+                if stripped.endswith('…') or stripped.endswith('...'):
+                    issues.append(ValidationIssue(
+                        'ellipsis_truncation', path,
+                        'prose ends mid-sentence with an ellipsis', True))
+            for path, text in _prose_strings(row.get('modules') or [],
+                                             f'{base}.modules', _QUOTED):
+                meta = _META_LANGUAGE.search(text)
+                if meta:
+                    issues.append(ValidationIssue(
+                        'meta_language', path,
+                        f'{meta.group(0)!r} is pipeline vocabulary in reader-facing copy', True))
+            for module_index, module in enumerate(row.get('modules') or []):
+                if not isinstance(module, dict) or module.get('type') not in ('industries', 'territories'):
+                    continue
+                for item_index, item in enumerate((module.get('data') or {}).get('items') or []):
+                    text = item.get('text') if isinstance(item, dict) else None
+                    if text and _INDUSTRY_FILLER.search(str(text)):
+                        issues.append(ValidationIssue(
+                            'industries_filler',
+                            f'{base}.modules[{module_index}].data.items[{item_index}]',
+                            'sector note declares its own irrelevance — leave it empty instead', True))
+
+    # Population-level gates: only meaningful on a full-sized map.
+    if len(shifts) >= FULL_MAP_MIN_SHIFTS:
+        per_domain: dict[str, int] = {}
+        for shift in shifts:
+            if isinstance(shift, dict):
+                per_domain[str(shift.get('domain_id'))] = per_domain.get(str(shift.get('domain_id')), 0) + 1
+        for domain_id, count in sorted(per_domain.items()):
+            if not MIN_KTS_PER_DOM <= count <= MAX_KTS_PER_DOM:
+                issues.append(ValidationIssue(
+                    'kt_count', f'key_trends.{domain_id}',
+                    f'{domain_id} carries {count} key shifts; the contract is '
+                    f'{MIN_KTS_PER_DOM}–{MAX_KTS_PER_DOM} per domain'))
+
+        velocities = [str(shift.get('velocity') or '') for shift in shifts if isinstance(shift, dict)]
+        if velocities:
+            top = max(set(velocities), key=velocities.count)
+            share = velocities.count(top) / len(velocities)
+            if share > VELOCITY_MAX_SHARE:
+                issues.append(ValidationIssue(
+                    'velocity_distribution', 'key_trends',
+                    f'{velocities.count(top)}/{len(velocities)} shifts share velocity '
+                    f'{top!r} — a single-bucket grading carries no signal'))
+
+        with_stat = sum(
+            1 for shift in shifts if isinstance(shift, dict)
+            and any(isinstance(m, dict) and m.get('type') == 'stat_band'
+                    for m in shift.get('modules') or []))
+        if with_stat / len(shifts) < STAT_COVERAGE_FLOOR:
+            issues.append(ValidationIssue(
+                'stat_coverage', 'key_trends',
+                f'only {with_stat}/{len(shifts)} key shifts carry a stat_band; '
+                f'the floor is {STAT_COVERAGE_FLOOR:.0%}', True))
+
+        # Crutch content: one centerpiece may not carry the map. Pages beyond
+        # the per-signature allowance are flagged individually so the repair
+        # pass regenerates exactly those pages with the avoid-list in hand.
+        pages: list[tuple[str, set]] = []
+        for label, rows in (('key_trends', shifts), ('sub_trends', subs)):
+            for index, row in enumerate(rows):
+                if isinstance(row, dict):
+                    pages.append((f'{label}[{index}]', _crutch_signatures(_centerpiece_text(row))))
+        page_count: dict[str, list[str]] = {}
+        for path, signatures in pages:
+            for signature in signatures:
+                page_count.setdefault(signature, []).append(path)
+        for signature, paths in sorted(page_count.items()):
+            limit = (CRUTCH_ENTITY_PAGE_LIMIT if signature.startswith('entity:')
+                     else CRUTCH_FIGURE_PAGE_LIMIT)
+            for path in paths[limit:]:
+                issues.append(ValidationIssue(
+                    'crutch_frequency', f'{path}.modules',
+                    f'centerpiece leans on {signature.split(":", 1)[1]!r}, already '
+                    f'headlining {limit}+ other pages', True))
+
+        reuse: dict[int, list[str]] = {}
+        for index, sub in enumerate(subs):
+            if not isinstance(sub, dict):
+                continue
+            for value in sub.get('claim_ids') or []:
+                number = _claim_number(value)
+                if number is not None:
+                    reuse.setdefault(number, []).append(f'sub_trends[{index}]')
+        for number, holders in sorted(reuse.items()):
+            if len(holders) > 2:
+                issues.append(ValidationIssue(
+                    'evidence_reuse', holders[2],
+                    f'claim c_{number} is routed to {len(holders)} sub-shifts; '
+                    f'the same evidence cannot anchor more than 2 pages'))
+
     return issues
 
 

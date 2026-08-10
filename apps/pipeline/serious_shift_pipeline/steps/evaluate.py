@@ -15,6 +15,14 @@ from ..core import db
 
 _ACCURACY = {"true": 1.0, "partially_true": 0.5, "false": 0.0, "expired": 0.3}
 
+#: Ceiling for the source-authority fallback. INVARIANT: an entity with no
+#: evaluated predictions must never outrank the band where named people sit
+#: (~50-54 while accuracy defaults to 0.5). Before this cap, `authority*100`
+#: put anonymous arXiv co-authors and org accounts at 60-69 — above every
+#: named thinker on the platform — and the ranking SQL dutifully preferred
+#: their claims for hero statistics.
+_ENTITY_FALLBACK_CAP = 45.0
+
 
 def score_thinker(predictions: list[tuple[str, float | None]]) -> dict:
     """Compute credibility for one thinker from their predictions.
@@ -93,10 +101,13 @@ def run(conn) -> dict[str, dict]:
 
         # For entities with no evaluated predictions, a prediction-derived
         # credibility (~54) is meaningless — prefer the source-authority signal
-        # when we have one so papers/orgs rank on merit, not a neutral default.
+        # when we have one so papers/orgs rank on merit relative to each other.
+        # Scaled and capped below the person band (see _ENTITY_FALLBACK_CAP):
+        # venue authority orders entities among themselves; it must never rank
+        # an unevaluated byline above a named thinker with a track record.
         credibility = s["credibility"]
         if s["evaluable"] == 0 and authority is not None:
-            credibility = round(float(authority) * 100.0, 1)
+            credibility = round(min(_ENTITY_FALLBACK_CAP, float(authority) * 100.0 * 0.8), 1)
 
         db.execute(
             conn,

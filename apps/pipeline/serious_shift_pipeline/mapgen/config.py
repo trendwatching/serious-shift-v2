@@ -47,7 +47,17 @@ INDUSTRY_SECTORS = _CONTRACT.get('industry_sectors') or []
 
 CLAIMS_PER_DOM  = 200   # claims sent to Key Trend generation per domain
 CLAIMS_PER_KT   = 100   # claims sent to sub-trend generation per KT
-MIN_KTS_PER_DOM = 8     # ask the model for at least this many Key Trends per domain
+
+#: How many Key Trends each domain carries: a RANGE, not a floor. The old
+#: floor-only prompt ("at least 8 … prefer more trends over fewer") produced
+#: 51 shifts telling ~30 distinct stories — the 2026-08-10 audit found an
+#: evaluation cluster of seven shifts and a jobs cluster of six. 7–9 per
+#: domain gives 28–36 total, which is insight granularity rather than
+#: database granularity. Phase 3 truncates past MAX deterministically and the
+#: publication gate rejects a count outside the range. This is the single
+#: source of truth — prompts/map_data.py imports it.
+MIN_KTS_PER_DOM = 7
+MAX_KTS_PER_DOM = 9
 
 DOMAINS = [
     {

@@ -11,6 +11,15 @@ RULES — GENERAL
 - Separate observation from inference. Do not turn one incident, forecast, or opinion into a universal claim.
 - Use only events, dates, organizations, and numbers present in EVIDENCE. A source URL is provenance, not permission to infer beyond its claim.
 - Each evidence record carries an `id`. That number exists so you can cite it in `evidence_ids`. It must never appear in prose. Never write an id, a credibility score, a confidence value, or any other field name from the evidence records into a sentence a reader sees. Attribute by name and publication only: "Jakob Nielsen", "Import AI". Never "Jakob Nielsen (id:38735)".
+- Never describe the pipeline, the prompt, the evidence records, word limits, or your own constraints in prose. A reader must never see sentences like "the allowed evidence for this shift covers…" — if the evidence is thin, write less, not about the thinness.
+
+ALREADY CARRYING OTHER PAGES — do not center any of these:
+Each statistic or anecdote below is already the headline of another shift on the same map. You may mention one in passing if the evidence demands it, but do not build a panel, tension, or timeline step around it — a reader browsing two pages must not meet the same centerpiece twice.
+{{avoid}}
+
+DEK (the standfirst under the shift's name)
+- One or two sentences, at most 45 words: the shift stated with its sharpest consequence for the reader.
+- It sits directly beneath FRAMING on the page, so it must NOT restate the framing — no shared opening clause, no paraphrase. The framing says what the shift is; the dek says why the reader cannot ignore it.
 
 FROM / TO (the spine of the shift)
 - `from` = the assumption or arrangement that is ending. `to` = what replaces it.
@@ -50,7 +59,7 @@ INDUSTRIES
 - Return one entry for EACH of these 16 TrendWatching sectors, in this exact order and with these exact names:
   Beauty & Personal Care, Consumer Tech, Digital Tech, Entertainment, Fashion & Accessories, Financial Services, Food & Beverage, Government & Public Sector, Health & Wellbeing, Home & Living, Media & Publishing, Mobility & Transport, Nonprofit & Social Cause, Retail & Commerce, Travel & Hospitality, Work & Education
 - One sentence each, at most 32 words: what this shift means for that sector specifically and where the commercial move is.
-- If a sector is genuinely peripheral to this shift, say so plainly and name the residual stake. Do not pad.
+- If a sector is genuinely peripheral to this shift, return an empty string "" as its text — the page simply skips it. Never write a sentence declaring the sector peripheral or naming a "residual stake"; filler that announces its own irrelevance fails publication.
 
 OPPORTUNITIES (opportunity territories)
 - 3–4 entries. Each is a `name` (2–4 words, a product or service category that does not yet exist at scale) and `text` of one sentence, at most 35 words.
@@ -60,7 +69,7 @@ READ_TIME
 - Estimate honestly from the length of what you wrote, e.g. "5 min read".
 
 Return ONLY valid JSON — no preamble, no markdown fences:
-{"from":"…","to":"…","whats_changing":"…","why_now":"…","pull_quote":"…","human_needs":{"unlocked":"…","threatened":"…"},"tension":"…","timeline":{"today":"…","next":"…","beyond":"…"},"industries":[{"name":"Beauty & Personal Care","text":"…"}],"opportunities":[{"name":"…","text":"…"}],"evidence_ids":[123,456],"read_time":"5 min read"}
+{"dek":"…","from":"…","to":"…","whats_changing":"…","why_now":"…","pull_quote":"…","human_needs":{"unlocked":"…","threatened":"…"},"tension":"…","timeline":{"today":"…","next":"…","beyond":"…"},"industries":[{"name":"Beauty & Personal Care","text":"…"}],"opportunities":[{"name":"…","text":"…"}],"evidence_ids":[123,456],"read_time":"5 min read"}
 
 KEY TREND: {{kt_name}}
 FRAMING: {{kt_subtitle}}

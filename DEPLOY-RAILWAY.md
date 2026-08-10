@@ -245,7 +245,7 @@ model spend, so `--export-only` alone refreshes them after a schema or data chan
 Module types and their `data` shapes: [packages/contracts/shift_modules.json](packages/contracts/shift_modules.json). Adding a
 new type means declaring it there, emitting it from `kt_modules`/`st_modules` in
 `mapgen/modules.py`, and registering a component in
-`apps/frontend/src/shift/modules.jsx` — the front end skips types it doesn't know,
+`apps/frontend/src/modules/index.jsx` — the front end skips types it doesn't know,
 so the backend can ship one first. `test_shift_modules_contract.py` fails if the
 three drift apart.
 

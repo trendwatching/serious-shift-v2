@@ -5,7 +5,7 @@
     "contract between the pipeline (which emits them) and the front end (which",
     "renders them). Adding a type means: add it here, emit it from the pipeline's",
     "MODULE_TEMPLATE, and register a component in",
-    "apps/frontend/src/shift/modules.jsx. Unknown types fail publication and the",
+    "apps/frontend/src/modules/index.jsx. Unknown types fail publication and the",
     "front end also surfaces a defensive unavailable-section fallback.",
     "Guarded by apps/pipeline/tests/test_shift_modules_contract.py.",
     "One type breaks that pattern: `innovations` is not generated at all. The",
@@ -15,7 +15,7 @@
     "below is still what decides where it lands \u2014 apps/backend/src/innovations.rs",
     "mirrors these two lists as consts and a test fails if they drift."
   ],
-  "version": 5,
+  "version": 6,
   "$order_comment": [
     "Canonical reading order.",
     "The export sorts every module list by this, so changing the order here",
@@ -196,15 +196,16 @@
       ]
     },
     "stat_band": {
-      "summary": "Full-bleed band: oversized numeral, prose, source.",
+      "summary": "Full-bleed band: oversized numeral, prose, source. A published statistic requires clickable provenance, so `url` is required — the validator always enforced this; the contract used to disagree.",
       "data": {
         "value": "string",
         "text": "string",
         "source": "string",
-        "url": "string?"
+        "url": "string"
       },
       "required": [
-        "value"
+        "value",
+        "url"
       ]
     },
     "peel_tabs": {

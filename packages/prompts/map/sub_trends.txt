@@ -24,10 +24,8 @@ RULES FOR CLAIM ASSIGNMENT
 - Assign each claim_id to the single sub-trend it best supports
 - Every claim that clearly fits should be assigned
 
-Also assign a velocity to the Key Trend itself: "breakout" | "accelerating" | "rising" | "steady"
-
 Return ONLY valid JSON — no preamble, no markdown fences:
-{"key_trend_velocity":"accelerating","sub_trends":[{"name":"1-2 word name","subtitle":"One specific sentence explaining exactly what this sub-trend is","description":"Sentence one: what is happening. Sentence two: the implication for consumers or brands.","claim_ids":[123,456,789]}]}
+{"sub_trends":[{"name":"1-2 word name","subtitle":"One specific sentence explaining exactly what this sub-trend is","description":"Sentence one: what is happening. Sentence two: the implication for consumers or brands.","claim_ids":[123,456,789]}]}
 
 KEY TREND: {{kt_name}}
 FRAMING: {{kt_subtitle}}

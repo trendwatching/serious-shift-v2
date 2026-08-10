@@ -379,11 +379,18 @@ def build_map_json_v2(conn) -> dict:
     for row in conn.execute('SELECT DISTINCT claim_id FROM domain_synthesis_insight_claims').fetchall():
         all_cids.add(row['claim_id'])
 
+    # Claims stay in the document — the publication gate cross-references every
+    # citation against them — but slimmed: no credibility score and no
+    # signal_strength. Neither is rendered anywhere, both were exposed
+    # unauthenticated through the deprecated /api/map blob, and the scores are
+    # decorative until predictions get resolved (accuracy defaults to 0.5 for
+    # everyone). Ranking still uses credibility_score DB-side; publishing it
+    # was the only part that had to stop.
     claims_j = []
     if all_cids:
         rows = conn.execute("""
-            SELECT c.id, c.claim_text, c.consumer_implication, c.signal_strength,
-                   t.name AS thinker, t.credibility_score,
+            SELECT c.id, c.claim_text, c.consumer_implication,
+                   t.name AS thinker,
                    s.title AS source_title, s.date_published, s.url AS source_url
             FROM claims c
             JOIN thinkers t ON c.thinker_id = t.id
@@ -395,28 +402,16 @@ def build_map_json_v2(conn) -> dict:
                 'id':                f'c_{r["id"]}',
                 'text':              r['claim_text'] or '',
                 'thinker':           r['thinker'] or '',
-                'thinker_credibility': round(r['credibility_score'] or 50.0, 1),
                 'source_title':      r['source_title'] or '',
                 'source_date':       r['date_published'] or '',
                 'source_url':        _http_url(r['source_url']),
-                'signal_strength':   r['signal_strength'] or '',
                 'consumer_implication': r['consumer_implication'] or '',
             })
 
-    # ---- thinkers ----
-    thinkers_j = [
-        {
-            'name': r['name'],
-            'credibility_score': round(r['credibility_score'] or 50.0, 1),
-            'prediction_accuracy': round(r['prediction_accuracy'] or 0.0, 3) if r['prediction_accuracy'] else None,
-            'image_url': r['image_url'],
-            'bio': r['bio'],
-        }
-        for r in conn.execute(
-            'SELECT name, credibility_score, prediction_accuracy, image_url, bio '
-            'FROM thinkers ORDER BY credibility_score DESC NULLS LAST, id'
-        ).fetchall()
-    ]
+    # The `thinkers` block is gone from the document: /api/thinkers reads the
+    # table directly, no frontend code reads the document copy, and shipping
+    # every thinker's credibility_score in an unauthenticated blob was the
+    # exposure main.rs's /api/map deprecation note complains about.
 
     # ---- synthesis insights ----
     si_rows = conn.execute("""
@@ -437,59 +432,11 @@ def build_map_json_v2(conn) -> dict:
             'ai_generated': True,
         })
 
-    # ---- links ----
-    link_rows = conn.execute("""
-        SELECT source_type, source_id, target_type, target_id,
-               relationship, strength, reasoning
-        FROM domain_links ORDER BY strength DESC, id
-    """).fetchall()
-    links_j = [
-        {
-            'source_type': r['source_type'],
-            'source_id':   r['source_id'],
-            'target_type': r['target_type'],
-            'target_id':   r['target_id'],
-            'relationship': r['relationship'],
-            'strength':    round(r['strength'], 3),
-            'reasoning':   r['reasoning'] or '',
-        }
-        for r in link_rows
-    ]
-
-    # ---- domain_flows ----
-    flow_rows = conn.execute('SELECT * FROM domain_flows ORDER BY id').fetchall()
-    flows_j = [
-        {
-            'source': r['source_id'], 'target': r['target_id'],
-            'strength': r['strength'], 'description': r['description'] or '',
-        }
-        for r in flow_rows
-    ]
-
-    # ---- index: by_thinker ----
-    claim_to_thinker = {str(c['id']).replace('c_', ''): c['thinker'] for c in claims_j}
-    by_thinker: dict = {}
-    def _add_t(t, etype, eid, ename):
-        by_thinker.setdefault(t, [])
-        for e in by_thinker[t]:
-            if e['type'] == etype and e['id'] == eid:
-                return
-        by_thinker[t].append({'type': etype, 'id': eid, 'name': ename})
-
-    for st in sub_trends_j:
-        for cid_str in st['claim_ids']:
-            t = claim_to_thinker.get(cid_str.replace('c_',''), '')
-            if t: _add_t(t, 'sub_trend', st['id'], st['name'])
-    for kt in key_trends_j:
-        for t in kt['proponents'] + kt['skeptics']:
-            _add_t(t, 'key_trend', kt['id'], kt['name'])
-
-    # ---- index: by_velocity ----
-    by_velocity: dict = {}
-    for kt in key_trends_j:
-        v = kt.get('velocity', 'rising')
-        by_velocity.setdefault(v, [])
-        by_velocity[v].append(kt['id'])
+    # `links`, `domain_flows`, `by_thinker` and `by_velocity` are no longer
+    # published: no public fragment ever served them, no frontend code read
+    # them, and their producers (phases 5/6) are dormant. `synthesis_insights`
+    # stays because the sphere fragment serves it and useData.js shape-checks
+    # the key — it is simply an empty list while phase 7 is dormant.
 
     return {
         'updated':             today,
@@ -498,12 +445,7 @@ def build_map_json_v2(conn) -> dict:
         'key_trends':          key_trends_j,
         'sub_trends':          sub_trends_j,
         'claims':              claims_j,
-        'thinkers':            thinkers_j,
         'synthesis_insights':  insights_j,
-        'links':               links_j,
-        'domain_flows':        flows_j,
-        'by_thinker':          by_thinker,
-        'by_velocity':         by_velocity,
     }
 
 

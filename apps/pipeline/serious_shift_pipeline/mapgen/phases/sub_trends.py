@@ -1,6 +1,9 @@
 """Phase 4 — generate sub-trends under each Key Trend."""
 from __future__ import annotations
 
+import math
+
+from ...core.matching import normalize
 from ...core.text import url_slug as slugify
 from ...prompts import prompt_sub_trends
 from ..config import CLAIMS_PER_KT, DOMAINS
@@ -22,6 +25,55 @@ MAX_CLUSTER_ATTEMPTS = 3
 #: fewer than this is unpublishable the moment it is created — no retry can fix
 #: it, because the evidence to cite does not exist.
 MIN_CLAIMS_PER_SUB = 2
+
+#: The smallest pool a KT can cluster five sub-shifts from: MIN_CLAIMS_PER_SUB
+#: per child plus citation headroom. Pools below this are filled from
+#: zero-overlap spares — a thin on-topic pool beats an unpublishable one.
+MIN_POOL_PER_KT = 12
+
+
+def _pool_idf(pool: list[dict]) -> dict[str, float]:
+    """IDF over the domain pool's claim texts (same shape as matching.Corpus)."""
+    df: dict[str, int] = {}
+    for claim in pool:
+        for term in set(normalize(claim.get('claim_text') or '')):
+            df[term] = df.get(term, 0) + 1
+    n = len(pool)
+    return {t: math.log((n + 1) / (c + 1)) + 1 for t, c in df.items()}
+
+
+def _topical_top_up(kt: dict, full_pool: list[dict], preferred_ids: set[int],
+                    ledger: set[int], remaining: int,
+                    idf: dict[str, float]) -> list[dict]:
+    """Spares for a KT's pool, chosen for the KT rather than for the domain.
+
+    The old top-up took the head of the domain pool, so every KT in a domain
+    received the same ~80 highest-weighted claims — which is how one suicide
+    statistic became the hero of ten shifts and the same six anecdotes carried
+    the whole map. Spares are now ranked by IDF-weighted token overlap with the
+    KT's own name+subtitle, and a claim consumed as top-up by one KT is off the
+    table for its siblings (`ledger`). Phase-3 assignments are never stolen.
+
+    Zero-overlap spares are used only to reach MIN_POOL_PER_KT — a claim with
+    nothing lexically in common with the shift has no business informing its
+    editorial, let alone becoming its hero stat.
+    """
+    kt_terms = set(normalize(f"{kt.get('name') or ''} {kt.get('subtitle') or ''}"))
+    scored: list[tuple[float, int, dict]] = []
+    for claim in full_pool:
+        cid = claim['id']
+        if cid in preferred_ids or cid in ledger:
+            continue
+        overlap = sum(idf.get(t, 0.0) for t in kt_terms & set(normalize(claim.get('claim_text') or '')))
+        scored.append((overlap, cid, claim))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+
+    chosen = [claim for overlap, _, claim in scored if overlap > 0][:remaining]
+    floor = max(0, min(remaining, MIN_POOL_PER_KT - len(preferred_ids)) - len(chosen))
+    if floor:
+        chosen += [claim for overlap, _, claim in scored if overlap <= 0][:floor]
+    ledger.update(claim['id'] for claim in chosen)
+    return chosen
 
 
 def _top_up_claims(sub_trends: list[dict], allowed_claim_ids: set[int]) -> list[dict]:
@@ -82,15 +134,22 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     all_domain_claims = {c['id']: c for d in DOMAINS for c in domain_claims[d['id']]}
 
     # Build the per-KT claim pool (pure, no I/O), one work item per KT.
+    # Top-up is topical and exclusive: ranked by overlap with the KT's own
+    # framing, and a spare consumed by one KT never pads a sibling's pool.
     work = []  # (domain_id, kt, preferred_claims)
     for d in DOMAINS:
         full_pool = domain_claims[d['id']]
+        idf = _pool_idf(full_pool)
+        topup_ledger: set[int] = set()
         for kt in domain_kts.get(d['id'], []):
             preferred_ids = set(kt.get('_claim_ids', []))
-            preferred = [all_domain_claims[cid] for cid in preferred_ids if cid in all_domain_claims]
+            preferred = sorted(
+                (all_domain_claims[cid] for cid in preferred_ids if cid in all_domain_claims),
+                key=lambda c: c['id'])
             remaining = CLAIMS_PER_KT - len(preferred)
             if remaining > 0:
-                preferred += [c for c in full_pool if c['id'] not in preferred_ids][:remaining]
+                preferred += _topical_top_up(kt, full_pool, preferred_ids,
+                                             topup_ledger, remaining, idf)
             if preferred:
                 work.append((d['id'], kt, preferred))
 
@@ -166,11 +225,12 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
             if usable(work[index], result):
                 results[index] = result
 
-    # Serial: write sub-trends + claim links, refine KT velocity.
+    # Serial: write sub-trends + claim links. Velocity is phase 3's call and is
+    # not revisited here — phase 3 sees the whole domain and can grade trends
+    # against each other; this phase sees one KT and anchored on the prompt's
+    # example value every time it was asked.
     slug = _slugger()
     for (d_id, kt, claims), result in zip(work, results):
-        velocity = result.get('key_trend_velocity', kt.get('velocity', 'rising'))
-        conn.execute('UPDATE domain_key_trends SET velocity=%s WHERE id=%s', (velocity, kt['_db_id']))
         # Truncate rather than publish a sixth: the contract is exact, and a
         # deterministic cut here beats a validation failure the repair pass then
         # has to spend a call undoing.
@@ -190,6 +250,6 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
                                     VALUES (%s,%s) ON CONFLICT DO NOTHING""", (st_db_id, int(cid)))
                 except Exception:
                     pass
-        print(f'  ✓  {kt["name"][:48]}: {len(sub_trends)} sub-trends, vel={velocity}')
+        print(f'  ✓  {kt["name"][:48]}: {len(sub_trends)} sub-trends')
 
     conn.commit()

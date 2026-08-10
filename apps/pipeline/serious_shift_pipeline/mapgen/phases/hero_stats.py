@@ -1,8 +1,17 @@
-"""Phase 8 — pick each Key Trend's hero statistic."""
+"""Phase 8 — pick each Key Trend's hero statistic.
+
+Assignment is exclusive and topical. The previous version ran an independent
+per-KT argmax over pools that (pre-2026-08-10) largely shared their contents,
+so the domain's three strongest statistics became the hero of every shift they
+leaked into — 51 shifts, ~6 distinct heroes, a teen-suicide figure fronting
+ten pages including shopping and pricing. One claim now heroes exactly one
+shift, and only when it shares vocabulary with the shift it fronts.
+"""
 from __future__ import annotations
 
 import json
 
+from ...core.matching import normalize
 
 #: Attributions render as a single small line under the statistic. A scraped
 #: article title can be 200+ characters of pipe-separated newsletter sections,
@@ -26,32 +35,56 @@ def _attribution(thinker: str, title: str, year: str) -> str:
     return ', '.join(p for p in (who, year) if p)
 
 
-def select_hero_stat(conn, kt_id) -> dict | None:
-    """Return the single strongest dated, attributable statistic among a Key
-    Trend's claims, as {value, thinker, source, year} — or None if it has none.
-    `source` is the rendered credit line, not the raw article title.
-    Ranked by claim weight × thinker credibility; statistics come from the
-    `claims.statistic` / `claims.has_statistic` fields (process_raw extracts them)."""
-    row = conn.execute("""
-        SELECT c.statistic, c.claim_text, t.name AS thinker,
-               s.title AS source, s.date_published AS pub_date, s.url
+def stat_matches_shift(kt_name: str | None, kt_subtitle: str | None,
+                       stat_value: str | None, stat_text: str | None) -> bool:
+    """The topical floor a hero statistic must clear to front a shift.
+
+    At least one shared stemmed, non-stopword term between the shift's own
+    framing and the statistic's text. Deliberately permissive — its job is to
+    reject category errors (a suicide statistic on a shopping page), not to
+    rank. `normalize` already drops domain-generic terms (ai, consumer, model…),
+    so the shared term has to carry actual topic. The publication gate applies
+    the same test (validation.py), so what this refuses to write, the gate
+    would refuse to publish.
+    """
+    shift_terms = set(normalize(f'{kt_name or ""} {kt_subtitle or ""}'))
+    stat_terms = set(normalize(f'{stat_value or ""} {stat_text or ""}'))
+    return bool(shift_terms & stat_terms)
+
+
+def _hero_candidates(conn) -> dict[int, list[dict]]:
+    """Every (kt, statistic-claim) pairing, strongest first, one query."""
+    rows = conn.execute("""
+        SELECT DISTINCT ON (st.kt_id, c.id)
+               st.kt_id, c.id AS claim_id, c.statistic, c.claim_text,
+               t.name AS thinker, s.title AS source,
+               s.date_published AS pub_date, s.url,
+               COALESCE(c.claim_weight, 0)
+                 * (GREATEST(COALESCE(t.credibility_score, 50.0), 30.0) / 100.0)
+                 AS score
         FROM domain_sub_trends st
         JOIN domain_sub_trend_claims stc ON stc.sub_trend_id = st.id
         JOIN claims c   ON c.id = stc.claim_id
         JOIN thinkers t ON t.id = c.thinker_id
-        LEFT JOIN sources s ON s.id = c.source_id
-        WHERE st.kt_id = %s
-          AND c.has_statistic IS TRUE
+        JOIN sources s  ON s.id = c.source_id
+        WHERE c.has_statistic IS TRUE
           AND c.statistic IS NOT NULL
           AND s.url ~* '^https?://'
           AND c.duplicate_of IS NULL
-        ORDER BY COALESCE(c.claim_weight,0)
-                 * (GREATEST(COALESCE(t.credibility_score,50.0), 30.0) / 100.0) DESC,
-                 c.id
-        LIMIT 1
-    """, (kt_id,)).fetchone()
-    if not row:
-        return None
+        ORDER BY st.kt_id, c.id
+    """).fetchall()
+    by_kt: dict[int, list[dict]] = {}
+    for r in rows:
+        by_kt.setdefault(r['kt_id'], []).append(dict(r))
+    for candidates in by_kt.values():
+        candidates.sort(key=lambda r: (-r['score'], r['claim_id']))
+    return by_kt
+
+
+def _as_hero(row: dict) -> dict:
+    # No claim_id in the JSON: the publication gate re-derives provenance from
+    # (value, url) against the document's own claims, so the same checks hold
+    # on a served document where a DB identifier would never be available.
     year = str(row['pub_date'])[:4] if row['pub_date'] else ''
     return {
         'value':   row['statistic'],
@@ -63,16 +96,45 @@ def select_hero_stat(conn, kt_id) -> dict | None:
     }
 
 
+def assign_heroes(kt_rows: list[dict],
+                  by_kt: dict[int, list[dict]]) -> dict[int, dict | None]:
+    """Greedy exclusive assignment: shifts with the fewest eligible candidates
+    choose first, each claim heroes at most one shift, and a shift whose every
+    candidate is either taken or off-topic gets None — no stat_band beats a
+    recycled or unrelated one."""
+    eligible: dict[int, list[dict]] = {}
+    for kt in kt_rows:
+        eligible[kt['id']] = [
+            row for row in by_kt.get(kt['id'], [])
+            if stat_matches_shift(kt['name'], kt['subtitle'],
+                                  row['statistic'], row['claim_text'])
+        ]
+
+    taken: set[int] = set()
+    heroes: dict[int, dict | None] = {}
+    for kt in sorted(kt_rows, key=lambda k: (len(eligible[k['id']]), k['id'])):
+        pick = next((row for row in eligible[kt['id']]
+                     if row['claim_id'] not in taken), None)
+        heroes[kt['id']] = _as_hero(pick) if pick else None
+        if pick:
+            taken.add(pick['claim_id'])
+    return heroes
+
+
 def phase8_hero_stats(conn):
     """Persist one hero statistic per Key Trend to domain_key_trends.hero_stat."""
     print('\nPhase 8 — Selecting hero statistics per Key Trend (SQL, no API)…')
-    kt_ids = [r['id'] for r in conn.execute('SELECT id FROM domain_key_trends').fetchall()]
+    kt_rows = [dict(r) for r in conn.execute(
+        'SELECT id, name, subtitle FROM domain_key_trends').fetchall()]
+    heroes = assign_heroes(kt_rows, _hero_candidates(conn))
+
     n = 0
-    for kt_id in kt_ids:
-        hero = select_hero_stat(conn, kt_id)
+    for kt in kt_rows:
+        hero = heroes.get(kt['id'])
         conn.execute('UPDATE domain_key_trends SET hero_stat=%s::jsonb WHERE id=%s',
-                     (json.dumps(hero) if hero else None, kt_id))
+                     (json.dumps(hero) if hero else None, kt['id']))
         if hero:
             n += 1
     conn.commit()
-    print(f'  ✓  {n}/{len(kt_ids)} Key Trends have a hero statistic.')
+    print(f'  ✓  {n}/{len(kt_rows)} Key Trends have a hero statistic '
+          f'(exclusive, topical).')

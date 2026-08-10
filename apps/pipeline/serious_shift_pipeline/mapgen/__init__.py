@@ -14,7 +14,9 @@ document so a regression in `export` is caught rather than shipped.
 Entry point: `python -m serious_shift_pipeline.mapgen.cli`
 """
 from .config import (
-    CLAIMS_PER_DOM, CLAIMS_PER_KT, DOMAINS, MIN_KTS_PER_DOM, MODULE_ORDER,
+    CLAIMS_PER_DOM, CLAIMS_PER_KT, DOMAINS, MAX_KTS_PER_DOM, MIN_KTS_PER_DOM,
+    MODULE_ORDER,
 )
 
-__all__ = ["CLAIMS_PER_DOM", "CLAIMS_PER_KT", "DOMAINS", "MIN_KTS_PER_DOM", "MODULE_ORDER"]
+__all__ = ["CLAIMS_PER_DOM", "CLAIMS_PER_KT", "DOMAINS", "MAX_KTS_PER_DOM",
+           "MIN_KTS_PER_DOM", "MODULE_ORDER"]

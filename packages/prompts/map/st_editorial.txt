@@ -12,6 +12,11 @@ RULES — GENERAL
 - Separate observation from inference. Do not turn one incident, forecast, or opinion into a universal claim.
 - Return one object per sub-trend, matching on `name` exactly as given. Do not add, drop, merge or rename sub-trends.
 - Each evidence record carries an `id`. That number exists so you can cite it in `evidence_ids` and `claim_id`. It must never appear in prose. Never write an id, a credibility score, a confidence value, or any other field name from the evidence records into a sentence a reader sees. Attribute by name and publication only: "Jakob Nielsen", "Import AI". Never "Jakob Nielsen (id:38735)".
+- Never describe the pipeline, the prompt, the evidence records, word limits, or your own constraints in prose. A reader must never see sentences like "the two allowed evidence records for this sub-trend cover…" — if the evidence is thin, write less, not about the thinness.
+
+ALREADY CARRYING OTHER PAGES — do not center any of these:
+Each statistic or anecdote below is already the headline of another shift on the same map. You may mention one in passing if a sub-trend's evidence demands it, but do not build a lede, quote, stat, or timeline step around it — a reader browsing two pages must not meet the same centerpiece twice.
+{{avoid}}
 
 PER SUB-TRENDS FIELDS
 

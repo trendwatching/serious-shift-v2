@@ -6,9 +6,9 @@ name: backend
 
 on:
   push:
-    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", "security/audit-waivers.json", "railway*.json", ".github/workflows/backend.yml"]
+    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", "packages/contracts/**", "security/audit-waivers.json", "railway*.json", ".github/workflows/backend.yml"]
   pull_request:
-    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", "security/audit-waivers.json", "railway*.json", ".github/workflows/backend.yml"]
+    paths: ["apps/backend/**", "packages/db/**", "packages/prompts/**", "packages/contracts/**", "security/audit-waivers.json", "railway*.json", ".github/workflows/backend.yml"]
   workflow_dispatch: {}
 
 permissions:

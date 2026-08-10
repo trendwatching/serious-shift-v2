@@ -76,10 +76,20 @@ def test_a_sentence_boundary_is_preferred_when_it_keeps_most_of_the_allowance():
     assert 'That leaves' not in out
 
 
-def test_a_cut_with_no_usable_sentence_break_is_elided_not_left_dangling():
+def test_a_cut_never_ships_an_ellipsis():
+    """37 visibly amputated sentences shipped on the 2026-08-09 map."""
     from serious_shift_pipeline.mapgen.modules import clamp_words
     out = clamp_words("one two three four five six seven eight nine ten", 4)
-    assert out == "one two three four…"
+    assert out == "one two three four."
+    assert not out.endswith("…") and not out.endswith("...")
+
+
+def test_a_clause_break_is_preferred_over_a_bare_word_cut():
+    from serious_shift_pipeline.mapgen.modules import clamp_words
+    text = ("Agents negotiate the price, the terms, the warranty and the "
+            "delivery window for every purchase a household makes")
+    out = clamp_words(text, 8)
+    assert out == "Agents negotiate the price, the terms."
 
 
 def test_missing_text_clamps_to_empty_rather_than_the_string_none():
@@ -98,3 +108,75 @@ def test_list_items_are_clamped_individually_not_dropped():
     assert len(out[0]['text'].split()) == 40
     assert out[1]['text'] == 'short note'
     assert [i['name'] for i in out] == ['Retail & Commerce', 'Financial Services']
+
+
+# ── Exclusive, topical hero assignment ───────────────────────────────────────
+#
+# The 2026-08-09 map had ~6 distinct hero stats across 51 shifts — a per-KT
+# argmax over shared pools with no topical check put a teen-suicide statistic
+# atop ten pages including shopping and pricing.
+
+def _cand(claim_id, statistic, text, score):
+    return {'claim_id': claim_id, 'statistic': statistic, 'claim_text': text,
+            'thinker': 'A. Thinker', 'source': 'A Post', 'pub_date': '2026-08-01',
+            'url': 'https://example.com/post', 'score': score}
+
+
+def test_stat_matches_shift_rejects_category_errors():
+    from serious_shift_pipeline.mapgen.phases.hero_stats import stat_matches_shift
+    assert not stat_matches_shift(
+        'Delegated Discovery', 'AI shopping agents replace brand websites',
+        'ChatGPT mentioned suicide 6x more frequently',
+        "Adam Raine's ChatGPT interactions included the AI mentioning suicide")
+
+
+def test_stat_matches_shift_accepts_on_topic_stats():
+    from serious_shift_pipeline.mapgen.phases.hero_stats import stat_matches_shift
+    assert stat_matches_shift(
+        'Delegated Discovery', 'AI shopping agents replace brand websites',
+        '41% prefer AI-assisted shopping over brand websites',
+        'Consumers now choose AI-assisted shopping over going to brand sites')
+
+
+def test_one_claim_heroes_exactly_one_shift():
+    from serious_shift_pipeline.mapgen.phases.hero_stats import assign_heroes
+    shared = _cand(1, '41% choose agent shopping', 'agent shopping beats brand sites', 9.0)
+    kts = [{'id': 10, 'name': 'Delegated Discovery', 'subtitle': 'agent shopping replaces brand sites'},
+           {'id': 11, 'name': 'Agent Shopping Anxiety', 'subtitle': 'shoppers distrust agent shopping'}]
+    by_kt = {10: [shared, _cand(2, '3.5x conversion via shopping assistants',
+                                'shopping assistants convert 3.5x better', 5.0)],
+             11: [shared]}
+    heroes = assign_heroes(kts, by_kt)
+    # KT 11 has one candidate (scarcest, picks first) and takes the shared claim;
+    # KT 10 falls back to its next-ranked candidate.
+    values = [heroes[10]['value'], heroes[11]['value']]
+    assert values.count('41% choose agent shopping') == 1
+    assert heroes[10] is not None and heroes[11] is not None
+
+
+def test_a_shift_with_only_off_topic_candidates_gets_none():
+    from serious_shift_pipeline.mapgen.phases.hero_stats import assign_heroes
+    kts = [{'id': 20, 'name': 'Provenance Premium', 'subtitle': 'human-made goods command a premium'}]
+    by_kt = {20: [_cand(3, '10,000 GPU cluster operating', 'Tencent runs a GPU training cluster', 9.9)]}
+    assert assign_heroes(kts, by_kt) == {20: None}
+
+
+def test_hero_json_carries_no_claim_id():
+    from serious_shift_pipeline.mapgen.phases.hero_stats import assign_heroes
+    kts = [{'id': 30, 'name': 'Compute Capitalism', 'subtitle': 'data centers as the local tax base'}]
+    by_kt = {30: [_cand(4, '$1.3B county tax revenue', 'data centers pay record county tax', 2.0)]}
+    hero = assign_heroes(kts, by_kt)[30]
+    assert hero is not None and 'claim_id' not in hero
+
+
+def test_short_figure_no_longer_garbles_scale_suffixes():
+    from serious_shift_pipeline.mapgen.modules import _short_figure
+    assert _short_figure('10 major open problems solved') != '10 m'
+    assert _short_figure('10 major open problems solved') == '10'
+    assert _short_figure('16 million users') == '16M'
+
+
+def test_short_figure_finds_a_figure_past_a_leading_word():
+    from serious_shift_pipeline.mapgen.modules import _short_figure
+    assert _short_figure('Approximately 79.44% of sampled pairs') == '79.44%'
+    assert _short_figure('roughly $54.2 million in claims') == '$54.2M'

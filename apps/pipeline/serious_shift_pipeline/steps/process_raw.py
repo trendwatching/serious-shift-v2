@@ -23,7 +23,7 @@ import re
 import sys
 from datetime import datetime
 
-from ..core import db, llm, observability, parallel
+from ..core import claim_integrity, db, llm, observability, parallel
 from ..core.observability import CostTracker, ErrorLog, RunLog
 from ..prompts import extraction_prompt
 
@@ -234,10 +234,16 @@ def write_to_database(conn, thinker, meta, raw_text, extracted):
          _json.dumps(authors_list) if authors_list else None, authority))
 
     claim_ids = []
+    downgraded = {"quote": 0, "statistic": 0}
     for cl in extracted.get("claims", []):
         domain = cl.get("domain", "technology_capability")
         if domain not in DOMAIN_VALID:
             domain = "technology_capability"
+        # A quote or statistic the source never said must not enter the corpus:
+        # scoring rewards has_statistic and hero stats publish it verbatim.
+        _, drops = claim_integrity.verify_claim_against_source(cl, raw_text)
+        for field in drops:
+            downgraded[field] += 1
         has_stat = bool(cl.get("has_statistic", False))
         cid = db.insert_returning_id(conn, """INSERT INTO claims
             (source_id, thinker_id, claim_text, claim_type, domain, consumer_implication,
@@ -249,6 +255,9 @@ def write_to_database(conn, thinker, meta, raw_text, extracted):
              cl.get("specificity", 3), cl.get("quote", ""),
              has_stat, (cl.get("statistic") or "")[:500] if has_stat else None))
         claim_ids.append(cid)
+    if downgraded["quote"] or downgraded["statistic"]:
+        print(f"    integrity: dropped {downgraded['quote']} unverifiable quote(s), "
+              f"{downgraded['statistic']} unverifiable statistic(s)")
 
 
     pred_count = 0

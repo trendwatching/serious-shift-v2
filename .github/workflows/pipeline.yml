@@ -10,12 +10,20 @@ on:
   pull_request:
     paths: ["apps/pipeline/**", "packages/**", "security/audit-waivers.json", "railway*.json", ".github/workflows/pipeline.yml"]
   workflow_dispatch: {}
+  schedule:
+    # Mondays 06:00 UTC, four hours after the weekly synthesize cron: verify
+    # that what staging actually SERVES still conforms to the current contract.
+    # This is the gap tools/verify_publication.py exists for — a validator
+    # hardened after a publication cannot re-check the live document from CI
+    # unless something runs it (2026-08-02 incident: 5,298 issues served).
+    - cron: "0 6 * * 1"
 
 permissions:
   contents: read
 
 jobs:
   test:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     services:
@@ -81,3 +89,46 @@ jobs:
         run: |
           docker build -f apps/pipeline/Dockerfile -t serious-shift-pipeline:ci .
           test "$(docker image inspect serious-shift-pipeline:ci --format '{{.Config.User}}')" = "10001:10001"
+
+  staging-conformance:
+    # Scheduled + manual only. Reads, never writes: exercises the served
+    # document and the deployed art/data coverage against the current checkout.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install pipeline package
+        run: |
+          pip install --require-hashes -r requirements-dev.lock
+          pip install --no-deps --no-build-isolation -e .
+        working-directory: apps/pipeline
+      - name: Verify the served document against the current contract
+        # Fails when staging serves a map the current validator rejects —
+        # the drift a pre-promotion gate can never see.
+        run: |
+          if [ -z "${STAGING_ORIGIN}" ]; then
+            echo "STAGING_ORIGIN secret not set; skipping"; exit 0
+          fi
+          python -m serious_shift_pipeline.tools.verify_publication \
+            --url "${STAGING_ORIGIN}" --token "${SS_INSPECTION_TOKEN}"
+        working-directory: apps/pipeline
+        env:
+          STAGING_ORIGIN: ${{ secrets.STAGING_ORIGIN }}
+          SS_INSPECTION_TOKEN: ${{ secrets.SS_INSPECTION_TOKEN }}
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: 22
+      - name: Preflight the deployed origin (art/data coverage)
+        run: |
+          if [ -z "${STAGING_ORIGIN}" ]; then
+            echo "STAGING_ORIGIN secret not set; skipping"; exit 0
+          fi
+          npm ci
+          npm run preflight -- "${STAGING_ORIGIN}"
+        working-directory: apps/frontend
+        env:
+          STAGING_ORIGIN: ${{ secrets.STAGING_ORIGIN }}

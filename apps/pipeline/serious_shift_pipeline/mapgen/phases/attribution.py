@@ -1,4 +1,14 @@
-"""Phase 5 — attribute each Key Trend to proponents and skeptics."""
+"""Phase 5 — attribute each Key Trend to proponents and skeptics.
+
+DORMANT since 2026-08-10: not called by cli.py. The voices module it feeds is
+hidden by the visibility matrix on all four spheres and the backend strips the
+raw proponents/skeptics columns from every fragment, so its ~51 calls per run
+produced content no reader saw. To re-enable: reinstate the call in cli.py,
+flip `shift_module_visibility` rows for `voices`, and fix the miscast-speaker
+problem first — the 2026-08-10 audit found "skeptics" agreeing with the thesis
+on most shifts, so the prompt needs a stance-verification pass before this is
+worth paying for again.
+"""
 from __future__ import annotations
 
 import json

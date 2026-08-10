@@ -1,4 +1,12 @@
-"""Phase 7 — per-domain synthesis insights."""
+"""Phase 7 — per-domain synthesis insights.
+
+DORMANT since 2026-08-10: not called by cli.py. Insights reach the sphere
+fragment and the frontend view-model but no component renders them, so the
+phase was pure spend. The export still publishes `synthesis_insights` (an
+empty list from the empty table) because useData.js checks the key's shape.
+To re-enable: reinstate the call in cli.py and build the renderer first; also
+dedupe — the 2026-08-10 audit found 16 insights that were ~12 distinct ones.
+"""
 from __future__ import annotations
 
 from ...core.text import url_slug as slugify

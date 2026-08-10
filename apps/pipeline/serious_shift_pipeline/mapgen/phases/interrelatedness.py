@@ -1,4 +1,14 @@
-"""Phase 6 — typed edges between Key Trends across domains."""
+"""Phase 6 — typed edges between Key Trends across domains.
+
+DORMANT since 2026-08-10: not called by cli.py. The related_shifts module and
+`links` array it feeds render nowhere (hidden on all spheres; no frontend
+reader). Before re-enabling, fix prompt_interrelatedness_batch
+(prompts/map_data.py): it drops the desc fields, so the model wrote every
+`reasoning` sentence from two 1–2-word names alone — which is how the map's
+cross-links came to describe concepts their pages don't contain. Also
+reconcile the parser's relationship vocabulary with export's
+RELATIONSHIP_LABELS (they disagree on 4 of 7 values).
+"""
 from __future__ import annotations
 
 import random

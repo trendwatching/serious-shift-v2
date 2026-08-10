@@ -518,8 +518,13 @@ def test_a_stat_figure_cannot_be_wider_than_the_band():
 
     # And the export re-reduces a value already written under the older limit.
     conformed = conform_modules([
-        {'type': 'stat_band', 'data': {'value': '$54.2 million', 'text': 'x', 'source': 's'}},
+        {'type': 'stat_band', 'data': {'value': '$54.2 million', 'text': 'x', 'source': 's',
+                                       'url': 'https://example.com/stat'}},
     ])
     assert conformed[0]['data']['value'] == '$54.2M'
     # A band whose value cannot be reduced to a figure is dropped, not shipped.
-    assert conform_modules([{'type': 'stat_band', 'data': {'value': 'a long phrase'}}]) == []
+    assert conform_modules([{'type': 'stat_band',
+                             'data': {'value': 'a long phrase',
+                                      'url': 'https://example.com/stat'}}]) == []
+    # As is a band without clickable provenance (contract v6: url required).
+    assert conform_modules([{'type': 'stat_band', 'data': {'value': '72%'}}]) == []

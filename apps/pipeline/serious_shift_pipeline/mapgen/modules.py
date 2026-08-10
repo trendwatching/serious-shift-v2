@@ -66,10 +66,13 @@ def _as_strings(items) -> list | None:
 
 
 #: A leading display figure: 200 · 25% · 3× · 2:1 · $4.2bn · 18-34.
+#: The scale suffix needs a trailing word boundary of its own: without `\b`
+#: after `m|k`, "10 major open problems" reduced to "10 m" and shipped as a
+#: published stat_band value that read as ten million.
 _FIGURE_RE = re.compile(
-    r'^[$€£]?\d[\d,.]*(?:\s?[-–]\s?\d[\d,.]*)?'          # 200 · 4.2 · 18-34
+    r'[$€£]?\d[\d,.]*(?:\s?[-–]\s?\d[\d,.]*)?'           # 200 · 4.2 · 18-34
     r'(?:\s?(?:%|×|x\b|:\s?\d+))?'                        # % · × · :1
-    r'(?:\s?(?:million|billion|trillion|bn|m|k))?',       # 4.2bn · 16 million
+    r'(?:\s?(?:million|billion|trillion|bn|m|k)\b)?',     # 4.2bn · 16 million
     re.IGNORECASE,
 )
 
@@ -182,12 +185,19 @@ def clamp_words(text, limit: int) -> str:
         used += cost
     head = ' '.join(kept)
     # Prefer the last sentence end, but only if it keeps most of the allowance —
-    # cutting a 40-word note down to 6 to land on a full stop loses more than the
-    # ellipsis does.
+    # cutting a 40-word note down to 6 to land on a full stop loses more than
+    # the trim does.
     cut = max(head.rfind('. '), head.rfind('! '), head.rfind('? '))
     if cut > 0 and count_words(head[:cut]) >= limit * 0.6:
         return head[:cut + 1]
-    return head.rstrip(' ,;:—-') + '…'
+    # Never append an ellipsis: 37 visibly amputated sentences shipped that way
+    # on the 2026-08-09 map, and the publication gate now rejects any prose
+    # ending in one. Fall back to the last clause break, then a clean word cut.
+    clause = max(head.rfind(', '), head.rfind('; '), head.rfind(': '),
+                 head.rfind(' — '), head.rfind(' - '))
+    if clause > 0 and count_words(head[:clause]) >= limit * 0.6:
+        return head[:clause].rstrip(' ,;:—-') + '.'
+    return head.rstrip(' ,;:—-') + '.'
 
 
 #: The publication gate accepts 2–6 citations on a peel-tab body. Nothing during
@@ -307,10 +317,16 @@ def _short_figure(text, limit: int = 8) -> str | None:
     # rendered as the page's headline statistic at ~99px.
     if len(t) <= limit and _HAS_DIGIT.search(t):
         return t
-    m = _FIGURE_RE.match(t)
-    if m:
+    # Prefer a leading figure, but tolerate a short qualifier before it — half
+    # the extractor's statistics open with one ("Approximately 1,337…",
+    # "roughly 25% of…"), and anchoring at position 0 silently cost those
+    # shifts their stat_band. The window stays tight so a year trailing a prose
+    # sentence ("…achieved supersonic flight in 2025") is still no statistic.
+    for m in _FIGURE_RE.finditer(t):
+        if m.start() > 20:
+            break
         figure = m.group(0).strip().rstrip('.,;:')
-        if figure and len(figure) <= limit:
+        if figure and _HAS_DIGIT.search(figure) and len(figure) <= limit:
             return figure
     return None
 
@@ -404,9 +420,10 @@ def conform_modules(modules: list) -> list:
         if type_ == 'stat_band':
             # Re-reduced here too: a value written under the older, looser limit
             # is already in the database, and the band it breaks is on a page
-            # that is already published.
+            # that is already published. And no band without provenance — the
+            # contract requires `url` (v6), matching the gate that always did.
             value = _short_figure(data.get('value'))
-            if not value:
+            if not value or not data.get('url'):
                 continue
             data['value'] = value
         if type_ in LIST_ITEM_WORD_LIMITS:
@@ -438,7 +455,11 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
     hero: dict = kt_row.get('hero_stat') or {}
 
     candidates = [
-        _module('dek', {'text': clamp_words(kt_row.get('subtitle'), 45)}, ('text',)),
+        # The dek is its own editorial field; the subtitle is only the fallback
+        # for bodies written before the field existed. Publishing the subtitle
+        # as the dek put the identical sentence on the page twice (three times,
+        # counting the exported description alias).
+        _module('dek', {'text': clamp_words(e.get('dek') or kt_row.get('subtitle'), 45)}, ('text',)),
         _module('from_to', {'from': clamp_words(e.get('from'), 30),
                             'to': clamp_words(e.get('to'), 30)}, ('from', 'to')),
         _module('pull_quote', {'quote': clamp_words(e.get('pull_quote'), 18)}, ('quote',)),
@@ -449,7 +470,7 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
             'text': hero.get('text') or hero.get('value') or '',
             'source': hero.get('source') or hero.get('thinker') or '',
             'url': hero.get('url') or '',
-        }, ('value',)),
+        }, ('value', 'url')),
         _module('peel_tabs', {
             'whats_changing': clamp_words(e.get('whats_changing'), 90),
             'why_now': clamp_words(e.get('why_now'), 70),
@@ -501,7 +522,7 @@ def st_modules(st_row: dict, editorial: dict) -> list:
             'text': stat.get('text') or '',
             'source': stat.get('source') or '',
             'url': stat.get('url') or '',
-        }, ('value',)),
+        }, ('value', 'url')),
         _module('peel_tabs', {
             'whats_changing': clamp_words(e.get('whats_changing'), 90),
             'why_now': clamp_words(e.get('why_now'), 70),

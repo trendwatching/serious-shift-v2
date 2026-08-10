@@ -19,15 +19,12 @@ from .dbutil import get_conn, reset_v2_tables
 from .export import (
     _write_map_document, build_map_json_v2, load_kts_from_db,
 )
-from .phases.attribution import phase5_thinker_attribution
 from .phases.domains import phase1_domain_definitions
 from .phases.editorial import phase4b_editorial
 from .phases.hero_stats import phase8_hero_stats
-from .phases.interrelatedness import phase6_interrelatedness
 from .phases.key_trends import phase3_key_trends
 from .phases.routing import phase2_claim_routing
 from .phases.sub_trends import phase4_sub_trends
-from .phases.synthesis import phase7_synthesis
 from .routing import route_claims_for_domain
 from .validation import PublicationValidationError, validate_map
 
@@ -119,17 +116,29 @@ def _issue_shift_ids(out: dict, issues) -> set[str]:
     return {shift_id for shift_id in shift_ids if shift_id and shift_id != 'None'}
 
 
+#: Issue codes whose first remedy is a free re-run of phase 8: hero exclusivity
+#: and topicality are assignment decisions, and stat coverage can recover when
+#: the assignment shuffles. Runs before any paid editorial regen, because the
+#: stat_band the editorial builds is derived from hero_stat.
+HERO_REPAIR_CODES = {'duplicate_hero_claim', 'hero_topicality', 'stat_coverage'}
+
+
 def _targeted_repair_once(conn, api_key: str, out: dict, issues,
                           domain_claims: dict, domain_kts: dict) -> bool:
     """One bounded repair pass over only the invalid parents."""
     repairable = [issue for issue in issues if issue.repairable]
     if not repairable:
         return False
+    repaired_heroes = False
+    if any(issue.code in HERO_REPAIR_CODES for issue in repairable):
+        print('  hero-stat issue(s) present — re-running phase 8 (free SQL) first')
+        phase8_hero_stats(conn)
+        repaired_heroes = True
     shift_ids = _issue_shift_ids(out, repairable)
     if not shift_ids or len(shift_ids) > MAX_TARGETED_REPAIR_SHIFTS:
         print(f'  targeted repair skipped: {len(shift_ids)} parent shift(s), '
               f'limit is {MAX_TARGETED_REPAIR_SHIFTS}')
-        return False
+        return repaired_heroes
 
     db_ids = {int(shift_id.removeprefix('kt-')) for shift_id in shift_ids}
     filtered = {
@@ -138,7 +147,9 @@ def _targeted_repair_once(conn, api_key: str, out: dict, issues,
     }
     filtered = {domain_id: items for domain_id, items in filtered.items() if items}
     if not filtered:
-        return False
+        # A hero reassignment alone still changes the candidate — rebuild and
+        # revalidate even when no editorial parent could be resolved.
+        return repaired_heroes
 
     count_ids = {
         int(shifts_match.group(1))
@@ -336,14 +347,15 @@ def main():
     # ── Phase 4b: editorial modules ──────────────────────────────────────────
     phase4b_editorial(conn, api_key, domain_claims, domain_kts)
 
-    # ── Phase 5: thinker attribution ─────────────────────────────────────────
-    phase5_thinker_attribution(conn, api_key, domain_claims, domain_kts)
-
-    # ── Phase 6: interrelatedness ─────────────────────────────────────────────
-    phase6_interrelatedness(conn, api_key, domain_kts)
-
-    # ── Phase 7: synthesis insights ───────────────────────────────────────────
-    phase7_synthesis(conn, api_key, domain_claims)
+    # ── Phases 5 (attribution/voices), 6 (interrelatedness/links) and
+    # 7 (synthesis insights) are DORMANT — deliberately not called. They were
+    # ~40% of the run's calls producing content no sphere renders: voices and
+    # related_shifts are hidden by the visibility matrix on all four spheres,
+    # and insights reach the view-model but no component (2026-08-10 audit).
+    # The phase modules stay on disk; to re-enable one, reinstate its call
+    # here and read its docstring first — phase 6 in particular must not come
+    # back until prompt_interrelatedness_batch stops writing reasoning from
+    # names alone (prompts/map_data.py drops the desc fields).
 
     # ── Phase 9: export ───────────────────────────────────────────────────────
     print('\nPhase 9 — Exporting map…')
@@ -362,9 +374,7 @@ def main():
 
     print("\n✓  map → documents['map']")
     print(f'   {len(out["domains"])} domains · {len(out["key_trends"])} KTs · '
-          f'{len(out["sub_trends"])} sub-trends')
-    print(f'   {len(out["claims"])} claims · {len(out["synthesis_insights"])} insights · '
-          f'{len(out["links"])} links')
+          f'{len(out["sub_trends"])} sub-trends · {len(out.get("claims") or [])} claims')
     mapgen_llm.COST.report()
     print('\nDone.')
 

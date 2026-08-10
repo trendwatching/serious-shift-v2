@@ -44,6 +44,7 @@ def _contract() -> dict:
 # Representative editorial payloads: one with every field the prompts ask for, and
 # one empty, so we see both the full module set and the degenerate case.
 _FULL_KT = {
+    "dek": "its own standfirst, not the subtitle",
     "from": "a", "to": "b", "whats_changing": "c", "why_now": "d", "evidence_ids": [1, 2], "stat_text": "e",
     "human_needs": {"unlocked": "f", "threatened": "g"},
     "consumer_tension": "h",
@@ -76,9 +77,20 @@ def test_pipeline_only_emits_declared_types():
 
 
 def test_frontend_registers_every_declared_type():
-    registry = _repo_file("apps", "frontend", "src", "shift", "modules.jsx")
-    if registry is None:
+    # Skip only when the whole frontend is absent (installed/sdist build).
+    # A present frontend with a missing registry is a FAILURE: this test
+    # silently skipped for months on a stale `src/shift/modules.jsx` path
+    # while the real registry lived at `src/modules/index.jsx`, which is how
+    # the one drift guard the contract has was dead on every run.
+    frontend = next((parent / "apps" / "frontend"
+                     for parent in Path(__file__).resolve().parents
+                     if (parent / "apps" / "frontend").is_dir()), None)
+    if frontend is None:
         pytest.skip("frontend not present in this checkout")
+    registry = _repo_file("apps", "frontend", "src", "modules", "index.jsx")
+    assert registry is not None, (
+        "frontend exists but apps/frontend/src/modules/index.jsx does not — "
+        "if the registry moved, update this path in the same commit")
     source = registry.read_text()
     # The registry is a flat object literal: `  some_type: Component,`
     registered = set(re.findall(r"^\s{2}(\w+):", source, re.MULTILINE))
@@ -146,18 +158,23 @@ def test_stat_band_rejects_prose_as_a_numeral():
     """hero_stat.value is prose lifted from a claim, but the band renders it at
     ~99px. A leading figure is salvaged; unsalvageable prose drops the module."""
     prose = "200 years of encyclical history, first time dedicated entirely to technology (2026)"
-    kt = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": prose}}, {})
+    url = "https://example.com/encyclical"
+    kt = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": prose, "url": url}}, {})
     band = next((m for m in kt if m["type"] == "stat_band"), None)
     assert band and band["data"]["value"] == "200", band
     # the full prose is kept as the explanatory text, not thrown away
     assert prose in band["data"]["text"]
 
     # no leading figure at all → no band
-    kt2 = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": "Boom Supersonic achieved flight"}}, {})
+    kt2 = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": "Boom Supersonic achieved flight", "url": url}}, {})
     assert "stat_band" not in {m["type"] for m in kt2}
 
+    # A statistic with no clickable provenance is not publishable (contract v6).
+    kt_no_url = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": prose}}, {})
+    assert "stat_band" not in {m["type"] for m in kt_no_url}
+
     # Model-authored figures never override the verified claim selected in SQL.
-    kt3 = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": prose}}, {"stat_value": "2:1"})
+    kt3 = gm.kt_modules({"subtitle": "d", "hero_stat": {"value": prose, "url": url}}, {"stat_value": "2:1"})
     assert next(m for m in kt3 if m["type"] == "stat_band")["data"]["value"] == "200"
 
 
@@ -238,3 +255,12 @@ def test_human_needs_requires_both_sides():
                             "threatened": "Judgement: you stop checking."}}
     kt = gm.kt_modules({"subtitle": "d", "hero_stat": None}, both)
     assert "human_needs" in {m["type"] for m in kt}
+
+
+def test_contract_version_is_pinned():
+    """Bump DELIBERATELY, both sides. Nothing consumed `version` before this
+    pin, so a breaking contract change could never fail a build (2026-08-08
+    audit, C5). If you are here because this assert fired: update the backend
+    mirrors (module_policy.rs DEFAULT_HIDDEN, innovations.rs MODULE_ORDER_*),
+    re-export the live document, and then bump this number in the same PR."""
+    assert _contract()["version"] == 6
