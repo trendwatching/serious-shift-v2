@@ -322,8 +322,12 @@ VELOCITY_MAX_SHARE = 0.8
 #: At least this share of key shifts must carry a stat_band. 22/51 shipped.
 STAT_COVERAGE_FLOOR = 0.6
 
-#: A proper-noun bigram may headline at most this many pages ("Adam Raine"
-#: carried 16); a bare figure gets more slack (different 40%s exist).
+#: A proper-noun bigram may headline at most this many shift FAMILIES ("Adam
+#: Raine" carried ~12); a bare figure gets more slack (different 40%s exist).
+#: The unit is the family — a parent and its five children legitimately share
+#: their own evidence (Loudoun County on the Compute shift and two of its
+#: sub-shifts is cohesion); the same number fronting unrelated shifts is the
+#: crutch the audit found.
 CRUTCH_ENTITY_PAGE_LIMIT = 4
 CRUTCH_FIGURE_PAGE_LIMIT = 6
 
@@ -784,28 +788,30 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
             _norm_prose(claim.get('thinker'))
             for claim in claims if isinstance(claim, dict) and claim.get('thinker')
         }
-        pages: list[tuple[str, set]] = []
+        pages: list[tuple[str, str, set]] = []  # (path, family, signatures)
         for label, rows in (('key_trends', shifts), ('sub_trends', subs)):
             for index, row in enumerate(rows):
                 if not isinstance(row, dict):
                     continue
+                family = str(row.get('key_trend_id') or row.get('id') or '')
                 signatures = {
                     s for s in _crutch_signatures(_centerpiece_text(row))
                     if not (s.startswith('entity:') and s[7:] in thinker_names)
                 }
-                pages.append((f'{label}[{index}]', signatures))
-        page_count: dict[str, list[str]] = {}
-        for path, signatures in pages:
+                pages.append((f'{label}[{index}]', family, signatures))
+        family_holders: dict[str, dict[str, list[str]]] = {}
+        for path, family, signatures in pages:
             for signature in signatures:
-                page_count.setdefault(signature, []).append(path)
-        for signature, paths in sorted(page_count.items()):
+                family_holders.setdefault(signature, {}).setdefault(family, []).append(path)
+        for signature, families in sorted(family_holders.items()):
             limit = (CRUTCH_ENTITY_PAGE_LIMIT if signature.startswith('entity:')
                      else CRUTCH_FIGURE_PAGE_LIMIT)
-            for path in paths[limit:]:
-                issues.append(ValidationIssue(
-                    'crutch_frequency', f'{path}.modules',
-                    f'centerpiece leans on {signature.split(":", 1)[1]!r}, already '
-                    f'headlining {limit}+ other pages', True))
+            for family in sorted(families)[limit:]:
+                for path in families[family]:
+                    issues.append(ValidationIssue(
+                        'crutch_frequency', f'{path}.modules',
+                        f'centerpiece leans on {signature.split(":", 1)[1]!r}, already '
+                        f'headlining {limit}+ other shift families', True))
 
         reuse: dict[int, list[str]] = {}
         for index, sub in enumerate(subs):

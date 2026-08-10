@@ -180,8 +180,18 @@ def _generate_until_complete(items, prompt_of, is_complete, *, describe, label,
     return results
 
 
+def _citable_ids(claims) -> set[int]:
+    """Only claims with publishable provenance may be cited: the gate rejects
+    a citation whose source has no HTTP URL, so offering those ids as valid
+    here produced bodies that passed this phase and failed publication."""
+    return {
+        claim['id'] for claim in claims
+        if str(claim.get('source_url') or '').startswith(('http://', 'https://'))
+    }
+
+
 def _sub_is_complete(sub, editorial, claims_by_sub) -> bool:
-    allowed = {claim['id'] for claim in claims_by_sub.get(sub['id'], [])}
+    allowed = _citable_ids(claims_by_sub.get(sub['id'], []))
     cited = _cited(editorial)
     return (_complete_editorial(editorial, ST_REQUIRED, ST_REQUIRED_ANY)
             and len(cited) >= 2 and cited <= allowed)
@@ -368,7 +378,7 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         return item[1]['name'][:30]
 
     def kt_is_complete(item, result):
-        allowed = {claim['id'] for claim in item[2]}
+        allowed = _citable_ids(item[2])
         cited = _cited(result)
         return (_complete_editorial(result, KT_REQUIRED, KT_REQUIRED_ANY)
                 and len(cited) >= 2 and cited <= allowed)
@@ -383,10 +393,11 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
             nested = result.get(key)
             if isinstance(nested, dict):
                 missing += [f'{key}.{s}' for s in sides if not nested.get(s)]
-        allowed = {claim['id'] for claim in item[2]}
+        allowed = _citable_ids(item[2])
         cited = _cited(result)
         if len(cited) < 2 or not cited <= allowed:
-            missing.append('evidence_ids (cite 2–6 ids that appear in EVIDENCE)')
+            missing.append('evidence_ids (cite 2–6 ids of evidence records that '
+                           'carry a source_url)')
         return missing
 
     kt_results = _generate_until_complete(
@@ -411,7 +422,7 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     for (_d_id, kt, _claims, subs, claims_by_sub), result in zip(work, results):
         e = result.get('kt') or {}
         kt_row = kt_rows.get(kt['_db_id'], {'subtitle': kt.get('subtitle', ''), 'hero_stat': None})
-        kt_ids = {claim['id'] for claim in _claims}
+        kt_ids = _citable_ids(_claims)
         kt_citations = _cited(e)
         complete_kt = (_complete_editorial(e, KT_REQUIRED, KT_REQUIRED_ANY)
                        and len(kt_citations) >= 2 and kt_citations <= kt_ids)
@@ -434,7 +445,7 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         for sub in subs:
             se = editorial_by_name.get(sub['name'].strip().lower()) or {}
             allowed = claims_by_sub.get(sub['id'], [])
-            allowed_ids = {claim['id'] for claim in allowed}
+            allowed_ids = _citable_ids(allowed)
             cited = _cited(se)
             complete_st = (_complete_editorial(se, ST_REQUIRED, ST_REQUIRED_ANY)
                            and len(cited) >= 2 and cited <= allowed_ids)
