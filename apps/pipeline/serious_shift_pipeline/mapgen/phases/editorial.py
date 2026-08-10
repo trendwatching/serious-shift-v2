@@ -288,7 +288,15 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     """Writes the module list for every Key Trend and sub-trend."""
     print('\nPhase 4b — Writing editorial modules per Key Trend (parallel)…')
 
-    pool = {c['id']: c for d in DOMAINS for c in domain_claims[d['id']]}
+    # Only claims with publishable provenance enter the editorial evidence at
+    # all. Offering an uncitable claim is a trap: the model cites the best
+    # evidence it can see, the gate rejects the citation, and the retry loop
+    # burns its three attempts on a defect the prompt itself created (Graph
+    # Moat failed nine asks on exactly this before the filter existed).
+    pool = {
+        c['id']: c for d in DOMAINS for c in domain_claims[d['id']]
+        if str(c.get('source_url') or '').startswith(('http://', 'https://'))
+    }
     by_id = {d['id']: d for d in DOMAINS}
 
     # The KT rows as stored — `hero_stat` (phase 8, which runs before this) and
