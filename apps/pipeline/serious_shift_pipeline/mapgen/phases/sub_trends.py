@@ -133,6 +133,21 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
 
     all_domain_claims = {c['id']: c for d in DOMAINS for c in domain_claims[d['id']]}
 
+    # The repair path re-clusters a few shifts into a map the rest of which
+    # already exists — everything ledgered below must therefore be seeded from
+    # the database, not just from this call's own work list. On the full run
+    # the tables were just reset, so both seeds are empty and nothing changes.
+    routed_elsewhere = {
+        r['claim_id'] for r in
+        conn.execute('SELECT DISTINCT claim_id FROM domain_sub_trend_claims').fetchall()
+    }
+    existing_names = {
+        str(r['name']).strip() for r in
+        conn.execute('SELECT name FROM domain_sub_trends UNION '
+                     'SELECT name FROM domain_key_trends').fetchall()
+        if str(r['name'] or '').strip()
+    }
+
     # Build the per-KT claim pool (pure, no I/O), one work item per KT.
     # Top-up is topical and exclusive: ranked by overlap with the KT's own
     # framing, and a spare consumed by one KT never pads a sibling's pool.
@@ -140,7 +155,7 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     for d in DOMAINS:
         full_pool = domain_claims[d['id']]
         idf = _pool_idf(full_pool)
-        topup_ledger: set[int] = set()
+        topup_ledger: set[int] = set(routed_elsewhere)
         for kt in domain_kts.get(d['id'], []):
             preferred_ids = set(kt.get('_claim_ids', []))
             preferred = sorted(
@@ -164,6 +179,8 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     # That is the whole reason the duplicates happened.
     # Matched case-insensitively, shown to the model in its original casing.
     display: dict[str, str] = {}
+    for name in existing_names:
+        display.setdefault(name.lower(), name)
     for _, kt, _ in work:
         name = str(kt.get('name') or '').strip()
         if name:
