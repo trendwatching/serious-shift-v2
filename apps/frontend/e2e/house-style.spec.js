@@ -102,7 +102,13 @@ test('the hero takes the poster cut for the shape of its band', async ({ page })
   // A slug that actually has generated art. The shared fixture's `trust-machines`
   // is not in heroes.json, so its hero falls back to the gradient and there is no
   // `.hero-art` element at all — which is correct behaviour, and useless here.
-  const slug = 'autonomous-infection'
+  // Derived from the manifests rather than hardcoded: a republish renames
+  // shifts and regenerates every poster, and a pinned slug from the previous
+  // taxonomy times out waiting for art that no longer exists.
+  const { default: heroes } = await import('../src/lib/heroes.json', { with: { type: 'json' } })
+  const { default: heroesWide } = await import('../src/lib/heroes-wide.json', { with: { type: 'json' } })
+  const slug = Object.keys(heroes).find((s) => s in heroesWide)
+  expect(slug, 'some shift has both poster cuts').toBeTruthy()
   const path = `/society/${slug}`
   await page.route('**/api/v1/map**', async (route) => {
     const url = new URL(route.request().url()).pathname
