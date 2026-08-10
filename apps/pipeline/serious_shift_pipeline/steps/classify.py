@@ -145,7 +145,11 @@ def _shift_doc(row: dict, scope: str, parent_ref=None) -> ShiftDoc:
 
 def load_corpus(conn):
     """Every shift in the current publication, plus the hash that dates it."""
-    body = db.scalar(conn, "SELECT body::text FROM documents WHERE key = 'map'")
+    # query_one, not scalar: a database with no publication yet (fresh CI
+    # Postgres, pre-first-run production) is a real state this function's own
+    # guard expects to answer with None — scalar() raises on zero rows.
+    row = db.query_one(conn, "SELECT body::text AS body FROM documents WHERE key = 'map'")
+    body = row['body'] if row else None
     if not body:
         return None, None, {}
     doc = json.loads(body)
