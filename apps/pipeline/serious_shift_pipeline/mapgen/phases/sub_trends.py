@@ -229,7 +229,10 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     # not revisited here — phase 3 sees the whole domain and can grade trends
     # against each other; this phase sees one KT and anchored on the prompt's
     # example value every time it was asked.
-    slug = _slugger()
+    # Seeded with what the table already holds: on the full run that is
+    # nothing (reset), on the repair path it is every other shift's children.
+    slug = _slugger({r['slug'] for r in
+                     conn.execute('SELECT slug FROM domain_sub_trends').fetchall()})
     for (d_id, kt, claims), result in zip(work, results):
         # Truncate rather than publish a sixth: the contract is exact, and a
         # deterministic cut here beats a validation failure the repair pass then

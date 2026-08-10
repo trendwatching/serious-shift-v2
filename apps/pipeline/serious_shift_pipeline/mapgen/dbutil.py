@@ -10,9 +10,15 @@ def get_conn():
 
 
 
-def _slugger():
-    """A fresh unique-slug maker: suffixes -2, -3, … on collision within a phase."""
-    used: set = set()
+def _slugger(seed: set | None = None):
+    """A fresh unique-slug maker: suffixes -2, -3, … on collision within a phase.
+
+    Pass `seed` when the table already holds rows this run did not write — the
+    repair pass re-clusters one shift into a table with 175 existing slugs, and
+    an unseeded slugger happily re-mints one of them straight into the UNIQUE
+    constraint (`st-opaque-pricing`, 2026-08-10).
+    """
+    used: set = set(seed or ())
 
     def make(base: str) -> str:
         s, n = base, 2
