@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>expert-displacement/sensor-shift</title>
+<defs>
+<linearGradient id="fexpertdisplacementsensorshift" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gexpertdisplacementsensorshift" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bexpertdisplacementsensorshift" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sexpertdisplacementsensorshift" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vexpertdisplacementsensorshift" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nexpertdisplacementsensorshift" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fexpertdisplacementsensorshift)"/>
+<rect width="640" height="640" fill="url(#gexpertdisplacementsensorshift)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bexpertdisplacementsensorshift)" filter="url(#sexpertdisplacementsensorshift)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="327.8" cy="-32" r="15"/><circle cx="96.1" cy="-20.8" r="14.8"/><circle cx="254.1" cy="-9.7" r="14.6"/><circle cx="155.7" cy="1.5" r="14.4"/><circle cx="538.9" cy="12.7" r="14.2"/><rect x="271.1" y="23.9" width="28.1" height="28.1" transform="rotate(81.5 271.1 23.9)"/><rect x="71.4" y="35" width="27.7" height="27.7" transform="rotate(22.8 71.4 35)"/><rect x="218.2" y="46.2" width="27.3" height="27.3" transform="rotate(82.9 218.2 46.2)"/><circle cx="325.4" cy="57.4" r="13.5"/><rect x="351.6" y="68.6" width="26.6" height="26.6" transform="rotate(50.2 351.6 68.6)"/><circle cx="292.4" cy="79.7" r="13.1"/><rect x="346.8" y="90.9" width="25.8" height="25.8" transform="rotate(27.6 346.8 90.9)"/><rect x="519.1" y="102.1" width="25.4" height="25.4" transform="rotate(21.4 519.1 102.1)"/><rect x="463" y="113.3" width="25" height="25" transform="rotate(23.5 463 113.3)"/><circle cx="41.2" cy="124.4" r="12.3"/><circle cx="563.3" cy="135.6" r="12.1"/><rect x="547.1" y="146.8" width="23.9" height="23.9" transform="rotate(36.3 547.1 146.8)"/><rect x="427.3" y="158" width="23.5" height="23.5" transform="rotate(18.2 427.3 158)"/><rect x="499" y="169.1" width="23.1" height="23.1" transform="rotate(73.1 499 169.1)"/><circle cx="341.8" cy="180.3" r="11.4"/><rect x="298.4" y="191.5" width="22.4" height="22.4" transform="rotate(56.1 298.4 191.5)"/><circle cx="252.8" cy="202.7" r="11"/><circle cx="281.1" cy="213.8" r="10.8"/><rect x="112.3" y="225" width="21.2" height="21.2" transform="rotate(63.9 112.3 225)"/><circle cx="549.6" cy="236.2" r="10.4"/><rect x="411.8" y="247.4" width="20.5" height="20.5" transform="rotate(85.2 411.8 247.4)"/><rect x="260.9" y="258.5" width="20.1" height="20.1" transform="rotate(5.8 260.9 258.5)"/><rect x="61.4" y="269.7" width="19.7" height="19.7" transform="rotate(77.8 61.4 269.7)"/><circle cx="212.4" cy="280.9" r="9.7"/><circle cx="219.1" cy="292.1" r="9.5"/><rect x="292.9" y="303.2" width="18.6" height="18.6" transform="rotate(85.2 292.9 303.2)"/><circle cx="245.9" cy="314.4" r="9.1"/><rect x="340.1" y="325.6" width="17.8" height="17.8" transform="rotate(84.3 340.1 325.6)"/><circle cx="452" cy="336.8" r="8.7"/><rect x="537.3" y="347.9" width="17" height="17" transform="rotate(66.5 537.3 347.9)"/><rect x="73.2" y="359.1" width="16.7" height="16.7" transform="rotate(35.3 73.2 359.1)"/><circle cx="443.5" cy="370.3" r="8.1"/><circle cx="396.9" cy="381.5" r="8"/><rect x="218.3" y="392.6" width="15.5" height="15.5" transform="rotate(49.3 218.3 392.6)"/><rect x="424.7" y="403.8" width="15.1" height="15.1" transform="rotate(16.2 424.7 403.8)"/><rect x="129" y="415" width="14.8" height="14.8" transform="rotate(23 129 415)"/><rect x="178.3" y="426.2" width="14.4" height="14.4" transform="rotate(35.4 178.3 426.2)"/><rect x="111.7" y="437.3" width="14" height="14" transform="rotate(42.6 111.7 437.3)"/><rect x="522.7" y="448.5" width="13.6" height="13.6" transform="rotate(72 522.7 448.5)"/><rect x="392.8" y="459.7" width="13.2" height="13.2" transform="rotate(16.8 392.8 459.7)"/><circle cx="183.7" cy="470.9" r="6.4"/><rect x="48.3" y="482" width="12.5" height="12.5" transform="rotate(74.3 48.3 482)"/><circle cx="300.5" cy="493.2" r="6"/><rect x="449.7" y="504.4" width="11.7" height="11.7" transform="rotate(70.2 449.7 504.4)"/><circle cx="238.7" cy="515.6" r="5.7"/><rect x="497.7" y="526.7" width="11" height="11" transform="rotate(75.5 497.7 526.7)"/><circle cx="295.8" cy="537.9" r="5.3"/><rect x="320.3" y="549.1" width="10.2" height="10.2" transform="rotate(45.7 320.3 549.1)"/><rect x="104.7" y="560.3" width="9.8" height="9.8" transform="rotate(14.1 104.7 560.3)"/><rect x="50.1" y="571.4" width="9.4" height="9.4" transform="rotate(27.6 50.1 571.4)"/><circle cx="118" cy="582.6" r="4.5"/><circle cx="95.8" cy="593.8" r="4.3"/><circle cx="309.1" cy="605" r="4.1"/><circle cx="236.3" cy="616.1" r="4"/><rect x="370.1" y="627.3" width="7.5" height="7.5" transform="rotate(6.3 370.1 627.3)"/><rect x="551.4" y="638.5" width="7.1" height="7.1" transform="rotate(36.5 551.4 638.5)"/><rect x="96.9" y="649.7" width="6.8" height="6.8" transform="rotate(87.8 96.9 649.7)"/><rect x="356.6" y="660.8" width="6.4" height="6.4" transform="rotate(30.2 356.6 660.8)"/><rect x="458.4" y="672" width="6" height="6" transform="rotate(34 458.4 672)"/></g>
+<rect width="640" height="640" fill="url(#vexpertdisplacementsensorshift)"/>
+<rect width="640" height="640" filter="url(#nexpertdisplacementsensorshift)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nexpertdisplacementsensorshift)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

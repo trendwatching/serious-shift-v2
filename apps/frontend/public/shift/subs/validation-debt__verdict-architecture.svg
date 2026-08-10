@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>validation-debt/verdict-architecture</title>
+<defs>
+<linearGradient id="fvalidationdebtverdictarchitecture" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gvalidationdebtverdictarchitecture" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bvalidationdebtverdictarchitecture" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="svalidationdebtverdictarchitecture" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vvalidationdebtverdictarchitecture" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nvalidationdebtverdictarchitecture" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fvalidationdebtverdictarchitecture)"/>
+<rect width="640" height="640" fill="url(#gvalidationdebtverdictarchitecture)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bvalidationdebtverdictarchitecture)" filter="url(#svalidationdebtverdictarchitecture)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><rect x="302.6" y="-32" width="30" height="30" transform="rotate(15.3 302.6 -32)"/><rect x="263.2" y="-20.8" width="29.6" height="29.6" transform="rotate(22.1 263.2 -20.8)"/><rect x="165.9" y="-9.7" width="29.2" height="29.2" transform="rotate(82.2 165.9 -9.7)"/><circle cx="179.2" cy="1.5" r="14.4"/><rect x="470.2" y="12.7" width="28.5" height="28.5" transform="rotate(17.4 470.2 12.7)"/><rect x="225.2" y="23.9" width="28.1" height="28.1" transform="rotate(26.8 225.2 23.9)"/><circle cx="83.5" cy="35" r="13.9"/><rect x="554.3" y="46.2" width="27.3" height="27.3" transform="rotate(45.9 554.3 46.2)"/><rect x="170.7" y="57.4" width="27" height="27" transform="rotate(58.8 170.7 57.4)"/><circle cx="433.7" cy="68.6" r="13.3"/><circle cx="299.6" cy="79.7" r="13.1"/><rect x="546.9" y="90.9" width="25.8" height="25.8" transform="rotate(59.8 546.9 90.9)"/><rect x="548.7" y="102.1" width="25.4" height="25.4" transform="rotate(83.9 548.7 102.1)"/><circle cx="553.8" cy="113.3" r="12.5"/><circle cx="244.9" cy="124.4" r="12.3"/><rect x="212.4" y="135.6" width="24.3" height="24.3" transform="rotate(62.9 212.4 135.6)"/><rect x="169" y="146.8" width="23.9" height="23.9" transform="rotate(28.5 169 146.8)"/><circle cx="373.6" cy="158" r="11.8"/><rect x="368.2" y="169.1" width="23.1" height="23.1" transform="rotate(44 368.2 169.1)"/><circle cx="215.7" cy="180.3" r="11.4"/><rect x="464.8" y="191.5" width="22.4" height="22.4" transform="rotate(63.1 464.8 191.5)"/><rect x="563.8" y="202.7" width="22" height="22" transform="rotate(78.8 563.8 202.7)"/><rect x="466.3" y="213.8" width="21.6" height="21.6" transform="rotate(42.6 466.3 213.8)"/><rect x="335.2" y="225" width="21.2" height="21.2" transform="rotate(87.6 335.2 225)"/><circle cx="165.9" cy="236.2" r="10.4"/><rect x="235" y="247.4" width="20.5" height="20.5" transform="rotate(87.4 235 247.4)"/><circle cx="133.5" cy="258.5" r="10"/><rect x="360.3" y="269.7" width="19.7" height="19.7" transform="rotate(42.9 360.3 269.7)"/><circle cx="528.5" cy="280.9" r="9.7"/><rect x="321.3" y="292.1" width="19" height="19" transform="rotate(77.3 321.3 292.1)"/><rect x="271.7" y="303.2" width="18.6" height="18.6" transform="rotate(24.6 271.7 303.2)"/><circle cx="360.7" cy="314.4" r="9.1"/><circle cx="360.8" cy="325.6" r="8.9"/><circle cx="184.6" cy="336.8" r="8.7"/><rect x="527.5" y="347.9" width="17" height="17" transform="rotate(50.1 527.5 347.9)"/><rect x="335.3" y="359.1" width="16.7" height="16.7" transform="rotate(13.3 335.3 359.1)"/><circle cx="466.3" cy="370.3" r="8.1"/><rect x="174.4" y="381.5" width="15.9" height="15.9" transform="rotate(9 174.4 381.5)"/><circle cx="71.9" cy="392.6" r="7.8"/><rect x="62.6" y="403.8" width="15.1" height="15.1" transform="rotate(18.7 62.6 403.8)"/><circle cx="106.6" cy="415" r="7.4"/><circle cx="269.8" cy="426.2" r="7.2"/><rect x="133.1" y="437.3" width="14" height="14" transform="rotate(37.5 133.1 437.3)"/><rect x="433.5" y="448.5" width="13.6" height="13.6" transform="rotate(7.9 433.5 448.5)"/><rect x="510.3" y="459.7" width="13.2" height="13.2" transform="rotate(10.5 510.3 459.7)"/><rect x="380.5" y="470.9" width="12.9" height="12.9" transform="rotate(47 380.5 470.9)"/><rect x="167.3" y="482" width="12.5" height="12.5" transform="rotate(25.7 167.3 482)"/><rect x="362.2" y="493.2" width="12.1" height="12.1" transform="rotate(81.1 362.2 493.2)"/><circle cx="459.4" cy="504.4" r="5.9"/><circle cx="80.8" cy="515.6" r="5.7"/><rect x="556.1" y="526.7" width="11" height="11" transform="rotate(49.8 556.1 526.7)"/><rect x="403.8" y="537.9" width="10.6" height="10.6" transform="rotate(45.9 403.8 537.9)"/><rect x="71.2" y="549.1" width="10.2" height="10.2" transform="rotate(17.9 71.2 549.1)"/><circle cx="268.8" cy="560.3" r="4.9"/><circle cx="305.3" cy="571.4" r="4.7"/><circle cx="556.7" cy="582.6" r="4.5"/><rect x="457.4" y="593.8" width="8.7" height="8.7" transform="rotate(72.6 457.4 593.8)"/><circle cx="426.8" cy="605" r="4.1"/><rect x="180.7" y="616.1" width="7.9" height="7.9" transform="rotate(47.2 180.7 616.1)"/><circle cx="82.3" cy="627.3" r="3.8"/><circle cx="544.4" cy="638.5" r="3.6"/><circle cx="276" cy="649.7" r="3.4"/><rect x="211.3" y="660.8" width="6.4" height="6.4" transform="rotate(15.7 211.3 660.8)"/><rect x="330" y="672" width="6" height="6" transform="rotate(82.7 330 672)"/></g>
+<rect width="640" height="640" fill="url(#vvalidationdebtverdictarchitecture)"/>
+<rect width="640" height="640" filter="url(#nvalidationdebtverdictarchitecture)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nvalidationdebtverdictarchitecture)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

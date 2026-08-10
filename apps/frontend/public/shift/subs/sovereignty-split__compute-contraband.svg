@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>sovereignty-split/compute-contraband</title>
+<defs>
+<linearGradient id="fsovereigntysplitcomputecontraband" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gsovereigntysplitcomputecontraband" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bsovereigntysplitcomputecontraband" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="ssovereigntysplitcomputecontraband" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vsovereigntysplitcomputecontraband" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nsovereigntysplitcomputecontraband" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fsovereigntysplitcomputecontraband)"/>
+<rect width="640" height="640" fill="url(#gsovereigntysplitcomputecontraband)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bsovereigntysplitcomputecontraband)" filter="url(#ssovereigntysplitcomputecontraband)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="143.3" cy="376.7" r="59.2"/><path d="M -1 680 L -1 456.7 C 56.7 414.1 95.9 399 143.3 399 C 190.7 399 229.8 414.1 287.5 456.7 L 287.5 680 Z"/></g><g fill="#39001F" stroke="#39001F" fill-opacity="1" stroke-opacity="1"><circle cx="391.2" cy="397.6" r="85"/><path d="M 184.2 680 L 184.2 512.3 C 267 451.3 323.2 429.5 391.2 429.5 C 459.2 429.5 515.4 451.3 598.2 512.3 L 598.2 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vsovereigntysplitcomputecontraband)"/>
+<rect width="640" height="640" filter="url(#nsovereigntysplitcomputecontraband)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nsovereigntysplitcomputecontraband)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

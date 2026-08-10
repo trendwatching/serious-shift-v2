@@ -1,8 +1,8 @@
 {
-  "digest": "aa3c43ce9e3b8c7750369ff28772602fda1353e139a7ef3d0df80238bea58559",
+  "digest": "afd72101691a81d49964fb8eccb9aa00148d40eef42c6d61feed188f03cf40fa",
   "summary": {
     "domains": 4,
-    "key_trends": 51,
+    "key_trends": 36,
     "kt_fields": [
       "authored",
       "db_id",
@@ -22,8 +22,8 @@
       "subtitle",
       "velocity"
     ],
-    "kt_modules": 631,
-    "links": 194,
+    "kt_modules": 382,
+    "links": 0,
     "st_fields": [
       "authored",
       "claim_ids",
@@ -37,21 +37,16 @@
       "slug",
       "subtitle"
     ],
-    "st_modules": 2656,
-    "sub_trends": 255,
-    "synthesis_insights": 16,
+    "st_modules": 1851,
+    "sub_trends": 180,
+    "synthesis_insights": 0,
     "top_level_keys": [
       "architecture",
-      "by_thinker",
-      "by_velocity",
       "claims",
-      "domain_flows",
       "domains",
       "key_trends",
-      "links",
       "sub_trends",
       "synthesis_insights",
-      "thinkers",
       "updated"
     ]
   }

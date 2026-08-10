@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>delegated-discovery/prompt-colonization</title>
+<defs>
+<linearGradient id="fdelegateddiscoverypromptcolonization" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gdelegateddiscoverypromptcolonization" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bdelegateddiscoverypromptcolonization" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sdelegateddiscoverypromptcolonization" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vdelegateddiscoverypromptcolonization" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ndelegateddiscoverypromptcolonization" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fdelegateddiscoverypromptcolonization)"/>
+<rect width="640" height="640" fill="url(#gdelegateddiscoverypromptcolonization)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bdelegateddiscoverypromptcolonization)" filter="url(#sdelegateddiscoverypromptcolonization)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="155" cy="347.6" r="58.2"/><path d="M 13.3 680 L 13.3 426.1 C 70 384.4 108.5 369.4 155 369.4 C 201.6 369.4 240.1 384.4 296.8 426.1 L 296.8 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="388.8" cy="394.8" r="90.6"/><path d="M 168.2 680 L 168.2 517.1 C 256.4 452.1 316.4 428.9 388.8 428.9 C 461.3 428.9 521.3 452.1 609.5 517.1 L 609.5 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vdelegateddiscoverypromptcolonization)"/>
+<rect width="640" height="640" filter="url(#ndelegateddiscoverypromptcolonization)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ndelegateddiscoverypromptcolonization)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

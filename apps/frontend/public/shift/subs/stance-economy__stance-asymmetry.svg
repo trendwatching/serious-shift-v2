@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>stance-economy/stance-asymmetry</title>
+<defs>
+<linearGradient id="fstanceeconomystanceasymmetry" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gstanceeconomystanceasymmetry" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bstanceeconomystanceasymmetry" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sstanceeconomystanceasymmetry" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vstanceeconomystanceasymmetry" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nstanceeconomystanceasymmetry" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fstanceeconomystanceasymmetry)"/>
+<rect width="640" height="640" fill="url(#gstanceeconomystanceasymmetry)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bstanceeconomystanceasymmetry)" filter="url(#sstanceeconomystanceasymmetry)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="124.5" cy="348.3" r="49.3"/><path d="M 4.3 680 L 4.3 414.9 C 52.4 379.5 85 366.9 124.5 366.9 C 164 366.9 196.6 379.5 244.7 414.9 L 244.7 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="400.5" cy="423.2" r="85.7"/><path d="M 191.7 680 L 191.7 538.9 C 275.2 477.4 331.9 455.4 400.5 455.4 C 469.1 455.4 525.9 477.4 609.4 538.9 L 609.4 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vstanceeconomystanceasymmetry)"/>
+<rect width="640" height="640" filter="url(#nstanceeconomystanceasymmetry)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nstanceeconomystanceasymmetry)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

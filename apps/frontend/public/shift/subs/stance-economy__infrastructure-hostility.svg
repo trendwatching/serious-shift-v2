@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>stance-economy/infrastructure-hostility</title>
+<defs>
+<linearGradient id="fstanceeconomyinfrastructurehostility" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gstanceeconomyinfrastructurehostility" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bstanceeconomyinfrastructurehostility" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sstanceeconomyinfrastructurehostility" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vstanceeconomyinfrastructurehostility" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nstanceeconomyinfrastructurehostility" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fstanceeconomyinfrastructurehostility)"/>
+<rect width="640" height="640" fill="url(#gstanceeconomyinfrastructurehostility)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bstanceeconomyinfrastructurehostility)" filter="url(#sstanceeconomyinfrastructurehostility)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="447.3" cy="-32" r="15"/><circle cx="287.8" cy="-20.8" r="14.8"/><rect x="412.7" y="-9.7" width="29.2" height="29.2" transform="rotate(84.1 412.7 -9.7)"/><rect x="429.2" y="1.5" width="28.9" height="28.9" transform="rotate(79 429.2 1.5)"/><circle cx="262.5" cy="12.7" r="14.2"/><rect x="391.5" y="23.9" width="28.1" height="28.1" transform="rotate(28.3 391.5 23.9)"/><rect x="405.8" y="35" width="27.7" height="27.7" transform="rotate(75.4 405.8 35)"/><circle cx="337.1" cy="46.2" r="13.7"/><circle cx="255.1" cy="57.4" r="13.5"/><rect x="483.4" y="68.6" width="26.6" height="26.6" transform="rotate(69.3 483.4 68.6)"/><circle cx="36" cy="79.7" r="13.1"/><rect x="65" y="90.9" width="25.8" height="25.8" transform="rotate(69.8 65 90.9)"/><rect x="337.4" y="102.1" width="25.4" height="25.4" transform="rotate(41.8 337.4 102.1)"/><rect x="163.9" y="113.3" width="25" height="25" transform="rotate(1.4 163.9 113.3)"/><rect x="464" y="124.4" width="24.7" height="24.7" transform="rotate(10.6 464 124.4)"/><circle cx="489.9" cy="135.6" r="12.1"/><rect x="41.1" y="146.8" width="23.9" height="23.9" transform="rotate(50.4 41.1 146.8)"/><circle cx="161.6" cy="158" r="11.8"/><circle cx="253.9" cy="169.1" r="11.6"/><rect x="482.8" y="180.3" width="22.8" height="22.8" transform="rotate(62 482.8 180.3)"/><rect x="440" y="191.5" width="22.4" height="22.4" transform="rotate(10 440 191.5)"/><rect x="497.9" y="202.7" width="22" height="22" transform="rotate(51 497.9 202.7)"/><rect x="349" y="213.8" width="21.6" height="21.6" transform="rotate(61.9 349 213.8)"/><rect x="380.8" y="225" width="21.2" height="21.2" transform="rotate(6.8 380.8 225)"/><rect x="141.4" y="236.2" width="20.9" height="20.9" transform="rotate(67.2 141.4 236.2)"/><circle cx="301.9" cy="247.4" r="10.2"/><circle cx="530.6" cy="258.5" r="10"/><circle cx="75.4" cy="269.7" r="9.9"/><circle cx="82.4" cy="280.9" r="9.7"/><circle cx="281" cy="292.1" r="9.5"/><circle cx="259.6" cy="303.2" r="9.3"/><rect x="66" y="314.4" width="18.2" height="18.2" transform="rotate(51.3 66 314.4)"/><rect x="357.9" y="325.6" width="17.8" height="17.8" transform="rotate(83.9 357.9 325.6)"/><rect x="238.1" y="336.8" width="17.4" height="17.4" transform="rotate(51.9 238.1 336.8)"/><rect x="499.3" y="347.9" width="17" height="17" transform="rotate(11.3 499.3 347.9)"/><rect x="86.9" y="359.1" width="16.7" height="16.7" transform="rotate(29.4 86.9 359.1)"/><rect x="543.9" y="370.3" width="16.3" height="16.3" transform="rotate(13.8 543.9 370.3)"/><circle cx="396.9" cy="381.5" r="8"/><rect x="66.7" y="392.6" width="15.5" height="15.5" transform="rotate(4.7 66.7 392.6)"/><circle cx="555.3" cy="403.8" r="7.6"/><rect x="280.7" y="415" width="14.8" height="14.8" transform="rotate(12.5 280.7 415)"/><circle cx="343.6" cy="426.2" r="7.2"/><rect x="188.9" y="437.3" width="14" height="14" transform="rotate(63.7 188.9 437.3)"/><rect x="536.4" y="448.5" width="13.6" height="13.6" transform="rotate(35.8 536.4 448.5)"/><rect x="380.5" y="459.7" width="13.2" height="13.2" transform="rotate(74.6 380.5 459.7)"/><circle cx="255.1" cy="470.9" r="6.4"/><circle cx="456.8" cy="482" r="6.2"/><rect x="379.8" y="493.2" width="12.1" height="12.1" transform="rotate(70.5 379.8 493.2)"/><rect x="355.6" y="504.4" width="11.7" height="11.7" transform="rotate(24.1 355.6 504.4)"/><rect x="138.7" y="515.6" width="11.3" height="11.3" transform="rotate(76.2 138.7 515.6)"/><rect x="142.1" y="526.7" width="11" height="11" transform="rotate(72.6 142.1 526.7)"/><circle cx="81.1" cy="537.9" r="5.3"/><rect x="301.9" y="549.1" width="10.2" height="10.2" transform="rotate(43.6 301.9 549.1)"/><rect x="268" y="560.3" width="9.8" height="9.8" transform="rotate(61.4 268 560.3)"/><circle cx="245.6" cy="571.4" r="4.7"/><circle cx="390.8" cy="582.6" r="4.5"/><rect x="191.8" y="593.8" width="8.7" height="8.7" transform="rotate(33 191.8 593.8)"/><rect x="170.3" y="605" width="8.3" height="8.3" transform="rotate(15.4 170.3 605)"/><rect x="375.7" y="616.1" width="7.9" height="7.9" transform="rotate(26.5 375.7 616.1)"/><rect x="231.9" y="627.3" width="7.5" height="7.5" transform="rotate(61.5 231.9 627.3)"/><circle cx="498.9" cy="638.5" r="3.6"/><rect x="526.3" y="649.7" width="6.8" height="6.8" transform="rotate(27.5 526.3 649.7)"/><circle cx="391.3" cy="660.8" r="3.2"/><circle cx="417.6" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vstanceeconomyinfrastructurehostility)"/>
+<rect width="640" height="640" filter="url(#nstanceeconomyinfrastructurehostility)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nstanceeconomyinfrastructurehostility)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

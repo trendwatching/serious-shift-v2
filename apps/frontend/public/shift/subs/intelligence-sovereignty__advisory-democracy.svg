@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>intelligence-sovereignty/advisory-democracy</title>
+<defs>
+<linearGradient id="fintelligencesovereigntyadvisorydemocracy" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gintelligencesovereigntyadvisorydemocracy" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bintelligencesovereigntyadvisorydemocracy" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sintelligencesovereigntyadvisorydemocracy" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vintelligencesovereigntyadvisorydemocracy" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nintelligencesovereigntyadvisorydemocracy" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fintelligencesovereigntyadvisorydemocracy)"/>
+<rect width="640" height="640" fill="url(#gintelligencesovereigntyadvisorydemocracy)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bintelligencesovereigntyadvisorydemocracy)" filter="url(#sintelligencesovereigntyadvisorydemocracy)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.92" stroke-opacity="0.92"><rect x="531.7" y="-32" width="30" height="30" transform="rotate(4.3 531.7 -32)"/><rect x="359.9" y="-20.8" width="29.6" height="29.6" transform="rotate(82.9 359.9 -20.8)"/><rect x="532.3" y="-9.7" width="29.2" height="29.2" transform="rotate(0.9 532.3 -9.7)"/><circle cx="470.2" cy="1.5" r="14.4"/><circle cx="524.5" cy="12.7" r="14.2"/><circle cx="162.4" cy="23.9" r="14"/><circle cx="510.8" cy="35" r="13.9"/><rect x="499.7" y="46.2" width="27.3" height="27.3" transform="rotate(32.8 499.7 46.2)"/><rect x="409.1" y="57.4" width="27" height="27" transform="rotate(25.4 409.1 57.4)"/><rect x="519.8" y="68.6" width="26.6" height="26.6" transform="rotate(0.4 519.8 68.6)"/><rect x="453.2" y="79.7" width="26.2" height="26.2" transform="rotate(53.2 453.2 79.7)"/><circle cx="315.6" cy="90.9" r="12.9"/><rect x="185.2" y="102.1" width="25.4" height="25.4" transform="rotate(17.9 185.2 102.1)"/><rect x="251.6" y="113.3" width="25" height="25" transform="rotate(13.5 251.6 113.3)"/><circle cx="208.6" cy="124.4" r="12.3"/><circle cx="98.4" cy="135.6" r="12.1"/><circle cx="332.6" cy="146.8" r="12"/><rect x="46.8" y="158" width="23.5" height="23.5" transform="rotate(6.3 46.8 158)"/><rect x="41.3" y="169.1" width="23.1" height="23.1" transform="rotate(3.3 41.3 169.1)"/><circle cx="277.8" cy="180.3" r="11.4"/><circle cx="275.5" cy="191.5" r="11.2"/><circle cx="175.8" cy="202.7" r="11"/><rect x="366" y="213.8" width="21.6" height="21.6" transform="rotate(50.7 366 213.8)"/><rect x="41.1" y="225" width="21.2" height="21.2" transform="rotate(88.2 41.1 225)"/><rect x="185.6" y="236.2" width="20.9" height="20.9" transform="rotate(54.4 185.6 236.2)"/><circle cx="221.6" cy="247.4" r="10.2"/><rect x="198.4" y="258.5" width="20.1" height="20.1" transform="rotate(23.7 198.4 258.5)"/><rect x="299.5" y="269.7" width="19.7" height="19.7" transform="rotate(53.3 299.5 269.7)"/><rect x="318.3" y="280.9" width="19.3" height="19.3" transform="rotate(58.4 318.3 280.9)"/><circle cx="307.5" cy="292.1" r="9.5"/><rect x="468.1" y="303.2" width="18.6" height="18.6" transform="rotate(53 468.1 303.2)"/><rect x="325" y="314.4" width="18.2" height="18.2" transform="rotate(36.2 325 314.4)"/><circle cx="463.4" cy="325.6" r="8.9"/><rect x="113.3" y="336.8" width="17.4" height="17.4" transform="rotate(36.9 113.3 336.8)"/><circle cx="95.6" cy="347.9" r="8.5"/><circle cx="392.9" cy="359.1" r="8.3"/><circle cx="448.8" cy="370.3" r="8.1"/><rect x="258.8" y="381.5" width="15.9" height="15.9" transform="rotate(73.7 258.8 381.5)"/><circle cx="145.5" cy="392.6" r="7.8"/><rect x="566.3" y="403.8" width="15.1" height="15.1" transform="rotate(78.2 566.3 403.8)"/><rect x="55.5" y="415" width="14.8" height="14.8" transform="rotate(85.5 55.5 415)"/><circle cx="583.3" cy="426.2" r="7.2"/><rect x="543" y="437.3" width="14" height="14" transform="rotate(84.1 543 437.3)"/><circle cx="132.5" cy="448.5" r="6.8"/><rect x="158" y="459.7" width="13.2" height="13.2" transform="rotate(18.9 158 459.7)"/><circle cx="407.8" cy="470.9" r="6.4"/><rect x="249.9" y="482" width="12.5" height="12.5" transform="rotate(72.6 249.9 482)"/><rect x="148.2" y="493.2" width="12.1" height="12.1" transform="rotate(56.3 148.2 493.2)"/><rect x="562.3" y="504.4" width="11.7" height="11.7" transform="rotate(42.5 562.3 504.4)"/><rect x="98.1" y="515.6" width="11.3" height="11.3" transform="rotate(17.5 98.1 515.6)"/><rect x="193.4" y="526.7" width="11" height="11" transform="rotate(60.2 193.4 526.7)"/><rect x="171.3" y="537.9" width="10.6" height="10.6" transform="rotate(33 171.3 537.9)"/><circle cx="323.4" cy="549.1" r="5.1"/><circle cx="470" cy="560.3" r="4.9"/><rect x="382.1" y="571.4" width="9.4" height="9.4" transform="rotate(28.6 382.1 571.4)"/><circle cx="307.1" cy="582.6" r="4.5"/><circle cx="158.1" cy="593.8" r="4.3"/><circle cx="441.7" cy="605" r="4.1"/><circle cx="552.8" cy="616.1" r="4"/><circle cx="170.6" cy="627.3" r="3.8"/><circle cx="192.1" cy="638.5" r="3.6"/><rect x="155.1" y="649.7" width="6.8" height="6.8" transform="rotate(38.4 155.1 649.7)"/><circle cx="156.8" cy="660.8" r="3.2"/><circle cx="177.1" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vintelligencesovereigntyadvisorydemocracy)"/>
+<rect width="640" height="640" filter="url(#nintelligencesovereigntyadvisorydemocracy)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nintelligencesovereigntyadvisorydemocracy)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

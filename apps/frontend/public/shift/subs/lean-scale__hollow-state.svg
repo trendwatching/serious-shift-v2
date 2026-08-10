@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>lean-scale/hollow-state</title>
+<defs>
+<linearGradient id="fleanscalehollowstate" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gleanscalehollowstate" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bleanscalehollowstate" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sleanscalehollowstate" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vleanscalehollowstate" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nleanscalehollowstate" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fleanscalehollowstate)"/>
+<rect width="640" height="640" fill="url(#gleanscalehollowstate)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bleanscalehollowstate)" filter="url(#sleanscalehollowstate)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><rect x="173.1" y="-32" width="30" height="30" transform="rotate(17.6 173.1 -32)"/><circle cx="591.4" cy="-20.8" r="14.8"/><rect x="122.5" y="-9.7" width="29.2" height="29.2" transform="rotate(8.9 122.5 -9.7)"/><rect x="299" y="1.5" width="28.9" height="28.9" transform="rotate(70.9 299 1.5)"/><rect x="82.7" y="12.7" width="28.5" height="28.5" transform="rotate(78 82.7 12.7)"/><rect x="391" y="23.9" width="28.1" height="28.1" transform="rotate(59.7 391 23.9)"/><circle cx="253.2" cy="35" r="13.9"/><circle cx="600.4" cy="46.2" r="13.7"/><circle cx="256" cy="57.4" r="13.5"/><rect x="355.3" y="68.6" width="26.6" height="26.6" transform="rotate(34.5 355.3 68.6)"/><rect x="305.9" y="79.7" width="26.2" height="26.2" transform="rotate(86.5 305.9 79.7)"/><rect x="210.2" y="90.9" width="25.8" height="25.8" transform="rotate(39.7 210.2 90.9)"/><circle cx="215.5" cy="102.1" r="12.7"/><circle cx="417.8" cy="113.3" r="12.5"/><rect x="132.4" y="124.4" width="24.7" height="24.7" transform="rotate(73.2 132.4 124.4)"/><rect x="171.8" y="135.6" width="24.3" height="24.3" transform="rotate(60.5 171.8 135.6)"/><rect x="283.4" y="146.8" width="23.9" height="23.9" transform="rotate(33.2 283.4 146.8)"/><rect x="400" y="158" width="23.5" height="23.5" transform="rotate(22.6 400 158)"/><rect x="571.4" y="169.1" width="23.1" height="23.1" transform="rotate(11.3 571.4 169.1)"/><circle cx="147.4" cy="180.3" r="11.4"/><circle cx="155.6" cy="191.5" r="11.2"/><rect x="272.5" y="202.7" width="22" height="22" transform="rotate(14.4 272.5 202.7)"/><circle cx="272.4" cy="213.8" r="10.8"/><rect x="168.1" y="225" width="21.2" height="21.2" transform="rotate(10.9 168.1 225)"/><circle cx="368.9" cy="236.2" r="10.4"/><rect x="451.4" y="247.4" width="20.5" height="20.5" transform="rotate(75.7 451.4 247.4)"/><rect x="434.8" y="258.5" width="20.1" height="20.1" transform="rotate(63.3 434.8 258.5)"/><rect x="426.4" y="269.7" width="19.7" height="19.7" transform="rotate(56.3 426.4 269.7)"/><circle cx="589" cy="280.9" r="9.7"/><circle cx="254.8" cy="292.1" r="9.5"/><rect x="90.9" y="303.2" width="18.6" height="18.6" transform="rotate(57.6 90.9 303.2)"/><rect x="330.4" y="314.4" width="18.2" height="18.2" transform="rotate(78.9 330.4 314.4)"/><rect x="185.3" y="325.6" width="17.8" height="17.8" transform="rotate(54.5 185.3 325.6)"/><rect x="424.1" y="336.8" width="17.4" height="17.4" transform="rotate(74.9 424.1 336.8)"/><circle cx="405.1" cy="347.9" r="8.5"/><circle cx="539.9" cy="359.1" r="8.3"/><circle cx="288.1" cy="370.3" r="8.1"/><circle cx="267.8" cy="381.5" r="8"/><circle cx="180.4" cy="392.6" r="7.8"/><circle cx="446.5" cy="403.8" r="7.6"/><rect x="532.7" y="415" width="14.8" height="14.8" transform="rotate(53.9 532.7 415)"/><circle cx="300.1" cy="426.2" r="7.2"/><rect x="549.1" y="437.3" width="14" height="14" transform="rotate(66.9 549.1 437.3)"/><rect x="548.4" y="448.5" width="13.6" height="13.6" transform="rotate(52.9 548.4 448.5)"/><circle cx="378" cy="459.7" r="6.6"/><rect x="85.3" y="470.9" width="12.9" height="12.9" transform="rotate(12.6 85.3 470.9)"/><rect x="349.3" y="482" width="12.5" height="12.5" transform="rotate(76.3 349.3 482)"/><rect x="305.9" y="493.2" width="12.1" height="12.1" transform="rotate(60.4 305.9 493.2)"/><circle cx="409.1" cy="504.4" r="5.9"/><rect x="229.5" y="515.6" width="11.3" height="11.3" transform="rotate(32.1 229.5 515.6)"/><rect x="321" y="526.7" width="11" height="11" transform="rotate(40.7 321 526.7)"/><circle cx="260.9" cy="537.9" r="5.3"/><rect x="402.6" y="549.1" width="10.2" height="10.2" transform="rotate(65.9 402.6 549.1)"/><circle cx="425.8" cy="560.3" r="4.9"/><circle cx="278" cy="571.4" r="4.7"/><rect x="458" y="582.6" width="9" height="9" transform="rotate(14.9 458 582.6)"/><rect x="229.7" y="593.8" width="8.7" height="8.7" transform="rotate(55.7 229.7 593.8)"/><rect x="419.2" y="605" width="8.3" height="8.3" transform="rotate(48.6 419.2 605)"/><rect x="224.3" y="616.1" width="7.9" height="7.9" transform="rotate(9 224.3 616.1)"/><circle cx="57.8" cy="627.3" r="3.8"/><rect x="374.8" y="638.5" width="7.1" height="7.1" transform="rotate(70.5 374.8 638.5)"/><rect x="232.9" y="649.7" width="6.8" height="6.8" transform="rotate(87.6 232.9 649.7)"/><rect x="112.5" y="660.8" width="6.4" height="6.4" transform="rotate(55.4 112.5 660.8)"/><circle cx="525.1" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vleanscalehollowstate)"/>
+<rect width="640" height="640" filter="url(#nleanscalehollowstate)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nleanscalehollowstate)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

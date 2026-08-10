@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>democratic-decay/delivery-void</title>
+<defs>
+<linearGradient id="fdemocraticdecaydeliveryvoid" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gdemocraticdecaydeliveryvoid" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bdemocraticdecaydeliveryvoid" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sdemocraticdecaydeliveryvoid" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vdemocraticdecaydeliveryvoid" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ndemocraticdecaydeliveryvoid" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fdemocraticdecaydeliveryvoid)"/>
+<rect width="640" height="640" fill="url(#gdemocraticdecaydeliveryvoid)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bdemocraticdecaydeliveryvoid)" filter="url(#sdemocraticdecaydeliveryvoid)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="111.8" cy="352.5" r="56.3"/><path d="M -25.4 680 L -25.4 428.5 C 29.5 388 66.7 373.6 111.8 373.6 C 156.8 373.6 194.1 388 248.9 428.5 L 248.9 680 Z"/></g><g fill="#39001F" stroke="#39001F" fill-opacity="1" stroke-opacity="1"><circle cx="470.9" cy="437.2" r="82.4"/><path d="M 270.2 680 L 270.2 548.4 C 350.5 489.3 405 468.2 470.9 468.2 C 536.8 468.2 591.3 489.3 671.6 548.4 L 671.6 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vdemocraticdecaydeliveryvoid)"/>
+<rect width="640" height="640" filter="url(#ndemocraticdecaydeliveryvoid)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ndemocraticdecaydeliveryvoid)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

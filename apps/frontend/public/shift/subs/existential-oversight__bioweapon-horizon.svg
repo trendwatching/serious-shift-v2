@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>existential-oversight/bioweapon-horizon</title>
+<defs>
+<linearGradient id="fexistentialoversightbioweaponhorizon" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gexistentialoversightbioweaponhorizon" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bexistentialoversightbioweaponhorizon" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sexistentialoversightbioweaponhorizon" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vexistentialoversightbioweaponhorizon" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nexistentialoversightbioweaponhorizon" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fexistentialoversightbioweaponhorizon)"/>
+<rect width="640" height="640" fill="url(#gexistentialoversightbioweaponhorizon)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bexistentialoversightbioweaponhorizon)" filter="url(#sexistentialoversightbioweaponhorizon)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="179.4" cy="363.6" r="55.5"/><path d="M 44.2 680 L 44.2 438.6 C 98.3 398.7 135 384.5 179.4 384.5 C 223.9 384.5 260.6 398.7 314.7 438.6 L 314.7 680 Z"/></g><g fill="#39001F" stroke="#39001F" fill-opacity="1" stroke-opacity="1"><circle cx="386.3" cy="420.3" r="83.9"/><path d="M 182 680 L 182 533.6 C 263.7 473.4 319.2 451.8 386.3 451.8 C 453.4 451.8 508.9 473.4 590.6 533.6 L 590.6 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vexistentialoversightbioweaponhorizon)"/>
+<rect width="640" height="640" filter="url(#nexistentialoversightbioweaponhorizon)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nexistentialoversightbioweaponhorizon)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

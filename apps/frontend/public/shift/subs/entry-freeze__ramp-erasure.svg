@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>entry-freeze/ramp-erasure</title>
+<defs>
+<linearGradient id="fentryfreezeramperasure" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#0FA6FF"/><stop offset="0.42" stop-color="#0A7FDA"/>
+<stop offset="0.8" stop-color="#23B9A6"/><stop offset="1" stop-color="#E6FF9C"/>
+</linearGradient>
+<radialGradient id="gentryfreezeramperasure" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bentryfreezeramperasure" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#E6FF9C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</linearGradient>
+<filter id="sentryfreezeramperasure" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="ventryfreezeramperasure" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#022638" stop-opacity="0"/>
+<stop offset="1" stop-color="#022638" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nentryfreezeramperasure" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#E6FF9C;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fentryfreezeramperasure)"/>
+<rect width="640" height="640" fill="url(#gentryfreezeramperasure)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bentryfreezeramperasure)" filter="url(#sentryfreezeramperasure)"/>
+<g fill="#022638" stroke="#022638" fill-opacity="0.92" stroke-opacity="0.92"><rect x="409.1" y="-32" width="30" height="30" transform="rotate(39 409.1 -32)"/><rect x="432.8" y="-20.8" width="29.6" height="29.6" transform="rotate(3.3 432.8 -20.8)"/><circle cx="571.3" cy="-9.7" r="14.6"/><circle cx="315.8" cy="1.5" r="14.4"/><circle cx="158.3" cy="12.7" r="14.2"/><circle cx="140.4" cy="23.9" r="14"/><rect x="272.1" y="35" width="27.7" height="27.7" transform="rotate(4.6 272.1 35)"/><circle cx="408.7" cy="46.2" r="13.7"/><rect x="238" y="57.4" width="27" height="27" transform="rotate(48.5 238 57.4)"/><rect x="355.2" y="68.6" width="26.6" height="26.6" transform="rotate(57.2 355.2 68.6)"/><rect x="321.1" y="79.7" width="26.2" height="26.2" transform="rotate(81.1 321.1 79.7)"/><circle cx="579.1" cy="90.9" r="12.9"/><rect x="123.9" y="102.1" width="25.4" height="25.4" transform="rotate(38.5 123.9 102.1)"/><rect x="119.2" y="113.3" width="25" height="25" transform="rotate(22.4 119.2 113.3)"/><circle cx="552.3" cy="124.4" r="12.3"/><rect x="54.2" y="135.6" width="24.3" height="24.3" transform="rotate(2.9 54.2 135.6)"/><circle cx="247.8" cy="146.8" r="12"/><circle cx="351.6" cy="158" r="11.8"/><rect x="53.2" y="169.1" width="23.1" height="23.1" transform="rotate(86.9 53.2 169.1)"/><circle cx="533.9" cy="180.3" r="11.4"/><rect x="119" y="191.5" width="22.4" height="22.4" transform="rotate(30.6 119 191.5)"/><rect x="336.5" y="202.7" width="22" height="22" transform="rotate(90 336.5 202.7)"/><rect x="243.9" y="213.8" width="21.6" height="21.6" transform="rotate(38.6 243.9 213.8)"/><rect x="277.4" y="225" width="21.2" height="21.2" transform="rotate(46.5 277.4 225)"/><circle cx="255.9" cy="236.2" r="10.4"/><rect x="368.9" y="247.4" width="20.5" height="20.5" transform="rotate(11.2 368.9 247.4)"/><rect x="43.6" y="258.5" width="20.1" height="20.1" transform="rotate(24.4 43.6 258.5)"/><rect x="337" y="269.7" width="19.7" height="19.7" transform="rotate(28.5 337 269.7)"/><circle cx="524.8" cy="280.9" r="9.7"/><circle cx="187.3" cy="292.1" r="9.5"/><rect x="49.8" y="303.2" width="18.6" height="18.6" transform="rotate(59.2 49.8 303.2)"/><rect x="566.9" y="314.4" width="18.2" height="18.2" transform="rotate(49.4 566.9 314.4)"/><rect x="110" y="325.6" width="17.8" height="17.8" transform="rotate(76.3 110 325.6)"/><circle cx="485.5" cy="336.8" r="8.7"/><rect x="529.2" y="347.9" width="17" height="17" transform="rotate(66.6 529.2 347.9)"/><circle cx="328.3" cy="359.1" r="8.3"/><circle cx="565.2" cy="370.3" r="8.1"/><rect x="482.4" y="381.5" width="15.9" height="15.9" transform="rotate(89.8 482.4 381.5)"/><circle cx="286.4" cy="392.6" r="7.8"/><rect x="210.4" y="403.8" width="15.1" height="15.1" transform="rotate(11.7 210.4 403.8)"/><rect x="390.7" y="415" width="14.8" height="14.8" transform="rotate(61.4 390.7 415)"/><circle cx="573.3" cy="426.2" r="7.2"/><circle cx="452" cy="437.3" r="7"/><rect x="340.4" y="448.5" width="13.6" height="13.6" transform="rotate(0.2 340.4 448.5)"/><rect x="96.7" y="459.7" width="13.2" height="13.2" transform="rotate(57 96.7 459.7)"/><circle cx="436" cy="470.9" r="6.4"/><rect x="47.8" y="482" width="12.5" height="12.5" transform="rotate(29.3 47.8 482)"/><rect x="399.1" y="493.2" width="12.1" height="12.1" transform="rotate(66.7 399.1 493.2)"/><rect x="563.1" y="504.4" width="11.7" height="11.7" transform="rotate(8 563.1 504.4)"/><circle cx="521.3" cy="515.6" r="5.7"/><rect x="104.9" y="526.7" width="11" height="11" transform="rotate(35 104.9 526.7)"/><rect x="225.6" y="537.9" width="10.6" height="10.6" transform="rotate(80.4 225.6 537.9)"/><circle cx="498.5" cy="549.1" r="5.1"/><circle cx="442.9" cy="560.3" r="4.9"/><rect x="144.3" y="571.4" width="9.4" height="9.4" transform="rotate(89.5 144.3 571.4)"/><circle cx="269.6" cy="582.6" r="4.5"/><circle cx="510.3" cy="593.8" r="4.3"/><circle cx="201.7" cy="605" r="4.1"/><rect x="60.7" y="616.1" width="7.9" height="7.9" transform="rotate(25.6 60.7 616.1)"/><circle cx="121" cy="627.3" r="3.8"/><rect x="121.4" y="638.5" width="7.1" height="7.1" transform="rotate(25.7 121.4 638.5)"/><rect x="293" y="649.7" width="6.8" height="6.8" transform="rotate(61.2 293 649.7)"/><circle cx="291.6" cy="660.8" r="3.2"/><circle cx="397" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#ventryfreezeramperasure)"/>
+<rect width="640" height="640" filter="url(#nentryfreezeramperasure)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nentryfreezeramperasure)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>
