@@ -214,12 +214,28 @@ def test_crutch_entity_beyond_the_page_limit_is_rejected():
     assert 'adam raine' in issues[0].message
 
 
-def test_evidence_reuse_across_three_subshifts_is_rejected():
+def test_evidence_reuse_beyond_three_subshifts_is_rejected():
     document = full_map()
     shared = document['sub_trends'][0]['claim_ids'][0]
     for sub in document['sub_trends'][1:3]:
         sub['claim_ids'] = [shared] + sub['claim_ids'][1:]
+    # Three holders is reachable by design (cross-domain routing) — legal.
+    assert 'evidence_reuse' not in codes(document)
+    document['sub_trends'][3]['claim_ids'] = [shared] + document['sub_trends'][3]['claim_ids'][1:]
     assert 'evidence_reuse' in codes(document)
+
+
+def test_thinker_attribution_is_not_a_crutch():
+    document = full_map()
+    document['claims'].append({'id': 'c_999999', 'text': 'x',
+                               'source_url': 'https://example.com/x',
+                               'thinker': 'Tristan Harris'})
+    for shift in document['key_trends'][:6]:
+        for module in shift['modules']:
+            if module['type'] == 'dek':
+                module['data']['text'] = 'Tristan Harris measured how story attention moves.'
+    assert not [i for i in _issues(document, 'crutch_frequency')
+                if 'tristan harris' in i.message]
 
 
 def test_small_structural_fixtures_do_not_trip_population_gates():

@@ -328,9 +328,15 @@ CRUTCH_ENTITY_PAGE_LIMIT = 4
 CRUTCH_FIGURE_PAGE_LIMIT = 6
 
 #: Everyday bigrams/figures that legitimately recur across an AGI map.
+#: Frontier-model names are domain vocabulary here, like "AI" itself.
+#: Thinker names are exempted dynamically in validate_map — attributing
+#: evidence to its (prolific) author is citation, not anecdote recycling;
+#: "Adam Raine" and "GrandChef" stay caught because they are subjects of
+#: claims, not authors of them.
 CRUTCH_WHITELIST = frozenset({
     'artificial intelligence', 'united states', 'serious shift', 'new york',
     'silicon valley', 'san francisco',
+    'claude opus', 'claude sonnet', 'claude haiku', 'chat gpt',
 })
 
 #: Centerpiece fields per module type: the prose that headlines a page. Body
@@ -772,11 +778,22 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
         # Crutch content: one centerpiece may not carry the map. Pages beyond
         # the per-signature allowance are flagged individually so the repair
         # pass regenerates exactly those pages with the avoid-list in hand.
+        # Corpus thinkers are exempt as entity signatures: citing the author
+        # of the evidence is attribution, not a recycled anecdote.
+        thinker_names = {
+            _norm_prose(claim.get('thinker'))
+            for claim in claims if isinstance(claim, dict) and claim.get('thinker')
+        }
         pages: list[tuple[str, set]] = []
         for label, rows in (('key_trends', shifts), ('sub_trends', subs)):
             for index, row in enumerate(rows):
-                if isinstance(row, dict):
-                    pages.append((f'{label}[{index}]', _crutch_signatures(_centerpiece_text(row))))
+                if not isinstance(row, dict):
+                    continue
+                signatures = {
+                    s for s in _crutch_signatures(_centerpiece_text(row))
+                    if not (s.startswith('entity:') and s[7:] in thinker_names)
+                }
+                pages.append((f'{label}[{index}]', signatures))
         page_count: dict[str, list[str]] = {}
         for path, signatures in pages:
             for signature in signatures:
@@ -798,12 +815,16 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
                 number = _claim_number(value)
                 if number is not None:
                     reuse.setdefault(number, []).append(f'sub_trends[{index}]')
+        # Cap 3, not 2: routing deliberately offers some claims to two domains
+        # (secondary_claim_domains), so three holders is reachable by design —
+        # one per domain assignment plus one top-up. Four is the filler-dump
+        # pattern the audit found (one claim padding unrelated pages).
         for number, holders in sorted(reuse.items()):
-            if len(holders) > 2:
+            if len(holders) > 3:
                 issues.append(ValidationIssue(
-                    'evidence_reuse', holders[2],
+                    'evidence_reuse', holders[3],
                     f'claim c_{number} is routed to {len(holders)} sub-shifts; '
-                    f'the same evidence cannot anchor more than 2 pages'))
+                    f'the same evidence cannot anchor more than 3 pages'))
 
     return issues
 
