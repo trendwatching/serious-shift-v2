@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>cognition-bleed/serial-forgetting</title>
+<defs>
+<linearGradient id="fcognitionbleedserialforgetting" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gcognitionbleedserialforgetting" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bcognitionbleedserialforgetting" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="scognitionbleedserialforgetting" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vcognitionbleedserialforgetting" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ncognitionbleedserialforgetting" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fcognitionbleedserialforgetting)"/>
+<rect width="640" height="640" fill="url(#gcognitionbleedserialforgetting)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bcognitionbleedserialforgetting)" filter="url(#scognitionbleedserialforgetting)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="178" rx="460.9" ry="165.9" fill="none" stroke-width="48"/><rect x="329.6" y="343.9" width="20" height="20" transform="rotate(87.8 329.6 343.9)"/><rect x="351" y="352.9" width="19.5" height="19.5" transform="rotate(50.8 351 352.9)"/><rect x="307.8" y="361.9" width="19.1" height="19.1" transform="rotate(3.9 307.8 361.9)"/><rect x="293.3" y="370.8" width="18.6" height="18.6" transform="rotate(60.1 293.3 370.8)"/><rect x="259.7" y="379.8" width="18.2" height="18.2" transform="rotate(2.2 259.7 379.8)"/><rect x="308.7" y="388.8" width="17.7" height="17.7" transform="rotate(80.6 308.7 388.8)"/><rect x="332.3" y="397.8" width="17.3" height="17.3" transform="rotate(33.7 332.3 397.8)"/><rect x="294" y="406.7" width="16.8" height="16.8" transform="rotate(81.7 294 406.7)"/><rect x="327.5" y="415.7" width="16.4" height="16.4" transform="rotate(16.3 327.5 415.7)"/><rect x="384.1" y="424.7" width="15.9" height="15.9" transform="rotate(14.8 384.1 424.7)"/><rect x="286.1" y="433.6" width="15.5" height="15.5" transform="rotate(77 286.1 433.6)"/><rect x="284.4" y="442.6" width="15" height="15" transform="rotate(46.5 284.4 442.6)"/><rect x="322.4" y="451.6" width="14.5" height="14.5" transform="rotate(44 322.4 451.6)"/><rect x="432.7" y="460.6" width="14.1" height="14.1" transform="rotate(77.7 432.7 460.6)"/><rect x="350" y="469.5" width="13.6" height="13.6" transform="rotate(18.1 350 469.5)"/><rect x="406.8" y="478.5" width="13.2" height="13.2" transform="rotate(23 406.8 478.5)"/><rect x="272.2" y="487.5" width="12.7" height="12.7" transform="rotate(2.5 272.2 487.5)"/><rect x="235.7" y="496.4" width="12.3" height="12.3" transform="rotate(4 235.7 496.4)"/><rect x="372.2" y="505.4" width="11.8" height="11.8" transform="rotate(42.6 372.2 505.4)"/><rect x="216.6" y="514.4" width="11.4" height="11.4" transform="rotate(45.9 216.6 514.4)"/><rect x="335.2" y="523.4" width="10.9" height="10.9" transform="rotate(44 335.2 523.4)"/><rect x="253.2" y="532.3" width="10.5" height="10.5" transform="rotate(80.2 253.2 532.3)"/><rect x="384.1" y="541.3" width="10" height="10" transform="rotate(74.2 384.1 541.3)"/><rect x="450.1" y="550.3" width="9.5" height="9.5" transform="rotate(89.8 450.1 550.3)"/><rect x="428.5" y="559.3" width="9.1" height="9.1" transform="rotate(84.5 428.5 559.3)"/><rect x="502.3" y="568.2" width="8.6" height="8.6" transform="rotate(72.1 502.3 568.2)"/><rect x="195" y="577.2" width="8.2" height="8.2" transform="rotate(47.8 195 577.2)"/><rect x="333.9" y="586.2" width="7.7" height="7.7" transform="rotate(23.1 333.9 586.2)"/><rect x="337.3" y="595.1" width="7.3" height="7.3" transform="rotate(25.5 337.3 595.1)"/><rect x="145.2" y="604.1" width="6.8" height="6.8" transform="rotate(45.2 145.2 604.1)"/><rect x="389.9" y="613.1" width="6.4" height="6.4" transform="rotate(29.5 389.9 613.1)"/><rect x="135.8" y="622.1" width="5.9" height="5.9" transform="rotate(70.6 135.8 622.1)"/><rect x="115.5" y="631" width="5.5" height="5.5" transform="rotate(60.2 115.5 631)"/><rect x="527.1" y="640" width="5" height="5" transform="rotate(9.2 527.1 640)"/></g>
+<rect width="640" height="640" fill="url(#vcognitionbleedserialforgetting)"/>
+<rect width="640" height="640" filter="url(#ncognitionbleedserialforgetting)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ncognitionbleedserialforgetting)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

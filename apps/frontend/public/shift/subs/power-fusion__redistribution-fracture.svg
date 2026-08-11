@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>power-fusion/redistribution-fracture</title>
+<defs>
+<linearGradient id="fpowerfusionredistributionfracture" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gpowerfusionredistributionfracture" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bpowerfusionredistributionfracture" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="spowerfusionredistributionfracture" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vpowerfusionredistributionfracture" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="npowerfusionredistributionfracture" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fpowerfusionredistributionfracture)"/>
+<rect width="640" height="640" fill="url(#gpowerfusionredistributionfracture)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bpowerfusionredistributionfracture)" filter="url(#spowerfusionredistributionfracture)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="164.6" cy="351.2" r="58.8"/><path d="M 21.4 680 L 21.4 430.6 C 78.7 388.4 117.6 373.3 164.6 373.3 C 211.7 373.3 250.6 388.4 307.9 430.6 L 307.9 680 Z"/></g><g fill="#39001F" stroke="#39001F" fill-opacity="1" stroke-opacity="1"><circle cx="469.5" cy="389.8" r="87.9"/><path d="M 255.3 680 L 255.3 508.5 C 340.9 445.4 399.1 422.9 469.5 422.9 C 539.8 422.9 598 445.4 683.7 508.5 L 683.7 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vpowerfusionredistributionfracture)"/>
+<rect width="640" height="640" filter="url(#npowerfusionredistributionfracture)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#npowerfusionredistributionfracture)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>legitimacy-collapse/inequality-ignition</title>
+<defs>
+<linearGradient id="flegitimacycollapseinequalityignition" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="glegitimacycollapseinequalityignition" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="blegitimacycollapseinequalityignition" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="slegitimacycollapseinequalityignition" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vlegitimacycollapseinequalityignition" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nlegitimacycollapseinequalityignition" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#flegitimacycollapseinequalityignition)"/>
+<rect width="640" height="640" fill="url(#glegitimacycollapseinequalityignition)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#blegitimacycollapseinequalityignition)" filter="url(#slegitimacycollapseinequalityignition)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="131.9" cy="377.2" r="59"/><path d="M -11.9 680 L -11.9 456.9 C 45.6 414.5 84.7 399.3 131.9 399.3 C 179.1 399.3 218.2 414.5 275.7 456.9 L 275.7 680 Z"/></g><g fill="#39001F" stroke="#39001F" fill-opacity="1" stroke-opacity="1"><circle cx="428.5" cy="390.7" r="84.3"/><path d="M 223.3 680 L 223.3 504.5 C 305.4 444 361.1 422.4 428.5 422.4 C 495.9 422.4 551.7 444 633.8 504.5 L 633.8 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vlegitimacycollapseinequalityignition)"/>
+<rect width="640" height="640" filter="url(#nlegitimacycollapseinequalityignition)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nlegitimacycollapseinequalityignition)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

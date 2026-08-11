@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>legitimacy-collapse/science-asylum</title>
+<defs>
+<linearGradient id="flegitimacycollapsescienceasylum" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="glegitimacycollapsescienceasylum" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="blegitimacycollapsescienceasylum" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="slegitimacycollapsescienceasylum" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vlegitimacycollapsescienceasylum" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nlegitimacycollapsescienceasylum" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#flegitimacycollapsescienceasylum)"/>
+<rect width="640" height="640" fill="url(#glegitimacycollapsescienceasylum)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#blegitimacycollapsescienceasylum)" filter="url(#slegitimacycollapsescienceasylum)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.92" stroke-opacity="0.92"><rect x="489" y="-32" width="30" height="30" transform="rotate(81.6 489 -32)"/><circle cx="62.2" cy="-20.8" r="14.8"/><rect x="430.5" y="-9.7" width="29.2" height="29.2" transform="rotate(58 430.5 -9.7)"/><rect x="52" y="1.5" width="28.9" height="28.9" transform="rotate(14.4 52 1.5)"/><circle cx="335" cy="12.7" r="14.2"/><rect x="320.2" y="23.9" width="28.1" height="28.1" transform="rotate(71.5 320.2 23.9)"/><rect x="102.5" y="35" width="27.7" height="27.7" transform="rotate(19.6 102.5 35)"/><circle cx="55.3" cy="46.2" r="13.7"/><rect x="325.9" y="57.4" width="27" height="27" transform="rotate(4.8 325.9 57.4)"/><rect x="109.1" y="68.6" width="26.6" height="26.6" transform="rotate(27.9 109.1 68.6)"/><rect x="47.3" y="79.7" width="26.2" height="26.2" transform="rotate(7.5 47.3 79.7)"/><circle cx="100.8" cy="90.9" r="12.9"/><rect x="272.2" y="102.1" width="25.4" height="25.4" transform="rotate(74.1 272.2 102.1)"/><rect x="548.1" y="113.3" width="25" height="25" transform="rotate(24.2 548.1 113.3)"/><circle cx="561.1" cy="124.4" r="12.3"/><rect x="87.3" y="135.6" width="24.3" height="24.3" transform="rotate(35.1 87.3 135.6)"/><rect x="249.8" y="146.8" width="23.9" height="23.9" transform="rotate(89.8 249.8 146.8)"/><rect x="85.6" y="158" width="23.5" height="23.5" transform="rotate(7.7 85.6 158)"/><circle cx="232" cy="169.1" r="11.6"/><rect x="218.7" y="180.3" width="22.8" height="22.8" transform="rotate(23.3 218.7 180.3)"/><circle cx="393.6" cy="191.5" r="11.2"/><rect x="538.3" y="202.7" width="22" height="22" transform="rotate(44.1 538.3 202.7)"/><rect x="276.3" y="213.8" width="21.6" height="21.6" transform="rotate(5.5 276.3 213.8)"/><circle cx="74.8" cy="225" r="10.6"/><circle cx="238.1" cy="236.2" r="10.4"/><circle cx="472" cy="247.4" r="10.2"/><rect x="578.8" y="258.5" width="20.1" height="20.1" transform="rotate(63.8 578.8 258.5)"/><circle cx="356.5" cy="269.7" r="9.9"/><rect x="301.5" y="280.9" width="19.3" height="19.3" transform="rotate(80.4 301.5 280.9)"/><circle cx="338.3" cy="292.1" r="9.5"/><circle cx="550" cy="303.2" r="9.3"/><rect x="205.6" y="314.4" width="18.2" height="18.2" transform="rotate(44.1 205.6 314.4)"/><circle cx="191.5" cy="325.6" r="8.9"/><rect x="283.7" y="336.8" width="17.4" height="17.4" transform="rotate(49.5 283.7 336.8)"/><circle cx="200.6" cy="347.9" r="8.5"/><rect x="452.7" y="359.1" width="16.7" height="16.7" transform="rotate(8.6 452.7 359.1)"/><rect x="438.9" y="370.3" width="16.3" height="16.3" transform="rotate(8.6 438.9 370.3)"/><circle cx="457.7" cy="381.5" r="8"/><rect x="331" y="392.6" width="15.5" height="15.5" transform="rotate(55.1 331 392.6)"/><rect x="439.2" y="403.8" width="15.1" height="15.1" transform="rotate(15.3 439.2 403.8)"/><rect x="400.9" y="415" width="14.8" height="14.8" transform="rotate(39.7 400.9 415)"/><circle cx="55.7" cy="426.2" r="7.2"/><rect x="240.7" y="437.3" width="14" height="14" transform="rotate(5.5 240.7 437.3)"/><rect x="405.9" y="448.5" width="13.6" height="13.6" transform="rotate(43.6 405.9 448.5)"/><rect x="527.6" y="459.7" width="13.2" height="13.2" transform="rotate(37.1 527.6 459.7)"/><rect x="183.3" y="470.9" width="12.9" height="12.9" transform="rotate(85 183.3 470.9)"/><circle cx="205.1" cy="482" r="6.2"/><rect x="424.3" y="493.2" width="12.1" height="12.1" transform="rotate(62.4 424.3 493.2)"/><rect x="242.9" y="504.4" width="11.7" height="11.7" transform="rotate(83.4 242.9 504.4)"/><rect x="443" y="515.6" width="11.3" height="11.3" transform="rotate(60.4 443 515.6)"/><circle cx="388.6" cy="526.7" r="5.5"/><rect x="232.2" y="537.9" width="10.6" height="10.6" transform="rotate(29.4 232.2 537.9)"/><circle cx="328" cy="549.1" r="5.1"/><rect x="529" y="560.3" width="9.8" height="9.8" transform="rotate(29.9 529 560.3)"/><rect x="63" y="571.4" width="9.4" height="9.4" transform="rotate(14.3 63 571.4)"/><circle cx="309.7" cy="582.6" r="4.5"/><circle cx="542.1" cy="593.8" r="4.3"/><rect x="239.1" y="605" width="8.3" height="8.3" transform="rotate(40.2 239.1 605)"/><rect x="219.9" y="616.1" width="7.9" height="7.9" transform="rotate(52.6 219.9 616.1)"/><rect x="145.5" y="627.3" width="7.5" height="7.5" transform="rotate(82 145.5 627.3)"/><circle cx="344" cy="638.5" r="3.6"/><rect x="104.7" y="649.7" width="6.8" height="6.8" transform="rotate(22.6 104.7 649.7)"/><circle cx="302.8" cy="660.8" r="3.2"/><rect x="192.9" y="672" width="6" height="6" transform="rotate(79.8 192.9 672)"/></g>
+<rect width="640" height="640" fill="url(#vlegitimacycollapsescienceasylum)"/>
+<rect width="640" height="640" filter="url(#nlegitimacycollapsescienceasylum)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nlegitimacycollapsescienceasylum)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

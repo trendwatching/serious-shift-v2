@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>cognition-bleed/marat-selection</title>
+<defs>
+<linearGradient id="fcognitionbleedmaratselection" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gcognitionbleedmaratselection" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bcognitionbleedmaratselection" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="scognitionbleedmaratselection" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vcognitionbleedmaratselection" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ncognitionbleedmaratselection" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fcognitionbleedmaratselection)"/>
+<rect width="640" height="640" fill="url(#gcognitionbleedmaratselection)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bcognitionbleedmaratselection)" filter="url(#scognitionbleedmaratselection)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="174.3" cy="325.4" r="54.8"/><path d="M 40.8 680 L 40.8 399.3 C 94.2 360 130.4 345.9 174.3 345.9 C 218.1 345.9 254.3 360 307.7 399.3 L 307.7 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="391.7" cy="397.1" r="78.2"/><path d="M 201.1 680 L 201.1 502.7 C 277.4 446.5 329.1 426.4 391.7 426.4 C 454.3 426.4 506 446.5 582.2 502.7 L 582.2 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vcognitionbleedmaratselection)"/>
+<rect width="640" height="640" filter="url(#ncognitionbleedmaratselection)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ncognitionbleedmaratselection)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

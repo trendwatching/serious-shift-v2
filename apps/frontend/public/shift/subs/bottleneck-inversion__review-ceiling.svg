@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>bottleneck-inversion/review-ceiling</title>
+<defs>
+<linearGradient id="fbottleneckinversionreviewceiling" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#0FA6FF"/><stop offset="0.42" stop-color="#0A7FDA"/>
+<stop offset="0.8" stop-color="#23B9A6"/><stop offset="1" stop-color="#E6FF9C"/>
+</linearGradient>
+<radialGradient id="gbottleneckinversionreviewceiling" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bbottleneckinversionreviewceiling" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#E6FF9C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</linearGradient>
+<filter id="sbottleneckinversionreviewceiling" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vbottleneckinversionreviewceiling" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#022638" stop-opacity="0"/>
+<stop offset="1" stop-color="#022638" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nbottleneckinversionreviewceiling" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#E6FF9C;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fbottleneckinversionreviewceiling)"/>
+<rect width="640" height="640" fill="url(#gbottleneckinversionreviewceiling)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bbottleneckinversionreviewceiling)" filter="url(#sbottleneckinversionreviewceiling)"/>
+<g fill="#022638" stroke="#022638" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="181.3" rx="459.4" ry="165.4" fill="none" stroke-width="48"/><rect x="355.1" y="346.7" width="20" height="20" transform="rotate(20.3 355.1 346.7)"/><rect x="315.1" y="355.6" width="19.5" height="19.5" transform="rotate(30.9 315.1 355.6)"/><rect x="277.2" y="364.5" width="19.1" height="19.1" transform="rotate(51.1 277.2 364.5)"/><rect x="275" y="373.4" width="18.6" height="18.6" transform="rotate(76.3 275 373.4)"/><rect x="307.8" y="382.2" width="18.2" height="18.2" transform="rotate(47.9 307.8 382.2)"/><rect x="286.6" y="391.1" width="17.7" height="17.7" transform="rotate(62 286.6 391.1)"/><rect x="353" y="400" width="17.3" height="17.3" transform="rotate(13 353 400)"/><rect x="389.8" y="408.9" width="16.8" height="16.8" transform="rotate(18.5 389.8 408.9)"/><rect x="281" y="417.8" width="16.4" height="16.4" transform="rotate(81.4 281 417.8)"/><rect x="388.9" y="426.7" width="15.9" height="15.9" transform="rotate(36.4 388.9 426.7)"/><rect x="372.2" y="435.6" width="15.5" height="15.5" transform="rotate(58.8 372.2 435.6)"/><rect x="297.8" y="444.5" width="15" height="15" transform="rotate(48.7 297.8 444.5)"/><rect x="387.2" y="453.3" width="14.5" height="14.5" transform="rotate(28.1 387.2 453.3)"/><rect x="415.2" y="462.2" width="14.1" height="14.1" transform="rotate(77.9 415.2 462.2)"/><rect x="397.8" y="471.1" width="13.6" height="13.6" transform="rotate(24.4 397.8 471.1)"/><rect x="237.6" y="480" width="13.2" height="13.2" transform="rotate(54.6 237.6 480)"/><rect x="373.6" y="488.9" width="12.7" height="12.7" transform="rotate(66.7 373.6 488.9)"/><rect x="277" y="497.8" width="12.3" height="12.3" transform="rotate(57.2 277 497.8)"/><rect x="193" y="506.7" width="11.8" height="11.8" transform="rotate(26.4 193 506.7)"/><rect x="406.2" y="515.6" width="11.4" height="11.4" transform="rotate(71.6 406.2 515.6)"/><rect x="363.8" y="524.5" width="10.9" height="10.9" transform="rotate(2.2 363.8 524.5)"/><rect x="343.2" y="533.3" width="10.5" height="10.5" transform="rotate(13.3 343.2 533.3)"/><rect x="339" y="542.2" width="10" height="10" transform="rotate(30.1 339 542.2)"/><rect x="222.9" y="551.1" width="9.5" height="9.5" transform="rotate(13.4 222.9 551.1)"/><rect x="482" y="560" width="9.1" height="9.1" transform="rotate(19.6 482 560)"/><rect x="436.5" y="568.9" width="8.6" height="8.6" transform="rotate(69.2 436.5 568.9)"/><rect x="387.3" y="577.8" width="8.2" height="8.2" transform="rotate(87.8 387.3 577.8)"/><rect x="415.8" y="586.7" width="7.7" height="7.7" transform="rotate(1.3 415.8 586.7)"/><rect x="373.2" y="595.6" width="7.3" height="7.3" transform="rotate(4 373.2 595.6)"/><rect x="353.4" y="604.4" width="6.8" height="6.8" transform="rotate(22.9 353.4 604.4)"/><rect x="385.8" y="613.3" width="6.4" height="6.4" transform="rotate(8.2 385.8 613.3)"/><rect x="158.1" y="622.2" width="5.9" height="5.9" transform="rotate(31.3 158.1 622.2)"/><rect x="164" y="631.1" width="5.5" height="5.5" transform="rotate(52.5 164 631.1)"/><rect x="254.8" y="640" width="5" height="5" transform="rotate(10 254.8 640)"/></g>
+<rect width="640" height="640" fill="url(#vbottleneckinversionreviewceiling)"/>
+<rect width="640" height="640" filter="url(#nbottleneckinversionreviewceiling)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nbottleneckinversionreviewceiling)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

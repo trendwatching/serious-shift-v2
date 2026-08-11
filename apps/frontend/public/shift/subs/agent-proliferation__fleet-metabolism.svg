@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>agent-proliferation/fleet-metabolism</title>
+<defs>
+<linearGradient id="fagentproliferationfleetmetabolism" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gagentproliferationfleetmetabolism" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bagentproliferationfleetmetabolism" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sagentproliferationfleetmetabolism" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vagentproliferationfleetmetabolism" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nagentproliferationfleetmetabolism" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fagentproliferationfleetmetabolism)"/>
+<rect width="640" height="640" fill="url(#gagentproliferationfleetmetabolism)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bagentproliferationfleetmetabolism)" filter="url(#sagentproliferationfleetmetabolism)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="185.1" rx="496" ry="178.6" fill="none" stroke-width="48"/><rect x="307.4" y="363.7" width="20" height="20" transform="rotate(25.1 307.4 363.7)"/><rect x="357.1" y="372.1" width="19.5" height="19.5" transform="rotate(44.1 357.1 372.1)"/><rect x="273.7" y="380.4" width="19.1" height="19.1" transform="rotate(40.1 273.7 380.4)"/><rect x="286.9" y="388.8" width="18.6" height="18.6" transform="rotate(1.2 286.9 388.8)"/><rect x="266.6" y="397.2" width="18.2" height="18.2" transform="rotate(88.7 266.6 397.2)"/><rect x="327.1" y="405.5" width="17.7" height="17.7" transform="rotate(40.8 327.1 405.5)"/><rect x="257.4" y="413.9" width="17.3" height="17.3" transform="rotate(85.8 257.4 413.9)"/><rect x="375.7" y="422.3" width="16.8" height="16.8" transform="rotate(35.7 375.7 422.3)"/><rect x="334.6" y="430.7" width="16.4" height="16.4" transform="rotate(27.4 334.6 430.7)"/><rect x="265.9" y="439" width="15.9" height="15.9" transform="rotate(85.2 265.9 439)"/><rect x="357.8" y="447.4" width="15.5" height="15.5" transform="rotate(11.9 357.8 447.4)"/><rect x="324.5" y="455.8" width="15" height="15" transform="rotate(53.7 324.5 455.8)"/><rect x="303.7" y="464.2" width="14.5" height="14.5" transform="rotate(34.6 303.7 464.2)"/><rect x="324.1" y="472.5" width="14.1" height="14.1" transform="rotate(78.3 324.1 472.5)"/><rect x="254.9" y="480.9" width="13.6" height="13.6" transform="rotate(43.3 254.9 480.9)"/><rect x="360.1" y="489.3" width="13.2" height="13.2" transform="rotate(43.3 360.1 489.3)"/><rect x="378.9" y="497.7" width="12.7" height="12.7" transform="rotate(71.8 378.9 497.7)"/><rect x="309.3" y="506" width="12.3" height="12.3" transform="rotate(24.9 309.3 506)"/><rect x="342.1" y="514.4" width="11.8" height="11.8" transform="rotate(43.8 342.1 514.4)"/><rect x="299.2" y="522.8" width="11.4" height="11.4" transform="rotate(5.1 299.2 522.8)"/><rect x="240.1" y="531.1" width="10.9" height="10.9" transform="rotate(75.4 240.1 531.1)"/><rect x="267.4" y="539.5" width="10.5" height="10.5" transform="rotate(50.4 267.4 539.5)"/><rect x="390.2" y="547.9" width="10" height="10" transform="rotate(79 390.2 547.9)"/><rect x="377" y="556.3" width="9.5" height="9.5" transform="rotate(58.2 377 556.3)"/><rect x="485.5" y="564.6" width="9.1" height="9.1" transform="rotate(59.6 485.5 564.6)"/><rect x="280.5" y="573" width="8.6" height="8.6" transform="rotate(29.9 280.5 573)"/><rect x="347.4" y="581.4" width="8.2" height="8.2" transform="rotate(31.6 347.4 581.4)"/><rect x="132.4" y="589.8" width="7.7" height="7.7" transform="rotate(75 132.4 589.8)"/><rect x="186.1" y="598.1" width="7.3" height="7.3" transform="rotate(13.2 186.1 598.1)"/><rect x="168.3" y="606.5" width="6.8" height="6.8" transform="rotate(0.6 168.3 606.5)"/><rect x="215.2" y="614.9" width="6.4" height="6.4" transform="rotate(56 215.2 614.9)"/><rect x="113.6" y="623.3" width="5.9" height="5.9" transform="rotate(62.2 113.6 623.3)"/><rect x="125.6" y="631.6" width="5.5" height="5.5" transform="rotate(89.9 125.6 631.6)"/><rect x="192.3" y="640" width="5" height="5" transform="rotate(55.5 192.3 640)"/></g>
+<rect width="640" height="640" fill="url(#vagentproliferationfleetmetabolism)"/>
+<rect width="640" height="640" filter="url(#nagentproliferationfleetmetabolism)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nagentproliferationfleetmetabolism)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

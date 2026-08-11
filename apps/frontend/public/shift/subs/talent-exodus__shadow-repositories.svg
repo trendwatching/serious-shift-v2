@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>talent-exodus/shadow-repositories</title>
+<defs>
+<linearGradient id="ftalentexodusshadowrepositories" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gtalentexodusshadowrepositories" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="btalentexodusshadowrepositories" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="stalentexodusshadowrepositories" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vtalentexodusshadowrepositories" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ntalentexodusshadowrepositories" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#ftalentexodusshadowrepositories)"/>
+<rect width="640" height="640" fill="url(#gtalentexodusshadowrepositories)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#btalentexodusshadowrepositories)" filter="url(#stalentexodusshadowrepositories)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="376" cy="-32" r="15"/><circle cx="403.5" cy="-20.8" r="14.8"/><rect x="42" y="-9.7" width="29.2" height="29.2" transform="rotate(10.7 42 -9.7)"/><rect x="464.5" y="1.5" width="28.9" height="28.9" transform="rotate(67.5 464.5 1.5)"/><circle cx="557.6" cy="12.7" r="14.2"/><circle cx="60.6" cy="23.9" r="14"/><rect x="102.2" y="35" width="27.7" height="27.7" transform="rotate(63.5 102.2 35)"/><rect x="82.6" y="46.2" width="27.3" height="27.3" transform="rotate(17.5 82.6 46.2)"/><circle cx="284.1" cy="57.4" r="13.5"/><rect x="353.4" y="68.6" width="26.6" height="26.6" transform="rotate(5.1 353.4 68.6)"/><circle cx="156.3" cy="79.7" r="13.1"/><circle cx="303.4" cy="90.9" r="12.9"/><circle cx="201.1" cy="102.1" r="12.7"/><rect x="338.3" y="113.3" width="25" height="25" transform="rotate(53.7 338.3 113.3)"/><rect x="44.2" y="124.4" width="24.7" height="24.7" transform="rotate(26.9 44.2 124.4)"/><rect x="166.4" y="135.6" width="24.3" height="24.3" transform="rotate(53.4 166.4 135.6)"/><circle cx="415.8" cy="146.8" r="12"/><rect x="46.7" y="158" width="23.5" height="23.5" transform="rotate(65.5 46.7 158)"/><circle cx="226.2" cy="169.1" r="11.6"/><rect x="574.3" y="180.3" width="22.8" height="22.8" transform="rotate(21 574.3 180.3)"/><circle cx="322.4" cy="191.5" r="11.2"/><circle cx="398" cy="202.7" r="11"/><circle cx="222.1" cy="213.8" r="10.8"/><rect x="521.8" y="225" width="21.2" height="21.2" transform="rotate(73.5 521.8 225)"/><circle cx="332.4" cy="236.2" r="10.4"/><rect x="283.3" y="247.4" width="20.5" height="20.5" transform="rotate(41.6 283.3 247.4)"/><circle cx="573.3" cy="258.5" r="10"/><circle cx="500.1" cy="269.7" r="9.9"/><rect x="161.2" y="280.9" width="19.3" height="19.3" transform="rotate(85.3 161.2 280.9)"/><rect x="342.7" y="292.1" width="19" height="19" transform="rotate(40.6 342.7 292.1)"/><circle cx="488.2" cy="303.2" r="9.3"/><rect x="230.3" y="314.4" width="18.2" height="18.2" transform="rotate(85.5 230.3 314.4)"/><circle cx="51.1" cy="325.6" r="8.9"/><rect x="335.8" y="336.8" width="17.4" height="17.4" transform="rotate(8.7 335.8 336.8)"/><circle cx="312.9" cy="347.9" r="8.5"/><rect x="92.5" y="359.1" width="16.7" height="16.7" transform="rotate(4.2 92.5 359.1)"/><circle cx="533.7" cy="370.3" r="8.1"/><rect x="134.2" y="381.5" width="15.9" height="15.9" transform="rotate(28.4 134.2 381.5)"/><rect x="581.2" y="392.6" width="15.5" height="15.5" transform="rotate(4.2 581.2 392.6)"/><rect x="195.4" y="403.8" width="15.1" height="15.1" transform="rotate(60.4 195.4 403.8)"/><circle cx="245.3" cy="415" r="7.4"/><rect x="220.9" y="426.2" width="14.4" height="14.4" transform="rotate(3.6 220.9 426.2)"/><rect x="213.5" y="437.3" width="14" height="14" transform="rotate(67.7 213.5 437.3)"/><rect x="400.2" y="448.5" width="13.6" height="13.6" transform="rotate(59 400.2 448.5)"/><rect x="204.1" y="459.7" width="13.2" height="13.2" transform="rotate(28.3 204.1 459.7)"/><rect x="74.5" y="470.9" width="12.9" height="12.9" transform="rotate(2.7 74.5 470.9)"/><rect x="445.3" y="482" width="12.5" height="12.5" transform="rotate(20 445.3 482)"/><rect x="527.1" y="493.2" width="12.1" height="12.1" transform="rotate(7.3 527.1 493.2)"/><rect x="92.9" y="504.4" width="11.7" height="11.7" transform="rotate(49.4 92.9 504.4)"/><circle cx="403.2" cy="515.6" r="5.7"/><rect x="356.1" y="526.7" width="11" height="11" transform="rotate(24.5 356.1 526.7)"/><circle cx="342.7" cy="537.9" r="5.3"/><rect x="501.8" y="549.1" width="10.2" height="10.2" transform="rotate(54.7 501.8 549.1)"/><circle cx="430.5" cy="560.3" r="4.9"/><circle cx="556.9" cy="571.4" r="4.7"/><rect x="327.1" y="582.6" width="9" height="9" transform="rotate(31 327.1 582.6)"/><circle cx="157.4" cy="593.8" r="4.3"/><circle cx="83.1" cy="605" r="4.1"/><rect x="429.5" y="616.1" width="7.9" height="7.9" transform="rotate(18.7 429.5 616.1)"/><rect x="326.5" y="627.3" width="7.5" height="7.5" transform="rotate(81.4 326.5 627.3)"/><circle cx="189.4" cy="638.5" r="3.6"/><rect x="194" y="649.7" width="6.8" height="6.8" transform="rotate(43.9 194 649.7)"/><rect x="206.6" y="660.8" width="6.4" height="6.4" transform="rotate(35 206.6 660.8)"/><circle cx="523.3" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vtalentexodusshadowrepositories)"/>
+<rect width="640" height="640" filter="url(#ntalentexodusshadowrepositories)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ntalentexodusshadowrepositories)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

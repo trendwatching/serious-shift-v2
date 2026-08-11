@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>exoself-bargain/friction-arbitrage</title>
+<defs>
+<linearGradient id="fexoselfbargainfrictionarbitrage" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gexoselfbargainfrictionarbitrage" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bexoselfbargainfrictionarbitrage" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sexoselfbargainfrictionarbitrage" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vexoselfbargainfrictionarbitrage" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nexoselfbargainfrictionarbitrage" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fexoselfbargainfrictionarbitrage)"/>
+<rect width="640" height="640" fill="url(#gexoselfbargainfrictionarbitrage)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bexoselfbargainfrictionarbitrage)" filter="url(#sexoselfbargainfrictionarbitrage)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="173.9" cy="340.4" r="52.5"/><path d="M 46 680 L 46 411.2 C 97.1 373.5 131.9 360.1 173.9 360.1 C 215.9 360.1 250.6 373.5 301.8 411.2 L 301.8 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="399.9" cy="436.9" r="90.1"/><path d="M 180.4 680 L 180.4 558.6 C 268.2 493.9 327.8 470.8 399.9 470.8 C 471.9 470.8 531.5 493.9 619.3 558.6 L 619.3 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vexoselfbargainfrictionarbitrage)"/>
+<rect width="640" height="640" filter="url(#nexoselfbargainfrictionarbitrage)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nexoselfbargainfrictionarbitrage)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>agent-proliferation/overhead-collapse</title>
+<defs>
+<linearGradient id="fagentproliferationoverheadcollapse" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gagentproliferationoverheadcollapse" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bagentproliferationoverheadcollapse" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sagentproliferationoverheadcollapse" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vagentproliferationoverheadcollapse" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nagentproliferationoverheadcollapse" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fagentproliferationoverheadcollapse)"/>
+<rect width="640" height="640" fill="url(#gagentproliferationoverheadcollapse)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bagentproliferationoverheadcollapse)" filter="url(#sagentproliferationoverheadcollapse)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="77.6" cy="-32" r="15"/><rect x="71.9" y="-20.8" width="29.6" height="29.6" transform="rotate(38.4 71.9 -20.8)"/><rect x="456.9" y="-9.7" width="29.2" height="29.2" transform="rotate(21.9 456.9 -9.7)"/><rect x="517.1" y="1.5" width="28.9" height="28.9" transform="rotate(52.5 517.1 1.5)"/><circle cx="402.8" cy="12.7" r="14.2"/><circle cx="535.7" cy="23.9" r="14"/><rect x="256.6" y="35" width="27.7" height="27.7" transform="rotate(74.9 256.6 35)"/><circle cx="67.4" cy="46.2" r="13.7"/><rect x="127.3" y="57.4" width="27" height="27" transform="rotate(9.4 127.3 57.4)"/><rect x="169.3" y="68.6" width="26.6" height="26.6" transform="rotate(76.4 169.3 68.6)"/><circle cx="393" cy="79.7" r="13.1"/><circle cx="529.4" cy="90.9" r="12.9"/><rect x="238.5" y="102.1" width="25.4" height="25.4" transform="rotate(26 238.5 102.1)"/><rect x="445.1" y="113.3" width="25" height="25" transform="rotate(50.3 445.1 113.3)"/><rect x="464" y="124.4" width="24.7" height="24.7" transform="rotate(58.5 464 124.4)"/><rect x="444" y="135.6" width="24.3" height="24.3" transform="rotate(59.9 444 135.6)"/><circle cx="261.3" cy="146.8" r="12"/><circle cx="199.2" cy="158" r="11.8"/><circle cx="314.5" cy="169.1" r="11.6"/><circle cx="496.7" cy="180.3" r="11.4"/><rect x="101.5" y="191.5" width="22.4" height="22.4" transform="rotate(19 101.5 191.5)"/><rect x="297.8" y="202.7" width="22" height="22" transform="rotate(68.1 297.8 202.7)"/><circle cx="69.6" cy="213.8" r="10.8"/><circle cx="382.6" cy="225" r="10.6"/><circle cx="379" cy="236.2" r="10.4"/><circle cx="375.7" cy="247.4" r="10.2"/><rect x="558.8" y="258.5" width="20.1" height="20.1" transform="rotate(30.4 558.8 258.5)"/><circle cx="575.5" cy="269.7" r="9.9"/><rect x="363.3" y="280.9" width="19.3" height="19.3" transform="rotate(80 363.3 280.9)"/><circle cx="469.4" cy="292.1" r="9.5"/><rect x="122.4" y="303.2" width="18.6" height="18.6" transform="rotate(24.4 122.4 303.2)"/><rect x="84.1" y="314.4" width="18.2" height="18.2" transform="rotate(60.6 84.1 314.4)"/><circle cx="255.3" cy="325.6" r="8.9"/><circle cx="280" cy="336.8" r="8.7"/><circle cx="73.3" cy="347.9" r="8.5"/><rect x="544.6" y="359.1" width="16.7" height="16.7" transform="rotate(52.6 544.6 359.1)"/><rect x="555.4" y="370.3" width="16.3" height="16.3" transform="rotate(77.2 555.4 370.3)"/><rect x="71.6" y="381.5" width="15.9" height="15.9" transform="rotate(88.9 71.6 381.5)"/><rect x="308.5" y="392.6" width="15.5" height="15.5" transform="rotate(85.3 308.5 392.6)"/><circle cx="129.4" cy="403.8" r="7.6"/><circle cx="582.6" cy="415" r="7.4"/><rect x="476.2" y="426.2" width="14.4" height="14.4" transform="rotate(18.3 476.2 426.2)"/><circle cx="512.4" cy="437.3" r="7"/><circle cx="431.1" cy="448.5" r="6.8"/><circle cx="466.4" cy="459.7" r="6.6"/><circle cx="389.9" cy="470.9" r="6.4"/><rect x="185.9" y="482" width="12.5" height="12.5" transform="rotate(82.6 185.9 482)"/><circle cx="577.7" cy="493.2" r="6"/><circle cx="113.1" cy="504.4" r="5.9"/><circle cx="512.7" cy="515.6" r="5.7"/><circle cx="202.1" cy="526.7" r="5.5"/><circle cx="93" cy="537.9" r="5.3"/><circle cx="524.5" cy="549.1" r="5.1"/><rect x="173.2" y="560.3" width="9.8" height="9.8" transform="rotate(70.2 173.2 560.3)"/><circle cx="59.3" cy="571.4" r="4.7"/><circle cx="462.7" cy="582.6" r="4.5"/><circle cx="538.7" cy="593.8" r="4.3"/><rect x="394.5" y="605" width="8.3" height="8.3" transform="rotate(84.3 394.5 605)"/><circle cx="116.8" cy="616.1" r="4"/><circle cx="323.5" cy="627.3" r="3.8"/><rect x="449.2" y="638.5" width="7.1" height="7.1" transform="rotate(57 449.2 638.5)"/><circle cx="544.9" cy="649.7" r="3.4"/><rect x="80" y="660.8" width="6.4" height="6.4" transform="rotate(18.8 80 660.8)"/><rect x="505.6" y="672" width="6" height="6" transform="rotate(30.1 505.6 672)"/></g>
+<rect width="640" height="640" fill="url(#vagentproliferationoverheadcollapse)"/>
+<rect width="640" height="640" filter="url(#nagentproliferationoverheadcollapse)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nagentproliferationoverheadcollapse)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

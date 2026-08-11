@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>governance-void/alignment-lag</title>
+<defs>
+<linearGradient id="fgovernancevoidalignmentlag" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="ggovernancevoidalignmentlag" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bgovernancevoidalignmentlag" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sgovernancevoidalignmentlag" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vgovernancevoidalignmentlag" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ngovernancevoidalignmentlag" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fgovernancevoidalignmentlag)"/>
+<rect width="640" height="640" fill="url(#ggovernancevoidalignmentlag)"/>
+<polygon points="192,192 448,192 537.6,640 102.39999999999998,640" fill="url(#bgovernancevoidalignmentlag)" filter="url(#sgovernancevoidalignmentlag)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.97" stroke-opacity="0.97"><rect x="-64" y="118.7" width="768" height="83.2"/><rect x="-64" y="201.9" width="768" height="25"/><rect x="53.8" y="226.9" width="105.8" height="640"/><rect x="275.8" y="226.9" width="88.5" height="640"/><rect x="480.2" y="226.9" width="106.3" height="640"/></g>
+<rect width="640" height="640" fill="url(#vgovernancevoidalignmentlag)"/>
+<rect width="640" height="640" filter="url(#ngovernancevoidalignmentlag)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ngovernancevoidalignmentlag)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

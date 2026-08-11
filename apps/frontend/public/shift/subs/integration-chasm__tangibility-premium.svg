@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>integration-chasm/tangibility-premium</title>
+<defs>
+<linearGradient id="fintegrationchasmtangibilitypremium" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gintegrationchasmtangibilitypremium" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bintegrationchasmtangibilitypremium" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sintegrationchasmtangibilitypremium" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vintegrationchasmtangibilitypremium" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nintegrationchasmtangibilitypremium" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fintegrationchasmtangibilitypremium)"/>
+<rect width="640" height="640" fill="url(#gintegrationchasmtangibilitypremium)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bintegrationchasmtangibilitypremium)" filter="url(#sintegrationchasmtangibilitypremium)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><rect x="132.2" y="-32" width="30" height="30" transform="rotate(19.3 132.2 -32)"/><circle cx="78.5" cy="-20.8" r="14.8"/><circle cx="291.2" cy="-9.7" r="14.6"/><circle cx="474.9" cy="1.5" r="14.4"/><rect x="223.6" y="12.7" width="28.5" height="28.5" transform="rotate(50.5 223.6 12.7)"/><rect x="78.6" y="23.9" width="28.1" height="28.1" transform="rotate(68 78.6 23.9)"/><rect x="312.5" y="35" width="27.7" height="27.7" transform="rotate(16 312.5 35)"/><circle cx="224.8" cy="46.2" r="13.7"/><rect x="380.3" y="57.4" width="27" height="27" transform="rotate(66.6 380.3 57.4)"/><rect x="296.5" y="68.6" width="26.6" height="26.6" transform="rotate(83.6 296.5 68.6)"/><rect x="345.9" y="79.7" width="26.2" height="26.2" transform="rotate(45.9 345.9 79.7)"/><circle cx="101.5" cy="90.9" r="12.9"/><rect x="570.3" y="102.1" width="25.4" height="25.4" transform="rotate(23 570.3 102.1)"/><rect x="80.7" y="113.3" width="25" height="25" transform="rotate(19.7 80.7 113.3)"/><rect x="271.1" y="124.4" width="24.7" height="24.7" transform="rotate(78.9 271.1 124.4)"/><rect x="42.2" y="135.6" width="24.3" height="24.3" transform="rotate(67.7 42.2 135.6)"/><circle cx="387.1" cy="146.8" r="12"/><circle cx="576.5" cy="158" r="11.8"/><circle cx="383.1" cy="169.1" r="11.6"/><circle cx="208.6" cy="180.3" r="11.4"/><rect x="244.6" y="191.5" width="22.4" height="22.4" transform="rotate(2.8 244.6 191.5)"/><rect x="163" y="202.7" width="22" height="22" transform="rotate(44.9 163 202.7)"/><circle cx="182.1" cy="213.8" r="10.8"/><rect x="289" y="225" width="21.2" height="21.2" transform="rotate(40.6 289 225)"/><circle cx="315.3" cy="236.2" r="10.4"/><rect x="410.7" y="247.4" width="20.5" height="20.5" transform="rotate(81 410.7 247.4)"/><rect x="370.7" y="258.5" width="20.1" height="20.1" transform="rotate(17.6 370.7 258.5)"/><rect x="52" y="269.7" width="19.7" height="19.7" transform="rotate(8.9 52 269.7)"/><circle cx="340.2" cy="280.9" r="9.7"/><circle cx="501.8" cy="292.1" r="9.5"/><circle cx="544" cy="303.2" r="9.3"/><circle cx="227" cy="314.4" r="9.1"/><rect x="242.5" y="325.6" width="17.8" height="17.8" transform="rotate(82.9 242.5 325.6)"/><circle cx="91.4" cy="336.8" r="8.7"/><circle cx="410.5" cy="347.9" r="8.5"/><circle cx="399.5" cy="359.1" r="8.3"/><rect x="148.4" y="370.3" width="16.3" height="16.3" transform="rotate(78.6 148.4 370.3)"/><circle cx="151.1" cy="381.5" r="8"/><rect x="561.5" y="392.6" width="15.5" height="15.5" transform="rotate(84 561.5 392.6)"/><circle cx="157.8" cy="403.8" r="7.6"/><rect x="237.2" y="415" width="14.8" height="14.8" transform="rotate(42.5 237.2 415)"/><rect x="374.5" y="426.2" width="14.4" height="14.4" transform="rotate(35.1 374.5 426.2)"/><circle cx="312.8" cy="437.3" r="7"/><rect x="137" y="448.5" width="13.6" height="13.6" transform="rotate(50.3 137 448.5)"/><rect x="445.7" y="459.7" width="13.2" height="13.2" transform="rotate(58.1 445.7 459.7)"/><rect x="547.6" y="470.9" width="12.9" height="12.9" transform="rotate(0.8 547.6 470.9)"/><circle cx="331.7" cy="482" r="6.2"/><rect x="470.1" y="493.2" width="12.1" height="12.1" transform="rotate(47.1 470.1 493.2)"/><circle cx="181.9" cy="504.4" r="5.9"/><rect x="86.8" y="515.6" width="11.3" height="11.3" transform="rotate(6.2 86.8 515.6)"/><rect x="240.4" y="526.7" width="11" height="11" transform="rotate(37 240.4 526.7)"/><circle cx="478.2" cy="537.9" r="5.3"/><circle cx="558.2" cy="549.1" r="5.1"/><circle cx="495.8" cy="560.3" r="4.9"/><rect x="210.5" y="571.4" width="9.4" height="9.4" transform="rotate(4.7 210.5 571.4)"/><circle cx="485.8" cy="582.6" r="4.5"/><rect x="238" y="593.8" width="8.7" height="8.7" transform="rotate(60.7 238 593.8)"/><circle cx="147.5" cy="605" r="4.1"/><circle cx="414.6" cy="616.1" r="4"/><circle cx="196.3" cy="627.3" r="3.8"/><rect x="314.5" y="638.5" width="7.1" height="7.1" transform="rotate(8.7 314.5 638.5)"/><rect x="545.1" y="649.7" width="6.8" height="6.8" transform="rotate(48.3 545.1 649.7)"/><circle cx="328.4" cy="660.8" r="3.2"/><rect x="382.3" y="672" width="6" height="6" transform="rotate(68.6 382.3 672)"/></g>
+<rect width="640" height="640" fill="url(#vintegrationchasmtangibilitypremium)"/>
+<rect width="640" height="640" filter="url(#nintegrationchasmtangibilitypremium)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nintegrationchasmtangibilitypremium)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

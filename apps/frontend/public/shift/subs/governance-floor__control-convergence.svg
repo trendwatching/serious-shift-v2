@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>governance-floor/control-convergence</title>
+<defs>
+<linearGradient id="fgovernancefloorcontrolconvergence" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="ggovernancefloorcontrolconvergence" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bgovernancefloorcontrolconvergence" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sgovernancefloorcontrolconvergence" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vgovernancefloorcontrolconvergence" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ngovernancefloorcontrolconvergence" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fgovernancefloorcontrolconvergence)"/>
+<rect width="640" height="640" fill="url(#ggovernancefloorcontrolconvergence)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bgovernancefloorcontrolconvergence)" filter="url(#sgovernancefloorcontrolconvergence)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="385" cy="-32" r="15"/><rect x="149.9" y="-20.8" width="29.6" height="29.6" transform="rotate(30.8 149.9 -20.8)"/><circle cx="131.5" cy="-9.7" r="14.6"/><circle cx="210.9" cy="1.5" r="14.4"/><rect x="412" y="12.7" width="28.5" height="28.5" transform="rotate(77.5 412 12.7)"/><rect x="124.1" y="23.9" width="28.1" height="28.1" transform="rotate(77.4 124.1 23.9)"/><rect x="148.6" y="35" width="27.7" height="27.7" transform="rotate(71.8 148.6 35)"/><rect x="309.4" y="46.2" width="27.3" height="27.3" transform="rotate(56.9 309.4 46.2)"/><circle cx="320.1" cy="57.4" r="13.5"/><circle cx="60.3" cy="68.6" r="13.3"/><rect x="454.1" y="79.7" width="26.2" height="26.2" transform="rotate(7 454.1 79.7)"/><circle cx="104.2" cy="90.9" r="12.9"/><rect x="96.9" y="102.1" width="25.4" height="25.4" transform="rotate(3.6 96.9 102.1)"/><rect x="496.9" y="113.3" width="25" height="25" transform="rotate(78.9 496.9 113.3)"/><circle cx="415.8" cy="124.4" r="12.3"/><rect x="116.3" y="135.6" width="24.3" height="24.3" transform="rotate(7.1 116.3 135.6)"/><circle cx="175.9" cy="146.8" r="12"/><rect x="452.8" y="158" width="23.5" height="23.5" transform="rotate(36.2 452.8 158)"/><rect x="132.9" y="169.1" width="23.1" height="23.1" transform="rotate(44.7 132.9 169.1)"/><circle cx="49.9" cy="180.3" r="11.4"/><rect x="518.6" y="191.5" width="22.4" height="22.4" transform="rotate(45.6 518.6 191.5)"/><rect x="583.3" y="202.7" width="22" height="22" transform="rotate(76.9 583.3 202.7)"/><circle cx="42" cy="213.8" r="10.8"/><rect x="235.2" y="225" width="21.2" height="21.2" transform="rotate(74.4 235.2 225)"/><circle cx="441.1" cy="236.2" r="10.4"/><circle cx="309.2" cy="247.4" r="10.2"/><rect x="257.7" y="258.5" width="20.1" height="20.1" transform="rotate(84.1 257.7 258.5)"/><rect x="489.1" y="269.7" width="19.7" height="19.7" transform="rotate(46.6 489.1 269.7)"/><rect x="58.2" y="280.9" width="19.3" height="19.3" transform="rotate(43 58.2 280.9)"/><circle cx="396.1" cy="292.1" r="9.5"/><circle cx="128.4" cy="303.2" r="9.3"/><circle cx="303.7" cy="314.4" r="9.1"/><rect x="313.7" y="325.6" width="17.8" height="17.8" transform="rotate(7.3 313.7 325.6)"/><rect x="530.6" y="336.8" width="17.4" height="17.4" transform="rotate(81.5 530.6 336.8)"/><circle cx="481.3" cy="347.9" r="8.5"/><rect x="149.2" y="359.1" width="16.7" height="16.7" transform="rotate(65.8 149.2 359.1)"/><rect x="285.7" y="370.3" width="16.3" height="16.3" transform="rotate(81.7 285.7 370.3)"/><circle cx="162.1" cy="381.5" r="8"/><circle cx="455.2" cy="392.6" r="7.8"/><circle cx="138.2" cy="403.8" r="7.6"/><rect x="196.2" y="415" width="14.8" height="14.8" transform="rotate(51.6 196.2 415)"/><rect x="133.2" y="426.2" width="14.4" height="14.4" transform="rotate(2.5 133.2 426.2)"/><circle cx="548" cy="437.3" r="7"/><rect x="112.5" y="448.5" width="13.6" height="13.6" transform="rotate(74.2 112.5 448.5)"/><rect x="521.5" y="459.7" width="13.2" height="13.2" transform="rotate(30.6 521.5 459.7)"/><circle cx="273.6" cy="470.9" r="6.4"/><circle cx="98.4" cy="482" r="6.2"/><rect x="560.8" y="493.2" width="12.1" height="12.1" transform="rotate(72.1 560.8 493.2)"/><rect x="52.5" y="504.4" width="11.7" height="11.7" transform="rotate(29.9 52.5 504.4)"/><circle cx="473.1" cy="515.6" r="5.7"/><circle cx="241.3" cy="526.7" r="5.5"/><circle cx="282.6" cy="537.9" r="5.3"/><rect x="310" y="549.1" width="10.2" height="10.2" transform="rotate(61.4 310 549.1)"/><circle cx="522.3" cy="560.3" r="4.9"/><rect x="159" y="571.4" width="9.4" height="9.4" transform="rotate(29.7 159 571.4)"/><circle cx="77.6" cy="582.6" r="4.5"/><rect x="299.2" y="593.8" width="8.7" height="8.7" transform="rotate(76.3 299.2 593.8)"/><circle cx="467.3" cy="605" r="4.1"/><rect x="220.3" y="616.1" width="7.9" height="7.9" transform="rotate(77.4 220.3 616.1)"/><rect x="496.8" y="627.3" width="7.5" height="7.5" transform="rotate(16.2 496.8 627.3)"/><rect x="524.6" y="638.5" width="7.1" height="7.1" transform="rotate(30.2 524.6 638.5)"/><circle cx="453.2" cy="649.7" r="3.4"/><rect x="158.9" y="660.8" width="6.4" height="6.4" transform="rotate(85.3 158.9 660.8)"/><rect x="53.6" y="672" width="6" height="6" transform="rotate(80.3 53.6 672)"/></g>
+<rect width="640" height="640" fill="url(#vgovernancefloorcontrolconvergence)"/>
+<rect width="640" height="640" filter="url(#ngovernancefloorcontrolconvergence)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ngovernancefloorcontrolconvergence)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

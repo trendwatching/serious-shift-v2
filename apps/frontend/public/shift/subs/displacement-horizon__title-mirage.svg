@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>displacement-horizon/title-mirage</title>
+<defs>
+<linearGradient id="fdisplacementhorizontitlemirage" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#0FA6FF"/><stop offset="0.42" stop-color="#0A7FDA"/>
+<stop offset="0.8" stop-color="#23B9A6"/><stop offset="1" stop-color="#E6FF9C"/>
+</linearGradient>
+<radialGradient id="gdisplacementhorizontitlemirage" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bdisplacementhorizontitlemirage" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#E6FF9C" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#E6FF9C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#E6FF9C" stop-opacity="0"/>
+</linearGradient>
+<filter id="sdisplacementhorizontitlemirage" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vdisplacementhorizontitlemirage" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#022638" stop-opacity="0"/>
+<stop offset="1" stop-color="#022638" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ndisplacementhorizontitlemirage" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#E6FF9C;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fdisplacementhorizontitlemirage)"/>
+<rect width="640" height="640" fill="url(#gdisplacementhorizontitlemirage)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bdisplacementhorizontitlemirage)" filter="url(#sdisplacementhorizontitlemirage)"/>
+<g fill="#022638" stroke="#022638" fill-opacity="0.92" stroke-opacity="0.92"><circle cx="157.3" cy="-32" r="15"/><rect x="485.6" y="-20.8" width="29.6" height="29.6" transform="rotate(80.8 485.6 -20.8)"/><circle cx="220.8" cy="-9.7" r="14.6"/><circle cx="387.3" cy="1.5" r="14.4"/><rect x="581" y="12.7" width="28.5" height="28.5" transform="rotate(39.3 581 12.7)"/><circle cx="59.1" cy="23.9" r="14"/><circle cx="438.6" cy="35" r="13.9"/><circle cx="554.4" cy="46.2" r="13.7"/><rect x="498.5" y="57.4" width="27" height="27" transform="rotate(3.1 498.5 57.4)"/><rect x="139.5" y="68.6" width="26.6" height="26.6" transform="rotate(66.5 139.5 68.6)"/><rect x="383.1" y="79.7" width="26.2" height="26.2" transform="rotate(29.7 383.1 79.7)"/><circle cx="583.6" cy="90.9" r="12.9"/><rect x="588.5" y="102.1" width="25.4" height="25.4" transform="rotate(65.3 588.5 102.1)"/><rect x="234.6" y="113.3" width="25" height="25" transform="rotate(42.7 234.6 113.3)"/><rect x="319.8" y="124.4" width="24.7" height="24.7" transform="rotate(30.5 319.8 124.4)"/><rect x="548.9" y="135.6" width="24.3" height="24.3" transform="rotate(82.1 548.9 135.6)"/><circle cx="259.6" cy="146.8" r="12"/><circle cx="323.4" cy="158" r="11.8"/><rect x="92.2" y="169.1" width="23.1" height="23.1" transform="rotate(25.7 92.2 169.1)"/><circle cx="214.4" cy="180.3" r="11.4"/><rect x="82.8" y="191.5" width="22.4" height="22.4" transform="rotate(31 82.8 191.5)"/><circle cx="227.1" cy="202.7" r="11"/><rect x="453.3" y="213.8" width="21.6" height="21.6" transform="rotate(48.8 453.3 213.8)"/><rect x="459.6" y="225" width="21.2" height="21.2" transform="rotate(15.8 459.6 225)"/><circle cx="239.7" cy="236.2" r="10.4"/><circle cx="352.5" cy="247.4" r="10.2"/><rect x="316.7" y="258.5" width="20.1" height="20.1" transform="rotate(42.1 316.7 258.5)"/><circle cx="258.5" cy="269.7" r="9.9"/><circle cx="186.1" cy="280.9" r="9.7"/><rect x="220.9" y="292.1" width="19" height="19" transform="rotate(37.4 220.9 292.1)"/><circle cx="355.4" cy="303.2" r="9.3"/><rect x="296.3" y="314.4" width="18.2" height="18.2" transform="rotate(69.3 296.3 314.4)"/><rect x="333.3" y="325.6" width="17.8" height="17.8" transform="rotate(44.2 333.3 325.6)"/><rect x="334.9" y="336.8" width="17.4" height="17.4" transform="rotate(37.8 334.9 336.8)"/><rect x="295" y="347.9" width="17" height="17" transform="rotate(15.3 295 347.9)"/><circle cx="190.8" cy="359.1" r="8.3"/><circle cx="560.9" cy="370.3" r="8.1"/><circle cx="240.8" cy="381.5" r="8"/><rect x="569.8" y="392.6" width="15.5" height="15.5" transform="rotate(1.3 569.8 392.6)"/><circle cx="174.6" cy="403.8" r="7.6"/><rect x="478.8" y="415" width="14.8" height="14.8" transform="rotate(87.2 478.8 415)"/><rect x="357.7" y="426.2" width="14.4" height="14.4" transform="rotate(57.3 357.7 426.2)"/><rect x="206.4" y="437.3" width="14" height="14" transform="rotate(64.4 206.4 437.3)"/><rect x="565.7" y="448.5" width="13.6" height="13.6" transform="rotate(29.3 565.7 448.5)"/><circle cx="228.9" cy="459.7" r="6.6"/><circle cx="510.3" cy="470.9" r="6.4"/><rect x="252.1" y="482" width="12.5" height="12.5" transform="rotate(17.3 252.1 482)"/><rect x="111.4" y="493.2" width="12.1" height="12.1" transform="rotate(63.2 111.4 493.2)"/><rect x="200.7" y="504.4" width="11.7" height="11.7" transform="rotate(18.8 200.7 504.4)"/><rect x="253.5" y="515.6" width="11.3" height="11.3" transform="rotate(59 253.5 515.6)"/><rect x="438.4" y="526.7" width="11" height="11" transform="rotate(26.3 438.4 526.7)"/><rect x="300.9" y="537.9" width="10.6" height="10.6" transform="rotate(62.3 300.9 537.9)"/><rect x="252.9" y="549.1" width="10.2" height="10.2" transform="rotate(66.5 252.9 549.1)"/><rect x="430.7" y="560.3" width="9.8" height="9.8" transform="rotate(67.2 430.7 560.3)"/><rect x="155.7" y="571.4" width="9.4" height="9.4" transform="rotate(50 155.7 571.4)"/><circle cx="152.2" cy="582.6" r="4.5"/><circle cx="417.2" cy="593.8" r="4.3"/><rect x="232.1" y="605" width="8.3" height="8.3" transform="rotate(42.7 232.1 605)"/><rect x="345" y="616.1" width="7.9" height="7.9" transform="rotate(27.4 345 616.1)"/><rect x="145" y="627.3" width="7.5" height="7.5" transform="rotate(18.7 145 627.3)"/><circle cx="373.2" cy="638.5" r="3.6"/><rect x="311.8" y="649.7" width="6.8" height="6.8" transform="rotate(20.5 311.8 649.7)"/><rect x="265.2" y="660.8" width="6.4" height="6.4" transform="rotate(12.8 265.2 660.8)"/><circle cx="413.2" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vdisplacementhorizontitlemirage)"/>
+<rect width="640" height="640" filter="url(#ndisplacementhorizontitlemirage)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ndisplacementhorizontitlemirage)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

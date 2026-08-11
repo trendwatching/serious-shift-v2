@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>fabricated-rapport/craft-premium</title>
+<defs>
+<linearGradient id="ffabricatedrapportcraftpremium" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gfabricatedrapportcraftpremium" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bfabricatedrapportcraftpremium" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sfabricatedrapportcraftpremium" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vfabricatedrapportcraftpremium" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nfabricatedrapportcraftpremium" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#ffabricatedrapportcraftpremium)"/>
+<rect width="640" height="640" fill="url(#gfabricatedrapportcraftpremium)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bfabricatedrapportcraftpremium)" filter="url(#sfabricatedrapportcraftpremium)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.92" stroke-opacity="0.92"><rect x="528.9" y="-32" width="30" height="30" transform="rotate(40.8 528.9 -32)"/><circle cx="397.6" cy="-20.8" r="14.8"/><circle cx="572.3" cy="-9.7" r="14.6"/><rect x="520" y="1.5" width="28.9" height="28.9" transform="rotate(54.1 520 1.5)"/><rect x="570.6" y="12.7" width="28.5" height="28.5" transform="rotate(20 570.6 12.7)"/><circle cx="49.7" cy="23.9" r="14"/><rect x="446.1" y="35" width="27.7" height="27.7" transform="rotate(28.8 446.1 35)"/><rect x="497.6" y="46.2" width="27.3" height="27.3" transform="rotate(65.5 497.6 46.2)"/><rect x="217.7" y="57.4" width="27" height="27" transform="rotate(42.9 217.7 57.4)"/><rect x="394.4" y="68.6" width="26.6" height="26.6" transform="rotate(17.2 394.4 68.6)"/><rect x="234.7" y="79.7" width="26.2" height="26.2" transform="rotate(68.6 234.7 79.7)"/><rect x="429.7" y="90.9" width="25.8" height="25.8" transform="rotate(38.9 429.7 90.9)"/><rect x="372.9" y="102.1" width="25.4" height="25.4" transform="rotate(80 372.9 102.1)"/><circle cx="367.9" cy="113.3" r="12.5"/><circle cx="75.1" cy="124.4" r="12.3"/><rect x="147.9" y="135.6" width="24.3" height="24.3" transform="rotate(3.1 147.9 135.6)"/><rect x="176.2" y="146.8" width="23.9" height="23.9" transform="rotate(65.7 176.2 146.8)"/><circle cx="514.4" cy="158" r="11.8"/><rect x="165.9" y="169.1" width="23.1" height="23.1" transform="rotate(5.2 165.9 169.1)"/><rect x="569" y="180.3" width="22.8" height="22.8" transform="rotate(54 569 180.3)"/><circle cx="44.7" cy="191.5" r="11.2"/><rect x="234.9" y="202.7" width="22" height="22" transform="rotate(70.7 234.9 202.7)"/><circle cx="44.2" cy="213.8" r="10.8"/><rect x="80.9" y="225" width="21.2" height="21.2" transform="rotate(64.4 80.9 225)"/><circle cx="205.1" cy="236.2" r="10.4"/><rect x="350.5" y="247.4" width="20.5" height="20.5" transform="rotate(33.9 350.5 247.4)"/><circle cx="299.7" cy="258.5" r="10"/><rect x="449" y="269.7" width="19.7" height="19.7" transform="rotate(29.9 449 269.7)"/><circle cx="424.4" cy="280.9" r="9.7"/><circle cx="160.8" cy="292.1" r="9.5"/><rect x="148.3" y="303.2" width="18.6" height="18.6" transform="rotate(56.1 148.3 303.2)"/><rect x="530.5" y="314.4" width="18.2" height="18.2" transform="rotate(56.5 530.5 314.4)"/><rect x="505.1" y="325.6" width="17.8" height="17.8" transform="rotate(22.2 505.1 325.6)"/><rect x="501.3" y="336.8" width="17.4" height="17.4" transform="rotate(76.4 501.3 336.8)"/><circle cx="99.6" cy="347.9" r="8.5"/><rect x="546.9" y="359.1" width="16.7" height="16.7" transform="rotate(79.8 546.9 359.1)"/><rect x="139.5" y="370.3" width="16.3" height="16.3" transform="rotate(47.6 139.5 370.3)"/><rect x="540.2" y="381.5" width="15.9" height="15.9" transform="rotate(57.5 540.2 381.5)"/><rect x="579.7" y="392.6" width="15.5" height="15.5" transform="rotate(42.7 579.7 392.6)"/><rect x="569.8" y="403.8" width="15.1" height="15.1" transform="rotate(45 569.8 403.8)"/><rect x="444.1" y="415" width="14.8" height="14.8" transform="rotate(83.9 444.1 415)"/><circle cx="66.8" cy="426.2" r="7.2"/><rect x="375.4" y="437.3" width="14" height="14" transform="rotate(25.9 375.4 437.3)"/><circle cx="353.9" cy="448.5" r="6.8"/><rect x="219.1" y="459.7" width="13.2" height="13.2" transform="rotate(31.3 219.1 459.7)"/><rect x="386.6" y="470.9" width="12.9" height="12.9" transform="rotate(8.1 386.6 470.9)"/><rect x="567.1" y="482" width="12.5" height="12.5" transform="rotate(25.9 567.1 482)"/><rect x="248.7" y="493.2" width="12.1" height="12.1" transform="rotate(18.6 248.7 493.2)"/><circle cx="358.4" cy="504.4" r="5.9"/><rect x="150.6" y="515.6" width="11.3" height="11.3" transform="rotate(68.7 150.6 515.6)"/><circle cx="443.9" cy="526.7" r="5.5"/><rect x="356.5" y="537.9" width="10.6" height="10.6" transform="rotate(44.2 356.5 537.9)"/><circle cx="134.2" cy="549.1" r="5.1"/><rect x="179.9" y="560.3" width="9.8" height="9.8" transform="rotate(41.8 179.9 560.3)"/><rect x="329.8" y="571.4" width="9.4" height="9.4" transform="rotate(11.5 329.8 571.4)"/><circle cx="275.1" cy="582.6" r="4.5"/><circle cx="101.8" cy="593.8" r="4.3"/><circle cx="555.5" cy="605" r="4.1"/><rect x="182.8" y="616.1" width="7.9" height="7.9" transform="rotate(54.1 182.8 616.1)"/><rect x="306.1" y="627.3" width="7.5" height="7.5" transform="rotate(0.8 306.1 627.3)"/><circle cx="496.7" cy="638.5" r="3.6"/><circle cx="461.6" cy="649.7" r="3.4"/><rect x="213.6" y="660.8" width="6.4" height="6.4" transform="rotate(41.3 213.6 660.8)"/><circle cx="242" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vfabricatedrapportcraftpremium)"/>
+<rect width="640" height="640" filter="url(#nfabricatedrapportcraftpremium)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nfabricatedrapportcraftpremium)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

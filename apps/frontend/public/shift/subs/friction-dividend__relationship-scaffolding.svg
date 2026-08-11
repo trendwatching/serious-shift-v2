@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>friction-dividend/relationship-scaffolding</title>
+<defs>
+<linearGradient id="ffrictiondividendrelationshipscaffolding" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gfrictiondividendrelationshipscaffolding" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bfrictiondividendrelationshipscaffolding" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sfrictiondividendrelationshipscaffolding" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vfrictiondividendrelationshipscaffolding" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nfrictiondividendrelationshipscaffolding" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#ffrictiondividendrelationshipscaffolding)"/>
+<rect width="640" height="640" fill="url(#gfrictiondividendrelationshipscaffolding)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bfrictiondividendrelationshipscaffolding)" filter="url(#sfrictiondividendrelationshipscaffolding)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="182.7" rx="514.9" ry="185.4" fill="none" stroke-width="48"/><rect x="346" y="368.1" width="20" height="20" transform="rotate(30.1 346 368.1)"/><rect x="351.3" y="376.4" width="19.5" height="19.5" transform="rotate(46.8 351.3 376.4)"/><rect x="352.6" y="384.6" width="19.1" height="19.1" transform="rotate(33.8 352.6 384.6)"/><rect x="336.2" y="392.8" width="18.6" height="18.6" transform="rotate(74.9 336.2 392.8)"/><rect x="348.4" y="401.1" width="18.2" height="18.2" transform="rotate(60.8 348.4 401.1)"/><rect x="342.7" y="409.3" width="17.7" height="17.7" transform="rotate(41.4 342.7 409.3)"/><rect x="325.1" y="417.5" width="17.3" height="17.3" transform="rotate(13.8 325.1 417.5)"/><rect x="334.5" y="425.8" width="16.8" height="16.8" transform="rotate(60.1 334.5 425.8)"/><rect x="387" y="434" width="16.4" height="16.4" transform="rotate(20.5 387 434)"/><rect x="335.1" y="442.3" width="15.9" height="15.9" transform="rotate(77.4 335.1 442.3)"/><rect x="279.2" y="450.5" width="15.5" height="15.5" transform="rotate(20.6 279.2 450.5)"/><rect x="240.8" y="458.7" width="15" height="15" transform="rotate(38.4 240.8 458.7)"/><rect x="415" y="467" width="14.5" height="14.5" transform="rotate(81.7 415 467)"/><rect x="215.6" y="475.2" width="14.1" height="14.1" transform="rotate(63.9 215.6 475.2)"/><rect x="300.2" y="483.5" width="13.6" height="13.6" transform="rotate(4.2 300.2 483.5)"/><rect x="393.6" y="491.7" width="13.2" height="13.2" transform="rotate(68.9 393.6 491.7)"/><rect x="338.9" y="499.9" width="12.7" height="12.7" transform="rotate(46 338.9 499.9)"/><rect x="453.8" y="508.2" width="12.3" height="12.3" transform="rotate(11.1 453.8 508.2)"/><rect x="443.6" y="516.4" width="11.8" height="11.8" transform="rotate(37.1 443.6 516.4)"/><rect x="333.6" y="524.7" width="11.4" height="11.4" transform="rotate(72.4 333.6 524.7)"/><rect x="202.2" y="532.9" width="10.9" height="10.9" transform="rotate(6.2 202.2 532.9)"/><rect x="196.5" y="541.1" width="10.5" height="10.5" transform="rotate(60.1 196.5 541.1)"/><rect x="277.3" y="549.4" width="10" height="10" transform="rotate(89.2 277.3 549.4)"/><rect x="280.6" y="557.6" width="9.5" height="9.5" transform="rotate(4.3 280.6 557.6)"/><rect x="207.8" y="565.8" width="9.1" height="9.1" transform="rotate(29.8 207.8 565.8)"/><rect x="492.5" y="574.1" width="8.6" height="8.6" transform="rotate(18 492.5 574.1)"/><rect x="279.6" y="582.3" width="8.2" height="8.2" transform="rotate(60.8 279.6 582.3)"/><rect x="495" y="590.6" width="7.7" height="7.7" transform="rotate(81.6 495 590.6)"/><rect x="404.3" y="598.8" width="7.3" height="7.3" transform="rotate(87.1 404.3 598.8)"/><rect x="286.3" y="607" width="6.8" height="6.8" transform="rotate(30.9 286.3 607)"/><rect x="423.7" y="615.3" width="6.4" height="6.4" transform="rotate(53.5 423.7 615.3)"/><rect x="273.6" y="623.5" width="5.9" height="5.9" transform="rotate(16.1 273.6 623.5)"/><rect x="532.3" y="631.8" width="5.5" height="5.5" transform="rotate(70.9 532.3 631.8)"/><rect x="369.4" y="640" width="5" height="5" transform="rotate(63 369.4 640)"/></g>
+<rect width="640" height="640" fill="url(#vfrictiondividendrelationshipscaffolding)"/>
+<rect width="640" height="640" filter="url(#nfrictiondividendrelationshipscaffolding)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nfrictiondividendrelationshipscaffolding)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

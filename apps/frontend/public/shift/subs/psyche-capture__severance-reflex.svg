@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>psyche-capture/severance-reflex</title>
+<defs>
+<linearGradient id="fpsychecaptureseverancereflex" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gpsychecaptureseverancereflex" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bpsychecaptureseverancereflex" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="spsychecaptureseverancereflex" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vpsychecaptureseverancereflex" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="npsychecaptureseverancereflex" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fpsychecaptureseverancereflex)"/>
+<rect width="640" height="640" fill="url(#gpsychecaptureseverancereflex)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bpsychecaptureseverancereflex)" filter="url(#spsychecaptureseverancereflex)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.92" stroke-opacity="0.92"><rect x="258.6" y="-32" width="30" height="30" transform="rotate(47.8 258.6 -32)"/><rect x="421.5" y="-20.8" width="29.6" height="29.6" transform="rotate(87.4 421.5 -20.8)"/><rect x="412.2" y="-9.7" width="29.2" height="29.2" transform="rotate(79.3 412.2 -9.7)"/><rect x="95.8" y="1.5" width="28.9" height="28.9" transform="rotate(5.4 95.8 1.5)"/><circle cx="358.3" cy="12.7" r="14.2"/><rect x="326" y="23.9" width="28.1" height="28.1" transform="rotate(22.8 326 23.9)"/><rect x="58.1" y="35" width="27.7" height="27.7" transform="rotate(3.4 58.1 35)"/><rect x="88" y="46.2" width="27.3" height="27.3" transform="rotate(53.2 88 46.2)"/><circle cx="221.1" cy="57.4" r="13.5"/><rect x="510.7" y="68.6" width="26.6" height="26.6" transform="rotate(48.4 510.7 68.6)"/><rect x="447.2" y="79.7" width="26.2" height="26.2" transform="rotate(24.1 447.2 79.7)"/><rect x="363.9" y="90.9" width="25.8" height="25.8" transform="rotate(8.5 363.9 90.9)"/><circle cx="468" cy="102.1" r="12.7"/><rect x="438.3" y="113.3" width="25" height="25" transform="rotate(10.4 438.3 113.3)"/><rect x="251" y="124.4" width="24.7" height="24.7" transform="rotate(18.8 251 124.4)"/><circle cx="88.5" cy="135.6" r="12.1"/><circle cx="520.6" cy="146.8" r="12"/><rect x="207.1" y="158" width="23.5" height="23.5" transform="rotate(59.7 207.1 158)"/><rect x="331.1" y="169.1" width="23.1" height="23.1" transform="rotate(48.9 331.1 169.1)"/><rect x="424.9" y="180.3" width="22.8" height="22.8" transform="rotate(23.3 424.9 180.3)"/><rect x="529.2" y="191.5" width="22.4" height="22.4" transform="rotate(43.6 529.2 191.5)"/><rect x="225.5" y="202.7" width="22" height="22" transform="rotate(6.4 225.5 202.7)"/><rect x="189.2" y="213.8" width="21.6" height="21.6" transform="rotate(69.8 189.2 213.8)"/><rect x="45.4" y="225" width="21.2" height="21.2" transform="rotate(13.1 45.4 225)"/><rect x="395.6" y="236.2" width="20.9" height="20.9" transform="rotate(41 395.6 236.2)"/><circle cx="502.8" cy="247.4" r="10.2"/><rect x="526" y="258.5" width="20.1" height="20.1" transform="rotate(48.6 526 258.5)"/><rect x="148.3" y="269.7" width="19.7" height="19.7" transform="rotate(20.7 148.3 269.7)"/><rect x="499.1" y="280.9" width="19.3" height="19.3" transform="rotate(23.3 499.1 280.9)"/><rect x="171" y="292.1" width="19" height="19" transform="rotate(51.3 171 292.1)"/><rect x="461.4" y="303.2" width="18.6" height="18.6" transform="rotate(74 461.4 303.2)"/><circle cx="588.2" cy="314.4" r="9.1"/><rect x="584.4" y="325.6" width="17.8" height="17.8" transform="rotate(19.3 584.4 325.6)"/><rect x="459.5" y="336.8" width="17.4" height="17.4" transform="rotate(20.4 459.5 336.8)"/><rect x="189.9" y="347.9" width="17" height="17" transform="rotate(17.5 189.9 347.9)"/><rect x="426.7" y="359.1" width="16.7" height="16.7" transform="rotate(63.1 426.7 359.1)"/><rect x="459.3" y="370.3" width="16.3" height="16.3" transform="rotate(57.4 459.3 370.3)"/><rect x="522.9" y="381.5" width="15.9" height="15.9" transform="rotate(40.5 522.9 381.5)"/><circle cx="353.1" cy="392.6" r="7.8"/><circle cx="300.9" cy="403.8" r="7.6"/><rect x="457.5" y="415" width="14.8" height="14.8" transform="rotate(23.2 457.5 415)"/><circle cx="453.8" cy="426.2" r="7.2"/><circle cx="271.2" cy="437.3" r="7"/><rect x="47.1" y="448.5" width="13.6" height="13.6" transform="rotate(46 47.1 448.5)"/><rect x="475.4" y="459.7" width="13.2" height="13.2" transform="rotate(49.7 475.4 459.7)"/><circle cx="572.4" cy="470.9" r="6.4"/><rect x="563.2" y="482" width="12.5" height="12.5" transform="rotate(82.8 563.2 482)"/><rect x="284.2" y="493.2" width="12.1" height="12.1" transform="rotate(52.8 284.2 493.2)"/><circle cx="282.9" cy="504.4" r="5.9"/><rect x="162.4" y="515.6" width="11.3" height="11.3" transform="rotate(2.1 162.4 515.6)"/><rect x="316.7" y="526.7" width="11" height="11" transform="rotate(44.1 316.7 526.7)"/><rect x="303.5" y="537.9" width="10.6" height="10.6" transform="rotate(59.4 303.5 537.9)"/><rect x="262.2" y="549.1" width="10.2" height="10.2" transform="rotate(7.7 262.2 549.1)"/><rect x="538.1" y="560.3" width="9.8" height="9.8" transform="rotate(0.4 538.1 560.3)"/><circle cx="371.6" cy="571.4" r="4.7"/><rect x="486.5" y="582.6" width="9" height="9" transform="rotate(70.9 486.5 582.6)"/><rect x="284.1" y="593.8" width="8.7" height="8.7" transform="rotate(82.1 284.1 593.8)"/><rect x="319.1" y="605" width="8.3" height="8.3" transform="rotate(65.9 319.1 605)"/><circle cx="288.3" cy="616.1" r="4"/><circle cx="402.7" cy="627.3" r="3.8"/><circle cx="418.5" cy="638.5" r="3.6"/><rect x="557.5" y="649.7" width="6.8" height="6.8" transform="rotate(23.7 557.5 649.7)"/><rect x="139.5" y="660.8" width="6.4" height="6.4" transform="rotate(35.4 139.5 660.8)"/><circle cx="484.7" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vpsychecaptureseverancereflex)"/>
+<rect width="640" height="640" filter="url(#npsychecaptureseverancereflex)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#npsychecaptureseverancereflex)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

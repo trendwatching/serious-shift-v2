@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>provenance-premium/abundance-aversion</title>
+<defs>
+<linearGradient id="fprovenancepremiumabundanceaversion" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gprovenancepremiumabundanceaversion" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bprovenancepremiumabundanceaversion" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sprovenancepremiumabundanceaversion" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vprovenancepremiumabundanceaversion" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nprovenancepremiumabundanceaversion" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fprovenancepremiumabundanceaversion)"/>
+<rect width="640" height="640" fill="url(#gprovenancepremiumabundanceaversion)"/>
+<polygon points="153.6,0 486.4,0 601.6,640 38.39999999999998,640" fill="url(#bprovenancepremiumabundanceaversion)" filter="url(#sprovenancepremiumabundanceaversion)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.92" stroke-opacity="0.92"><rect x="34.4" y="-32" width="30" height="30" transform="rotate(84.1 34.4 -32)"/><circle cx="463.2" cy="-20.8" r="14.8"/><rect x="473.2" y="-9.7" width="29.2" height="29.2" transform="rotate(83.3 473.2 -9.7)"/><rect x="418.2" y="1.5" width="28.9" height="28.9" transform="rotate(33 418.2 1.5)"/><rect x="317.2" y="12.7" width="28.5" height="28.5" transform="rotate(6.1 317.2 12.7)"/><circle cx="81.8" cy="23.9" r="14"/><circle cx="70.6" cy="35" r="13.9"/><rect x="421.5" y="46.2" width="27.3" height="27.3" transform="rotate(61.7 421.5 46.2)"/><circle cx="549.7" cy="57.4" r="13.5"/><rect x="190" y="68.6" width="26.6" height="26.6" transform="rotate(84.4 190 68.6)"/><circle cx="442.8" cy="79.7" r="13.1"/><rect x="412" y="90.9" width="25.8" height="25.8" transform="rotate(82.8 412 90.9)"/><circle cx="378.6" cy="102.1" r="12.7"/><rect x="269.4" y="113.3" width="25" height="25" transform="rotate(70.4 269.4 113.3)"/><circle cx="363.7" cy="124.4" r="12.3"/><circle cx="262.7" cy="135.6" r="12.1"/><circle cx="221.8" cy="146.8" r="12"/><rect x="447.9" y="158" width="23.5" height="23.5" transform="rotate(52.9 447.9 158)"/><rect x="161.9" y="169.1" width="23.1" height="23.1" transform="rotate(59 161.9 169.1)"/><circle cx="491.4" cy="180.3" r="11.4"/><circle cx="458.6" cy="191.5" r="11.2"/><rect x="173.7" y="202.7" width="22" height="22" transform="rotate(24.1 173.7 202.7)"/><rect x="154" y="213.8" width="21.6" height="21.6" transform="rotate(25.9 154 213.8)"/><rect x="174.3" y="225" width="21.2" height="21.2" transform="rotate(58.4 174.3 225)"/><circle cx="48.8" cy="236.2" r="10.4"/><circle cx="556.9" cy="247.4" r="10.2"/><rect x="199.3" y="258.5" width="20.1" height="20.1" transform="rotate(22.6 199.3 258.5)"/><rect x="462.6" y="269.7" width="19.7" height="19.7" transform="rotate(80.5 462.6 269.7)"/><rect x="520.8" y="280.9" width="19.3" height="19.3" transform="rotate(4 520.8 280.9)"/><circle cx="583.7" cy="292.1" r="9.5"/><rect x="469.4" y="303.2" width="18.6" height="18.6" transform="rotate(46.1 469.4 303.2)"/><rect x="443.1" y="314.4" width="18.2" height="18.2" transform="rotate(25 443.1 314.4)"/><rect x="253.2" y="325.6" width="17.8" height="17.8" transform="rotate(21 253.2 325.6)"/><circle cx="564.2" cy="336.8" r="8.7"/><rect x="105.3" y="347.9" width="17" height="17" transform="rotate(39.7 105.3 347.9)"/><rect x="99.5" y="359.1" width="16.7" height="16.7" transform="rotate(41.2 99.5 359.1)"/><rect x="313.2" y="370.3" width="16.3" height="16.3" transform="rotate(32.7 313.2 370.3)"/><circle cx="113.7" cy="381.5" r="8"/><circle cx="165.7" cy="392.6" r="7.8"/><circle cx="524.3" cy="403.8" r="7.6"/><rect x="389.5" y="415" width="14.8" height="14.8" transform="rotate(0.4 389.5 415)"/><circle cx="497.1" cy="426.2" r="7.2"/><circle cx="312.4" cy="437.3" r="7"/><circle cx="200.9" cy="448.5" r="6.8"/><circle cx="267.4" cy="459.7" r="6.6"/><rect x="576.9" y="470.9" width="12.9" height="12.9" transform="rotate(3.7 576.9 470.9)"/><rect x="510.8" y="482" width="12.5" height="12.5" transform="rotate(18.7 510.8 482)"/><rect x="408.2" y="493.2" width="12.1" height="12.1" transform="rotate(19.8 408.2 493.2)"/><rect x="533.1" y="504.4" width="11.7" height="11.7" transform="rotate(32.9 533.1 504.4)"/><circle cx="449.3" cy="515.6" r="5.7"/><circle cx="520.1" cy="526.7" r="5.5"/><circle cx="410.2" cy="537.9" r="5.3"/><circle cx="383" cy="549.1" r="5.1"/><circle cx="305.6" cy="560.3" r="4.9"/><circle cx="519.9" cy="571.4" r="4.7"/><rect x="157.1" y="582.6" width="9" height="9" transform="rotate(1.9 157.1 582.6)"/><circle cx="156.7" cy="593.8" r="4.3"/><circle cx="174.3" cy="605" r="4.1"/><rect x="81.4" y="616.1" width="7.9" height="7.9" transform="rotate(3.1 81.4 616.1)"/><circle cx="221.1" cy="627.3" r="3.8"/><circle cx="359.7" cy="638.5" r="3.6"/><rect x="442.3" y="649.7" width="6.8" height="6.8" transform="rotate(3.3 442.3 649.7)"/><circle cx="486.3" cy="660.8" r="3.2"/><circle cx="367.3" cy="672" r="3"/></g>
+<rect width="640" height="640" fill="url(#vprovenancepremiumabundanceaversion)"/>
+<rect width="640" height="640" filter="url(#nprovenancepremiumabundanceaversion)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nprovenancepremiumabundanceaversion)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

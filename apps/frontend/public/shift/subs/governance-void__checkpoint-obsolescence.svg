@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>governance-void/checkpoint-obsolescence</title>
+<defs>
+<linearGradient id="fgovernancevoidcheckpointobsolescence" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF007A"/><stop offset="0.42" stop-color="#E8006F"/>
+<stop offset="0.8" stop-color="#F2734A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="ggovernancevoidcheckpointobsolescence" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bgovernancevoidcheckpointobsolescence" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sgovernancevoidcheckpointobsolescence" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vgovernancevoidcheckpointobsolescence" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#39001F" stop-opacity="0"/>
+<stop offset="1" stop-color="#39001F" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="ngovernancevoidcheckpointobsolescence" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fgovernancevoidcheckpointobsolescence)"/>
+<rect width="640" height="640" fill="url(#ggovernancevoidcheckpointobsolescence)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bgovernancevoidcheckpointobsolescence)" filter="url(#sgovernancevoidcheckpointobsolescence)"/>
+<g fill="#39001F" stroke="#39001F" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="144" rx="490.7" ry="176.7" fill="none" stroke-width="48"/><rect x="319.2" y="320.7" width="20" height="20" transform="rotate(66.2 319.2 320.7)"/><rect x="278.6" y="330.4" width="19.5" height="19.5" transform="rotate(11 278.6 330.4)"/><rect x="334.3" y="340" width="19.1" height="19.1" transform="rotate(29.3 334.3 340)"/><rect x="347.1" y="349.7" width="18.6" height="18.6" transform="rotate(87.5 347.1 349.7)"/><rect x="267.8" y="359.4" width="18.2" height="18.2" transform="rotate(86.6 267.8 359.4)"/><rect x="331.5" y="369.1" width="17.7" height="17.7" transform="rotate(68 331.5 369.1)"/><rect x="306.9" y="378.7" width="17.3" height="17.3" transform="rotate(43.2 306.9 378.7)"/><rect x="240.2" y="388.4" width="16.8" height="16.8" transform="rotate(62.1 240.2 388.4)"/><rect x="317.7" y="398.1" width="16.4" height="16.4" transform="rotate(41.6 317.7 398.1)"/><rect x="296" y="407.8" width="15.9" height="15.9" transform="rotate(78.1 296 407.8)"/><rect x="247.1" y="417.4" width="15.5" height="15.5" transform="rotate(83.9 247.1 417.4)"/><rect x="386.4" y="427.1" width="15" height="15" transform="rotate(1.1 386.4 427.1)"/><rect x="315.5" y="436.8" width="14.5" height="14.5" transform="rotate(71.6 315.5 436.8)"/><rect x="309.1" y="446.5" width="14.1" height="14.1" transform="rotate(65 309.1 446.5)"/><rect x="415.1" y="456.2" width="13.6" height="13.6" transform="rotate(31.9 415.1 456.2)"/><rect x="313.1" y="465.8" width="13.2" height="13.2" transform="rotate(44.7 313.1 465.8)"/><rect x="365" y="475.5" width="12.7" height="12.7" transform="rotate(54.8 365 475.5)"/><rect x="375.5" y="485.2" width="12.3" height="12.3" transform="rotate(63.8 375.5 485.2)"/><rect x="301.6" y="494.9" width="11.8" height="11.8" transform="rotate(10.2 301.6 494.9)"/><rect x="316.4" y="504.5" width="11.4" height="11.4" transform="rotate(34.2 316.4 504.5)"/><rect x="453.8" y="514.2" width="10.9" height="10.9" transform="rotate(25.7 453.8 514.2)"/><rect x="291.3" y="523.9" width="10.5" height="10.5" transform="rotate(26.6 291.3 523.9)"/><rect x="351" y="533.6" width="10" height="10" transform="rotate(2.5 351 533.6)"/><rect x="417.1" y="543.2" width="9.5" height="9.5" transform="rotate(52.9 417.1 543.2)"/><rect x="397.8" y="552.9" width="9.1" height="9.1" transform="rotate(55.1 397.8 552.9)"/><rect x="169" y="562.6" width="8.6" height="8.6" transform="rotate(85.4 169 562.6)"/><rect x="210.2" y="572.3" width="8.2" height="8.2" transform="rotate(79.9 210.2 572.3)"/><rect x="136.2" y="581.9" width="7.7" height="7.7" transform="rotate(69 136.2 581.9)"/><rect x="202.6" y="591.6" width="7.3" height="7.3" transform="rotate(23.2 202.6 591.6)"/><rect x="280.7" y="601.3" width="6.8" height="6.8" transform="rotate(50.4 280.7 601.3)"/><rect x="414.3" y="611" width="6.4" height="6.4" transform="rotate(63.1 414.3 611)"/><rect x="254" y="620.6" width="5.9" height="5.9" transform="rotate(26.1 254 620.6)"/><rect x="528" y="630.3" width="5.5" height="5.5" transform="rotate(86.3 528 630.3)"/><rect x="291.5" y="640" width="5" height="5" transform="rotate(18.6 291.5 640)"/></g>
+<rect width="640" height="640" fill="url(#vgovernancevoidcheckpointobsolescence)"/>
+<rect width="640" height="640" filter="url(#ngovernancevoidcheckpointobsolescence)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#ngovernancevoidcheckpointobsolescence)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>friction-dividend/friction-reversal</title>
+<defs>
+<linearGradient id="ffrictiondividendfrictionreversal" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gfrictiondividendfrictionreversal" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bfrictiondividendfrictionreversal" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sfrictiondividendfrictionreversal" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vfrictiondividendfrictionreversal" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nfrictiondividendfrictionreversal" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#ffrictiondividendfrictionreversal)"/>
+<rect width="640" height="640" fill="url(#gfrictiondividendfrictionreversal)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bfrictiondividendfrictionreversal)" filter="url(#sfrictiondividendfrictionreversal)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="163.1" cy="341.6" r="55.5"/><path d="M 27.8 680 L 27.8 416.6 C 81.9 376.7 118.7 362.5 163.1 362.5 C 207.6 362.5 244.3 376.7 298.4 416.6 L 298.4 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="485.5" cy="391.2" r="87.8"/><path d="M 271.6 680 L 271.6 509.7 C 357.2 446.7 415.2 424.1 485.5 424.1 C 555.7 424.1 613.8 446.7 699.3 509.7 L 699.3 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vfrictiondividendfrictionreversal)"/>
+<rect width="640" height="640" filter="url(#nfrictiondividendfrictionreversal)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nfrictiondividendfrictionreversal)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

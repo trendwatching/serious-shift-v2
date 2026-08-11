@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>objective-moat/leakage-paradox</title>
+<defs>
+<linearGradient id="fobjectivemoatleakageparadox" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#C2C64F"/><stop offset="0.42" stop-color="#9A9A43"/>
+<stop offset="0.8" stop-color="#4E9A62"/><stop offset="1" stop-color="#EFFAB4"/>
+</linearGradient>
+<radialGradient id="gobjectivemoatleakageparadox" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bobjectivemoatleakageparadox" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#EFFAB4" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#EFFAB4" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#EFFAB4" stop-opacity="0"/>
+</linearGradient>
+<filter id="sobjectivemoatleakageparadox" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vobjectivemoatleakageparadox" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#20260A" stop-opacity="0"/>
+<stop offset="1" stop-color="#20260A" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nobjectivemoatleakageparadox" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#EFFAB4;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#fobjectivemoatleakageparadox)"/>
+<rect width="640" height="640" fill="url(#gobjectivemoatleakageparadox)"/>
+<polygon points="179.2,192 460.8,192 588.8,640 51.19999999999999,640" fill="url(#bobjectivemoatleakageparadox)" filter="url(#sobjectivemoatleakageparadox)"/>
+<g fill="#20260A" stroke="#20260A" fill-opacity="0.96" stroke-opacity="0.96"><ellipse cx="320" cy="185.9" rx="526.4" ry="189.5" fill="none" stroke-width="48"/><rect x="347.2" y="375.4" width="20" height="20" transform="rotate(24.9 347.2 375.4)"/><rect x="359" y="383.4" width="19.5" height="19.5" transform="rotate(46.4 359 383.4)"/><rect x="351" y="391.4" width="19.1" height="19.1" transform="rotate(16.6 351 391.4)"/><rect x="291.8" y="399.4" width="18.6" height="18.6" transform="rotate(54.3 291.8 399.4)"/><rect x="328.7" y="407.5" width="18.2" height="18.2" transform="rotate(50.2 328.7 407.5)"/><rect x="325.3" y="415.5" width="17.7" height="17.7" transform="rotate(58 325.3 415.5)"/><rect x="362.4" y="423.5" width="17.3" height="17.3" transform="rotate(46.8 362.4 423.5)"/><rect x="274.9" y="431.5" width="16.8" height="16.8" transform="rotate(44.1 274.9 431.5)"/><rect x="353" y="439.5" width="16.4" height="16.4" transform="rotate(44.8 353 439.5)"/><rect x="363.2" y="447.6" width="15.9" height="15.9" transform="rotate(31.4 363.2 447.6)"/><rect x="238.9" y="455.6" width="15.5" height="15.5" transform="rotate(39.8 238.9 455.6)"/><rect x="369.3" y="463.6" width="15" height="15" transform="rotate(47 369.3 463.6)"/><rect x="285.8" y="471.6" width="14.5" height="14.5" transform="rotate(63.6 285.8 471.6)"/><rect x="404.5" y="479.6" width="14.1" height="14.1" transform="rotate(67 404.5 479.6)"/><rect x="211.1" y="487.7" width="13.6" height="13.6" transform="rotate(62.7 211.1 487.7)"/><rect x="358.5" y="495.7" width="13.2" height="13.2" transform="rotate(76.6 358.5 495.7)"/><rect x="190.6" y="503.7" width="12.7" height="12.7" transform="rotate(82.2 190.6 503.7)"/><rect x="283.3" y="511.7" width="12.3" height="12.3" transform="rotate(24 283.3 511.7)"/><rect x="209.8" y="519.7" width="11.8" height="11.8" transform="rotate(61.6 209.8 519.7)"/><rect x="433.2" y="527.7" width="11.4" height="11.4" transform="rotate(22.7 433.2 527.7)"/><rect x="240.7" y="535.8" width="10.9" height="10.9" transform="rotate(51 240.7 535.8)"/><rect x="282.9" y="543.8" width="10.5" height="10.5" transform="rotate(22.5 282.9 543.8)"/><rect x="427.6" y="551.8" width="10" height="10" transform="rotate(87.9 427.6 551.8)"/><rect x="472.7" y="559.8" width="9.5" height="9.5" transform="rotate(84.3 472.7 559.8)"/><rect x="242.3" y="567.8" width="9.1" height="9.1" transform="rotate(7 242.3 567.8)"/><rect x="449.1" y="575.9" width="8.6" height="8.6" transform="rotate(8.9 449.1 575.9)"/><rect x="160.9" y="583.9" width="8.2" height="8.2" transform="rotate(23.2 160.9 583.9)"/><rect x="474" y="591.9" width="7.7" height="7.7" transform="rotate(53.1 474 591.9)"/><rect x="251.6" y="599.9" width="7.3" height="7.3" transform="rotate(54.6 251.6 599.9)"/><rect x="212.7" y="607.9" width="6.8" height="6.8" transform="rotate(71.6 212.7 607.9)"/><rect x="338.2" y="615.9" width="6.4" height="6.4" transform="rotate(73.9 338.2 615.9)"/><rect x="302.1" y="624" width="5.9" height="5.9" transform="rotate(24.8 302.1 624)"/><rect x="100.2" y="632" width="5.5" height="5.5" transform="rotate(48.5 100.2 632)"/><rect x="119.5" y="640" width="5" height="5" transform="rotate(57.2 119.5 640)"/></g>
+<rect width="640" height="640" fill="url(#vobjectivemoatleakageparadox)"/>
+<rect width="640" height="640" filter="url(#nobjectivemoatleakageparadox)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nobjectivemoatleakageparadox)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>

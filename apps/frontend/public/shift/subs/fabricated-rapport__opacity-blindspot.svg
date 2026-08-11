@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+<title>fabricated-rapport/opacity-blindspot</title>
+<defs>
+<linearGradient id="ffabricatedrapportopacityblindspot" x1="0" y1="0" x2="0.6" y2="1">
+<stop offset="0" stop-color="#FF6A1F"/><stop offset="0.42" stop-color="#E74707"/>
+<stop offset="0.8" stop-color="#F2A03A"/><stop offset="1" stop-color="#FDFF85"/>
+</linearGradient>
+<radialGradient id="gfabricatedrapportopacityblindspot" cx="46%" cy="30%" r="60%">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="bfabricatedrapportopacityblindspot" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#FDFF85" stop-opacity="0.42"/>
+<stop offset="0.55" stop-color="#FDFF85" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#FDFF85" stop-opacity="0"/>
+</linearGradient>
+<filter id="sfabricatedrapportopacityblindspot" x="-25%" y="-25%" width="150%" height="150%">
+<feGaussianBlur stdDeviation="22"/>
+</filter>
+<radialGradient id="vfabricatedrapportopacityblindspot" cx="50%" cy="40%" r="72%">
+<stop offset="0.5" stop-color="#3B1101" stop-opacity="0"/>
+<stop offset="1" stop-color="#3B1101" stop-opacity="0.58"/>
+</radialGradient>
+<filter id="nfabricatedrapportopacityblindspot" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="11" result="t"/>
+<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0 0 0 0"/>
+</filter>
+<style>.lit{fill:#FDFF85;stroke:none;fill-opacity:0.3}</style>
+</defs>
+<rect width="640" height="640" fill="url(#ffabricatedrapportopacityblindspot)"/>
+<rect width="640" height="640" fill="url(#gfabricatedrapportopacityblindspot)"/>
+<polygon points="128.00000000000003,0 435.20000000000005,0 537.6,640 25.600000000000023,640" fill="url(#bfabricatedrapportopacityblindspot)" filter="url(#sfabricatedrapportopacityblindspot)"/>
+<g fill="#3B1101" stroke="#3B1101" fill-opacity="0.72" stroke-opacity="0.72"><circle cx="189.5" cy="379.2" r="60.1"/><path d="M 43.1 680 L 43.1 460.3 C 101.7 417.2 141.4 401.8 189.5 401.8 C 237.5 401.8 277.3 417.2 335.8 460.3 L 335.8 680 Z"/></g><g fill="#3B1101" stroke="#3B1101" fill-opacity="1" stroke-opacity="1"><circle cx="425.2" cy="451.7" r="87.6"/><path d="M 211.7 680 L 211.7 570 C 297.1 507.1 355.1 484.6 425.2 484.6 C 495.3 484.6 553.2 507.1 638.6 570 L 638.6 680 Z"/></g>
+<rect width="640" height="640" fill="url(#vfabricatedrapportopacityblindspot)"/>
+<rect width="640" height="640" filter="url(#nfabricatedrapportopacityblindspot)" opacity="0.3" style="mix-blend-mode:multiply"/>
+<rect width="640" height="640" filter="url(#nfabricatedrapportopacityblindspot)" opacity="0.14" style="mix-blend-mode:screen"/>
+</svg>
