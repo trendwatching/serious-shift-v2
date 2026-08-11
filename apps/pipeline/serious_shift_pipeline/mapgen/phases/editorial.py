@@ -340,6 +340,34 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     """).fetchall():
         claim_ids_by_sub.setdefault(r['sub_trend_id'], []).append(r['claim_id'])
 
+    # Routed evidence is the contract: the publication gate accepts any citation
+    # in domain_sub_trend_claims, so the prompt must offer exactly that set. The
+    # domain pools are capped and re-derived each run, so a claim routed to a
+    # sub-shift — e.g. by a manual repair — can be absent from its domain's
+    # pool; dropping it here starved those pages while the gate kept demanding
+    # citations from it, and their editorial could never complete.
+    missing_ids = sorted({
+        cid for cids in claim_ids_by_sub.values() for cid in cids
+        if cid not in pool
+    })
+    if missing_ids:
+        placeholders = ','.join(['%s'] * len(missing_ids))
+        for r in conn.execute(f"""
+            SELECT c.id, c.claim_text, c.quote, c.consumer_implication,
+                   c.claim_type, c.signal_strength, c.specificity,
+                   c.has_statistic, c.statistic, c.domain AS claim_domain,
+                   t.name AS thinker, t.credibility_score, t.discovered AS thinker_discovered,
+                   s.title AS source_title, s.date_published, s.url AS source_url,
+                   s.source_type, s.confidence AS source_confidence
+            FROM claims c
+            JOIN thinkers t ON c.thinker_id = t.id
+            LEFT JOIN sources s ON c.source_id = s.id
+            WHERE c.id IN ({placeholders})
+        """, tuple(missing_ids)).fetchall():
+            c = dict(r)
+            if str(c.get('source_url') or '').startswith(('http://', 'https://')):
+                pool[c['id']] = c
+
     # One work item per KT, carrying its claims and its already-written sub-trends.
     work = []
     for d in DOMAINS:
