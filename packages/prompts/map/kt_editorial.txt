@@ -12,6 +12,9 @@ RULES — GENERAL
 - Use only events, dates, organizations, and numbers present in EVIDENCE. A source URL is provenance, not permission to infer beyond its claim.
 - Each evidence record carries an `id`. That number exists so you can cite it in `evidence_ids`. It must never appear in prose. Never write an id, a credibility score, a confidence value, or any other field name from the evidence records into a sentence a reader sees. Attribute by name and publication only: "Jakob Nielsen", "Import AI". Never "Jakob Nielsen (id:38735)".
 - Never describe the pipeline, the prompt, the evidence records, word limits, or your own constraints in prose. A reader must never see sentences like "the allowed evidence for this shift covers…" — if the evidence is thin, write less, not about the thinness.
+- Vary your sources across the page. One commentator or study must not front more than one module; if the same name would anchor two fields, find a second source for one of them or write that field without the anchor.
+- A company, product, or person the reader may not know must arrive with one clause of context and the publication that reported it ("Parth Sarthi, a solo developer profiled by Import AI, runs…"). A bare unfamiliar name is not evidence, it is noise.
+- A sentence built on a figure must say what the figure measures and who measured it, and must read as sense on its own. If you cannot state the number's subject and source in the same sentence, do not use the number.
 
 ALREADY CARRYING OTHER PAGES — do not center any of these:
 Each statistic or anecdote below is already the headline of another shift on the same map. You may mention one in passing if the evidence demands it, but do not build a panel, tension, or timeline step around it — a reader browsing two pages must not meet the same centerpiece twice.
@@ -20,10 +23,12 @@ Each statistic or anecdote below is already the headline of another shift on the
 DEK (the standfirst under the shift's name)
 - One or two sentences, at most 45 words: the shift stated with its sharpest consequence for the reader.
 - It sits directly beneath FRAMING on the page, so it must NOT restate the framing — no shared opening clause, no paraphrase. The framing says what the shift is; the dek says why the reader cannot ignore it.
+- The dek must not restate the page's headline statistic either. If the hero stat carries the point, the dek carries the consequence — a dek and a stat band saying the same thing is one module wearing two outfits.
 
 FROM / TO (the spine of the shift)
 - `from` = the assumption or arrangement that is ending. `to` = what replaces it.
 - One clause each, 12–24 words. They must be a genuine pair: the same variable, moved.
+- Direction is not negotiable: `from` is always the state that is ending, `to` is always what replaces it. Before returning, re-read every pair and confirm the arrow of time points from old to new; an inverted pair fails the page.
 - Right: from "Literacy treated as a stable baseline citizens reliably have" → to "Cognitive capacity treated as a variable that must be actively maintained, or it falls"
 - Wrong: a restatement, a cause/effect pair, or two unrelated observations.
 
@@ -31,10 +36,11 @@ WHATS_CHANGING / WHY_NOW (two panels the reader toggles between)
 - `whats_changing`: 2–3 sentences, at most 75 words. The mechanism of the shift: what is actually moving, and why the obvious reading is incomplete.
 - `why_now`: 2 sentences, at most 55 words. Why this is landing in this window rather than five years ago or five years hence. Name only converging forces present in the evidence.
 - These must not overlap. If `why_now` could be pasted into `whats_changing`, rewrite it.
+- Never open `why_now` with convergence boilerplate: "three forces converged", "a perfect storm", "several trends collided". Start from the specific mechanism or the specific event that opened this window. If two pages could share your opening clause, it is boilerplate.
 
 HUMAN_NEEDS
 - `unlocked`: the human need this shift genuinely satisfies. Steelman it — the reader must believe the appeal.
-- `threatened`: the need it puts at risk. Name the need, then the fear in the reader's own voice.
+- `threatened`: the need it puts at risk. Name the need, then the fear as the people inside this shift feel it — described, not addressed to the reader.
 - One or two sentences each, at most 40 words, starting with the need itself (e.g. "Cognitive relief: …").
 - Both are required. The page sets them side by side as a pair, so one without the other is a half-empty section and the module is dropped.
 
@@ -45,7 +51,7 @@ PULL_QUOTE (the editorial verdict, set immediately after From→To)
 - Wrong: "AI may have negative effects on human reasoning over time." (hedged, not quotable)
 
 THE TENSION
-- One sentence, at most 32 words and in first person, that a real person inside this shift could say out loud. It must contain the contradiction, not describe it.
+- One sentence, at most 32 words and in first person, that a real person inside this shift could say out loud. It must contain the contradiction, not describe it. This is the only first-person sentence on the page.
 - Whose voice depends on the domain. In Consumers it is a shopper; in Organizations an operator; in Economy or Society a citizen. Write whichever one this shift is actually about.
 - Right: "I use AI because it makes me more capable, but I'm starting to suspect it's making me less capable."
 - Wrong: "Consumers feel conflicted about AI." (describes rather than voices)
@@ -56,14 +62,15 @@ TIMELINE
 - Each step must be a different order of consequence, not the same claim escalated by adverbs.
 
 INDUSTRIES
-- Return one entry for EACH of these 16 TrendWatching sectors, in this exact order and with these exact names:
-  Beauty & Personal Care, Consumer Tech, Digital Tech, Entertainment, Fashion & Accessories, Financial Services, Food & Beverage, Government & Public Sector, Health & Wellbeing, Home & Living, Media & Publishing, Mobility & Transport, Nonprofit & Social Cause, Retail & Commerce, Travel & Hospitality, Work & Education
+- Return one entry for EACH of these 15 TrendWatching sectors, in this exact order and with these exact names:
+  Beauty & Personal Care, Consumer Tech, Digital Tech, Entertainment, Fashion & Accessories, Financial Services, Food & Beverage, Government & Public Sector, Health & Wellbeing, Home & Living, Mobility & Transport, Nonprofit & Social Cause, Retail & Commerce, Travel & Hospitality, Work & Education
 - One sentence each, at most 32 words: what this shift means for that sector specifically and where the commercial move is.
 - If a sector is genuinely peripheral to this shift, return an empty string "" as its text — the page simply skips it. Never write a sentence declaring the sector peripheral or naming a "residual stake"; filler that announces its own irrelevance fails publication.
 
 OPPORTUNITIES (opportunity territories)
 - 3–4 entries. Each is a `name` (2–4 words, a product or service category that does not yet exist at scale) and `text` of one sentence, at most 35 words.
 - These are commercial starting points, not restatements of the trend.
+- Do not build names on "agent", "agentic", or "AI" plus a noun ("Agent Concierge", "AI Provenance"). Name the human or commercial capability the territory sells; if the technology word is doing the naming, the territory has not been thought through. Across your 3–4 entries, no repeated first word.
 
 READ_TIME
 - Estimate honestly from the length of what you wrote, e.g. "5 min read".

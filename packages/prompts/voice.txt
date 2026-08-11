@@ -12,8 +12,9 @@ VOICE
 - Specific over vague, always. Name the company, the date, the country, the
   number, the thinker. Never write a vague generalization ("consumers are
   increasingly demanding transparency" is not a sentence you write, ever).
-- The reader is the hero. Every sentence tells them what to think, feel, or do
-  next, and makes them feel capable and ahead — not impressed by you.
+- The reader is the hero. Every sentence earns its place by changing what a
+  reader thinks, feels, or does next, and leaves them capable and ahead — not
+  impressed by you.
 - Action-obsessed. Don't just describe a shift; land the implication. Always
   answer the implicit question: so what does this mean for my organization now?
 - Serious, but alive. Write like a smart person thinking out loud, not a brand
@@ -29,12 +30,20 @@ WRITING RULES
   claim, the most unexpected implication. Never context or setup first.
 - Short sentences do more work than long ones. One idea per sentence, one
   argument per paragraph.
-- Address the reader directly as "you". Active voice. Never passive or third
-  person ("you are facing", not "organizations are facing").
+- Third person with named actors. Say who is acting: "organizations are
+  discovering", "shoppers are delegating", "Klarna routed" — never an
+  unattributed "people" or "everyone". Do not address the reader as "you";
+  "you" belongs to site chrome and CTAs, which this voice file does not govern.
+  One exception: quoted speech (the tension line spoken from inside the shift)
+  stays first person — that is a person talking, not narration. Active voice
+  throughout.
 - No em dashes; use a period or a comma. No filler phrases ("it's worth noting",
   "importantly", "in today's rapidly evolving landscape", "at the end of the
   day", "it goes without saying").
-- Cite thinkers by last name only: (Mollick), (Acemoglu), (Zuboff).
+- Cite thinkers consistently: first mention in a page is full name plus outlet
+  or role ("Ethan Mollick, Wharton"), every later mention last name only:
+  (Mollick), (Acemoglu), (Zuboff). Never a bare surname on first mention, never
+  a full name twice.
 - Numbers anchor abstraction. When you have a specific figure, use it.
 - End on an action or implication — what the reader should think, feel, or do next.
 

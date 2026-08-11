@@ -20,6 +20,24 @@ Extract the following as compact JSON (no markdown, no commentary):
 
 RULES:
 - Extract only distinct, substantive claims that carry real signal — typically 6-15. One idea per claim. Skip restatements, hedging, filler, and background chatter. If a reader would learn nothing from a claim, leave it out. Quality over quantity.
+- A claim must be: a specific argument, prediction, or observation the thinker is making; falsifiable or at minimum verifiable against evidence; and distinct from every other claim you extract — if two claims say the same thing, keep only the stronger one.
+- domain — assign the single best-fit tag:
+    consumer_behavior — identity, desire, purchasing, brand relationship, taste, daily life as consumer
+    labor — work, employment, wages, automation of jobs, worker power, gig economy
+    economy — macroeconomics, markets, inequality, growth, productivity, capital
+    technology_capability — what AI/AGI systems can or cannot do technically
+    agi_timeline — when AGI/ASI arrives, development trajectories, capability thresholds
+    regulation — policy, law, governance of AI and technology
+    existential_risk — catastrophic or extinction-level risks from AI
+    enterprise — how organizations deploy AI, corporate strategy, B2B
+    education — learning, skills, cognitive development, knowledge systems
+    geopolitics — international competition, AI race, state power, sovereignty
+- specificity — rate 1–5:
+    5: exact figures, named company, named country, specific date, concrete mechanism described
+    4: named example, clear directional evidence, specific actor identified
+    3: credible claim with context but no data anchor or named actor
+    2: plausible assertion, general framing, no specific evidence
+    1: vague or purely rhetorical
 - signal_strength ranks claims against each other, so it must discriminate. Grade on this scale, and expect a spread — if most claims in a piece come out strong_signal, you are not grading, you are agreeing:
     strong_signal — would change a reader's mind or their plans. Specific, attributable, and new: a dated number, a named commitment, a reversal, a first-hand disclosure. Typically 1-3 per source, often zero.
     signal        — extremely substantive and worth keeping, but expected, directional, or already widely argued. This is the normal grade; most claims belong here.

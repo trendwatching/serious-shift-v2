@@ -119,12 +119,17 @@ export function Header() {
       >
         <nav aria-label="Primary" style={{ padding: '8px var(--gutter) 26px', animation: 'ssRise 0.42s var(--ease-out)' }}>
           {MENU_LINKS.map((link) => {
+            // Only a row that declares `meta` gets the right-hand slot; a null
+            // declaration means "fill in the live shift count". The 5 Aug Miro
+            // review removed the descriptive metas from every other row.
             const body = (
               <>
                 <span className="t-display font-semibold tracking-[-0.01em]" style={{ fontSize: 'var(--t-nav)' }}>{link.label}</span>
-                <span className="ml-auto" style={{ fontSize: 'calc(var(--t-nav) * 0.6)', color: 'rgba(255,255,255,0.5)' }}>
-                  {link.meta ?? (meta.shiftCount ? `${meta.shiftCount} key shifts` : 'Every domain')}
-                </span>
+                {'meta' in link && (
+                  <span className="ml-auto" style={{ fontSize: 'calc(var(--t-nav) * 0.6)', color: 'rgba(255,255,255,0.5)' }}>
+                    {link.meta ?? (meta.shiftCount ? `${meta.shiftCount} key shifts` : 'Every domain')}
+                  </span>
+                )}
               </>
             )
             const props = {

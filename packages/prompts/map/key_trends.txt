@@ -7,31 +7,64 @@ From the evidence below, identify {{min_kts}}–{{max_kts}} distinct KEY TRENDS 
 
 Prefer FEWER, more distinct trends over more, thinner ones. Before returning, check every pair of your candidates: if two tell the same underlying story from different angles — the same mechanism, the same evidence base, the same "so what" — merge them into the stronger one. A reader who cannot say in one sentence how two trends differ has been given one trend twice. Never invent a trend the claims do not back.
 
+WHAT SYNTHESIS MEANS
+Synthesis is not summarizing. It is not finding the most common theme. It is not echoing what one thinker already said. Synthesis means holding two or more thinkers' claims together — including claims that tension or contradict each other — and finding the pattern that none of them named individually.
+
+Before naming any Key Trend, ask yourself:
+1. Which two or more thinkers' claims does this trend require? If you removed one thinker's evidence and the trend would still exist, it is probably a summary of that one thinker's view — not a synthesis.
+2. Is there disagreement in the evidence? Find the thinkers who agree on what is happening but disagree on what it means, or who see the same shift from opposite value positions. That gap is where the real trend lives.
+3. Would any individual thinker recognize this trend as already their own idea? If yes, go deeper. The synthesis should arrive at something no single source quite named.
+
 RULES FOR KEY TREND NAMES
 - 1–2 words. Short, intriguing, memorable. The name creates curiosity; the subtitle delivers the meaning. Alliteration works well but is not required.
+- Names feel coined, not described. They compress a new behavior or tension into a single concept that didn't exist before: not a headline, not a category, but the name for a thing that now needs a name. Favor compound words, portmanteaus, or unexpected two-word pairings — "Transumers", "Proof Premium", "Autonomy Tax" — over adjective + noun where the adjective is just a modifier ("Enhanced Trust", "New Dynamics", "Digital Shift").
+- Name what is changing, not what the domain is about. "Delegated Desire" names a shift (desire is being handed off). "AI Shopping" names a topic. Do not use the domain name in a trend name, and do not use words that could describe any trend anywhere: "Transformation", "Evolution", "Disruption", "Emergence".
 - Right: "Synthetic Trust", "Delegated Desire", "Proof Premium", "Silent Commerce"
 - Wrong: "AI Changes Consumer Behavior" (descriptive, not a name), "The Rise of Authenticity" (generic), "Trust Issues" (category label)
 - The audience is brand strategists and executives, not AI researchers. Name and subtitle must parse for a curious executive on first read. Never build a name on AI-insider jargon: no "Benchmark", "Eval", "Alignment", "Pacing", "Agentic", "Compute", "Open-Source/Open Parity", "Scaffolding", "Inference" or similar terms of art. If the shift is about one of those things, name the human or commercial consequence instead.
-- Every Key Trend must be distinct from the others — no overlapping trends.
+- Every Key Trend must be distinct from the others — no overlapping trends, and no two of your names sharing a noun. If you have "Trust Proxy" and "Trust Collapse", one is a sub-variant of the other: collapse them or differentiate them.
+- TEST: say the name out loud. Could it have been on a PowerPoint slide from 2019? Does it feel described rather than coined? Either way — rename it.
 
-TAKEN — these names already belong to other domains on this map. Do not reuse or closely echo any of them:
+TAKEN — these names already belong to other domains on this map. Do not reuse or closely echo any of them. Do not begin or end a name with a word that already begins or ends a TAKEN name ("Delegated X", "X Erosion", "X Gap" families count as echoes):
 {{taken}}
 
 RULES FOR SUBTITLES (mandatory — the name is never shown without one)
 - One complete, specific sentence. Super descriptive: explain exactly what the trend is. The subtitle carries the meaning the name deliberately withholds; if it is vague, the name has failed.
-- Write it as a journalist writes a subheading, not as a marketer.
+- Write it as a journalist writes a subheading, not as a marketer. Present tense, declarative, no hedging ("may be", "could potentially", "seems to be").
+- Anchor it in at least one specific: a named company, a named thinker, a named country, or a named technology or product — not a statistic; the stat has its own space on the page. Name WHAT is changing and WHO is affected.
+- Never open with a generic "As AI…" clause. Be specific about which capability, which company, which behavior.
 - Right: "When consumers rely on AI recommendations over brand reputation"
+- Right: "As Klarna routes the majority of its customer queries through AI, the human service agent is being repositioned from frontline worker to emotional specialist."
+- TEST: remove the trend name. If the subtitle could belong to a different trend, it is not specific enough to this shift.
+
+SELECTION — WHAT QUALIFIES AS A KEY TREND
+Before anything gets named, it must pass four tests. Failing any one means it is a sub-trend, a domain-level observation, or noise:
+1. DOMAIN INTEGRITY — does this trend belong specifically to this domain, or could it sit unchanged in another? A trend that is really about what institutions, governments, or employers are doing does not belong in Consumers, even if consumers are affected. Reject any trend that could be lifted and placed unchanged into a different domain.
+2. DECISION-MAKER URGENCY — read the trend as a senior CMO or Innovation Director would. It must carry a commercial or strategic consequence a decision-maker could build a response to, not just be true and interesting. Reject purely descriptive trends.
+3. DISTINCTNESS — for each pair of your trends: same underlying cause told at two magnifications is one trend plus a sub-trend. Merge or cut. If cutting one trend would leave no meaningful gap, cut it.
+4. KEY TREND vs SUB-TREND — a Key Trend is a broad structural shift several different things could be symptoms of. A specific manifestation of a broader shift already in your list is a sub-trend: demote it.
 
 RULES FOR CLAIM ASSIGNMENT
 - Assign each claim_id to the single Key Trend it best supports
 - Every claim that clearly fits a Key Trend should be assigned
 - Claims that don't fit cleanly may be omitted
+- Each Key Trend should draw on multiple thinkers. A Key Trend supported by only one thinker's claims is a red flag — it is probably not synthesized.
 
 Assign a velocity to each Key Trend — and grade the trends RELATIVE TO EACH OTHER. A response where most trends share one grade is not grading, it is agreeing; expect a spread across your set:
 - "breakout" = explosive growth, tipping point imminent (rare — at most one or two)
 - "accelerating" = clear momentum, adoption growing fast
 - "rising" = real signal, still building
 - "steady" = established, not accelerating
+
+COVERAGE CHECK BEFORE FINALIZING
+Ask: what would a sophisticated reader — a senior executive who has already thought carefully about AI — notice is missing? The list should together answer the most commercially urgent questions for decision-makers in this domain. If it cannot, check whether the evidence supports trends that were missed or whether existing trends need reframing to be more commercially specific. Do not invent trends the evidence does not back.
+
+FINAL CHECK BEFORE OUTPUT
+□ Does each trend pass all four selection tests?
+□ Does each name feel coined rather than described? If it reads as a topic header, rename.
+□ Does each subtitle contain a specific anchor (named thinker, company, country, or technology — not a statistic)?
+□ Are any two trends saying the same thing? Merge or cut.
+□ Does the full list together feel like a complete, non-redundant map of what is shifting in this domain?
 
 Return ONLY valid JSON — no preamble, no markdown fences:
 {"key_trends":[{"name":"Key trend name here","subtitle":"One specific sentence explaining exactly what this trend is","velocity":"<breakout|accelerating|rising|steady>","claim_ids":[123,456,789]}]}

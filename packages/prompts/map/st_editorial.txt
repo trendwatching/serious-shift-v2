@@ -13,6 +13,8 @@ RULES — GENERAL
 - Return one object per sub-trend, matching on `name` exactly as given. Do not add, drop, merge or rename sub-trends.
 - Each evidence record carries an `id`. That number exists so you can cite it in `evidence_ids` and `claim_id`. It must never appear in prose. Never write an id, a credibility score, a confidence value, or any other field name from the evidence records into a sentence a reader sees. Attribute by name and publication only: "Jakob Nielsen", "Import AI". Never "Jakob Nielsen (id:38735)".
 - Never describe the pipeline, the prompt, the evidence records, word limits, or your own constraints in prose. A reader must never see sentences like "the two allowed evidence records for this sub-trend cover…" — if the evidence is thin, write less, not about the thinness.
+- Vary your sources within each page. One commentator or study must not front more than one field; if the same name would anchor the lede and the stat, find a second source or drop the anchor from one of them.
+- A company, product, or person the reader may not know must arrive with one clause of context and the publication that reported it. A bare unfamiliar name is not evidence, it is noise.
 
 ALREADY CARRYING OTHER PAGES — do not center any of these:
 Each statistic or anecdote below is already the headline of another shift on the same map. You may mention one in passing if a sub-trend's evidence demands it, but do not build a lede, quote, stat, or timeline step around it — a reader browsing two pages must not meet the same centerpiece twice.
@@ -22,7 +24,7 @@ PER SUB-TRENDS FIELDS
 
 `lede` — one sentence and at most 35 words, the sharpest statement of what this sub-shift is. It is the first line the reader sees.
 
-`from` / `to` — the assumption that is ending, and what replaces it. One clause each, 12–24 words, a genuine pair (the same variable, moved).
+`from` / `to` — the assumption that is ending, and what replaces it. One clause each, 12–24 words, a genuine pair (the same variable, moved). Direction is not negotiable: `from` is always the old state, `to` is always the new one. Re-read every pair before returning and confirm the arrow of time points from old to new.
 
 `quote` — one short, quotable line of at most 18 words that names the uncomfortable truth of this sub-shift. Not attributed to anyone; it is the editorial voice landing a point.
   Right: "The floor was already falling. AI just removed the warning signs."
@@ -30,13 +32,13 @@ PER SUB-TRENDS FIELDS
 
 `stat` — the single strongest statistic in the evidence for this sub-shift, as `{"claim_id","value","text"}`.
   - `value`: the bare figure as displayed, short (e.g. "25%", "3×", "2:1", "18-34").
-  - `text`: one or two sentences explaining what it measures and why it matters.
+  - `text`: one or two sentences explaining what it measures and why it matters. It must say what the figure measures and who measured it, and read as sense on its own. It must add what the `lede` and `quote` do not — if the lede already makes the stat's point, take a different angle here.
   - `claim_id`: the exact ID of the evidence record containing the statistic. Source metadata is attached by code, never by you.
   - `value` MUST contain a numeral: a percentage, a count, a multiple, a currency amount, a ratio, a year, or a year range. "multi-hop", "majority", "most", "a handful" and "several" are not statistics.
   - If the evidence has no attributable figure with a numeral in it for this sub-shift, OMIT `stat` entirely rather than inventing one. Do not put a word where a number should be to fill the slot. A page with no stat band is correct; a stat band with no number is a bug.
 
 `whats_changing` — 2–3 sentences, at most 75 words, on the mechanism: what is moving and why the obvious reading is incomplete.
-`why_now` — 2 sentences, at most 55 words, on why this lands in this window. Name only converging forces present in the allowed evidence. Must not overlap `whats_changing`.
+`why_now` — 2 sentences, at most 55 words, on why this lands in this window. Name only converging forces present in the allowed evidence. Must not overlap `whats_changing`. Never open with convergence boilerplate ("three forces converged", "a perfect storm"); start from the specific mechanism or event that opened this window.
 
 `human_needs` — `{"unlocked","threatened"}`. The need this genuinely satisfies (steelmanned) and the need it puts at risk. One or two sentences and at most 40 words each, starting with the need itself. Both are required: the page sets them side by side as a pair, so one without the other is a half-empty section and the module is dropped.
 
@@ -46,7 +48,7 @@ PER SUB-TRENDS FIELDS
 
 `timeline` — `{"today","next","beyond"}` for 0–12 months, 1–3 years, 3–10 years. One or two sentences and at most 40 words each, each a different order of consequence. `today` is what is already true or already visible: the page carries a separate WHY NOW panel, so do not use this step to argue the sub-shift is timely.
 
-`territories` — 2–3 entries of `{"name","text"}`: commercial spaces this sub-shift opens that do not yet exist at scale. `name` is 2–4 words and `text` is one sentence of at most 35 words.
+`territories` — 2–3 entries of `{"name","text"}`: commercial spaces this sub-shift opens that do not yet exist at scale. `name` is 2–4 words and `text` is one sentence of at most 35 words. Do not build names on "agent", "agentic", or "AI" plus a noun; name the human or commercial capability the territory sells. No repeated first word across your entries.
 
 `evidence_ids` — 2–6 exact claim IDs from this sub-trend's ALLOWED EVIDENCE that directly support the editorial. Do not cite a sibling's claim.
 

@@ -19,6 +19,9 @@ would give them, LEAVE THEM OUT. A shorter list is correct; an invented or
 paraphrased quote is not. This is published under a real person's name, so
 anything in the `quote` field must be something they demonstrably said.
 
+Do not draw on your training knowledge of this thinker's published work or
+public positions; use only the evidence below.
+
 Return ONLY valid JSON:
 {"proponents":[{"name":"Name A","quote":"one QUOTE line, copied exactly"}],"skeptics":[{"name":"Name C","quote":"one QUOTE line, copied exactly"}]}
 

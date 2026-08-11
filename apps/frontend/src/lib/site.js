@@ -14,10 +14,9 @@
 /** The four domains, in reading order. Names/blurbs are overridden by the live
  *  document when it has them; these are the fallback and the deck ordering. */
 /*
- * `id` is the database id and the URL segment, so Organisations keeps its s.
- * `name` is what a reader sees, and the content spec is US spelling throughout.
- * The two disagreeing is deliberate: renaming the id would 404 every published
- * link and strand every `shift_refs` row.
+ * `id` is the database id and the URL segment, US-spelled to match the DB and
+ * every published URL since the 20260809 sphere-id migration ('organizations',
+ * not 'organisations'). `name` is what a reader sees; same spelling.
  *
  * `intro` is the "what's shifting right now" paragraph. It is authored in the
  * pipeline (`mapgen/config.py`) and served on the per-sphere fragment; this copy
@@ -64,18 +63,12 @@ export const CONTACT_URL = 'mailto:hello@trendwatching.com'
 export const WHATSAPP_URL = `${ABOUT_URL}#whatsapp`
 
 /*
- * The nav, exactly as the delivered build has it: six rows, each with a
- * right-aligned descriptor.
- *
- * A Miro sticky asked for the descriptors to be dropped; the later design build
- * still renders them, so they stay. They also earn their place — the shift count
- * is the only number on the site that tells a first-time reader how much is
- * behind the deck.
- *
- * `meta: null` on Shifts means "fill this in from the published totals". The
- * design writes the literal "52 key shifts"; a live site that says 52 while
- * serving 58 is worse than one that counts, so the Header substitutes the real
- * number and falls back to the plain label until the index has loaded.
+ * The nav: six rows, labels only. The 5 Aug 2026 Miro review ("no need for all
+ * this info!") dropped the right-aligned descriptors the delivered build drew;
+ * that supersedes the earlier decision to keep them. The Header still
+ * substitutes the live shift count into the Shifts row when `meta` is null and
+ * the index has loaded, so the one descriptor that carried real information
+ * survives as a count, not copy.
  *
  * Every row but Shifts resolves to the internal /about page, which carries all
  * five sections. The external HubSpot page remains the destination only for the
@@ -83,9 +76,9 @@ export const WHATSAPP_URL = `${ABOUT_URL}#whatsapp`
  */
 export const MENU_LINKS = [
   { label: 'Shifts', meta: null, href: '/', internal: true },
-  { label: 'Methodology', meta: 'How we track', href: '/about#methodology', internal: true },
-  { label: 'Subscribe', meta: 'One shift a day', href: '/about#subscribe', internal: true },
-  { label: 'Services', meta: 'Reports & workshops', href: '/about#services', internal: true },
-  { label: 'TrendWatching', meta: '20+ years', href: '/about#trendwatching', internal: true },
-  { label: 'About', meta: 'Why & who & what', href: '/about', internal: true },
+  { label: 'Methodology', href: '/about#methodology', internal: true },
+  { label: 'Subscribe', href: '/about#subscribe', internal: true },
+  { label: 'Services', href: '/about#services', internal: true },
+  { label: 'TrendWatching', href: '/about#trendwatching', internal: true },
+  { label: 'About', href: '/about', internal: true },
 ]

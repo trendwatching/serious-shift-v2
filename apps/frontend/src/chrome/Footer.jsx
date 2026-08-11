@@ -55,32 +55,42 @@ function Marquee() {
  * is a sibling of the canvas now and simply fills its parent, which is what a
  * footer does at every width without a single fixed number.
  */
-export function Footer() {
+/**
+ * `social` gates the trust line and client-logo rail. Sphere pages pass false —
+ * the 5 Aug Miro review asked for the social-proof band to come off those
+ * screens; the homepage keeps it.
+ */
+export function Footer({ social = true }) {
   return (
     <footer className="w-full">
-      <div
-        style={{
-          padding: '40px 24px 34px',
-          backgroundImage: 'var(--grad-yellow)',
-        }}
-      >
-        <p
-          className="t-display footer-inner text-center text-pretty"
-          style={{ fontSize: 'var(--t-trust)', fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }}
+      {social && (
+        <div
+          style={{
+            padding: '40px 24px 34px',
+            backgroundImage: 'var(--grad-yellow)',
+          }}
         >
-          TrendWatching and Serious Shift are trusted by 50,000+ members worldwide
-        </p>
-      </div>
+          <p
+            className="t-display footer-inner text-center text-pretty"
+            style={{ fontSize: 'var(--t-trust)', fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }}
+          >
+            TrendWatching and Serious Shift are trusted by 50,000+ members worldwide
+          </p>
+        </div>
+      )}
 
-      <Marquee />
+      {social && <Marquee />}
 
       <div style={{ padding: '52px 24px 56px', background: 'var(--color-darker)', color: '#fff' }}>
         <div className="footer-inner flex flex-col items-center" style={{ gap: 30 }}>
+        {/* 0.905 → 1.13 (same 2.892 aspect): the 5 Aug review flagged the
+            "Powered by TrendWatching" line inside the PNG as unreadable at the
+            old size. A re-cut asset with a larger byline is with design. */}
         <img
           src={LOGO} alt="Serious Shi(f)t, powered by TrendWatching"
           width={220} height={76}
           className="block object-contain"
-          style={{ height: 'calc(var(--bar-h) * 0.905)', width: 'calc(var(--bar-h) * 2.619)' }}
+          style={{ height: 'calc(var(--bar-h) * 1.13)', width: 'calc(var(--bar-h) * 3.268)' }}
         />
         {/* Dark ink, not white: white on #25D366 is 1.98:1 and unreadable.
             Ink is 8.96:1 and it is the same move the yellow pill already makes,

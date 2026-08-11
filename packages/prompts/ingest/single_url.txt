@@ -7,7 +7,33 @@ THINKER: {{thinker_name}}
 CONTENT:
 {{content}}
 
-Return compact JSON (no markdown):
-{"source":{"title":"...","date":"YYYY-MM-DD","summary":"3 sentences","consumer_implication":"1 sentence","source_type":"article/interview/talk/podcast/blog_post","signal_strength":"high/medium/low","novelty":"new_thinking/repeating_position/position_shift"},"claims":[{"claim_text":"One specific claim","claim_type":"prediction/analysis/opinion/fact","domain":"labor/consumer_behavior/technology_capability/economy/agi_timeline/regulation/existential_risk/enterprise","consumer_implication":"How this affects consumers","specificity":3,"quote":"direct quote if available"}],"predictions":[{"claim_text":"Falsifiable prediction","timeframe":"By YYYY","domain":"...","specificity":4,"consensus_alignment":0.5,"evaluation_date":"YYYY-MM-DD"}],"position_changes":[{"previous_position":"What they said before","new_position":"What they say now"}]}
+FIELD DEFINITIONS — read before scoring:
 
-Extract distinct, substantive claims (typically 5-12); skip filler and restatements. Flag any position changes compared to the positions above. Set novelty to "repeating_position" when restating a known view, "new_thinking" when genuinely new.
+SIGNAL STRENGTH — rate high/medium/low:
+- high: specific data point, named company or experiment, measurable outcome, post-2023 evidence, or falsifiable prediction with a timeframe
+- medium: credible directional claim with context, named example without hard data, expert judgment grounded in observable trend
+- low: speculative assertion, anecdotal or single-case evidence, general opinion without grounding
+
+SPECIFICITY — rate 1–5:
+- 5: exact figures, named company, named country, specific date, concrete mechanism described
+- 4: named example, clear directional evidence, specific actor identified
+- 3: credible claim with context but no data anchor or named actor
+- 2: plausible assertion, general framing, no specific evidence
+- 1: vague or purely rhetorical
+
+CONSENSUS ALIGNMENT — rate 0.0–1.0:
+- 1.0: widely accepted mainstream view, no serious disagreement
+- 0.7: broadly credible, minor dissent
+- 0.5: genuinely contested, expert opinion split
+- 0.3: contrarian position, argued against mainstream
+- 0.0: fringe or widely rejected view
+
+NOVELTY:
+- "new_thinking" — a claim or framing this thinker has not made before in this form
+- "repeating_position" — consistent with their established public stance
+- "position_shift" — meaningfully different from a previously held position (requires previous_position to be filled)
+
+Return compact JSON (no markdown):
+{"source":{"title":"...","date":"YYYY-MM-DD","summary":"3 sentences","consumer_implication":"1 sentence","source_type":"article/interview/talk/podcast/blog_post","signal_strength":"high/medium/low","novelty":"new_thinking/repeating_position/position_shift"},"claims":[{"claim_text":"One specific claim","claim_type":"prediction/analysis/opinion/fact","domain":"labor/consumer_behavior/technology_capability/economy/agi_timeline/regulation/existential_risk/enterprise/education/geopolitics","consumer_implication":"How this affects consumers","specificity":3,"has_statistic":false,"statistic":null,"quote":"direct quote if available, else null"}],"predictions":[{"claim_text":"Falsifiable prediction","timeframe":"By YYYY","domain":"...","specificity":4,"consensus_alignment":0.5,"evaluation_date":"YYYY-MM-DD"}],"position_changes":[{"previous_position":"What they said before","new_position":"What they say now"}]}
+
+Extract distinct, substantive claims (typically 5-12); skip filler and restatements. Set has_statistic true ONLY when the claim contains a specific, attributable number that appears in CONTENT; put that figure in "statistic", else null. Flag any position changes compared to the positions above. Set novelty to "repeating_position" when restating a known view, "new_thinking" when genuinely new.

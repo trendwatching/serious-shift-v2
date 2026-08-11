@@ -15,7 +15,7 @@
     "below is still what decides where it lands \u2014 apps/backend/src/innovations.rs",
     "mirrors these two lists as consts and a test fails if they drift."
   ],
-  "version": 6,
+  "version": 7,
   "$order_comment": [
     "Canonical reading order.",
     "The export sorts every module list by this, so changing the order here",
@@ -424,12 +424,11 @@
     "Government & Public Sector",
     "Health & Wellbeing",
     "Home & Living",
-    "Media & Publishing",
     "Mobility & Transport",
     "Nonprofit & Social Cause",
     "Retail & Commerce",
     "Travel & Hospitality",
     "Work & Education"
   ],
-  "$sectors_comment": "The 16 TrendWatching sectors. The industries module asks for one entry per sector, in this order; kt_editorial.txt must match this list."
+  "$sectors_comment": "The 15 TrendWatching sectors. The industries module asks for one entry per sector, in this order; kt_editorial.txt must match this list. Media & Publishing was removed 2026-08-11 per the editorial review on the Miro board."
 }

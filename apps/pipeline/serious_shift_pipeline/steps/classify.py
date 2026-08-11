@@ -60,19 +60,19 @@ BREAKER_SAMPLE = int(os.environ.get('SS_CLASSIFY_BREAKER_SAMPLE', '25'))
 #: when a shift is oversubscribed the editor's picks are the ones that survive.
 AUTO_SORT_BASE = 100
 
-# ── The 16 canonical sectors, for the industry facet ────────────────────────
+# ── The 15 canonical sectors, for the industry facet ────────────────────────
 SECTORS = [
     'Beauty & Personal Care', 'Consumer Tech', 'Digital Tech', 'Entertainment',
     'Fashion & Accessories', 'Financial Services', 'Food & Beverage',
     'Government & Public Sector', 'Health & Wellbeing', 'Home & Living',
-    'Media & Publishing', 'Mobility & Transport', 'Nonprofit & Social Cause',
+    'Mobility & Transport', 'Nonprofit & Social Cause',
     'Retail & Commerce', 'Travel & Hospitality', 'Work & Education',
 ]
 _SECTOR_BY_TOKEN = {s.split(' & ')[0].lower().replace(' ', '-'): s for s in SECTORS}
 
 
 def sector_of(slug: str) -> str:
-    """Upstream's industry slug → one of our 16 sectors, or ''.
+    """Upstream's industry slug → one of our 15 sectors, or ''.
 
     Substring rather than an exhaustive table: upstream's taxonomy is theirs to
     change, and a slug we cannot place should contribute nothing rather than
@@ -127,7 +127,7 @@ def _shift_doc(row: dict, scope: str, parent_ref=None) -> ShiftDoc:
         (tension.get('quote'), 1),
         (territories_text, 1),
         ((panels.get('whats_changing') or '')[:400], 1),
-        # The sector NAMES only. Their prose is 16 paragraphs and would swamp a
+        # The sector NAMES only. Their prose is 15 paragraphs and would swamp a
         # 200-word spine; it is reachable through the facet channel instead.
         (' '.join(sector_text), 1),
     ])

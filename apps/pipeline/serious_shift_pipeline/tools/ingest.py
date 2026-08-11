@@ -103,11 +103,13 @@ def write_to_db(conn, thinker_id, url, extracted):
         domain = cl.get("domain", "technology_capability")
         if domain not in DOMAIN_VALID:
             domain = "technology_capability"
+        has_stat = bool(cl.get("has_statistic", False))
         db.execute(conn, """INSERT INTO claims (source_id, thinker_id, claim_text, claim_type,
-            domain, consumer_implication, signal_strength, specificity, quote)
-            VALUES (%s,%s,%s,%s,%s,%s,'signal',%s,%s)""",
+            domain, consumer_implication, signal_strength, specificity, quote, has_statistic, statistic)
+            VALUES (%s,%s,%s,%s,%s,%s,'signal',%s,%s,%s,%s)""",
             (source_id, thinker_id, cl["claim_text"], cl.get("claim_type", "analysis"), domain,
-             cl.get("consumer_implication", ""), cl.get("specificity", 3), cl.get("quote", "")))
+             cl.get("consumer_implication", ""), cl.get("specificity", 3), cl.get("quote", "") or "",
+             has_stat, (cl.get("statistic") or "") if has_stat else ""))
         claim_count += 1
 
     conn.commit()

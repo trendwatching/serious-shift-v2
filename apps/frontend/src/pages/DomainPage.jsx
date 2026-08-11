@@ -98,7 +98,7 @@ export default function DomainPage() {
 
         {/* Inside the sheet — the design's own placement — but outside the
             gutter, so the bands reach the sheet's edges on their own. */}
-        <div style={{ marginTop: 26 }}><Footer /></div>
+        <div style={{ marginTop: 26 }}><Footer social={false} /></div>
       </div>
     </article>
   )
