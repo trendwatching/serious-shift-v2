@@ -242,9 +242,13 @@ def _generate_sub_editorial(items, *, describe, avoid_of=None):
         )
         for index, result in zip(pending, results):
             item = items[index]
+            # The model occasionally returns the sub_trends array bare instead
+            # of wrapped in {"sub_trends": [...]}; both carry the same entries.
+            entries = (result if isinstance(result, list)
+                       else (result or {}).get('sub_trends') or [])
             by_name = {
                 str(se.get('name', '')).strip().lower(): se
-                for se in ((result or {}).get('sub_trends') or []) if isinstance(se, dict)
+                for se in entries if isinstance(se, dict)
             }
             for sub in missing(index):
                 se = by_name.get(sub['name'].strip().lower())
