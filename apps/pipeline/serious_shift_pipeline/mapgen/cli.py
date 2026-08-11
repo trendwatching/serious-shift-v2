@@ -301,8 +301,8 @@ def main():
             'links': len(out.get('links', [])),
         }})
         print("✓  map written → documents['map']")
-        print(f'   {len(out["domains"])} domains · {len(out["key_trends"])} KTs · '
-              f'{len(out["sub_trends"])} sub-trends · {len(out["links"])} links')
+        print(f'   {len(out.get("domains", []))} domains · {len(out.get("key_trends", []))} KTs · '
+              f'{len(out.get("sub_trends", []))} sub-trends · {len(out.get("links", []))} links')
         print(f'   recorded as pipeline_runs stage=export run_id={run_id}')
         conn.close(); return
 
