@@ -81,13 +81,20 @@ test('the rendered name is quoted, and the breadcrumb trail is not', async ({ pa
  * origin in verify.spec.js.
  */
 test('every shift has its own link-preview card, and it is raster', async ({ page }) => {
-  const manifest = await page.request.get('/shift/og/delegated-discovery.jpg')
-    .catch(() => null)
-  // The build ships one card per shift; a 200 with real bytes is the check that
-  // matters, because a manifest entry with no file is a blank preview.
-  if (manifest) {
-    expect(manifest.status(), 'the card is served').toBe(200)
-    expect(Number(manifest.headers()['content-length'] ?? 1), 'and is not empty')
+  // Derived from the committed manifest rather than a pinned slug: a republish
+  // renames every shift, and a slug from the previous taxonomy asserts on a
+  // card that no longer exists. check-heroes.mjs already vets manifest↔disk;
+  // what only this test can see is whether the server hands the bytes over,
+  // because a manifest entry the server answers with nothing is a blank
+  // preview on every share of that shift.
+  const { default: og } = await import('../src/lib/heroes-og.json', { with: { type: 'json' } })
+  const cards = Object.entries(og)
+  expect(cards.length, 'the build ships at least one card').toBeGreaterThan(0)
+  for (const [slug, path] of cards) {
+    expect(path, `${slug}'s card is raster`).toMatch(/\.jpg$/)
+    const res = await page.request.get(path)
+    expect(res.status(), `${slug}'s card is served`).toBe(200)
+    expect(Number(res.headers()['content-length'] ?? 0), `${slug}'s card is not empty`)
       .toBeGreaterThan(1000)
   }
 })
