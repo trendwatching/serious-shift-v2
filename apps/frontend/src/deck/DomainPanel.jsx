@@ -4,9 +4,10 @@ import { pad2 } from '../lib/theme'
 /**
  * Every panel carries its sphere's artwork since the 11 Aug 2026 review asked
  * for imagery behind all four ("the spheres on the homepage don't have the
- * images in the background"). Society is the design's own asset; the other
- * three are generated in its mold by scripts/generate-sphere-bg.mjs (interim,
- * until the photo-illustration set lands — docs/sphere-image-prompts.md).
+ * images in the background"). All four are design's own human-made
+ * illustrations since the 12 Aug 2026 review (the "Serious Shift Homepage
+ * Animation" export), replacing the interim generated set — provenance in
+ * docs/sphere-image-prompts.md.
  *
  * All four therefore get the 0.12→0.42 scrim below. The earlier build kept
  * the three imageless panels scrim-free because a flat black over a bare
@@ -35,7 +36,10 @@ export default function DomainPanel({ domain, width, active, position, count, to
       role="group" aria-roledescription="slide" aria-label={`${domain.name}, ${position} of ${count}`}
       aria-hidden={!active} inert={!active ? '' : undefined}
     >
-      <div className="canvas flex h-full flex-col">
+      {/* `panel-canvas` is the desktop hook: a full-height desktop panel
+          centers this copy instead of stretching it top-and-bottom — the
+          same fix .intro-panel got, from the other direction. */}
+      <div className="panel-canvas canvas flex h-full flex-col">
         <div className="t-mono" style={{ fontSize: 11, letterSpacing: '0.08em', opacity: 0.9 }}>
           {domain.num} / {pad2(total)}
         </div>
@@ -49,9 +53,11 @@ export default function DomainPanel({ domain, width, active, position, count, to
 
         <p className="measure" style={{ '--measure': '290px', marginTop: 14, fontSize: 15, lineHeight: 1.5, opacity: 0.94 }}>{domain.blurb}</p>
 
-        {/* Pinned to the bottom: what is moving in this domain right now, as
-            opposed to the evergreen line above. */}
-        <div className="mt-auto flex flex-col" style={{ gap: 8 }}>
+        {/* Pinned to the bottom on a phone: what is moving in this domain
+            right now, as opposed to the evergreen line above. The desktop
+            layer swaps the auto margin for a fixed gap so the copy sits as
+            one centered group instead of splitting to the panel's edges. */}
+        <div className="panel-shifting mt-auto flex flex-col" style={{ gap: 8 }}>
           <span className="t-eyebrow" style={{ fontWeight: 800, color: domain.eyebrow }}>What’s shifting right now</span>
           <span className="measure text-pretty" style={{ fontSize: 14, lineHeight: 1.5, opacity: 0.94 }}>
             {domain.intro}

@@ -5,9 +5,11 @@
  * The shipped Society background (design's own asset) is the mold: a
  * single-hue duotone field, silhouetted people lit by the devices they hold,
  * a soft crowd behind them, fine network lines, and three glowing keyword
- * nodes naming the sphere's stakes. This draws the other three spheres in
- * that family — interim, Claude-crafted stand-ins until design replaces them
- * with the photo-illustration set (prompts in docs/sphere-image-prompts.md).
+ * nodes naming the sphere's stakes. This drew the other three spheres in
+ * that family as interim stand-ins. RETIRED 12 Aug 2026: design's own
+ * human-made illustration set landed (the "Serious Shift Homepage Animation"
+ * export) and now lives in public/shift/domain-*-bg.jpg — running this would
+ * overwrite it. Kept for the drawing technique, not for running.
  *
  * Deterministic: no randomness at runtime, same input → same JPEG bytes
  * modulo JPEG encoder wobble. Society is never overwritten.

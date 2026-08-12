@@ -268,5 +268,21 @@
     .nav-desktop { display: flex; }
     .nav-burger { display: none !important; }
 
+    /* A sphere panel is the full viewport height here, and its copy was
+       split to the edges: name at the top, intro and pill pinned to the
+       bottom by an auto margin, and a void between them that grew with the
+       screen. Same cure as .intro-panel above — the copy sits as one
+       centered group. `!important` for the same reason as .nav-burger: the
+       block carries the `mt-auto` utility. */
+    .panel-canvas { justify-content: center; }
+    .panel-shifting { margin-top: 52px !important; }
+
+    /* The sphere hero is a ~3:1 letterbox here painting portrait art;
+       `center top` showed the picture's top strip — sky, spotlight, a cart
+       icon — and cropped the people out. The figures sit mid-frame in all
+       four illustrations, so the band tracks them. Phones keep `top`: the
+       tall panel shows most of the picture anyway. */
+    .sphere-art { background-position: center 38%; }
+
   }
 }

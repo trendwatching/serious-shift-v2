@@ -370,3 +370,20 @@
     display: none;
   }
 }
+
+@layer components {
+  /* Deck-panel geometry the desktop layer re-tunes. Bottom padding is a class
+     so the 74 → 110px desktop override can actually win — it spent its first
+     weeks losing to an inline `padding` shorthand on the panel and doing
+     nothing. */
+  .intro-panel {
+    padding-bottom: 74px;
+  }
+
+  /* The sphere hero's artwork. `top` suits a tall phone panel that shows most
+     of the picture; the desktop layer re-aims the letterbox at the figures
+     mid-frame. On the class for the same reason as the padding above. */
+  .sphere-art {
+    background-position: center top;
+  }
+}

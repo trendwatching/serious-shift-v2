@@ -56,9 +56,10 @@ function Marquee() {
  * footer does at every width without a single fixed number.
  */
 /**
- * `social` gates the trust line and client-logo rail. Sphere pages pass false —
- * the 5 Aug Miro review asked for the social-proof band to come off those
- * screens; the homepage keeps it.
+ * `social` gates the trust line and client-logo rail. Every page shows them
+ * since the 12 Aug 2026 review asked for the band back on the sphere pages,
+ * reversing the 5 Aug "no social proof on those screens" note. The prop stays
+ * because the next flip of this decision should be a one-caller change again.
  */
 export function Footer({ social = true }) {
   return (

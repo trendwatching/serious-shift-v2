@@ -161,11 +161,13 @@
      breadcrumb on the site inherited the 20px error. Everything INSIDE the
      bar reads `--bar-h`, so the logo and the hamburger grow with the band
      rather than rattling around in it. */
-  /* Retargeted from a 116px ceiling, which read as too heavy a band on a
-     desktop — the bar is chrome, and at 116 it was taking more of the screen
-     than the thing it sits above deserves. The FLOOR is untouched, so the
-     phone is still exactly 84px with a 74px lock-up. */
-  --bar-h: clamp(84px, 79.882px + 1.048vw, 100px);
+  /* Retargeted twice: 116px → 100px (too heavy a band on a desktop), then
+     100px → 90px on the 12 Aug 2026 review ("a bit too tall"). The slope is
+     re-derived each time so the ramp still rises through 768/1280/1920 and
+     plateaus by then — e2e/scale.spec.js pins exactly that shape. The FLOOR
+     is untouched both times, so the phone is still exactly 84px with a 74px
+     lock-up. */
+  --bar-h: clamp(84px, 80px + 0.6vw, 90px);
   --topbar: calc(max(0px, env(safe-area-inset-top)) + var(--bar-h));
 
   /* ── Per-domain gradients ─────────────────────────────────────────────

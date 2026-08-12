@@ -7,9 +7,10 @@ import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Loading, Missing, Unavailable } from './states'
 
-// Society is the design's own asset; the other three are generated in its
-// mold by scripts/generate-sphere-bg.mjs (interim, until the photo-
-// illustration set lands — prompts in docs/sphere-image-prompts.md).
+// All four are design's own human-made illustrations, taken from the
+// "Serious Shift Homepage Animation" export on the 12 Aug 2026 review —
+// replacing the interim generated set (scripts/generate-sphere-bg.mjs,
+// retired; provenance in docs/sphere-image-prompts.md).
 const HERO_IMAGE = {
   society: '/shift/domain-society-bg.jpg',
   economy: '/shift/domain-economy-bg.jpg',
@@ -55,9 +56,12 @@ export default function DomainPage() {
         style={{ padding: 'calc(var(--topbar) + 68px) 0 74px' }}
       >
         {photo && (
+          /* Position lives on .sphere-art, not inline — the desktop layer
+             re-aims the letterbox at the figures mid-frame, and an inline
+             value would win that fight and pin every width to `top`. */
           <span
-            aria-hidden="true" className="absolute z-0"
-            style={{ inset: -2, backgroundImage: cssUrl(photo), backgroundSize: 'cover', backgroundPosition: 'center top' }}
+            aria-hidden="true" className="sphere-art absolute z-0"
+            style={{ inset: -2, backgroundImage: cssUrl(photo), backgroundSize: 'cover' }}
           />
         )}
         <span
@@ -107,7 +111,7 @@ export default function DomainPage() {
 
         {/* Inside the sheet — the design's own placement — but outside the
             gutter, so the bands reach the sheet's edges on their own. */}
-        <div style={{ marginTop: 26 }}><Footer social={false} /></div>
+        <div style={{ marginTop: 26 }}><Footer /></div>
       </div>
     </article>
   )

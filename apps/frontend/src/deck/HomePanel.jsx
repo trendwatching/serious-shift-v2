@@ -20,8 +20,11 @@ export default function HomePanel({ width, active, count, domains, onJump }) {
 
   return (
     <div
+      // Bottom padding lives on the class, not inline — the desktop layer
+      // overrides it (74 → 110px) and an inline shorthand silently won that
+      // fight for as long as it existed, leaving the rule inert.
       className="intro-panel relative box-border flex h-full shrink-0 flex-col overflow-hidden bg-white"
-      style={{ width, padding: '30px 24px 74px' }}
+      style={{ width, paddingTop: 30, paddingInline: 24 }}
       role="group" aria-roledescription="slide" aria-label={`Introduction, 1 of ${count}`}
       aria-hidden={!active} inert={!active ? '' : undefined}
     >

@@ -1,5 +1,11 @@
 # Sphere background images — generation prompts
 
+> **Superseded 2026-08-12.** Design's own human-made illustration set landed via the
+> "Serious Shift Homepage Animation" export and now ships as `public/shift/domain-*-bg.jpg`
+> (society 884×791, the other three ~1200×1550 portrait, recompressed to JPEG q80 ≤1600px).
+> `scripts/generate-sphere-bg.mjs` is retired — running it would overwrite the delivered art.
+> Everything below is kept as the record of the interim generated set and its art direction.
+
 No literal image-generation prompt existed on the Miro board (full sweep, 2026-08-12); what the
 board gives is an art direction: Reinier's 2026-08-04 selection of **Abstract & Conceptual
 Surrealism + Mid-Century Realism** from the Frame 7 moodboard, with the constraints "NOT AI
