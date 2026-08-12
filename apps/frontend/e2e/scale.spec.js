@@ -50,9 +50,15 @@ test('the chrome scales with the display, and stops', async ({ page }) => {
   expect(at[2560].bar).toBe(at[1920].bar)
 
   // The lock-up is a fraction of the band, so it tracks it rather than
-  // rattling around inside a bar that grew without it.
-  for (const w of [393, 768, 1280, 1920]) {
+  // rattling around inside a bar that grew without it. The fraction differs
+  // by chrome: phones keep the design's 74-in-84 lock-up, while the desktop
+  // layer drops it to 62% so it sits at nav-entry scale beside the
+  // spelled-out menu rather than reading as a billboard.
+  for (const w of [393, 768]) {
     expect(at[w].logo / at[w].bar).toBeCloseTo(74 / 84, 1)
+  }
+  for (const w of [1280, 1920]) {
+    expect(at[w].logo / at[w].bar).toBeCloseTo(0.62, 1)
   }
 })
 

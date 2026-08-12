@@ -369,6 +369,15 @@
   .nav-desktop {
     display: none;
   }
+
+  /* The header lock-up. A fraction of the band (74×214 in an 84px bar), and a
+     CLASS rather than an inline style so the desktop layer can shrink it —
+     spelled-out nav entries beside a phone-scaled logo read as chrome from two
+     different sites. 2.548 / 0.881 keeps the PNG's own 2.892 aspect. */
+  .brand-logo {
+    height: calc(var(--bar-h) * 0.881);
+    width: calc(var(--bar-h) * 2.548);
+  }
 }
 
 @layer components {

@@ -65,19 +65,18 @@ export const CONTACT_URL = 'mailto:hello@trendwatching.com'
 export const WHATSAPP_URL = 'https://chat.whatsapp.com/EFptoaGlMau7sNog3onRP2?s=cl&p=i&ilr=0'
 
 /*
- * The nav: six rows, labels only. The 5 Aug 2026 Miro review ("no need for all
+ * The nav: five rows, labels only. The 5 Aug 2026 Miro review ("no need for all
  * this info!") dropped the right-aligned descriptors the delivered build drew;
- * that supersedes the earlier decision to keep them. The Header still
- * substitutes the live shift count into the Shifts row when `meta` is null and
- * the index has loaded, so the one descriptor that carried real information
- * survives as a count, not copy.
+ * that supersedes the earlier decision to keep them. The Shifts row went in the
+ * 13 Aug pass: it pointed at `/`, which the logo already covers and which the
+ * router's same-route guard turns into a no-op from the home deck — a nav item
+ * that visibly did nothing.
  *
- * Every row but Shifts resolves to the internal /about page, which carries all
- * five sections. The external HubSpot page remains the destination only for the
+ * Every row resolves to the internal /about page, which carries all five
+ * sections. The external HubSpot page remains the destination only for the
  * deep links the About copy itself makes.
  */
 export const MENU_LINKS = [
-  { label: 'Shifts', meta: null, href: '/', internal: true },
   { label: 'Methodology', href: '/about#methodology', internal: true },
   { label: 'Subscribe', href: '/about#subscribe', internal: true },
   { label: 'Services', href: '/about#services', internal: true },

@@ -11,24 +11,18 @@
  * 1120px grids twice their width — with a 660px hero spanning the full viewport
  * above them and a breadcrumb pinned to the far top-left corner.
  *
- * So the layer is built on two widths and everything lines up with one of them:
+ * So the layer is built on ONE measure and everything lines up with it:
  *
- *   --col   the reading column — prose and single-focus blocks
- *   --wide  lists and grids, the bands, and the hero's inner content
+ *   --wide  every block — prose, lists, grids, the bands, and the hero's
+ *           inner content
  *
- * WHICH BLOCK GETS WHICH is a rule, not a per-component choice, because leaving
- * it to each module is what produced a page that changed width five times in
- * eight blocks:
- *
- *   column   prose and one thing to read — dek, lede, rich_text, pull_quote,
- *            peel_tabs, from_to, from_to_solid, signals / counter_signals
- *   wide     anything that is a LIST or a GRID — sub_shift_list, timeline,
- *            industries, territories, innovations, voices, evidence,
- *            related_shifts, human_needs
- *   bleed    full-width bands — stat_band, tension_band
- *
- * `--wide` is `--col` plus 160px, so the step is 80px per side and both are
- * centred on the same axis. That is what makes the page read as a column.
+ * There USED to be a second, narrower `--col` for prose, with lists and bands
+ * stepping out 80px per side. The 13 Aug 2026 review called the two-measure
+ * page ugly — blocks alternating between widths read as a ragged edge, not a
+ * rhythm — so the canvas itself now takes `--wide` and the `.widen` / `.bleed`
+ * breakouts collapse to zero. The classes stay in the markup: they still carry
+ * the grid/rail re-shapes below, and they keep the escape hatch open if the
+ * two measures ever come back.
  *
  * scripts/check-layers.mjs fails the build if `md:` or `lg:` appears anywhere
  * under src/ outside this file.
@@ -49,43 +43,34 @@
 
   @media (min-width: 64rem) {
     :root {
-      /* ══ The two measures, and the ONE step between them ═══════════════
-       * Both of these are CONTENT widths. That distinction is the bug this
-       * replaces: `--col` used to be a border box carrying the gutter as
-       * padding while `--wide` was a raw width, so the two were never
-       * comparable. The note here claimed a 1.4x contrast; the real one was
-       * 1.78x at 1440 and 2.03x at 1920, because the gutter ramp ate into
-       * `--col` while `--wide` grew away from it. A page alternating between
-       * them stepped 230px per side at 1440 and 300px at 1920 — five width
-       * changes in eight blocks on a Society key shift, three of them single
-       * blocks marooned between wide ones.
+      /* ══ The ONE measure ════════════════════════════════════════════════
+       * A CONTENT width — the gutter rides on top of it, never inside it.
+       * That distinction is the bug an earlier version had: a border-box
+       * measure eats the gutter ramp and drifts against a raw one.
        *
-       * `--wide` is now DERIVED from `--col` rather than given its own ramp,
-       * which is the whole point: the step is a constant 80px per side at
-       * every viewport and the two cannot drift apart again.
+       * `--col` remains the ramped base (660 → 720) and `--wide` is derived
+       * from it, exactly as when the two were separate measures — only now
+       * every block takes `--wide`:
        *
-       *   1024   660 / 820      1440   688 / 848      1920   720 / 880
+       *   1024   820      1440   848      1920   880
        *
-       * The 720px cap on the reading measure is what keeps prose inside a
-       * comfortable line length; body copy itself stays off the ramp. The
-       * trade is that rails run 3-up instead of 4-up — each card is LARGER
-       * (275px at 1440, against 254 before), there are simply fewer per row.
+       * The viewport `min()` is the phone-landscape / small-laptop guard: the
+       * measure never exceeds the window minus its gutters.
        * ------------------------------------------------------------------ */
       --col: clamp(660px, 591.43px + 6.7vw, 720px);
       --wide: min(calc(var(--col) + 160px), calc(100vw - 2 * var(--gutter)));
     }
 
-    /* `--col` is the CONTENT width, so the box has to carry the gutter on top
-       of it. Setting `max-width: var(--col)` is what made the two measures
-       incommensurable in the first place. */
-    .canvas { max-width: calc(var(--col) + 2 * var(--gutter)); }
+    /* The box carries the gutter ON TOP of the content width. Setting
+       `max-width: var(--wide)` alone would shrink the content by two gutters
+       and misalign it against every `.widen`/`.bleed` block. */
+    .canvas { max-width: calc(var(--wide) + 2 * var(--gutter)); }
 
-    /* A wide block has to BREAK OUT of the canvas, not merely be allowed to be
-       wider than it: `max-width` alone can never exceed the parent's width, so
-       an earlier version left every rail at the canvas content box and the
-       widening silently did nothing. `100%` here is that content box, so the
-       margins go negative by exactly half the difference and the block stays
-       centred on the same axis as the prose. */
+    /* With the canvas itself on `--wide`, this breakout now computes to a 0
+       margin — the block simply fills the content box. The rule stays because
+       it is what guarantees a `.widen`/`.bleed` block sits on the canvas axis
+       whatever the canvas measures, and it is the working escape hatch if a
+       narrower reading column ever returns. */
     .widen,
     .bleed {
       width: var(--wide);
@@ -245,16 +230,17 @@
     .stat-surface > :last-child { max-width: 620px; }
 
     /* The breadcrumb floats over the hero at the gutter on a phone, which puts
-       it in the far corner of a wide screen. It rides the reading column. */
+       it in the far corner of a wide screen. It rides the page measure, so its
+       left edge is the content's left edge. */
     .crumb-float {
       /* Released: the pills were capped at 112/150px so a long sphere name would
          not push the trail off a phone. There is room here. */
       --crumb-cap: none;
       left: 50%;
-      transform: translateX(calc(var(--col) / -2));
+      transform: translateX(calc(var(--wide) / -2));
       /* The trail stops being truncated the moment there is room for it —
          "DELEGATE…" was a phone constraint applied to a 1440px screen. */
-      max-width: var(--col);
+      max-width: var(--wide);
     }
 
     /* Both needs cards stay readable: the collapsed one was a 100px sliver
@@ -267,6 +253,30 @@
        `flex` utility and utilities outrank this layer. */
     .nav-desktop { display: flex; }
     .nav-burger { display: none !important; }
+
+    /* Entries rest at 80% and light to full white with an underline — the bar
+       had no hover state at all, so nothing on it read as clickable. Opacity,
+       not color: the links carry `!text-white`, which no layer outranks. */
+    .nav-desktop a {
+      opacity: 0.8;
+      text-underline-offset: 7px;
+      text-decoration-thickness: 1.5px;
+      transition: opacity 0.25s var(--ease-out);
+    }
+    .nav-desktop a:hover,
+    .nav-desktop a:focus-visible {
+      opacity: 1;
+      text-decoration-line: underline;
+    }
+
+    /* The phone keeps the 88%-of-the-band lock-up (components.css); beside
+       spelled-out nav entries that read as a billboard, so here it drops to
+       62% — ~53px against 74. Same 2.892 aspect, still a fraction of the band
+       so it tracks the chrome, not the viewport. */
+    .brand-logo {
+      height: calc(var(--bar-h) * 0.62);
+      width: calc(var(--bar-h) * 1.793);
+    }
 
     /* A sphere panel is the full viewport height here, and its copy was
        split to the edges: name at the top, intro and pill pinned to the

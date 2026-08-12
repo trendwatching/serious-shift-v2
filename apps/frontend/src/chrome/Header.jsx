@@ -18,13 +18,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from '../lib/router'
 import { MENU_LINKS } from '../lib/site'
-import { useDomains } from '../lib/useDomains'
 
 const LOGO = '/shift/serious-shift-logo-white.png'
 
 export function Header() {
   const [open, setOpen] = useState(false)
-  const { meta } = useDomains()
   const dialogRef = useRef(null)
   const triggerRef = useRef(null)
 
@@ -71,13 +69,15 @@ export function Header() {
               74×214 in an 84px bar, so it keeps 88% of the band's height and
               its own 2.892 aspect at every width — which is what stops a
               214px logo from becoming a stamp in the corner of a 27" display.
-              The width/height attributes stay: they give the browser the ratio
-              to hold before the PNG arrives. */}
+              The sizing lives on `.brand-logo` (components.css), NOT inline,
+              so the desktop layer can shrink it — an inline style would beat
+              every layer and check-layers.mjs rejects it. The width/height
+              attributes stay: they give the browser the ratio to hold before
+              the PNG arrives. */}
           <img
             src={LOGO} alt="Serious Shi(f)t, powered by TrendWatching"
             width={214} height={74} draggable="false"
-            className="block object-contain"
-            style={{ height: 'calc(var(--bar-h) * 0.881)', width: 'calc(var(--bar-h) * 2.548)' }}
+            className="brand-logo block object-contain"
           />
         </Link>
 
@@ -85,7 +85,7 @@ export function Header() {
             12 Aug 2026 Miro review. `.nav-desktop` is display:none until the
             desktop layer (styles/desktop.css) shows it and hides the burger,
             so phones keep the dropdown exactly as it was. */}
-        <nav aria-label="Primary" className="nav-desktop items-center" style={{ gap: 30 }}>
+        <nav aria-label="Primary" className="nav-desktop items-center" style={{ gap: 36 }}>
           {MENU_LINKS.map((link) => {
             const props = {
               className: 't-display font-semibold !text-white',
@@ -135,18 +135,8 @@ export function Header() {
       >
         <nav aria-label="Primary" style={{ padding: '8px var(--gutter) 26px', animation: 'ssRise 0.42s var(--ease-out)' }}>
           {MENU_LINKS.map((link) => {
-            // Only a row that declares `meta` gets the right-hand slot; a null
-            // declaration means "fill in the live shift count". The 5 Aug Miro
-            // review removed the descriptive metas from every other row.
             const body = (
-              <>
-                <span className="t-display font-semibold tracking-[-0.01em]" style={{ fontSize: 'var(--t-nav)' }}>{link.label}</span>
-                {'meta' in link && (
-                  <span className="ml-auto" style={{ fontSize: 'calc(var(--t-nav) * 0.6)', color: 'rgba(255,255,255,0.5)' }}>
-                    {link.meta ?? (meta.shiftCount ? `${meta.shiftCount} key shifts` : 'Every domain')}
-                  </span>
-                )}
-              </>
+              <span className="t-display font-semibold tracking-[-0.01em]" style={{ fontSize: 'var(--t-nav)' }}>{link.label}</span>
             )
             const props = {
               onClick: close,

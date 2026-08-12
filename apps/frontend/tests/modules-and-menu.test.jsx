@@ -62,21 +62,20 @@ describe('modules', () => {
 })
 
 describe('header navigation', () => {
-  it('opens the six-item dropdown and restores focus when it closes', async () => {
+  it('opens the five-item dropdown and restores focus when it closes', async () => {
     const user = userEvent.setup()
     render(<MemoryRouter><Header /></MemoryRouter>)
     const trigger = screen.getByRole('button', { name: 'Open navigation' })
     await user.click(trigger)
 
     const dialog = screen.getByRole('dialog', { name: 'Site navigation' })
+    // No Shifts row: it pointed at `/`, which the logo already covers and the
+    // router's same-route guard made a visible no-op (13 Aug 2026 review).
+    // Its live-count meta slot went with it — the 5 Aug Miro review had
+    // already removed the descriptor column from every other row.
     expect(within(dialog).getAllByRole('link').map((l) => l.querySelector('span').textContent))
-      .toEqual(['Shifts', 'Methodology', 'Subscribe', 'Services', 'TrendWatching', 'About'])
-    // The 5 Aug Miro review removed the descriptor column ("no need for all
-    // this info!"); only the Shifts row keeps its meta slot, which falls back
-    // to "Every domain" until the live shift count arrives. This asserted the
-    // old "How we track" descriptor long after site.js dropped it.
-    expect(within(dialog).queryByText('How we track')).toBeNull()
-    expect(within(dialog).getByText('Every domain')).toBeTruthy()
+      .toEqual(['Methodology', 'Subscribe', 'Services', 'TrendWatching', 'About'])
+    expect(within(dialog).queryByText('Every domain')).toBeNull()
 
     fireEvent.keyDown(document, { key: 'Escape' })
     await waitFor(() => expect(trigger).toHaveFocus())

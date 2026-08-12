@@ -315,15 +315,20 @@
    * blue. The one module on the page whose whole job is to be loud was the one
    * module that ignored the sphere.
    *
-   * Rebuilt as layered radials in the sphere's own hues, in the same
-   * composition as the artwork: deep at the top-left, hot bloom low and centre,
-   * the deep tone closing the right. The grain that made the JPG feel printed
-   * comes back as a tiled turbulence overlay in components.css, so this stays a
-   * token that follows [data-domain] rather than an asset per sphere.
+   * Rebuilt in the sphere's own hues: one hot bloom in the top-left corner
+   * over a diagonal mid-to-deep ramp. The first version stacked THREE radials,
+   * and every one of them faded to bare `transparent` — which in sRGB is
+   * transparent BLACK, so each fade travelled through grey and drew a dark
+   * ring around its own blob; three rings crossing read as stains, not light
+   * (13 Aug 2026 review: "blobby"). So: fades end at alpha-zero of the SAME
+   * hue via color-mix, never bare `transparent`, and one bloom is all there
+   * is. The grain that made the JPG feel printed comes back as a tiled
+   * turbulence overlay in components.css, so this stays a token that follows
+   * [data-domain] rather than an asset per sphere.
    * ------------------------------------------------------------------- */
   --grad-stat:
-    radial-gradient(120% 140% at 18% 0%, var(--a) 0%, transparent 58%),
-    radial-gradient(90% 120% at 52% 108%, var(--a-hot) 0%, transparent 62%),
-    radial-gradient(80% 130% at 100% 40%, var(--a-deep) 12%, transparent 72%),
-    linear-gradient(104deg, var(--a-deep) 0%, var(--a) 48%, var(--a-deep) 100%);
+    radial-gradient(140% 170% at 15% -10%,
+      color-mix(in srgb, var(--a-hot) 80%, var(--a)) 0%,
+      color-mix(in srgb, var(--a-hot), transparent 100%) 62%),
+    linear-gradient(115deg, var(--a) 0%, var(--a-deep) 78%, var(--a-deep) 100%);
 }
