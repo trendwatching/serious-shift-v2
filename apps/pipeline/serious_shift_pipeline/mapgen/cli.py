@@ -100,10 +100,8 @@ def _close_export_run(run: RunLog | None, *, status: str, detail: dict | None = 
 def _issue_shift_ids(out: dict, issues) -> set[str]:
     """Resolve repairable issue paths back to parent shift document IDs."""
     shift_ids: set[str] = set()
-    sub_to_parent = {
-        str(sub.get('id')): str(sub.get('key_trend_id'))
-        for sub in out.get('sub_trends') or [] if isinstance(sub, dict)
-    }
+    subs = [sub for sub in out.get('sub_trends') or [] if isinstance(sub, dict)]
+    sub_to_parent = {str(sub.get('id')): str(sub.get('key_trend_id')) for sub in subs}
     shifts = out.get('key_trends') or []
     for issue in issues:
         match = re.match(r'key_trends\[(\d+)\]', issue.path)
@@ -111,8 +109,18 @@ def _issue_shift_ids(out: dict, issues) -> set[str]:
             shift_ids.add(str(shifts[int(match.group(1))].get('id')))
             continue
         match = re.match(r'sub_trends\[([^\]]+)\]', issue.path)
-        if match and match.group(1) in sub_to_parent:
-            shift_ids.add(sub_to_parent[match.group(1)])
+        if not match:
+            continue
+        # The validator writes ARRAY INDICES into paths ('sub_trends[39]'),
+        # while the id-keyed map only ever matched an id-shaped segment — so
+        # every sub-anchored issue silently resolved to no parent and the
+        # repair pass regenerated nothing (observed 2026-08-12: 14 issues,
+        # 1 request). Index first; id kept as the fallback.
+        segment = match.group(1)
+        if segment.isdigit() and int(segment) < len(subs):
+            shift_ids.add(str(subs[int(segment)].get('key_trend_id')))
+        elif segment in sub_to_parent:
+            shift_ids.add(sub_to_parent[segment])
     return {shift_id for shift_id in shift_ids if shift_id and shift_id != 'None'}
 
 

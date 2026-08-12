@@ -107,6 +107,28 @@ def test_duplicate_hero_claim_is_rejected():
     assert 'duplicate_hero_claim' in codes(document)
 
 
+def test_hero_and_sub_stat_band_collide_across_value_forms():
+    """A KT hero carries the claim's long-form sentence while a sub band
+    carries its _short_figure reduction, so the old raw-prose key never
+    matched the two — governance-void's hero and pacing-schism's band both
+    fronted the 1,337 petition claim on 2026-08-12."""
+    document = full_map()
+    hero = document['key_trends'][0]['hero_stat']   # '41% story adoption'
+    band = {'type': 'stat_band', 'data': {
+        'value': '41%',   # the _short_figure reduction of the hero's value
+        'text': 'Story adoption measured', 'source': 'T, 2026',
+        'url': hero['url'],
+    }}
+    # A child in a DIFFERENT family fronts the reduced form of the same claim.
+    document['sub_trends'][9]['modules'].insert(3, band)
+    assert 'duplicate_hero_claim' in codes(document)
+
+    # The same figure from a different source is a different claim — the url
+    # component still keeps coincidental "41%"s apart.
+    band['data']['url'] = 'https://example.com/another-claim'
+    assert 'duplicate_hero_claim' not in codes(document)
+
+
 def test_off_topic_hero_is_rejected():
     document = full_map()
     shift = document['key_trends'][0]

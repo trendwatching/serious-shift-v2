@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from .config import DOMAINS, MAX_KTS_PER_DOM, MIN_KTS_PER_DOM
 from .modules import (_LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE,
                       FIELD_WORD_LIMITS, LIST_ITEM_WORD_LIMITS, PAIR_TEXT_WORD_LIMITS,
-                      STEP_TEXT_WORD_LIMIT, count_words)
+                      STEP_TEXT_WORD_LIMIT, count_words, stat_claim_key)
 from .phases.hero_stats import stat_matches_shift
 
 #: A stat band displays a statistic, and a statistic contains a number.
@@ -686,7 +686,11 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
         if not isinstance(hero, dict) or not hero.get('value'):
             continue
         path = f'key_trends[{index}].hero_stat'
-        key = (_norm_prose(hero.get('value')), str(hero.get('url') or ''))
+        # Keyed on the reduced figure, not the raw prose: the hero carries the
+        # claim's long-form sentence here while a sub band carries its
+        # _short_figure reduction, and the raw-prose key let both front the
+        # same claim (the 1,337 petition figure, 2026-08-12).
+        key = stat_claim_key(hero.get('value'), hero.get('url'))
         if key in hero_seen:
             issues.append(ValidationIssue(
                 'duplicate_hero_claim', path,
@@ -719,7 +723,7 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
             value = data.get('value')
             if not value:
                 continue
-            key = (_norm_prose(value), str(data.get('url') or ''))
+            key = stat_claim_key(value, data.get('url'))
             path = f'sub_trends[{index}].modules.stat_band'
             if key in hero_seen:
                 issues.append(ValidationIssue(

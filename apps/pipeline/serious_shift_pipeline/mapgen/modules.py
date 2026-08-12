@@ -331,6 +331,22 @@ def _short_figure(text, limit: int = 8) -> str | None:
     return None
 
 
+def stat_claim_key(value, url) -> tuple[str, str]:
+    """The identity a fronted statistic is deduplicated on: (figure, source).
+
+    A KT `hero_stat.value` is the claim's long-form prose until export reduces
+    it, while a sub-shift stat_band's value is already the `_short_figure`
+    reduction — so keying on the raw string let one claim front both at once:
+    governance-void's hero and pacing-schism's band both shipped the 1,337
+    petition figure on 2026-08-12. Reducing both sides through the same
+    extraction before keying makes the writer and the gate agree on what "the
+    same claim" means whichever form the value arrives in. Lives here, next to
+    `_short_figure`, so phase 8 and validation.py share one definition.
+    """
+    text = _short_figure(value) or str(value or '')
+    return (' '.join(re.findall(r'[a-z0-9]+', text.lower())), str(url or ''))
+
+
 def _jsonb(value) -> str | None:
     """Serialise for a `%s::jsonb` placeholder; empty/None stays SQL NULL so the
     front end treats the section as absent."""

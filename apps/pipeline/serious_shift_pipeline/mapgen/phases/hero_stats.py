@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 
 from ...core.matching import normalize
+from ..modules import stat_claim_key
 
 #: Attributions render as a single small line under the statistic. A scraped
 #: article title can be 200+ characters of pipe-separated newsletter sections,
@@ -97,17 +98,28 @@ def _as_hero(row: dict) -> dict:
 
 
 def assign_heroes(kt_rows: list[dict],
-                  by_kt: dict[int, list[dict]]) -> dict[int, dict | None]:
+                  by_kt: dict[int, list[dict]],
+                  fronted: set[tuple[str, str]] | None = None) -> dict[int, dict | None]:
     """Greedy exclusive assignment: shifts with the fewest eligible candidates
     choose first, each claim heroes at most one shift, and a shift whose every
     candidate is either taken or off-topic gets None — no stat_band beats a
-    recycled or unrelated one."""
+    recycled or unrelated one.
+
+    `fronted` is the set of stat_claim_keys already carried by persisted
+    sub-shift stat bands. Exclusivity via `taken` only covers this run's own
+    picks; on a targeted regen the children's bands survive from a previous
+    run, and assigning one of their claims as a hero creates exactly the
+    duplicate_hero_claim the gate rejects (the 1,337 petition figure fronted
+    governance-void's hero and pacing-schism's band at once, 2026-08-12).
+    """
+    fronted = fronted or set()
     eligible: dict[int, list[dict]] = {}
     for kt in kt_rows:
         eligible[kt['id']] = [
             row for row in by_kt.get(kt['id'], [])
-            if stat_matches_shift(kt['name'], kt['subtitle'],
-                                  row['statistic'], row['claim_text'])
+            if stat_claim_key(row['statistic'], row['url']) not in fronted
+            and stat_matches_shift(kt['name'], kt['subtitle'],
+                                   row['statistic'], row['claim_text'])
         ]
 
     taken: set[int] = set()
@@ -126,7 +138,18 @@ def phase8_hero_stats(conn):
     print('\nPhase 8 — Selecting hero statistics per Key Trend (SQL, no API)…')
     kt_rows = [dict(r) for r in conn.execute(
         'SELECT id, name, subtitle FROM domain_key_trends').fetchall()]
-    heroes = assign_heroes(kt_rows, _hero_candidates(conn))
+    # Claims the children already front. Sub stat bands persist across targeted
+    # regens, so they are prior art this assignment must not re-front.
+    fronted = {
+        stat_claim_key(r['value'], r['url'])
+        for r in conn.execute("""
+            SELECT m->'data'->>'value' AS value, m->'data'->>'url' AS url
+            FROM domain_sub_trends, jsonb_array_elements(modules) m
+            WHERE m->>'type' = 'stat_band'
+              AND COALESCE(m->'data'->>'value', '') <> ''
+        """).fetchall()
+    }
+    heroes = assign_heroes(kt_rows, _hero_candidates(conn), fronted)
 
     n = 0
     for kt in kt_rows:

@@ -161,6 +161,23 @@ def test_a_shift_with_only_off_topic_candidates_gets_none():
     assert assign_heroes(kts, by_kt) == {20: None}
 
 
+def test_a_claim_already_fronting_a_sub_stat_band_cannot_hero_a_shift():
+    """Sub stat bands persist across targeted regens, so phase 8 must treat
+    them as prior art: the band stores the _short_figure reduction and the
+    candidate carries the long-form statistic, and stat_claim_key matches the
+    two across forms."""
+    from serious_shift_pipeline.mapgen.modules import stat_claim_key
+    from serious_shift_pipeline.mapgen.phases.hero_stats import assign_heroes
+    kts = [{'id': 40, 'name': 'Governance Void',
+            'subtitle': 'labs sign a restraint petition'}]
+    cand = _cand(5, '~1,337 employees across major Western AI labs signed',
+                 'employees signed a restraint petition', 8.0)
+    by_kt = {40: [cand]}
+    assert assign_heroes(kts, by_kt)[40] is not None   # eligible on its own
+    fronted = {stat_claim_key('1,337', cand['url'])}   # a child's band, short form
+    assert assign_heroes(kts, by_kt, fronted)[40] is None
+
+
 def test_hero_json_carries_no_claim_id():
     from serious_shift_pipeline.mapgen.phases.hero_stats import assign_heroes
     kts = [{'id': 30, 'name': 'Compute Capitalism', 'subtitle': 'data centers as the local tax base'}]
