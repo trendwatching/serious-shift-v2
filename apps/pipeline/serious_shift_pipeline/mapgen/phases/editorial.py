@@ -324,6 +324,37 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
                 out.append(value[:90])
         return sorted(out)
 
+    # The stat each published sub-shift currently fronts, grouped by family, so
+    # a sub-shift being written can be told what OTHER families' children lead
+    # on. Read once; same-family entries are excluded per call below because
+    # those pages are being rewritten in the same request.
+    sub_stats_by_kt: dict = {}
+    for r in conn.execute("""
+        SELECT kt_id, m->'data'->>'value' AS value
+        FROM domain_sub_trends, jsonb_array_elements(modules) m
+        WHERE m->>'type' = 'stat_band' AND COALESCE(m->'data'->>'value', '') <> ''
+    """).fetchall():
+        sub_stats_by_kt.setdefault(r['kt_id'], []).append(str(r['value']).strip())
+
+    def _avoid_for_subs(kt_db_id) -> list[str]:
+        """The children's ledger. Unlike the parent's, it INCLUDES the parent's
+        own hero — a child fronting its parent's headline is the same page
+        twice (st-restraint-petition shipped its parent's 1,337 hero verbatim
+        because this list deliberately dropped it) — plus the stats other
+        families' sub-shifts already front."""
+        out = set()
+        for _other_id, row in kt_rows.items():
+            hero = row.get('hero_stat')
+            if isinstance(hero, dict):
+                value = str(hero.get('value') or '').strip()
+                if value:
+                    out.add(value[:90])
+        for other_kt, values in sub_stats_by_kt.items():
+            if other_kt == kt_db_id:
+                continue
+            out.update(v[:90] for v in values if v)
+        return sorted(out)
+
     # Sub-trends grouped by parent in one query (rather than one query per KT).
     subs_by_kt: dict = {}
     for r in conn.execute("""
@@ -444,14 +475,15 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         work,
         lambda item: prompt_kt_editorial(
             item[1]['name'], item[1].get('subtitle', ''), str(by_id[item[0]]['name']),
-            item[2], avoid=_avoid_for(item[1]['_db_id'])),
+            item[2], avoid=_avoid_for(item[1]['_db_id']),
+            hero_stat=(kt_rows.get(item[1]['_db_id']) or {}).get('hero_stat')),
         kt_is_complete, describe=describe, label='shift editorial',
         diagnose=kt_diagnose,
     )
     with_subs = [item for item in work if item[3]]
     st_results = _generate_sub_editorial(
         with_subs, describe=describe,
-        avoid_of=lambda item: _avoid_for(item[1]['_db_id']))
+        avoid_of=lambda item: _avoid_for_subs(item[1]['_db_id']))
     st_by_kt = {id(item): r for item, r in zip(with_subs, st_results)}
     results = [
         {'kt': kt_r or {}, 'st': st_by_kt.get(id(item)) or {}}

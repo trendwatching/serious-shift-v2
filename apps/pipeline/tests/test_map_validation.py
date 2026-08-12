@@ -103,8 +103,8 @@ def codes(document) -> set[str]:
     return {issue.code for issue in validate_map(document, CONTRACT)}
 
 
-@pytest.mark.parametrize(('count', 'valid'), [(0, False), (4, False), (5, True), (6, False)])
-def test_exactly_five_sub_shifts(count, valid):
+@pytest.mark.parametrize(('count', 'valid'), [(0, False), (3, False), (4, True), (5, True), (6, False)])
+def test_four_or_five_sub_shifts(count, valid):
     document = valid_map()
     parent = document['key_trends'][0]
     children = [sub for sub in document['sub_trends'] if sub['key_trend_id'] == parent['id']]

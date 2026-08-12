@@ -112,8 +112,26 @@ def _fmt_avoid(avoid: list | None) -> str:
     return '\n'.join(f'- {entry}' for entry in (avoid or [])) or '- (none yet)'
 
 
+def _fmt_hero_stat(hero_stat: dict | None) -> str:
+    """The shift's own stat band, so the prose can stay out of its way.
+
+    The band is assembled by code from `hero_stat` (phase 8 runs before the
+    editorial phase), so without this block the model has no way to know which
+    of the ~90 claims it must not repeat — the 22-25/16% figure fronted five
+    modules on one page before the prompt could see it.
+    """
+    if not isinstance(hero_stat, dict):
+        return '- (no stat band on this page)'
+    value = str(hero_stat.get('value') or '').strip()
+    text = str(hero_stat.get('text') or '').strip()
+    if not value and not text:
+        return '- (no stat band on this page)'
+    return f'- {value}\n- {text}' if text else f'- {value}'
+
+
 def prompt_kt_editorial(kt_name: str, kt_subtitle: str, domain_name: str,
-                        claims: list, avoid: list | None = None) -> str:
+                        claims: list, avoid: list | None = None,
+                        hero_stat: dict | None = None) -> str:
     return load_and_render(
         "map/kt_editorial.txt",
         voice=VOICE,
@@ -122,6 +140,7 @@ def prompt_kt_editorial(kt_name: str, kt_subtitle: str, domain_name: str,
         domain_name=domain_name,
         claim_count=len(claims),
         avoid=_fmt_avoid(avoid),
+        hero_stat=_fmt_hero_stat(hero_stat),
         evidence=fmt_claims_block(claims, max_per=90),
     )
 

@@ -263,4 +263,4 @@ def test_contract_version_is_pinned():
     audit, C5). If you are here because this assert fired: update the backend
     mirrors (module_policy.rs DEFAULT_HIDDEN, innovations.rs MODULE_ORDER_*),
     re-export the live document, and then bump this number in the same PR."""
-    assert _contract()["version"] == 7
+    assert _contract()["version"] == 8

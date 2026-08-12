@@ -8,6 +8,7 @@ RULES — GENERAL
 - Ground every field in the evidence. Never invent a statistic, a study, a percentage, or a source.
 - Journalist briefing a strategist: specific, declarative, no marketing register.
 - US English. No em dashes.
+- Say what IS happening, in the affirmative. Never build a sentence on the contrastive-negation scaffold: "This is not X. It is Y.", "X is not A but B", "The issue is not X — it is Y". It is a tic, and a page full of it reads like a debate rebuttal. At most ONE negation per sub-shift, and only when the misconception itself is the finding.
 - Each sub-trend has its own ALLOWED EVIDENCE block. Use only that block for that sub-trend. Never reuse evidence from a sibling.
 - Separate observation from inference. Do not turn one incident, forecast, or opinion into a universal claim.
 - Return one object per sub-trend, matching on `name` exactly as given. Do not add, drop, merge or rename sub-trends.
@@ -33,11 +34,13 @@ PER SUB-TRENDS FIELDS
 `stat` — the single strongest statistic in the evidence for this sub-shift, as `{"claim_id","value","text"}`.
   - `value`: the bare figure as displayed, short (e.g. "25%", "3×", "2:1", "18-34").
   - `text`: one or two sentences explaining what it measures and why it matters. It must say what the figure measures and who measured it, and read as sense on its own. It must add what the `lede` and `quote` do not — if the lede already makes the stat's point, take a different angle here.
+  - The chosen figure appears on this page EXACTLY ONCE, here. Do not restate it, its population, or its phrasing in the lede, from/to, whats_changing, why_now, signals, or any timeline step.
+  - No two sub-trends in this response may front the same statistic or cite the same claim_id in their `stat`. Each page gets its own number; if two sub-trends want the same figure, the one it fits best keeps it and the other takes a different angle or omits `stat`.
   - `claim_id`: the exact ID of the evidence record containing the statistic. Source metadata is attached by code, never by you.
   - `value` MUST contain a numeral: a percentage, a count, a multiple, a currency amount, a ratio, a year, or a year range. "multi-hop", "majority", "most", "a handful" and "several" are not statistics.
   - If the evidence has no attributable figure with a numeral in it for this sub-shift, OMIT `stat` entirely rather than inventing one. Do not put a word where a number should be to fill the slot. A page with no stat band is correct; a stat band with no number is a bug.
 
-`whats_changing` — 2–3 sentences, at most 75 words, on the mechanism: what is moving and why the obvious reading is incomplete.
+`whats_changing` — 2–3 sentences, at most 75 words, on the mechanism: what is moving, and the second-order consequence a first reading would miss — stated affirmatively, as what IS happening, not as a correction of what it is not.
 `why_now` — 2 sentences, at most 55 words, on why this lands in this window. Name only converging forces present in the allowed evidence. Must not overlap `whats_changing`. Never open with convergence boilerplate ("three forces converged", "a perfect storm"); start from the specific mechanism or event that opened this window.
 
 `human_needs` — `{"unlocked","threatened"}`. The need this genuinely satisfies (steelmanned) and the need it puts at risk. One or two sentences and at most 40 words each, starting with the need itself. Both are required: the page sets them side by side as a pair, so one without the other is a half-empty section and the module is dropped.

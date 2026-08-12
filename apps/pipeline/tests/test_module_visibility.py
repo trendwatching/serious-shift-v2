@@ -59,8 +59,10 @@ def test_the_visibility_block_is_well_formed():
 
 def test_the_matrix_matches_the_delivered_design():
     """The design gates industries and territories to Consumers on a key shift,
-    and human_needs and territories to Consumers on a sub-shift. That asymmetry
-    is deliberate and is the single easiest thing to invert by accident."""
+    and human_needs and territories to Consumers on a sub-shift. The 11 Aug 2026
+    review then removed human_needs from the Society and Economy key shifts and
+    turned signals/counter_signals ON for every sub-shift. That asymmetry is
+    deliberate and is the single easiest thing to invert by accident."""
     hidden = _contract()["visibility"]["hidden"]
 
     for sphere in ("society", "economy", "organizations"):
@@ -68,8 +70,19 @@ def test_the_matrix_matches_the_delivered_design():
         assert "territories" in hidden["key_trend"][sphere]
         assert "human_needs" in hidden["sub_trend"][sphere]
         assert "territories" in hidden["sub_trend"][sphere]
-        # human_needs IS a key-shift section on every sphere.
+
+    # human_needs left the Society and Economy key shifts; it survives on
+    # Organizations and Consumers.
+    for sphere in ("society", "economy"):
+        assert "human_needs" in hidden["key_trend"][sphere]
+    for sphere in ("organizations", "consumers"):
         assert "human_needs" not in hidden["key_trend"][sphere]
+
+    # signals/counter_signals render on every sub-shift; evidence still never does.
+    for sphere in ("society", "economy", "organizations", "consumers"):
+        assert "signals" not in hidden["sub_trend"][sphere]
+        assert "counter_signals" not in hidden["sub_trend"][sphere]
+        assert "evidence" in hidden["sub_trend"][sphere]
 
     assert "industries" not in hidden["key_trend"]["consumers"]
     assert "territories" not in hidden["key_trend"]["consumers"]

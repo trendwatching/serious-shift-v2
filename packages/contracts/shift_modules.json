@@ -15,7 +15,7 @@
     "below is still what decides where it lands \u2014 apps/backend/src/innovations.rs",
     "mirrors these two lists as consts and a test fails if they drift."
   ],
-  "version": 7,
+  "version": 8,
   "$order_comment": [
     "Canonical reading order.",
     "The export sorts every module list by this, so changing the order here",
@@ -79,12 +79,14 @@
     "default_visibility_matches_the_contract fails if the two drift.",
     "",
     "Two groups are hidden here. The first is per-sphere: the design gates",
-    "industries and territories to Consumers on a key shift, and human_needs and",
-    "territories to Consumers on a sub-shift. The second is everywhere: pull_quote,",
-    "tension_band, voices and related_shifts on key shifts, and signals,",
-    "counter_signals and evidence on sub-shifts, are all still generated but the",
-    "design build renders none of them. They are kept rather than cut so that",
-    "turning one on later is one row and no model spend.",
+    "industries and territories to Consumers on a key shift, human_needs and",
+    "territories to Consumers on a sub-shift, and the 11 Aug 2026 review removed",
+    "human_needs from Society and Economy key shifts. The second is everywhere:",
+    "pull_quote, tension_band, voices and related_shifts on key shifts, and",
+    "evidence on sub-shifts, are all still generated but not rendered. signals and",
+    "counter_signals were un-hidden on every sub-shift by the same 11 Aug review.",
+    "Hidden modules are kept rather than cut so that turning one on later is one",
+    "row and no model spend.",
     "",
     "domain_id is the database id, and it is US spelling like everything else",
     "since the sphere rename — /organizations was a 404 a reader could reach by",
@@ -99,7 +101,8 @@
           "voices",
           "related_shifts",
           "industries",
-          "territories"
+          "territories",
+          "human_needs"
         ],
         "economy": [
           "pull_quote",
@@ -107,7 +110,8 @@
           "voices",
           "related_shifts",
           "industries",
-          "territories"
+          "territories",
+          "human_needs"
         ],
         "organizations": [
           "pull_quote",
@@ -126,29 +130,21 @@
       },
       "sub_trend": {
         "society": [
-          "signals",
-          "counter_signals",
           "evidence",
           "human_needs",
           "territories"
         ],
         "economy": [
-          "signals",
-          "counter_signals",
           "evidence",
           "human_needs",
           "territories"
         ],
         "organizations": [
-          "signals",
-          "counter_signals",
           "evidence",
           "human_needs",
           "territories"
         ],
         "consumers": [
-          "signals",
-          "counter_signals",
           "evidence"
         ]
       }

@@ -502,9 +502,13 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
         if shift.get('domain_id') not in domain_ids:
             issues.append(ValidationIssue('shift_domain', f'{path}.domain_id', 'unknown parent domain'))
         children = subs_by_parent.get(str(shift.get('id') or ''), [])
-        if len(children) != 5:
+        # 5 is the generation target; 4 is legal because an editor may merge two
+        # near-duplicate siblings (11 Aug 2026 review: tutor-paradox absorbed
+        # scaffold-dependency). Below 4 the page reads thin and something is
+        # actually missing.
+        if not 4 <= len(children) <= 5:
             issues.append(ValidationIssue('sub_shift_count', f'{path}.sub_trend_ids',
-                                          f'expected exactly 5 sub-shifts, found {len(children)}', True))
+                                          f'expected 4-5 sub-shifts, found {len(children)}', True))
         declared_children = shift.get('sub_trend_ids') or []
         actual_children = [sub.get('id') for sub in children]
         if declared_children != actual_children:
@@ -700,6 +704,29 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
             issues.append(ValidationIssue(
                 'hero_topicality', path,
                 'hero statistic shares no topical vocabulary with the shift it fronts', True))
+
+    # Sub-shift stat bands join the same exclusivity registry as the heroes,
+    # so a child fronting its parent's headline — or another family's — is
+    # caught on the same (value, url) key. st-pacing-schism shipped Governance
+    # Void's 1,337 hero byte-for-byte before this covered sub_trends.
+    for index, sub in enumerate(subs):
+        if not isinstance(sub, dict):
+            continue
+        for module in sub.get('modules') or []:
+            if not isinstance(module, dict) or module.get('type') != 'stat_band':
+                continue
+            data = module.get('data') or {}
+            value = data.get('value')
+            if not value:
+                continue
+            key = (_norm_prose(value), str(data.get('url') or ''))
+            path = f'sub_trends[{index}].modules.stat_band'
+            if key in hero_seen:
+                issues.append(ValidationIssue(
+                    'duplicate_hero_claim', path,
+                    f'stat band already fronts {hero_seen[key]} — one claim, one page', True))
+            else:
+                hero_seen[key] = f'sub_trends[{index}]'
 
     # dek must be its own sentence, not the subtitle republished.
     for index, shift in enumerate(shifts):

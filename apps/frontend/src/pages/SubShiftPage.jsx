@@ -79,6 +79,14 @@ export default function SubShiftPage() {
       </header>
 
       <div className="canvas gutter flex flex-col" style={{ paddingTop: 26, gap: 'var(--module-gap)' }}>
+        {/* The taxonomy summary, in full. The key-shift page shows only its
+            first 116 characters as a teaser, so this is the one place a reader
+            can finish the sentence they started there (11 Aug 2026 review). */}
+        {sub.dek && (
+          <p className="t-display text-pretty" style={{ margin: 0, fontSize: 19, fontWeight: 600, lineHeight: 1.35, letterSpacing: '-0.01em' }}>
+            {sub.dek}
+          </p>
+        )}
         <Modules modules={sub.modules} ctx={{ scope: 'sub_shift', domain, subs: [] }} />
       </div>
 

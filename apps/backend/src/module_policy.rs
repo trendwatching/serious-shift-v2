@@ -45,7 +45,8 @@ use crate::innovations::{fnv1a, Scope};
 /// `organizations` — US spelling, the same everywhere since the sphere rename.
 const DEFAULT_HIDDEN: [(&str, &str, &[&str]); 8] = [
     // Key shifts: the four modules the build never renders, plus the two that are
-    // Consumers-only.
+    // Consumers-only. The 11 Aug 2026 review also removed human_needs from the
+    // Society and Economy key-shift pages.
     (
         "key_trend",
         "society",
@@ -56,6 +57,7 @@ const DEFAULT_HIDDEN: [(&str, &str, &[&str]); 8] = [
             "related_shifts",
             "industries",
             "territories",
+            "human_needs",
         ],
     ),
     (
@@ -68,6 +70,7 @@ const DEFAULT_HIDDEN: [(&str, &str, &[&str]); 8] = [
             "related_shifts",
             "industries",
             "territories",
+            "human_needs",
         ],
     ),
     (
@@ -87,46 +90,25 @@ const DEFAULT_HIDDEN: [(&str, &str, &[&str]); 8] = [
         "consumers",
         &["pull_quote", "tension_band", "voices", "related_shifts"],
     ),
-    // Sub-shifts: the three the build never renders, plus the two that are
-    // Consumers-only.
+    // Sub-shifts: evidence never renders; human_needs and territories are
+    // Consumers-only. signals and counter_signals were un-hidden everywhere by
+    // the 11 Aug 2026 review.
     (
         "sub_trend",
         "society",
-        &[
-            "signals",
-            "counter_signals",
-            "evidence",
-            "human_needs",
-            "territories",
-        ],
+        &["evidence", "human_needs", "territories"],
     ),
     (
         "sub_trend",
         "economy",
-        &[
-            "signals",
-            "counter_signals",
-            "evidence",
-            "human_needs",
-            "territories",
-        ],
+        &["evidence", "human_needs", "territories"],
     ),
     (
         "sub_trend",
         "organizations",
-        &[
-            "signals",
-            "counter_signals",
-            "evidence",
-            "human_needs",
-            "territories",
-        ],
+        &["evidence", "human_needs", "territories"],
     ),
-    (
-        "sub_trend",
-        "consumers",
-        &["signals", "counter_signals", "evidence"],
-    ),
+    ("sub_trend", "consumers", &["evidence"]),
 ];
 
 /// Every explicit row, plus a hash of the query result.
@@ -307,12 +289,19 @@ mod tests {
         // Consumers keeps industries and territories; nobody else does.
         assert!(policy.is_visible(Scope::KeyTrend, "consumers", "industries"));
         assert!(!policy.is_visible(Scope::KeyTrend, "society", "industries"));
-        // human_needs is a key-shift section everywhere, a sub-shift section only
-        // for Consumers. That asymmetry is the design's, and it is easy to invert
-        // by accident.
-        assert!(policy.is_visible(Scope::KeyTrend, "society", "human_needs"));
+        // human_needs left the Society and Economy key-shift pages in the
+        // 11 Aug 2026 review but stays on Organizations and Consumers, and as a
+        // sub-shift section only for Consumers. Easy to invert by accident.
+        assert!(!policy.is_visible(Scope::KeyTrend, "society", "human_needs"));
+        assert!(!policy.is_visible(Scope::KeyTrend, "economy", "human_needs"));
+        assert!(policy.is_visible(Scope::KeyTrend, "organizations", "human_needs"));
+        assert!(policy.is_visible(Scope::KeyTrend, "consumers", "human_needs"));
         assert!(!policy.is_visible(Scope::SubTrend, "society", "human_needs"));
         assert!(policy.is_visible(Scope::SubTrend, "consumers", "human_needs"));
+        // signals/counter_signals came ON for every sub-shift in the same review.
+        assert!(policy.is_visible(Scope::SubTrend, "society", "signals"));
+        assert!(policy.is_visible(Scope::SubTrend, "economy", "counter_signals"));
+        assert!(!policy.is_visible(Scope::SubTrend, "society", "evidence"));
     }
 
     #[test]

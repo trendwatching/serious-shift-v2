@@ -8,6 +8,7 @@ RULES — GENERAL
 - Every field must be grounded in the evidence. Never invent a statistic, a study, or a source.
 - Write like a journalist briefing a strategist: specific, declarative, no marketing register.
 - US English. No em dashes, no bullet fragments inside a field.
+- Say what IS happening, in the affirmative. Never build a sentence on the contrastive-negation scaffold: "This is not X. It is Y.", "X is not A but B", "The issue is not X — it is Y". It is a tic, and a page full of it reads like a debate rebuttal. At most ONE negation on the whole page, and only when the misconception itself is the finding.
 - Separate observation from inference. Do not turn one incident, forecast, or opinion into a universal claim.
 - Use only events, dates, organizations, and numbers present in EVIDENCE. A source URL is provenance, not permission to infer beyond its claim.
 - Each evidence record carries an `id`. That number exists so you can cite it in `evidence_ids`. It must never appear in prose. Never write an id, a credibility score, a confidence value, or any other field name from the evidence records into a sentence a reader sees. Attribute by name and publication only: "Jakob Nielsen", "Import AI". Never "Jakob Nielsen (id:38735)".
@@ -19,6 +20,10 @@ RULES — GENERAL
 ALREADY CARRYING OTHER PAGES — do not center any of these:
 Each statistic or anecdote below is already the headline of another shift on the same map. You may mention one in passing if the evidence demands it, but do not build a panel, tension, or timeline step around it — a reader browsing two pages must not meet the same centerpiece twice.
 {{avoid}}
+
+THIS PAGE'S HEADLINE STATISTIC — already displayed, do not repeat it:
+The stat band on this page already shows the figure below, full size, with its source. Do not restate this figure, its population, or its phrasing in the dek, from/to, whats_changing, why_now, or any timeline step. The rest of the page is the space for everything the headline number does not say.
+{{hero_stat}}
 
 DEK (the standfirst under the shift's name)
 - One or two sentences, at most 45 words: the shift stated with its sharpest consequence for the reader.
@@ -33,7 +38,7 @@ FROM / TO (the spine of the shift)
 - Wrong: a restatement, a cause/effect pair, or two unrelated observations.
 
 WHATS_CHANGING / WHY_NOW (two panels the reader toggles between)
-- `whats_changing`: 2–3 sentences, at most 75 words. The mechanism of the shift: what is actually moving, and why the obvious reading is incomplete.
+- `whats_changing`: 2–3 sentences, at most 75 words. The mechanism of the shift: what is actually moving, and the second-order consequence a first reading would miss — stated affirmatively, as what IS happening, not as a correction of what it is not.
 - `why_now`: 2 sentences, at most 55 words. Why this is landing in this window rather than five years ago or five years hence. Name only converging forces present in the evidence.
 - These must not overlap. If `why_now` could be pasted into `whats_changing`, rewrite it.
 - Never open `why_now` with convergence boilerplate: "three forces converged", "a perfect storm", "several trends collided". Start from the specific mechanism or the specific event that opened this window. If two pages could share your opening clause, it is boilerplate.
