@@ -69,9 +69,10 @@ DOMAINS = [
             'nobody has to be present.'
         ),
         'intro': (
-            'Reasoning itself is thinning. As AI mediates more of what people '
-            'read, judge and decide, the shared capacity democracy assumes is '
-            'quietly falling — and nobody is measuring it.'
+            'As AI moves deeper into everyday life, institutions, '
+            'relationships, identities and power structures begin to shift, '
+            'especially once intelligent machines become social participants '
+            'themselves.'
         ),
         'description': (
             "AGI doesn't arrive into a neutral world — it arrives into one already "
@@ -101,9 +102,9 @@ DOMAINS = [
             'Where value, work and money move once capability stops being scarce.'
         ),
         'intro': (
-            'Capability has stopped being scarce and verification has started. '
-            'Value is migrating from producing work to proving a human judged '
-            'it — and pricing is following.'
+            'Intelligence is becoming an economic resource in its own right, '
+            'transforming how value is created, who or what produces it, who '
+            'owns it and how wealth is distributed.'
         ),
         'description': (
             "The intelligence economy is not a better version of the knowledge economy — "
@@ -131,9 +132,9 @@ DOMAINS = [
             'Identity, taste and desire in a market where software does the shopping.'
         ),
         'intro': (
-            'Agents are entering the purchase. Brands are suddenly selling to '
-            'software with a human sponsor, and the impulse aisle has no surface '
-            'left to interrupt.'
+            'What people need may remain remarkably constant. AI radically '
+            'changes how those needs are understood and fulfilled, and '
+            'increasingly acts, chooses and buys on people’s behalf.'
         ),
         'description': (
             "The consumer isn't disappearing — they're delegating. As AI agents take over "
@@ -168,8 +169,9 @@ DOMAINS = [
             'How institutions decide, hire and defend themselves when speed is free.'
         ),
         'intro': (
-            'Speed is free, so deliberation is the differentiator. The bottleneck '
-            'has moved from making the work to finding anyone qualified to review it.'
+            'From individual tasks to entire workflows, AI is rebuilding the '
+            'organization around autonomy, changing how companies operate, '
+            'innovate, compete and ultimately what a company even is.'
         ),
         'description': (
             "Most organizations were designed for a world of scarce intelligence and "

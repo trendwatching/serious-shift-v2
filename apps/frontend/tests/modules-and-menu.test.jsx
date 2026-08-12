@@ -71,9 +71,12 @@ describe('header navigation', () => {
     const dialog = screen.getByRole('dialog', { name: 'Site navigation' })
     expect(within(dialog).getAllByRole('link').map((l) => l.querySelector('span').textContent))
       .toEqual(['Shifts', 'Methodology', 'Subscribe', 'Services', 'TrendWatching', 'About'])
-    // The design's descriptor column, which a Miro sticky asked to remove and
-    // the later build kept.
-    expect(within(dialog).getByText('How we track')).toBeTruthy()
+    // The 5 Aug Miro review removed the descriptor column ("no need for all
+    // this info!"); only the Shifts row keeps its meta slot, which falls back
+    // to "Every domain" until the live shift count arrives. This asserted the
+    // old "How we track" descriptor long after site.js dropped it.
+    expect(within(dialog).queryByText('How we track')).toBeNull()
+    expect(within(dialog).getByText('Every domain')).toBeTruthy()
 
     fireEvent.keyDown(document, { key: 'Escape' })
     await waitFor(() => expect(trigger).toHaveFocus())

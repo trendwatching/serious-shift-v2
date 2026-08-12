@@ -70,7 +70,7 @@ export default function DomainPanel({ domain, width, active, position, count, to
             tabIndex={active ? 0 : -1}
             className="pill-yellow self-start"
           >
-            All {domain.count} key shifts
+            ALL {domain.count} KEY SHIFTS
             <span aria-hidden="true" className="inline-block rotate-90" style={{ fontSize: 16, lineHeight: 1 }}>→</span>
           </Link>
         </div>

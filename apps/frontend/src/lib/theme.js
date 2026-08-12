@@ -7,7 +7,7 @@
  * than `var(--a-*)` because the chrome that uses them renders above the element
  * that sets `data-domain`.
  */
-export const DOMAIN_ORDER = ['society', 'economy', 'organizations', 'consumers']
+export const DOMAIN_ORDER = ['society', 'economy', 'consumers', 'organizations']
 
 /**
  * Is this URL segment one of the four spheres?
@@ -30,13 +30,13 @@ export const DOMAIN_THEME = {
     num: '02', dot: '#0A7FDA', crumb: '#023F6C', eyebrow: '#FDFF85',
     grad: 'linear-gradient(135deg, #0F91EE 0%, #0A7FDA 46%, #04528B 100%)',
   },
-  organizations: {
-    num: '03', dot: '#9A9A43', crumb: '#41500A', eyebrow: '#FFFFFF',
-    grad: 'linear-gradient(135deg, #ADB03A 0%, #9A9A43 42%, #5F6E13 100%)',
-  },
   consumers: {
-    num: '04', dot: '#E74707', crumb: '#6E2202', eyebrow: '#FDFF85',
+    num: '03', dot: '#E74707', crumb: '#6E2202', eyebrow: '#FDFF85',
     grad: 'linear-gradient(135deg, #F65510 0%, #E74707 46%, #922E03 100%)',
+  },
+  organizations: {
+    num: '04', dot: '#9A9A43', crumb: '#41500A', eyebrow: '#FFFFFF',
+    grad: 'linear-gradient(135deg, #ADB03A 0%, #9A9A43 42%, #5F6E13 100%)',
   },
 }
 

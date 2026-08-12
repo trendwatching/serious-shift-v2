@@ -118,10 +118,11 @@ describe('route-scoped data', () => {
 
   it('renders a shift in the contract order however the document arrived', async () => {
     // The published document was composed by whatever order the contract had at
-    // export time, so a page cannot depend on the array it was handed: the live
-    // map still lists sub_shift_list last, where an older Miro mockup put it.
-    // Sorting at render is what puts it back after the peel tabs — the position
-    // the delivered design gives it — without a regeneration.
+    // export time, so a page cannot depend on the array it was handed: a map
+    // exported before the 12 Aug 2026 review lists sub_shift_list directly
+    // after the peel tabs, where the delivered design build put it. Sorting at
+    // render is what moves it to the bottom of the page — the review's
+    // placement — without a regeneration.
     const scrambled = {
       ...shiftFixture,
       shift: {
@@ -142,10 +143,13 @@ describe('route-scoped data', () => {
     )
     await screen.findByText('A dek.')
     const order = CONTRACT.order.key_trend
-    expect(order.indexOf('sub_shift_list')).toBe(order.indexOf('peel_tabs') + 1)
+    expect(order[order.length - 1]).toBe('sub_shift_list')
 
     const seen = [...document.querySelectorAll('h2')].map((h) => h.textContent)
-    expect(seen.indexOf('The 2 sub-shifts')).toBeLessThan(seen.indexOf('Today / next / beyond'))
+    // The fixture carries five subs, so this is the eyebrow's real text — the
+    // previous assertion looked for "The 2 sub-shifts", got -1 from indexOf,
+    // and passed without testing the position at all.
+    expect(seen.indexOf('The 5 sub-shifts')).toBeGreaterThan(seen.indexOf('Today / next / beyond'))
   })
 
   it('clears stale canonical metadata and marks client-side unknown routes noindex', async () => {
@@ -227,15 +231,17 @@ describe('URLs the site did not author', () => {
 describe('the deck', () => {
   it('orders the panels the way the badges are drawn', async () => {
     // HomePanel draws the badges in DOMAIN_ORDER and jumps by PANEL index, so
-    // the panels must be in that order too. They followed the published
-    // document's order instead — society, economy, consumers, organizations —
-    // so the Consumers badge opened Organizations, the Organizations badge
-    // opened Consumers, and the deck counted 01, 02, 04, 03.
+    // the panels must be in that order too. The 12 Aug 2026 Miro review fixed
+    // the sequence as society, economy, consumers, organizations — which is
+    // also the published document's order, so the reorder is now a no-op on a
+    // complete document. It still earns its keep: it protects the deck when
+    // the fetch fails (four fallback panels) and when the document arrives
+    // partial or reordered.
     const { orderDomains } = await import('../src/lib/useDomains')
     const { DOMAIN_ORDER } = await import('../src/lib/theme')
 
     const published = ['society', 'economy', 'consumers', 'organizations']
-    expect(published).not.toEqual(DOMAIN_ORDER)
+    expect(published).toEqual(DOMAIN_ORDER)
     expect(orderDomains(published)).toEqual(DOMAIN_ORDER)
 
     // A cold or failed fetch still gives the deck its four panels.

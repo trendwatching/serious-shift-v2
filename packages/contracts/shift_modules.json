@@ -22,9 +22,11 @@
     "re-composes each page on the next --export-only with no regeneration, and",
     "the front end sorts by it again at render so an already-published document",
     "reads correctly too. Types absent from a page are simply skipped.",
-    "The sub-shift list sits directly after the peel tabs, which is where the",
-    "delivered design build puts it. An earlier Miro content mockup put it at the",
-    "bottom of the page and this file followed that; the design supersedes it."
+    "The sub-shift list closes the key-shift page. The delivered design build",
+    "put it directly after the peel tabs and this file followed that for a",
+    "while; the 12 Aug 2026 Miro review re-insisted on the original mockup's",
+    "bottom placement — the reader finishes the analysis, then fans out into",
+    "the sub-shifts — and that decision supersedes the design build."
   ],
   "order": {
     "key_trend": [
@@ -33,7 +35,6 @@
       "pull_quote",
       "stat_band",
       "peel_tabs",
-      "sub_shift_list",
       "human_needs",
       "tension_band",
       "timeline",
@@ -42,7 +43,8 @@
       "innovations",
       "voices",
       "related_shifts",
-      "rich_text"
+      "rich_text",
+      "sub_shift_list"
     ],
     "sub_trend": [
       "lede",

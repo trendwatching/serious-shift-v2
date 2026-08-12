@@ -81,12 +81,28 @@ export function Header() {
           />
         </Link>
 
+        {/* The spelled-out desktop nav — real horizontal entries, per the
+            12 Aug 2026 Miro review. `.nav-desktop` is display:none until the
+            desktop layer (styles/desktop.css) shows it and hides the burger,
+            so phones keep the dropdown exactly as it was. */}
+        <nav aria-label="Primary" className="nav-desktop items-center" style={{ gap: 30 }}>
+          {MENU_LINKS.map((link) => {
+            const props = {
+              className: 't-display font-semibold !text-white',
+              style: { fontSize: 16, letterSpacing: '-0.01em' },
+            }
+            return link.internal
+              ? <Link key={link.label} to={link.href} {...props}>{link.label}</Link>
+              : <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" {...props}>{link.label}</a>
+          })}
+        </nav>
+
         <button
           ref={triggerRef}
           type="button" onClick={() => setOpen((v) => !v)}
           aria-label={open ? 'Close navigation' : 'Open navigation'}
           aria-expanded={open} aria-controls="site-nav"
-          className="flex cursor-pointer flex-col items-end"
+          className="nav-burger flex cursor-pointer flex-col items-end"
           style={{
             padding: `calc(var(--bar-h) * 0.048) 0 calc(var(--bar-h) * 0.119) calc(var(--bar-h) * 0.167)`,
             gap: 'calc(var(--bar-h) * 0.0595)',

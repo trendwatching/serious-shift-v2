@@ -129,19 +129,17 @@ def test_innovations_is_orderable_on_both_scopes():
     assert order["sub_trend"].index("timeline") < order["sub_trend"].index("innovations")
 
 
-def test_the_sub_shift_list_follows_the_peel_tabs():
-    """The delivered design build puts the sub-shifts immediately after the peel
-    tabs, above Human needs — a reader meets the parts of the shift before the
-    analysis fans out into needs, horizons and industries.
+def test_the_sub_shift_list_closes_the_page():
+    """The sub-shift overview is the LAST module on a key shift: the reader
+    finishes the analysis, then fans out into the sub-shifts.
 
-    The earlier Miro content mockup put them last, as a carousel, and this file
-    pinned that. The design supersedes it; Miro is the content guide, not the
-    layout. Pinned here because it is a one-line edit that would otherwise move
-    the section on every key shift with nothing to notice."""
+    This placement has flipped twice — the original Miro mockup put it at the
+    bottom, the delivered design build moved it directly after the peel tabs,
+    and the 12 Aug 2026 Miro review re-insisted on the bottom. That review is
+    the standing decision. Pinned here because it is a one-line edit that would
+    otherwise move the section on every key shift with nothing to notice."""
     order = _contract()["order"]["key_trend"]
-    assert order.index("sub_shift_list") == order.index("peel_tabs") + 1
-    for later in ("human_needs", "timeline", "industries", "territories"):
-        assert order.index("sub_shift_list") < order.index(later), later
+    assert order[-1] == "sub_shift_list"
 
 
 def test_modules_are_omitted_when_the_model_returned_nothing():
@@ -208,7 +206,7 @@ def test_module_order_is_actually_loaded():
     export silently stops ordering and the page composition regresses."""
     assert MODULE_ORDER.get("key_trend"), "module order failed to load"
     order = MODULE_ORDER["key_trend"]
-    assert order.index("sub_shift_list") < order.index("industries")
+    assert order.index("peel_tabs") < order.index("industries")
 
 
 # ── The design's renames and the both-sides rule ────────────────────────────

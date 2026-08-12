@@ -98,7 +98,6 @@ const MODULE_ORDER_KEY_TREND: [&str; 15] = [
     "pull_quote",
     "stat_band",
     "peel_tabs",
-    "sub_shift_list",
     "human_needs",
     "tension_band",
     "timeline",
@@ -108,6 +107,7 @@ const MODULE_ORDER_KEY_TREND: [&str; 15] = [
     "voices",
     "related_shifts",
     "rich_text",
+    "sub_shift_list",
 ];
 
 const MODULE_ORDER_SUB_TREND: [&str; 13] = [

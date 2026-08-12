@@ -261,5 +261,12 @@
        holding a rotated-looking label. */
     .needs-pair > * { min-width: 190px; }
 
+    /* The nav spells itself out — real horizontal entries at the top, like
+       most desktop websites (12 Aug 2026 Miro review). The burger and its
+       dropdown stay the phone's; `!important` because the button carries the
+       `flex` utility and utilities outrank this layer. */
+    .nav-desktop { display: flex; }
+    .nav-burger { display: none !important; }
+
   }
 }

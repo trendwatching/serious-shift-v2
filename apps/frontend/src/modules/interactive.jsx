@@ -277,14 +277,22 @@ export function Territories({ data, ctx }) {
             animation: still ? undefined : 'ssRise 0.6s var(--ease-out) 0.34s',
           }}
         >
+          {/* Copy and destination from the 12 Aug 2026 Miro review. The photo is
+              the review's "small beautiful visual" — the card was reading as
+              copy-only; @Antara may swap in bespoke art later. */}
+          <img
+            src="/shift/about-team.jpg" alt="" aria-hidden="true" draggable="false"
+            className="block w-full object-cover"
+            style={{ height: 84, borderRadius: 10, objectPosition: 'center 42%' }}
+          />
           <span className="t-eyebrow" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--color-yellow)' }}>Work with us</span>
-          <span className="t-title" style={{ fontSize: 21, lineHeight: 1.14 }}>Don’t see your angle here?</span>
+          <span className="t-title" style={{ fontSize: 21, lineHeight: 1.14 }}>Ready for the shift?</span>
           <span className="text-pretty" style={{ fontSize: 13, lineHeight: 1.48, opacity: 0.94 }}>
-            These territories are starting points, not limits. We work with organizations to find where a shift like this creates real commercial space for their specific context.
+            Work directly with our team to turn AI shifts into things worth building. From Bangkok to Boston.
           </span>
-          <a href="mailto:hello@trendwatching.com" className="pill-contact mt-auto self-start">
-            Contact us <span aria-hidden="true" style={{ fontSize: 15 }}>→</span>
-          </a>
+          <Link to="/about#services" className="pill-contact mt-auto self-start">
+            TALK TO US <span aria-hidden="true" style={{ fontSize: 15 }}>→</span>
+          </Link>
         </div>
       </div>
     </section>

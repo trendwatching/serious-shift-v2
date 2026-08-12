@@ -361,3 +361,12 @@
     box-shadow: 0 12px 22px rgba(27, 22, 32, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
 }
+
+@layer components {
+  /* The spelled-out desktop nav (12 Aug 2026 Miro review). Hidden here; the
+     desktop layer shows it and hides the burger — the ONE breakpoint lives in
+     desktop.css, so this base rule is all this file is allowed to say. */
+  .nav-desktop {
+    display: none;
+  }
+}
