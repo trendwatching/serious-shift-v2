@@ -2,14 +2,23 @@ import { Link } from '../lib/router'
 import { pad2 } from '../lib/theme'
 
 /**
- * Society is the only panel with photography behind it; the other three are
- * their gradient, unmodified.
+ * Every panel carries its sphere's artwork since the 11 Aug 2026 review asked
+ * for imagery behind all four ("the spheres on the homepage don't have the
+ * images in the background"). Society is the design's own asset; the other
+ * three are generated in its mold by scripts/generate-sphere-bg.mjs (interim,
+ * until the photo-illustration set lands — docs/sphere-image-prompts.md).
  *
- * No scrim on those three. The previous build added a flat 30% black over
- * every gradient, which is the single reason the whole deck read darker than
- * the design.
+ * All four therefore get the 0.12→0.42 scrim below. The earlier build kept
+ * the three imageless panels scrim-free because a flat black over a bare
+ * gradient read darker than the design; with artwork behind the type the
+ * scrim is what keeps the panel text legible.
  */
-const PANEL_IMAGE = { society: '/shift/domain-society-bg.jpg' }
+const PANEL_IMAGE = {
+  society: '/shift/domain-society-bg.jpg',
+  economy: '/shift/domain-economy-bg.jpg',
+  organizations: '/shift/domain-organizations-bg.jpg',
+  consumers: '/shift/domain-consumers-bg.jpg',
+}
 
 const background = (domain) => (PANEL_IMAGE[domain.id]
   ? `linear-gradient(180deg, rgba(27,22,32,0.12) 0%, rgba(27,22,32,0.42) 100%), url('${PANEL_IMAGE[domain.id]}')`

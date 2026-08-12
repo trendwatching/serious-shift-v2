@@ -7,7 +7,15 @@ import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Loading, Missing, Unavailable } from './states'
 
-const HERO_IMAGE = { society: '/shift/domain-society-bg.jpg' }
+// Society is the design's own asset; the other three are generated in its
+// mold by scripts/generate-sphere-bg.mjs (interim, until the photo-
+// illustration set lands — prompts in docs/sphere-image-prompts.md).
+const HERO_IMAGE = {
+  society: '/shift/domain-society-bg.jpg',
+  economy: '/shift/domain-economy-bg.jpg',
+  organizations: '/shift/domain-organizations-bg.jpg',
+  consumers: '/shift/domain-consumers-bg.jpg',
+}
 
 export default function DomainPage() {
   const { domainSlug } = useParams()
