@@ -189,15 +189,16 @@
     max-width: var(--crumb-max, 300px);
   }
 
-  /* The stat band's surface: the sphere's ramp plus the grain that made the
-     design's JPG feel printed rather than rendered. Tiled turbulence, inlined,
-     so it costs one gzipped line rather than a request per sphere. */
+  /* The stat band's surface: the sphere's ramp, alone. It USED to carry a
+     tiled 160px feTurbulence grain (the design JPG's printed feel), but
+     turbulence tiles are not seamless — every tile boundary drew a hard
+     vertical seam across the band, and under the overlay blend the band read
+     as a row of repeating panels rather than one gradient (13 Aug 2026
+     review). If grain ever comes back it has to be a seamless tile, not
+     this filter. */
   .stat-surface {
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0 0 0 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
-      var(--grad-stat);
-    background-size: 160px 160px, cover;
-    background-blend-mode: overlay, normal;
+    background-image: var(--grad-stat);
+    background-size: cover;
   }
 
   /* Escape only — for rails that want to run to the screen edge and set

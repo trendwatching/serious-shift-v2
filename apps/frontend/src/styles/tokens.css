@@ -339,9 +339,11 @@
    * ring around its own blob; three rings crossing read as stains, not light
    * (13 Aug 2026 review: "blobby"). So: fades end at alpha-zero of the SAME
    * hue via color-mix, never bare `transparent`, and one bloom is all there
-   * is. The grain that made the JPG feel printed comes back as a tiled
-   * turbulence overlay in components.css, so this stays a token that follows
-   * [data-domain] rather than an asset per sphere.
+   * is. The JPG's grain does NOT come back: the tiled-turbulence overlay
+   * that stood in for it drew a hard seam at every 160px tile boundary and
+   * the band read as repeating panels (13 Aug 2026 review) — the band is
+   * the ramp alone, and it stays a token that follows [data-domain] rather
+   * than an asset per sphere.
    * ------------------------------------------------------------------- */
   --grad-stat:
     radial-gradient(140% 170% at 15% -10%,
