@@ -3,13 +3,15 @@
  *
  * Two things here are load-bearing and were wrong before:
  *
- *  * The bar is `position: absolute`, not sticky, and it OVERLAPS the content
- *    below it. The deck starts at 126px while the bar is 140px, so the bar
- *    sits over the top 14px of the panel. Making it sticky put it in flow and
- *    pushed everything down.
- *  * Its height is `--topbar`, and every hero and floating breadcrumb measures
- *    against that same token. The last build hard-coded 62px against an 82px
- *    bar and the 20px error propagated to every page.
+ *  * The bar is OUT OF FLOW and OVERLAPS the content below it — absolute on
+ *    phones (the deck starts at 126px while the bar is 140px, so the bar sits
+ *    over the top 14px of the panel; making it sticky put it in flow and
+ *    pushed everything down), and a fixed floating pill on desktop
+ *    (styles/desktop.css). Either way nothing below it moves.
+ *  * The zone it reserves is `--topbar`, and every hero and floating
+ *    breadcrumb measures against that same token — the desktop pill floats
+ *    INSIDE that zone rather than resizing it. The last build hard-coded 62px
+ *    against an 82px bar and the 20px error propagated to every page.
  *
  * The nav is a dropdown pinned under the bar, not a full-screen sheet. It is
  * still a <dialog> so focus is trapped and Escape closes it — semantics the
@@ -54,16 +56,11 @@ export function Header() {
 
   return (
     <>
-      <header
-        className="a-fade absolute inset-x-0 top-0 z-50 box-border flex items-center justify-between"
-        style={{
-          height: 'var(--topbar)',
-          // 56px of the design's 140px is the iOS status bar. On the web that
-          // inset is real and variable, so it is honoured rather than faked.
-          padding: 'max(0px, env(safe-area-inset-top)) var(--gutter) 0',
-          background: 'var(--color-black)',
-        }}
-      >
+      {/* Geometry and paint live on `.site-bar` (components.css), NOT inline
+          and NOT as position utilities: desktop.css restyles the band into a
+          floating pill, and both an inline style and a Tailwind utility beat
+          the components layer — check-layers.mjs rejects the inline form. */}
+      <header className="site-bar a-fade z-50 box-border flex items-center justify-between">
         <Link to="/" aria-label="Serious Shift — home" className="flex shrink-0 items-center">
           {/* Sized as a FRACTION of the band, not in pixels. The lock-up is
               74×214 in an 84px bar, so it keeps 88% of the band's height and
@@ -85,7 +82,9 @@ export function Header() {
             12 Aug 2026 Miro review. `.nav-desktop` is display:none until the
             desktop layer (styles/desktop.css) shows it and hides the burger,
             so phones keep the dropdown exactly as it was. */}
-        <nav aria-label="Primary" className="nav-desktop items-center" style={{ gap: 36 }}>
+        {/* Gap 20 + 8px link padding-inline (desktop.css) = the old 36px
+            rhythm, but with real hit areas inside the pill. */}
+        <nav aria-label="Primary" className="nav-desktop items-center" style={{ gap: 20 }}>
           {MENU_LINKS.map((link) => {
             const props = {
               className: 't-display font-semibold !text-white',

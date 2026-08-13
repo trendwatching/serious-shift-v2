@@ -41,24 +41,25 @@ test('the chrome scales with the display, and stops', async ({ page }) => {
   expect(at[393].bar).toBe(84)
   expect(at[393].logo).toBe(74)
 
-  // It rises.
+  // The phone band rises…
   expect(at[768].bar).toBeGreaterThan(at[393].bar)
-  expect(at[1280].bar).toBeGreaterThan(at[768].bar)
-  expect(at[1920].bar).toBeGreaterThan(at[1280].bar)
 
-  // And it stops: past the ceiling a bigger display is usually a further one.
+  // …then DETACHES: at the desktop breakpoint the band becomes the floating
+  // pill (styles/desktop.css .site-bar), slimmer than any phone band. The
+  // pill rides its own ramp — rises, and its ceiling lands by 1920.
+  expect(at[1280].bar).toBeLessThan(at[393].bar)
+  expect(at[1920].bar).toBeGreaterThan(at[1280].bar)
   expect(at[2560].bar).toBe(at[1920].bar)
 
-  // The lock-up is a fraction of the band, so it tracks it rather than
-  // rattling around inside a bar that grew without it. The fraction differs
-  // by chrome: phones keep the design's 74-in-84 lock-up, while the desktop
-  // layer drops it to 62% so it sits at nav-entry scale beside the
-  // spelled-out menu rather than reading as a billboard.
+  // The lock-up is a fraction of its chrome, so it tracks it rather than
+  // rattling around inside a bar that grew without it. Phones keep the
+  // design's 74-in-84 lock-up; the desktop mark is 61% of the pill, at
+  // nav-entry scale beside the spelled-out menu.
   for (const w of [393, 768]) {
     expect(at[w].logo / at[w].bar).toBeCloseTo(74 / 84, 1)
   }
   for (const w of [1280, 1920]) {
-    expect(at[w].logo / at[w].bar).toBeCloseTo(0.62, 1)
+    expect(at[w].logo / at[w].bar).toBeCloseTo(0.61, 1)
   }
 })
 

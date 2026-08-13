@@ -59,6 +59,11 @@
        * ------------------------------------------------------------------ */
       --col: clamp(660px, 591.43px + 6.7vw, 720px);
       --wide: min(calc(var(--col) + 160px), calc(100vw - 2 * var(--gutter)));
+
+      /* The floating nav pill's height. Same shape as every chrome ramp —
+         rises with the display, stops — but its ceiling lands by 1920 (42 +
+         1.15vw = 64 at ~1913px), which is what scale.spec.js asserts. */
+      --pill-h: clamp(56px, 42px + 1.15vw, 64px);
     }
 
     /* The box carries the gutter ON TOP of the content width. Setting
@@ -236,6 +241,10 @@
       /* Released: the pills were capped at 112/150px so a long sphere name would
          not push the trail off a phone. There is room here. */
       --crumb-cap: none;
+      /* Re-anchored under the floating pill's bottom edge rather than the
+         `--topbar` band's — the band-relative offset left it adrift in the
+         gap the detached pill opened up. */
+      top: calc(14px + var(--pill-h) + 18px);
       left: 50%;
       transform: translateX(calc(var(--wide) / -2));
       /* The trail stops being truncated the moment there is room for it —
@@ -254,10 +263,38 @@
     .nav-desktop { display: flex; }
     .nav-burger { display: none !important; }
 
+    /* The band becomes a FLOATING PILL — detached from the edges, pinned
+       while the page scrolls (13 Aug 2026 review). It floats INSIDE the zone
+       `--topbar` reserves, so heroes, the deck overlap and .anchor-top all
+       keep their offsets and nothing below it moves. Solid black, because
+       three of the six page tops are white and one is the sunset ramp — the
+       pill has to bring its own contrast. Width is `--wide`: the logo sits on
+       the content's left edge, on the page's one measure, like every band. */
+    .site-bar {
+      position: fixed;
+      top: 14px;
+      /* `inset-inline: auto` FIRST: it is a shorthand for left+right, so it
+         has to release the base rule's 0/0 stretch BEFORE `left` re-anchors
+         the pill — after it, it silently resets `left` and the pill hangs
+         half off the screen's left edge. */
+      inset-inline: auto;
+      left: 50%;
+      transform: translateX(-50%);
+      width: var(--wide);
+      height: var(--pill-h);
+      padding: 0 12px 0 26px;
+      border-radius: 999px;
+      /* The breadcrumb pills' shadow family, scaled to chrome. */
+      box-shadow: 0 10px 30px rgba(27, 22, 32, 0.22);
+    }
+
     /* Entries rest at 80% and light to full white with an underline — the bar
        had no hover state at all, so nothing on it read as clickable. Opacity,
-       not color: the links carry `!text-white`, which no layer outranks. */
+       not color: the links carry `!text-white`, which no layer outranks.
+       The 8px inline padding is the hit area inside the pill; with the nav's
+       20px gap it keeps the old 36px visual rhythm. */
     .nav-desktop a {
+      padding-inline: 8px;
       opacity: 0.8;
       text-underline-offset: 7px;
       text-decoration-thickness: 1.5px;
@@ -269,13 +306,13 @@
       text-decoration-line: underline;
     }
 
-    /* The phone keeps the 88%-of-the-band lock-up (components.css); beside
-       spelled-out nav entries that read as a billboard, so here it drops to
-       62% — ~53px against 74. Same 2.892 aspect, still a fraction of the band
-       so it tracks the chrome, not the viewport. */
+    /* The phone keeps the 88%-of-the-band lock-up (components.css); here the
+       mark is re-anchored to the PILL — 61% of it, ~35px at 1280 — so it
+       tracks the chrome it actually sits in. 1.764 / 0.61 keeps the PNG's own
+       2.892 aspect. */
     .brand-logo {
-      height: calc(var(--bar-h) * 0.62);
-      width: calc(var(--bar-h) * 1.793);
+      height: calc(var(--pill-h) * 0.61);
+      width: calc(var(--pill-h) * 1.764);
     }
 
     /* A sphere panel is the full viewport height here, and its copy was

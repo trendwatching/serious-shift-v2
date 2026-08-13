@@ -363,6 +363,20 @@
 }
 
 @layer components {
+  /* The black top band. A CLASS, not inline styles or position utilities on
+     the <header>, because desktop.css restyles it into a floating pill and
+     both channels would beat that layer (check-layers.mjs enforces the inline
+     half). The 56px status-bar share of the design's 140px is real and
+     variable on the web, so it is honoured as the safe-area inset. */
+  .site-bar {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: var(--topbar);
+    padding: max(0px, env(safe-area-inset-top)) var(--gutter) 0;
+    background: var(--color-black);
+  }
+
   /* The spelled-out desktop nav (12 Aug 2026 Miro review). Hidden here; the
      desktop layer shows it and hides the burger — the ONE breakpoint lives in
      desktop.css, so this base rule is all this file is allowed to say. */
