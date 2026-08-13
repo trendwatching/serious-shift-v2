@@ -23,9 +23,7 @@ export function PeelTabs({ data, ctx }) {
 
   const [top, setTop] = useState(0)
   const [height, setHeight] = useState(0)
-  const [width, setWidth] = useState(0)
   const bodies = useRef([])
-  const section = useRef(null)
   const id = useId()
   const sub = ctx.scope === 'sub_shift'
 
@@ -33,9 +31,6 @@ export function PeelTabs({ data, ctx }) {
     const measure = () => {
       const tallest = bodies.current.reduce((m, el) => (el ? Math.max(m, el.scrollHeight) : m), 0)
       if (tallest) setHeight(tallest + 96)
-      // The width feeds the shared gradient box below; without it the fills
-      // fall back to per-element boxes and the seam mismatch returns.
-      if (section.current) setWidth(section.current.getBoundingClientRect().width)
     }
     measure()
     // Re-measure on reflow, not just on mount. A one-shot measurement is what
@@ -46,10 +41,7 @@ export function PeelTabs({ data, ctx }) {
     // window resize anyway.
     window.addEventListener('resize', measure)
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
-    if (observer) {
-      bodies.current.forEach((el) => el && observer.observe(el))
-      if (section.current) observer.observe(section.current)
-    }
+    if (observer) bodies.current.forEach((el) => el && observer.observe(el))
     return () => {
       window.removeEventListener('resize', measure)
       observer?.disconnect()
@@ -66,17 +58,28 @@ export function PeelTabs({ data, ctx }) {
   // against its own element's box, so painting the same token into a 54px tab
   // and a 300px panel produced two unrelated colors meeting at the seam —
   // solid bright blue on a blue→green ramp (13 Aug 2026 device screenshots).
-  // Instead every piece paints the SAME W×H gradient (the section's box) and
-  // offsets it to its own position, so the tab is literally the top 54px of
-  // the panel's fill, at any angle, in both scopes.
+  // Instead every piece paints the section-sized gradient and offsets it to
+  // its own position, so the tab is literally the top 54px of the panel's
+  // fill, at any angle, in both scopes.
+  //
+  // The widths are PERCENTAGES, never a measured pixel value: the page's
+  // entry animation scales the article, `getBoundingClientRect` returns the
+  // scaled width, and a ResizeObserver never corrects it because the LAYOUT
+  // size never changes — so a mount-time measurement painted the gradient
+  // ~10% short and the grey inactive panel showed through the gap (13 Aug
+  // 2026 desktop screenshot). Background percentages resolve against the
+  // untransformed box: the left tab spans 48% of the section, so its gradient
+  // box is 100/0.48 of its own width; the right tab spans 52%, and
+  // `backgroundPosition: '100% 0'` right-aligns an oversized image, which
+  // lands its left edge at exactly −48% of the section. Only the HEIGHT is
+  // measured, and scrollHeight is layout-based — transforms can't skew it.
   const stage = height || 246
-  const slice = width
-    ? {
-        size: `${width}px ${stage}px`,
-        tab: (left) => (left ? '0 0' : `-${Math.round(width * 0.48)}px 0`),
-        panel: '0 -50px',
-      }
-    : { size: undefined, tab: () => undefined, panel: undefined }
+  const slice = {
+    tabSize: (left) => `${left ? 208.3334 : 192.3077}% ${stage}px`,
+    tabPos: (left) => (left ? '0 0' : '100% 0'),
+    panelSize: `100% ${stage}px`,
+    panelPos: '0 -50px',
+  }
 
   const onKeyDown = (e) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
@@ -85,7 +88,7 @@ export function PeelTabs({ data, ctx }) {
   }
 
   return (
-    <section ref={section} className="relative" style={{ height: stage, marginTop: 2 }}>
+    <section className="relative" style={{ height: stage, marginTop: 2 }}>
       <h2 className="sr-only">What’s changing and why now</h2>
       {/* Tabs and panels are siblings, not nested.
           A `tabpanel` is not an allowed child of a `tablist`, so the earlier
@@ -110,8 +113,8 @@ export function PeelTabs({ data, ctx }) {
                 top: 0, left: left ? 0 : '48%', right: left ? '52%' : 0, height: 54, padding: '0 8px',
                 borderRadius: `${radius}px ${radius}px 0 0`,
                 backgroundImage: on ? front : back,
-                backgroundSize: on ? slice.size : undefined,
-                backgroundPosition: on ? slice.tab(left) : undefined,
+                backgroundSize: on ? slice.tabSize(left) : undefined,
+                backgroundPosition: on ? slice.tabPos(left) : undefined,
                 backgroundRepeat: 'no-repeat',
               }}
             >
@@ -139,8 +142,8 @@ export function PeelTabs({ data, ctx }) {
               top: 50, left: 0, right: 0, bottom: 0, padding: '22px 20px',
               borderRadius: left ? `0 ${radius}px ${radius}px ${radius}px` : `${radius}px 0 ${radius}px ${radius}px`,
               backgroundImage: on ? front : back,
-              backgroundSize: on ? slice.size : undefined,
-              backgroundPosition: on ? slice.panel : undefined,
+              backgroundSize: on ? slice.panelSize : undefined,
+              backgroundPosition: on ? slice.panelPos : undefined,
               backgroundRepeat: 'no-repeat',
               boxShadow: '0 10px 26px rgba(27,22,32,0.14)',
             }}
