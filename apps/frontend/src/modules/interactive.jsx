@@ -23,7 +23,9 @@ export function PeelTabs({ data, ctx }) {
 
   const [top, setTop] = useState(0)
   const [height, setHeight] = useState(0)
+  const [width, setWidth] = useState(0)
   const bodies = useRef([])
+  const section = useRef(null)
   const id = useId()
   const sub = ctx.scope === 'sub_shift'
 
@@ -31,15 +33,27 @@ export function PeelTabs({ data, ctx }) {
     const measure = () => {
       const tallest = bodies.current.reduce((m, el) => (el ? Math.max(m, el.scrollHeight) : m), 0)
       if (tallest) setHeight(tallest + 96)
+      // The width feeds the shared gradient box below; without it the fills
+      // fall back to per-element boxes and the seam mismatch returns.
+      if (section.current) setWidth(section.current.getBoundingClientRect().width)
     }
     measure()
     // Re-measure on reflow, not just on mount. A one-shot measurement is what
     // left the previous version's stack sized for the text it had on first
     // paint, so a rotate or a font swap left the copy overflowing a stale box.
-    if (typeof ResizeObserver === 'undefined') return undefined
-    const observer = new ResizeObserver(measure)
-    bodies.current.forEach((el) => el && observer.observe(el))
-    return () => observer.disconnect()
+    // The window listener is not redundant with the observer: environments
+    // exist where ResizeObserver callbacks never dispatch, and a rotate is a
+    // window resize anyway.
+    window.addEventListener('resize', measure)
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    if (observer) {
+      bodies.current.forEach((el) => el && observer.observe(el))
+      if (section.current) observer.observe(section.current)
+    }
+    return () => {
+      window.removeEventListener('resize', measure)
+      observer?.disconnect()
+    }
   }, [data.whats_changing, data.why_now])
 
   if (!cards.length) return null
@@ -48,6 +62,22 @@ export function PeelTabs({ data, ctx }) {
   const front = sub ? 'var(--grad-sunset)' : 'var(--a-grad)'
   const back = 'linear-gradient(180deg, #F7F7F7 0%, #F1F1F3 100%)'
 
+  // ONE gradient box for the whole peel, sliced. A CSS gradient resolves
+  // against its own element's box, so painting the same token into a 54px tab
+  // and a 300px panel produced two unrelated colors meeting at the seam —
+  // solid bright blue on a blue→green ramp (13 Aug 2026 device screenshots).
+  // Instead every piece paints the SAME W×H gradient (the section's box) and
+  // offsets it to its own position, so the tab is literally the top 54px of
+  // the panel's fill, at any angle, in both scopes.
+  const stage = height || 246
+  const slice = width
+    ? {
+        size: `${width}px ${stage}px`,
+        tab: (left) => (left ? '0 0' : `-${Math.round(width * 0.48)}px 0`),
+        panel: '0 -50px',
+      }
+    : { size: undefined, tab: () => undefined, panel: undefined }
+
   const onKeyDown = (e) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
     e.preventDefault()
@@ -55,7 +85,7 @@ export function PeelTabs({ data, ctx }) {
   }
 
   return (
-    <section className="relative" style={{ height: height || 246, marginTop: 2 }}>
+    <section ref={section} className="relative" style={{ height: stage, marginTop: 2 }}>
       <h2 className="sr-only">What’s changing and why now</h2>
       {/* Tabs and panels are siblings, not nested.
           A `tabpanel` is not an allowed child of a `tablist`, so the earlier
@@ -77,12 +107,12 @@ export function PeelTabs({ data, ctx }) {
               className="absolute box-border flex cursor-pointer items-center justify-center"
               style={{
                 zIndex: on ? 13 : 11,
-                top: 0, left: left ? 0 : '48%', right: left ? '52%' : 0, height: 54, padding: '0 12px',
+                top: 0, left: left ? 0 : '48%', right: left ? '52%' : 0, height: 54, padding: '0 8px',
                 borderRadius: `${radius}px ${radius}px 0 0`,
                 backgroundImage: on ? front : back,
-                backgroundSize: sub && on ? '100% 250px' : undefined,
+                backgroundSize: on ? slice.size : undefined,
+                backgroundPosition: on ? slice.tab(left) : undefined,
                 backgroundRepeat: 'no-repeat',
-                transition: 'background-image 0.35s ease, color 0.35s ease',
               }}
             >
               <span
@@ -109,8 +139,10 @@ export function PeelTabs({ data, ctx }) {
               top: 50, left: 0, right: 0, bottom: 0, padding: '22px 20px',
               borderRadius: left ? `0 ${radius}px ${radius}px ${radius}px` : `${radius}px 0 ${radius}px ${radius}px`,
               backgroundImage: on ? front : back,
+              backgroundSize: on ? slice.size : undefined,
+              backgroundPosition: on ? slice.panel : undefined,
+              backgroundRepeat: 'no-repeat',
               boxShadow: '0 10px 26px rgba(27,22,32,0.14)',
-              transition: 'background-image 0.35s ease',
             }}
           >
             <div
@@ -160,7 +192,11 @@ export function HumanNeeds({ data, ctx }) {
           className="text-pretty"
           style={{
             fontSize: 14, lineHeight: 1.5, opacity: on ? 1 : 0,
-            maxHeight: on ? (sub ? 260 : 240) : 0, overflow: 'hidden',
+            // 340/360, not the 240/260 the animation shipped with: a 45-word
+            // needs body wraps to ~250px on a 360dp phone and the cap clipped
+            // it silently — the cap exists for the open/close transition, not
+            // as an editorial limit.
+            maxHeight: on ? (sub ? 360 : 340) : 0, overflow: 'hidden',
             transition: 'opacity 0.3s ease, max-height 0.45s var(--ease-out)',
           }}
         >
@@ -330,7 +366,9 @@ export function SubShiftList({ ctx }) {
                 <span
                   className="block shrink-0 self-stretch"
                   style={{
-                    width: 152,
+                    // 42% floor: a literal 152px is 48% of a 316px phone card
+                    // and starved the text column of its title.
+                    width: 'min(152px, 42%)',
                     backgroundImage: cssUrl(s.tileImage || '/shift/sub-card-art.jpg'),
                     backgroundSize: 'cover', backgroundPosition: 'center',
                   }}
@@ -464,7 +502,7 @@ export function SignalList({ data, tone }) {
         {items.map((text, i) => (
           <div key={i} className="flex items-center bg-white" style={{ borderRadius: 10, padding: 16, gap: 14 }}>
             <span className="t-display" style={{ fontSize: 20, fontWeight: 700 }}>{i + 1}.</span>
-            <span style={{ fontSize: 15, lineHeight: 1.45 }}>{text}</span>
+            <span className="min-w-0" style={{ fontSize: 15, lineHeight: 1.45, overflowWrap: 'anywhere' }}>{text}</span>
           </div>
         ))}
       </div>

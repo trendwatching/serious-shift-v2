@@ -123,8 +123,15 @@
      hook writes an inline height, which beats any rule — so a hard-coded 660
      would drag the desktop hero back to phone proportions on the first scroll
      event. One source of truth, read at run time. */
-  .hero-tall  { --hero-h: 660px; --hero-h-min: 360px; height: var(--hero-h); }
-  .hero-flat  { height: 340px; }
+  /* `min(660px, 75svh)`: a viewport-independent 660 was 100% of a phone's
+     visible height with the browser bars up — the H1 cropped below the fold
+     and nothing peeked to say there was a page (13 Aug 2026 device review:
+     "around 75% so the user knows there is content"). `svh`, not `dvh`, so
+     the hero doesn't jump when the URL bar collapses mid-scroll. Registered
+     lengths resolve to px, so the shrink hook keeps reading numbers. */
+  .hero-tall  { --hero-h: min(660px, 75svh); --hero-h-min: min(360px, 44svh); height: var(--hero-h); }
+  /* min-height: a fixed 340 clipped a six-line no-image title. */
+  .hero-flat  { min-height: 340px; }
   .hero-short { min-height: 500px; }
   .hero-sub   { min-height: 400px; }
 
@@ -419,5 +426,15 @@
      mid-frame. On the class for the same reason as the padding above. */
   .sphere-art {
     background-position: center top;
+  }
+}
+
+@layer components {
+  /* The needs pair's floor. The collapsed card is ~76px wide on a 360dp
+     phone while its nowrap THREATENED label renders at ~104px with its
+     letter-spacing — the label ran under the neighbour's edge. Desktop
+     raises this to 190px; phones only need the label to survive. */
+  .needs-pair > * {
+    min-width: 106px;
   }
 }

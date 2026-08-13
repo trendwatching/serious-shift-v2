@@ -60,7 +60,11 @@ export const FromTo = ({ data, ctx }) => {
     >
       <div
         className="relative box-border flex flex-col items-center justify-center text-center"
-        style={{ height: 208, padding: '20px 15px', gap: 10, color: lit ? '#fff' : 'var(--color-ink-strong)' }}
+        // minHeight, NOT height: a fixed 208 under the outer's overflow-hidden
+        // clipped the "To" label and the body at both ends on a 360-412px
+        // phone (13 Aug 2026 device screenshots). The grid stretches both
+        // cards to the taller one, so From/To stay equal-height.
+        style={{ minHeight: 208, padding: '20px 15px', gap: 10, color: lit ? '#fff' : 'var(--color-ink-strong)' }}
       >
         <span
           className="t-display"
@@ -132,7 +136,7 @@ export const StatBand = ({ data, ctx }) => {
   const big = ctx.scope === 'sub_shift' ? 'calc(var(--t-figure) * 0.897)' : 'var(--t-figure)'
   return (
     <section
-      className="bleed stat-surface box-border flex items-center text-white"
+      className="bleed stat-surface box-border flex flex-wrap items-center text-white"
       style={{
         gap: 18,
         marginBlock: ctx.scope === 'sub_shift' ? 0 : 10,
@@ -158,8 +162,11 @@ export const StatBand = ({ data, ctx }) => {
       </span>
       {/* `min-w-0` is load-bearing: a flex item defaults to `min-width: auto`,
           so this column refuses to shrink below its longest word and pushes the
-          band past the viewport. */}
-      <span className="flex min-w-0 flex-1 flex-col" style={{ gap: 8 }}>
+          band past the viewport. The 200px basis is the readability floor —
+          when a narrow phone can't give the copy at least that beside the
+          figure, it wraps to a full-width line underneath instead of setting
+          17-character lines (13 Aug 2026 device screenshots). */}
+      <span className="flex min-w-0 flex-col" style={{ flex: '1 1 200px', gap: 8 }}>
         <span className="text-pretty" style={{ fontSize: 13.5, lineHeight: 1.45 }}>{data.text}</span>
         {data.source && <span style={{ fontSize: 'var(--t-meta)', lineHeight: 1.4, opacity: 0.75 }}>{data.source}</span>}
       </span>
