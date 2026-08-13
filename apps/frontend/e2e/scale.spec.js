@@ -37,26 +37,30 @@ test('the chrome scales with the display, and stops', async ({ page }) => {
     at[w] = await read(page)
   }
 
-  // The design canvas, to the pixel. Every clamp floors here.
-  expect(at[393].bar).toBe(84)
-  expect(at[393].logo).toBe(74)
+  // The design canvas, to the pixel. Every clamp floors here. 64/40 since
+  // the 13 Aug 2026 device review — the original 84/74 band filled over half
+  // a real phone's width.
+  expect(at[393].bar).toBe(64)
+  expect(at[393].logo).toBe(40)
 
   // The phone band rises…
   expect(at[768].bar).toBeGreaterThan(at[393].bar)
 
   // …then DETACHES: at the desktop breakpoint the band becomes the floating
   // pill (styles/desktop.css .site-bar), slimmer than any phone band. The
-  // pill rides its own ramp — rises, and its ceiling lands by 1920.
+  // pill rides its own ramp — rises, and its ceiling lands by 1920. NOTE the
+  // margin here is thin now (pill ~57 at 1280 vs a 64px phone band): if the
+  // band floor ever drops below --pill-h's 1280 value, this inverts.
   expect(at[1280].bar).toBeLessThan(at[393].bar)
   expect(at[1920].bar).toBeGreaterThan(at[1280].bar)
   expect(at[2560].bar).toBe(at[1920].bar)
 
   // The lock-up is a fraction of its chrome, so it tracks it rather than
-  // rattling around inside a bar that grew without it. Phones keep the
-  // design's 74-in-84 lock-up; the desktop mark is 61% of the pill, at
-  // nav-entry scale beside the spelled-out menu.
+  // rattling around inside a bar that grew without it. Phones carry a
+  // 40-in-64 lock-up; the desktop mark is 61% of the pill, at nav-entry
+  // scale beside the spelled-out menu.
   for (const w of [393, 768]) {
-    expect(at[w].logo / at[w].bar).toBeCloseTo(74 / 84, 1)
+    expect(at[w].logo / at[w].bar).toBeCloseTo(0.63, 1)
   }
   for (const w of [1280, 1920]) {
     expect(at[w].logo / at[w].bar).toBeCloseTo(0.61, 1)

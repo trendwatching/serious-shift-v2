@@ -120,11 +120,17 @@
   --gutter: clamp(22px, 17.367px + 1.179vw, 40px);
   --module-gap: clamp(30px, 26.397px + 0.917vw, 44px);
 
-  /* ── Display type ────────────────────────────────────────────────────── */
-  --t-deck:       clamp(58px, 49.25px + 2.227vw, 92px);    /* deck H1        */
-  --t-standfirst: clamp(18.5px, 17.084px + 0.36vw, 24px);  /* deck standfirst */
-  --t-hero:       clamp(46px, 40.338px + 1.441vw, 68px);   /* sphere H1      */
-  --t-sub:        clamp(32px, 28.397px + 0.917vw, 46px);   /* sub-shift H1   */
+  /* ── Display type ────────────────────────────────────────────────────
+   * The headline ramps carry an outer `min(…, Xvw)` where X = floor/3.93:
+   * identical at and above the 393px canvas, proportional below it. Without
+   * it a 360dp Android kept the 393 floor and the deck H1 over-wrapped to
+   * four lines (13 Aug 2026 device screenshots). Body-scale tokens stay
+   * un-wrapped — shrinking 13px copy helps nobody.
+   * ------------------------------------------------------------------- */
+  --t-deck:       min(clamp(58px, 49.25px + 2.227vw, 92px), 14.76vw);   /* deck H1        */
+  --t-standfirst: min(clamp(18.5px, 17.084px + 0.36vw, 24px), 4.71vw); /* deck standfirst */
+  --t-hero:       min(clamp(46px, 40.338px + 1.441vw, 68px), 11.7vw);  /* sphere H1      */
+  --t-sub:        min(clamp(32px, 28.397px + 0.917vw, 46px), 8.14vw);  /* sub-shift H1   */
   --t-about:      clamp(52px, 45.823px + 1.572vw, 76px);   /* About H1       */
   --t-trust:      clamp(23px, 21.198px + 0.458vw, 30px);   /* footer trust   */
   --t-stat:       clamp(25px, 22.684px + 0.589vw, 34px);   /* stat figure    */
@@ -161,14 +167,23 @@
      breadcrumb on the site inherited the 20px error. Everything INSIDE the
      bar reads `--bar-h`, so the logo and the hamburger grow with the band
      rather than rattling around in it. */
-  /* Retargeted twice: 116px → 100px (too heavy a band on a desktop), then
-     100px → 90px on the 12 Aug 2026 review ("a bit too tall"). The slope is
-     re-derived each time so the ramp still rises through 768/1280/1920 and
-     plateaus by then — e2e/scale.spec.js pins exactly that shape. The FLOOR
-     is untouched both times, so the phone is still exactly 84px with a 74px
-     lock-up. */
-  --bar-h: clamp(84px, 80px + 0.6vw, 90px);
+  /* Retargeted three times: 116px → 100px (too heavy a band on a desktop),
+     100px → 90px on the 12 Aug 2026 review ("a bit too tall"), and then the
+     FLOOR itself, 84px → 64px, on the 13 Aug 2026 device review — a 74px
+     lock-up in an 84px band filled over half a phone's width, and navbar
+     marks belong at ~40px. The slope is re-derived each time so the ramp
+     still rises through 768 and plateaus — e2e/scale.spec.js pins exactly
+     that shape (desktop measures the floating pill, --pill-h, instead).
+     The footer's marks deliberately do NOT ride this token — see --mark-h. */
+  --bar-h: clamp(64px, 60px + 0.6vw, 70px);
   --topbar: calc(max(0px, env(safe-area-inset-top)) + var(--bar-h));
+
+  /* The footer marks' scale — the band's OLD ramp, frozen when the band
+     shrank. The footer lock-up and client-logo tiles sized themselves as
+     fractions of --bar-h by convenience; letting them shrink 24% would
+     re-break the "Powered by TrendWatching" legibility the 5 Aug 2026
+     review flagged, and turn the client logos into smudges. */
+  --mark-h: clamp(84px, 80px + 0.6vw, 90px);
 
   /* ── Per-domain gradients ─────────────────────────────────────────────
    * Verbatim from the build's DECK table.
@@ -331,4 +346,18 @@
       color-mix(in srgb, var(--a-hot) 80%, var(--a)) 0%,
       color-mix(in srgb, var(--a-hot), transparent 100%) 62%),
     linear-gradient(115deg, var(--a) 0%, var(--a-deep) 78%, var(--a-deep) 100%);
+}
+
+/* Short VISIBLE viewports — an iPhone SE with its browser chrome expanded
+   shows ~553px, and the deck intro is the one screen composed against the
+   full height. Its display scale gives back what the screen doesn't have;
+   everything else keeps its floor. These three tokens are used only by the
+   deck intro (H1, standfirst, sphere badges), so the query is scoped in
+   effect even though it is written on :root. */
+@media (max-height: 620px) {
+  :root {
+    --t-deck: min(48px, 12.22vw);
+    --t-standfirst: min(16px, 4.07vw);
+    --badge-h: min(36px, 9.16vw);
+  }
 }

@@ -24,7 +24,7 @@ export default function HomePanel({ width, active, count, domains, onJump }) {
       // overrides it (74 → 110px) and an inline shorthand silently won that
       // fight for as long as it existed, leaving the rule inert.
       className="intro-panel relative box-border flex h-full shrink-0 flex-col overflow-hidden bg-white"
-      style={{ width, paddingTop: 30, paddingInline: 24 }}
+      style={{ width, paddingTop: 24, paddingInline: 24 }}
       role="group" aria-roledescription="slide" aria-label={`Introduction, 1 of ${count}`}
       aria-hidden={!active} inert={!active ? '' : undefined}
     >
@@ -45,14 +45,14 @@ export default function HomePanel({ width, active, count, domains, onJump }) {
           className="measure"
           style={{
             '--measure': '320px',
-            margin: '24px 0 0', fontSize: 'var(--t-standfirst)', lineHeight: 1.45,
+            margin: '18px 0 0', fontSize: 'var(--t-standfirst)', lineHeight: 1.45,
             color: 'var(--color-ink-soft)', animation: 'ssRise 0.7s var(--ease-out) 0.4s',
           }}
         >
           Understand how AI will transform society, the economy, consumers and organizations — then turn those shifts into your own daring new opportunities and futures.
         </p>
 
-        <div className="badge-row flex flex-wrap items-center" style={{ marginTop: 24, gap: 9 }}>
+        <div className="badge-row flex flex-wrap items-center" style={{ marginTop: 18, gap: 9 }}>
           {DOMAIN_ORDER.map((id, i) => (
             <button
               key={id} type="button" onClick={() => onJump(i + 1)} tabIndex={active ? 0 : -1}

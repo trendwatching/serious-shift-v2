@@ -25,7 +25,7 @@ function Marquee() {
             key={i}
             className="box-border flex shrink-0 items-center justify-center rounded-xl bg-white p-2"
             style={{
-              width: 'calc(var(--bar-h) * 1.405)', height: 'calc(var(--bar-h) * 0.667)',
+              width: 'calc(var(--mark-h) * 1.405)', height: 'calc(var(--mark-h) * 0.667)',
               boxShadow: '0 3px 12px rgba(27,22,32,0.08)',
             }}
           >
@@ -91,7 +91,7 @@ export function Footer({ social = true }) {
           src={LOGO} alt="Serious Shi(f)t, powered by TrendWatching"
           width={220} height={76}
           className="block object-contain"
-          style={{ height: 'calc(var(--bar-h) * 1.13)', width: 'calc(var(--bar-h) * 3.268)' }}
+          style={{ height: 'calc(var(--mark-h) * 1.13)', width: 'calc(var(--mark-h) * 3.268)' }}
         />
         {/* Dark ink, not white: white on #25D366 is 1.98:1 and unreadable.
             Ink is 8.96:1 and it is the same move the yellow pill already makes,

@@ -4,10 +4,10 @@
  * Two things here are load-bearing and were wrong before:
  *
  *  * The bar is OUT OF FLOW and OVERLAPS the content below it — absolute on
- *    phones (the deck starts at 126px while the bar is 140px, so the bar sits
- *    over the top 14px of the panel; making it sticky put it in flow and
- *    pushed everything down), and a fixed floating pill on desktop
- *    (styles/desktop.css). Either way nothing below it moves.
+ *    phones (the deck starts 14px under the bar's top edge — 106 against a
+ *    120px notched band since the 13 Aug 2026 shrink; making it sticky put
+ *    it in flow and pushed everything down), and a fixed floating pill on
+ *    desktop (styles/desktop.css). Either way nothing below it moves.
  *  * The zone it reserves is `--topbar`, and every hero and floating
  *    breadcrumb measures against that same token — the desktop pill floats
  *    INSIDE that zone rather than resizing it. The last build hard-coded 62px
@@ -103,19 +103,21 @@ export function Header() {
           aria-expanded={open} aria-controls="site-nav"
           className="nav-burger flex cursor-pointer flex-col items-end"
           style={{
-            padding: `calc(var(--bar-h) * 0.048) 0 calc(var(--bar-h) * 0.119) calc(var(--bar-h) * 0.167)`,
-            gap: 'calc(var(--bar-h) * 0.0595)',
+            padding: `calc(var(--bar-h) * 0.063) 0 calc(var(--bar-h) * 0.156) calc(var(--bar-h) * 0.219)`,
+            gap: 'calc(var(--bar-h) * 0.0781)',
           }}
         >
           {/* Three bars of falling width. They do not morph on open — the
               design's hamburger is static and the panel's presence is the
               state indicator. Like the logo, each is a fraction of the band
-              (26, 20 and 13 of an 84px bar), so the target grows with the
-              chrome instead of staying a 26px smudge on a large screen. */}
-          {[0.3095, 0.2381, 0.1548].map((k) => (
+              (26, 20 and 13 of a 64px bar — the fractions were re-derived
+              when the band shrank, so the burger and its tap target kept
+              their pixels), so the target grows with the chrome instead of
+              staying a 26px smudge on a large screen. */}
+          {[0.406, 0.3125, 0.203].map((k) => (
             <span
               key={k} className="block rounded-sm bg-white"
-              style={{ width: `calc(var(--bar-h) * ${k})`, height: 'calc(var(--bar-h) * 0.0298)' }}
+              style={{ width: `calc(var(--bar-h) * ${k})`, height: 'calc(var(--bar-h) * 0.0391)' }}
             />
           ))}
         </button>

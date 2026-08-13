@@ -3,7 +3,13 @@
 
 @layer base {
   html {
+    /* All three forms, deliberately: Chrome on Android ignores the -webkit-
+       prefix and runs its "font boosting" inflation on long text blocks —
+       the 13 Aug 2026 device screenshots showed the deck H1 boosted to a
+       four-line wrap. The unprefixed property is the one it honors. */
     -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
