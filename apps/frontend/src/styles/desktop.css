@@ -315,6 +315,16 @@
       width: calc(var(--pill-h) * 1.764);
     }
 
+    /* The deck rises to the top of the viewport: the sphere posters run
+       behind the floating pill exactly as the page heroes do, instead of
+       leaving a bare white strip with the pill marooned in it (13 Aug 2026
+       review screenshot). Still sums to exactly 100dvh — nothing to scroll,
+       nothing shifts. */
+    .deck-stage {
+      height: 100dvh;
+      margin-top: 0;
+    }
+
     /* A sphere panel is the full viewport height here, and its copy was
        split to the edges: name at the top, intro and pill pinned to the
        bottom by an auto margin, and a void between them that grew with the

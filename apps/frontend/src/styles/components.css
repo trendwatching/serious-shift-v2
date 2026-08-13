@@ -377,6 +377,16 @@
     background: var(--color-black);
   }
 
+  /* The deck's stage. On a phone it starts 14px UNDER the top of the bar so
+     the band overlaps it (the design's overlap; height + margin sum to
+     exactly 100dvh — e2e/smooth.spec.js guards that sum). A class, not
+     inline styles, so the desktop layer can raise the stage to y=0 and run
+     the sphere posters behind the floating pill. */
+  .deck-stage {
+    height: calc(100dvh - var(--topbar) + 14px);
+    margin-top: calc(var(--topbar) - 14px);
+  }
+
   /* The spelled-out desktop nav (12 Aug 2026 Miro review). Hidden here; the
      desktop layer shows it and hides the burger — the ONE breakpoint lives in
      desktop.css, so this base rule is all this file is allowed to say. */

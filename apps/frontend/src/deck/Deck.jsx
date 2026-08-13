@@ -145,11 +145,12 @@ export default function Deck() {
 
   return (
     <>
-      {/* The deck starts 14px UNDER the top of the bar, so the bar overlaps it.
-          That overlap is the design's, and it is why the bar is absolute. */}
+      {/* On a phone the deck starts 14px UNDER the top of the bar, so the
+          band overlaps it — the design's overlap. The geometry lives on
+          `.deck-stage` (components.css), not inline, so the desktop layer can
+          raise the stage to y=0 and run the posters behind the floating pill. */}
       <section
-        className="relative overflow-hidden bg-white"
-        style={{ height: 'calc(100dvh - var(--topbar) + 14px)', marginTop: 'calc(var(--topbar) - 14px)' }}
+        className="deck-stage relative overflow-hidden bg-white"
         aria-label="Current shift domains"
         aria-roledescription="carousel"
       >
