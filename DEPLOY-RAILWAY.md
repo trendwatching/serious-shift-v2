@@ -119,6 +119,21 @@ New service → **Deploy from repo**.
 - **Config-as-code path:** `railway.ingest.json`. Root Directory stays empty.
 - **Cron Schedule:** comes from that file (`0 22 * * 0`, Sundays 22:00 UTC).
   Railway runs the container on schedule, then the service sleeps.
+
+  > **The cron schedule is a property of the branch, not of the environment.** It lives in
+  > `railway.ingest.json` / `railway.synthesize.json`, and config-as-code overrides anything set
+  > through the Railway API or dashboard — a schedule changed there silently reverts on the next
+  > deploy. Environment-specific schedules therefore have to be environment-specific *branches*:
+  >
+  > | Environment  | Branch      | Schedules |
+  > |--------------|-------------|-----------|
+  > | `production` | `mobile-ui` | live: ingest `0 22 * * 0`, synthesize `0 2 * * 1` |
+  > | `staging`    | `main`      | annual, so nothing fires unattended |
+  > | `dev`        | `dev`       | annual, so nothing fires unattended |
+  >
+  > `main` and `dev` are otherwise kept identical to `mobile-ui`; those two `cronSchedule` values
+  > are the whole of the intended divergence. Runs in `staging` and `dev` are started by hand from
+  > the Railway dashboard ("Run now"), which is why an annual date keeps them dormant.
 - **Variables:** `DATABASE_URL = ${{Postgres.DATABASE_URL}}`, `ANTHROPIC_API_KEY`.
   - `YOUTUBE_PROXY_URL` — managed secret required for the YouTube source canary.
     Never print it. The pipeline redacts HTTP userinfo before writing errors.
