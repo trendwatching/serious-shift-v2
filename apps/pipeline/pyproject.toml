@@ -31,7 +31,7 @@ dev = [
     # Ruff 0.16 expands the effective default rule set for this legacy tree.
     # Keep CI deterministic until PR 5 introduces hash-locked dev tooling and
     # addresses the expanded rules with dedicated behavior tests.
-    "ruff==0.15.13",
+    "ruff==0.16.3",
     "mypy>=1.10",
     "pip-audit>=2.10",
     "sqlglot>=25.0",            # server-free SQL validation (test_queries_sql.py)
