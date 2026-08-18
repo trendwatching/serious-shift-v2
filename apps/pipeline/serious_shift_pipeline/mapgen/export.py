@@ -13,7 +13,8 @@ from ..core.text import url_slug as slugify
 from .art.store import publish_art
 from .carryover import load_published_taxonomy, pin_slugs
 from .config import DOMAINS, MODULE_ORDER
-from .modules import conform_modules, scrub_module_tree
+from .modules import (conform_modules, scrub_module_tree, stat_band_from_hero,
+                      stat_claim_key)
 from .validation import require_valid_map
 
 
@@ -348,6 +349,14 @@ def build_map_json_v2(conn) -> dict:
         mods = entry['modules']
         mods = _insert_after(mods, ('tension_band', 'timeline'), _voices_module(row))
 
+        # Phase 8 runs after phase 4b, so the persisted band can be a hero ago.
+        # Re-derived, never trusted; dropped outright when the current hero has
+        # no figure in it, because that band would render as an empty box.
+        band = stat_band_from_hero(entry['hero_stat'])
+        mods = [m for m in mods if not (isinstance(m, dict) and m.get('type') == 'stat_band')]
+        if band:
+            mods = mods + [band]
+
         seen, items = set(), []
         for dst, rel, why in links_by_kt.get(row['id'], []):
             if dst in seen or dst == row['id'] or dst not in kt_slug_by_id:
@@ -409,6 +418,17 @@ def build_map_json_v2(conn) -> dict:
         print(f'  ⚠  {len(_suffixed)} sub-shift(s) needed a numeric suffix — two '
               f'pages share a name: {", ".join(_suffixed[:5])}'
               + (' …' if len(_suffixed) > 5 else ''))
+
+    # One claim, one page — settled here rather than asked of the writers.
+    stat_report = reconcile_fronted_stats(key_trends_j, sub_trends_j)
+    if stat_report['sub_bands_ceded'] or stat_report['sub_bands_deduped']:
+        print(f"  ↳ {stat_report['sub_bands_ceded']} sub-shift stat band(s) ceded to "
+              f"their parent shift, {stat_report['sub_bands_deduped']} deduplicated "
+              f"between sub-shifts — one claim fronts one page.")
+    if stat_report['shift_heroes_dropped']:
+        print(f"  ⚠  {len(stat_report['shift_heroes_dropped'])} shift(s) lost a hero "
+              f"statistic to a duplicate figure: "
+              f"{', '.join(stat_report['shift_heroes_dropped'][:5])}")
 
     unmatched = sorted(f'{s}:{sl}' for (s, sl) in overrides.keys() - used_overrides)
     if unmatched:
@@ -497,6 +517,76 @@ def build_map_json_v2(conn) -> dict:
         'synthesis_insights':  insights_j,
     }
 
+
+
+def reconcile_fronted_stats(key_trends: list, sub_trends: list) -> dict:
+    """Apply the gate's own statistic dedup, in the gate's own order, by
+    stripping the loser. Parent priority.
+
+    One claim may front one page. `validate_map` enforces that by registering
+    every key shift's `hero_stat` first and every sub-shift's `stat_band` after,
+    so the SUB is always the one blamed for a cross-form collision. Nothing
+    upstream honoured that order: phase 8 treated persisted child bands as
+    senior and skipped the claim, and two distinct claim rows quoting the same
+    figure from the same article still collided because the key is
+    (figure, source), not the claim id.
+
+    The 2026-08-12 remediation established that editorial regeneration CANNOT
+    converge these — ~$4.50 of targeted regen re-formed the same pairs, because
+    the avoid-list is advisory and both pages genuinely rest on the same
+    evidence. So this is settled deterministically at export, where the whole
+    document is visible, rather than asked for at generation. Every publish path
+    passes through here, including --export-only.
+
+    Prose defects (spelling, crutch, meta-language) do regen away and are left
+    to the repair pass; only fronted-statistic identity is resolved here.
+    """
+    seen: dict[tuple, str] = {}
+    dropped: list[str] = []
+    ceded = deduped = 0
+
+    for index, shift in enumerate(key_trends):
+        hero = shift.get('hero_stat')
+        if not isinstance(hero, dict) or not hero.get('value'):
+            continue
+        key = stat_claim_key(hero.get('value'), hero.get('url'))
+        if key in seen:
+            # A parent cannot cede to another parent — there is no second place
+            # to put a hero — so the later shift loses both the field and the
+            # band derived from it, and renders as a shift without a statistic.
+            shift['hero_stat'] = None
+            shift['modules'] = [m for m in shift.get('modules') or []
+                                if not (isinstance(m, dict) and m.get('type') == 'stat_band')]
+            dropped.append(shift.get('slug') or f'key_trends[{index}]')
+        else:
+            seen[key] = f'key_trends[{index}]'
+
+    for index, sub in enumerate(sub_trends):
+        kept = []
+        for module in sub.get('modules') or []:
+            if not (isinstance(module, dict) and module.get('type') == 'stat_band'):
+                kept.append(module)
+                continue
+            data = module.get('data') or {}
+            if not data.get('value'):
+                kept.append(module)
+                continue
+            key = stat_claim_key(data.get('value'), data.get('url'))
+            owner = seen.get(key)
+            if owner is None:
+                seen[key] = f'sub_trends[{index}]'
+                kept.append(module)
+                continue
+            # Dropped, not blanked: `sub_modules` requires value+url, so a band
+            # with the figure removed is not a band.
+            if owner.startswith('key_trends'):
+                ceded += 1
+            else:
+                deduped += 1
+        sub['modules'] = kept
+
+    return {'shift_heroes_dropped': dropped,
+            'sub_bands_ceded': ceded, 'sub_bands_deduped': deduped}
 
 def _write_map_document(conn, out):
     """Validate and atomically promote a candidate, rotating the last good map."""

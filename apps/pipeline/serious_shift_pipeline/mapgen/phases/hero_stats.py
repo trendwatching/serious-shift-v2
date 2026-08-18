@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 
 from ...core.matching import normalize
-from ..modules import stat_claim_key
+from ..modules import _short_figure, stat_claim_key
 
 #: Attributions render as a single small line under the statistic. A scraped
 #: article title can be 200+ characters of pipe-separated newsletter sections,
@@ -105,22 +105,36 @@ def assign_heroes(kt_rows: list[dict],
     candidate is either taken or off-topic gets None — no stat_band beats a
     recycled or unrelated one.
 
-    `fronted` is the set of stat_claim_keys already carried by persisted
-    sub-shift stat bands. Exclusivity via `taken` only covers this run's own
-    picks; on a targeted regen the children's bands survive from a previous
-    run, and assigning one of their claims as a hero creates exactly the
-    duplicate_hero_claim the gate rejects (the 1,337 petition figure fronted
-    governance-void's hero and pacing-schism's band at once, 2026-08-12).
+    Candidates are filtered to statistics that actually REDUCE to a display
+    figure. `kt_modules` renders the band as `_short_figure(hero.value)` and
+    drops the module when that returns None, so a hero picked from prose with no
+    numeral in it satisfies this phase and then renders nothing: the 18 Aug 2026
+    staging run reported 30/44 shifts with a hero and the gate found 16/44
+    carrying a band, failing stat_coverage from the other side of the same
+    exclusive assignment. A pick that cannot render is worse than no pick, since
+    it also consumes the claim.
+
+    `fronted` — the stat_claim_keys already carried by persisted sub-shift bands
+    — is a PREFERENCE, not a filter. It was a hard exclusion, which inverted the
+    gate: validation registers key shifts first and blames the SUB for
+    re-fronting, so treating a child's band as senior prior art cost the parent
+    its figure and left the collision in place anyway. Children's bands that
+    still collide are ceded to their parent at export instead
+    (`reconcile_fronted_stats`), which is the same parent-priority policy that
+    remediated 2026-08-12 by hand.
     """
     fronted = fronted or set()
     eligible: dict[int, list[dict]] = {}
     for kt in kt_rows:
-        eligible[kt['id']] = [
+        rows = [
             row for row in by_kt.get(kt['id'], [])
-            if stat_claim_key(row['statistic'], row['url']) not in fronted
+            if _short_figure(row['statistic']) is not None
             and stat_matches_shift(kt['name'], kt['subtitle'],
                                    row['statistic'], row['claim_text'])
         ]
+        # Stable partition, so strength order survives inside each half.
+        rows.sort(key=lambda r: stat_claim_key(r['statistic'], r['url']) in fronted)
+        eligible[kt['id']] = rows
 
     taken: set[int] = set()
     heroes: dict[int, dict | None] = {}

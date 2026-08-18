@@ -161,21 +161,54 @@ def test_a_shift_with_only_off_topic_candidates_gets_none():
     assert assign_heroes(kts, by_kt) == {20: None}
 
 
-def test_a_claim_already_fronting_a_sub_stat_band_cannot_hero_a_shift():
-    """Sub stat bands persist across targeted regens, so phase 8 must treat
-    them as prior art: the band stores the _short_figure reduction and the
-    candidate carries the long-form statistic, and stat_claim_key matches the
-    two across forms."""
+def test_a_claim_a_child_already_fronts_is_a_last_resort_not_a_veto():
+    """This used to be a hard exclusion, and it inverted the gate.
+
+    validate_map registers key shifts FIRST and blames the sub-shift for
+    re-fronting, so treating a child's persisted band as senior prior art cost
+    the parent its figure and left the collision standing. It also made
+    stat_coverage unsatisfiable from both ends — 17/36 in Aug 2026, 16/44 on the
+    18 Aug run. Now: prefer a clean claim, fall back to a contested one, and let
+    export cede the child's band to its parent.
+    """
     from serious_shift_pipeline.mapgen.modules import stat_claim_key
     from serious_shift_pipeline.mapgen.phases.hero_stats import assign_heroes
     kts = [{'id': 40, 'name': 'Governance Void',
             'subtitle': 'labs sign a restraint petition'}]
     cand = _cand(5, '~1,337 employees across major Western AI labs signed',
                  'employees signed a restraint petition', 8.0)
-    by_kt = {40: [cand]}
-    assert assign_heroes(kts, by_kt)[40] is not None   # eligible on its own
+    clean = _cand(6, '62% of labs signed a petition on restraint',
+                  'a majority of labs signed the restraint petition', 4.0)
     fronted = {stat_claim_key('1,337', cand['url'])}   # a child's band, short form
-    assert assign_heroes(kts, by_kt, fronted)[40] is None
+
+    # Given a choice, the contested claim loses even though it ranks higher.
+    both = assign_heroes(kts, {40: [cand, clean]}, fronted)[40]
+    assert both is not None and '62%' in both['value']
+
+    # Given no choice, the shift still gets its figure rather than nothing.
+    only = assign_heroes(kts, {40: [cand]}, fronted)[40]
+    assert only is not None and '1,337' in only['value']
+
+
+def test_a_hero_that_cannot_render_a_band_is_never_picked():
+    """kt_modules drops the stat_band when _short_figure returns None, so a
+    hero picked from figure-less prose reports coverage the page does not have
+    — and burns the claim exclusively on the way. 30/44 heroes rendered 16/44
+    bands on the 18 Aug staging run, failing stat_coverage.
+    """
+    from serious_shift_pipeline.mapgen.modules import _short_figure
+    from serious_shift_pipeline.mapgen.phases.hero_stats import assign_heroes
+    kts = [{'id': 41, 'name': 'Provenance Premium',
+            'subtitle': 'human-made goods command a premium'}]
+    prose = _cand(7, 'a premium for goods made by human hands, without machines',
+                  'shoppers pay a premium for human-made goods', 9.9)
+    figure = _cand(8, '31% premium for human-made goods',
+                   'shoppers pay a premium for human-made goods', 1.0)
+    assert _short_figure(prose['statistic']) is None
+
+    assert assign_heroes(kts, {41: [prose]})[41] is None
+    picked = assign_heroes(kts, {41: [prose, figure]})[41]
+    assert picked is not None and _short_figure(picked['value']) is not None
 
 
 def test_hero_json_carries_no_claim_id():

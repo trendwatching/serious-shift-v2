@@ -460,6 +460,27 @@ def conform_modules(modules: list) -> list:
     return out
 
 
+def stat_band_from_hero(hero) -> dict | None:
+    """The stat band a key shift's `hero_stat` renders, or None.
+
+    Phase 8 assigns heroes with free SQL and runs AFTER phase 4b in both the
+    repair pass and a full build, so the band 4b persisted is stale by
+    construction — the export re-derives from this rather than trusting it.
+    One definition, so what phase 4b writes and what the export publishes cannot
+    disagree about whether a shift carries a statistic (they did on 18 Aug 2026:
+    30 heroes, 16 bands, and a stat_coverage failure between them).
+    """
+    hero = hero if isinstance(hero, dict) else {}
+    return _module('stat_band', {
+        # The model is asked for a display figure; hero_stat.value is a
+        # fallback and is usually prose, so it has to be reduced first.
+        'value': _short_figure(hero.get('value')) or '',
+        'text': hero.get('text') or hero.get('value') or '',
+        'source': hero.get('source') or hero.get('thinker') or '',
+        'url': hero.get('url') or '',
+    }, ('value', 'url'))
+
+
 def kt_modules(kt_row: dict, editorial: dict) -> list:
     """Module list for a key shift, in the design's reading order."""
     e = editorial or {}
@@ -479,14 +500,7 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
         _module('from_to', {'from': clamp_words(e.get('from'), 30),
                             'to': clamp_words(e.get('to'), 30)}, ('from', 'to')),
         _module('pull_quote', {'quote': clamp_words(e.get('pull_quote'), 18)}, ('quote',)),
-        _module('stat_band', {
-            # The model is asked for a display figure; hero_stat.value is a
-            # fallback and is usually prose, so it has to be reduced first.
-            'value': _short_figure(hero.get('value')) or '',
-            'text': hero.get('text') or hero.get('value') or '',
-            'source': hero.get('source') or hero.get('thinker') or '',
-            'url': hero.get('url') or '',
-        }, ('value', 'url')),
+        stat_band_from_hero(hero),
         _module('peel_tabs', {
             'whats_changing': clamp_words(e.get('whats_changing'), 90),
             'why_now': clamp_words(e.get('why_now'), 70),

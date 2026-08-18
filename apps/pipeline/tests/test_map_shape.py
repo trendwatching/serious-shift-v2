@@ -157,3 +157,81 @@ def test_the_repair_limit_covers_a_map_that_needs_many_small_fixes():
     assert cli._repair_limit({'key_trends': [{}] * 44}) >= 30
     total = 60
     assert cli._repair_limit({'key_trends': [{}] * total}) < total
+
+
+# ── one claim, one page: settled at export, not asked of the writers ─────
+
+def _shift(slug, value, url):
+    return {'slug': slug, 'hero_stat': {'value': value, 'url': url},
+            'modules': [{'type': 'dek', 'data': {'text': 'x'}},
+                        {'type': 'stat_band', 'data': {'value': value, 'url': url}}]}
+
+
+def _sub(value, url):
+    return {'modules': [{'type': 'stat_band', 'data': {'value': value, 'url': url}},
+                        {'type': 'dek', 'data': {'text': 'x'}}]}
+
+
+def test_a_child_cedes_its_stat_band_to_its_parent():
+    """The gate registers key shifts first and blames the SUB, so the writer has
+    to resolve it the same way round. The band is dropped, not blanked — a band
+    without a figure is not a band."""
+    from serious_shift_pipeline.mapgen.export import reconcile_fronted_stats
+
+    # Long-form on the parent, the _short_figure reduction on the child: the
+    # two forms that keyed differently before 2026-08-12.
+    shifts = [_shift('governance-void',
+                     '~1,337 employees across major Western AI labs signed', 'u1')]
+    subs = [_sub('1,337', 'u1'), _sub('72%', 'u2')]
+    report = reconcile_fronted_stats(shifts, subs)
+
+    assert report['sub_bands_ceded'] == 1
+    assert [m['type'] for m in subs[0]['modules']] == ['dek']
+    assert shifts[0]['hero_stat'] is not None, 'the parent keeps its figure'
+    assert [m['type'] for m in subs[1]['modules']] == ['stat_band', 'dek']
+
+
+def test_two_parents_on_one_figure_leaves_the_later_shift_without_one():
+    """Exclusive assignment is by claim id, but the key is (figure, source) —
+    two claim rows quoting the same figure from the same article collide anyway,
+    and there is no second place to put a hero."""
+    from serious_shift_pipeline.mapgen.export import reconcile_fronted_stats
+
+    shifts = [_shift('first', '41% choose agent shopping', 'u1'),
+              _shift('second', '41% choose agent shopping', 'u1')]
+    report = reconcile_fronted_stats(shifts, [])
+
+    assert report['shift_heroes_dropped'] == ['second']
+    assert shifts[1]['hero_stat'] is None
+    assert 'stat_band' not in [m['type'] for m in shifts[1]['modules']]
+    assert 'stat_band' in [m['type'] for m in shifts[0]['modules']]
+
+
+def test_reconciliation_leaves_the_gate_nothing_to_find():
+    """The point of doing it at export: whatever this returns must pass the
+    very gate that used to reject it."""
+    from serious_shift_pipeline.mapgen.export import reconcile_fronted_stats
+
+    document = full_map()
+    shared = {'value': '41% choose agent shopping', 'url': 'https://e.com/a'}
+    for shift in document['key_trends'][:3]:
+        shift['hero_stat'] = dict(shared)
+    for sub in document['sub_trends'][:4]:
+        sub['modules'] = [{'type': 'stat_band', 'data': dict(shared)}] + [
+            m for m in sub.get('modules') or [] if m.get('type') != 'stat_band']
+
+    assert 'duplicate_hero_claim' in codes(document), 'fixture must trip the gate'
+    reconcile_fronted_stats(document['key_trends'], document['sub_trends'])
+    assert 'duplicate_hero_claim' not in codes(document)
+
+
+def test_the_us_spelling_of_programmed_is_not_flagged_as_british():
+    """`programme(?:s|d)?` matched "programmed", which is the US past tense of
+    "program" — three correct sentences failed the 18 Aug 2026 run on it. The
+    British noun must still be caught."""
+    from serious_shift_pipeline.mapgen.validation import _BRITISH
+
+    assert not _BRITISH.search('the model was programmed to refuse')
+    assert _BRITISH.search('a government programme')
+    assert _BRITISH.search('two funding programmes')
+    assert _BRITISH.search('they catalogued the results')

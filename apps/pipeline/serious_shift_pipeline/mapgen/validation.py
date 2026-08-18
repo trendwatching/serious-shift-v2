@@ -287,7 +287,11 @@ def _validate_modules(modules, scope: str, path: str, contract: dict) -> list[Va
 _BRITISH = re.compile(
     r'\b('
     r'organis(?:e|es|ed|ing|ation|ations|ational)|'
-    r'catalogu(?:e|es|ed|ing)|behaviour(?:s|al|ally)?|programme(?:s|d)?|'
+    r'catalogu(?:e|es|ed|ing)|behaviour(?:s|al|ally)?|programme(?:s)?|'
+    # NOT programmed: that is the standard US past tense of "program"
+    # (Merriam-Webster's primary form), and the `d` alternative failed
+    # three correct sentences on the 18 Aug 2026 run. The trailing \b
+    # already keeps `programme` from matching inside it.
     r'centre[sd]?|recognis(?:e|es|ed|ing|able)|'
     r'optimis(?:e|es|ed|ing|ation|ations)|realis(?:e|es|ed|ing|ation)|'
     r'utilis(?:e|es|ed|ing|ation)|analys(?:e|ed|ing)|'
