@@ -308,3 +308,52 @@ def test_trimming_leaves_the_gate_nothing_to_find():
     assert [i.path for i in validate_map(document, CONTRACT)
             if i.code == 'editorial_provenance'] == [i.path for i in provenance_before], \
         'the trim must not orphan a citation'
+
+
+# ── the batch queue is not worth the wait for a handful of requests ──────
+
+def test_a_small_submission_skips_the_batch_queue(monkeypatch):
+    """A one-request retry sat in the batch queue for 58 minutes on the 18 Aug
+    2026 run, protecting a discount worth under a cent."""
+    from serious_shift_pipeline.core import llm
+
+    monkeypatch.setattr(llm, 'call', lambda req: (f'body:{req.custom_id}', {'in': 1}))
+    monkeypatch.setattr(llm, 'client',
+                        lambda: pytest.fail('the batch API must not be reached'))
+
+    reqs = [llm.Req(user=f'p{n}', custom_id=f'kt-{n}')
+            for n in range(llm.SYNC_AT_OR_BELOW)]
+    out = llm.call_batch(reqs)
+
+    assert sorted(out) == sorted(r.custom_id for r in reqs)
+    assert out['kt-0'][0] == 'body:kt-0'
+    # NOT marked batch: these are billed at full price and the report must say so.
+    assert not out['kt-0'][1].get('batch')
+
+
+def test_one_failure_does_not_lose_the_others():
+    """Same contract as the batch path — callers filter on a None body."""
+    from serious_shift_pipeline.core import llm
+
+    def flaky(req):
+        if req.custom_id == 'kt-1':
+            raise RuntimeError('overloaded')
+        return ('body', {'in': 1})
+
+    original = llm.call
+    llm.call = flaky
+    try:
+        out = llm.call_batch([llm.Req(user='p', custom_id=f'kt-{n}') for n in range(2)])
+    finally:
+        llm.call = original
+
+    assert out['kt-0'][0] == 'body'
+    assert out['kt-1'][0] is None
+    assert out['kt-1'][1]['error'] == 'RuntimeError'
+
+
+def test_a_real_batch_still_goes_to_the_batch_api():
+    """The discount is the whole point above the threshold."""
+    from serious_shift_pipeline.core import llm
+
+    assert llm.SYNC_AT_OR_BELOW < 44, 'a full map must never bypass the discount'

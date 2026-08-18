@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from .config import EXTRACTION_MODEL
@@ -28,6 +29,22 @@ from .config import EXTRACTION_MODEL
 # 10-minute ceiling. Below it, skip streaming: a plain create() is what the
 # Batch API accepts, and it is one less moving part.
 _STREAM_ABOVE_MAX_TOKENS = 16_000
+
+#: At or below this many requests, skip the Batch API and just call.
+#:
+#: Batching trades latency for half price, which is plainly right for 44 shifts
+#: and plainly wrong for one. The retry ladders submit whatever came back short
+#: — often a single shift — and each of those submissions joins the queue on its
+#: own terms. Measured on the 18 Aug 2026 publication run, four batches in one
+#: session took 2m39s, 5m19s, 22m36s and 33m51s with no relationship to size,
+#: and a FINAL one-request retry sat in_progress for 58 minutes. The discount it
+#: was protecting was under a cent. A three-attempt ladder can therefore spend
+#: hours of wall-clock to save small change, which is most of what made that
+#: run take all evening.
+#:
+#: Three, not one: the same reasoning covers the tail of a ladder, and three
+#: concurrent calls still return in about the time of the slowest one.
+SYNC_AT_OR_BELOW = 3
 
 _client = None
 
@@ -93,6 +110,28 @@ def call(req: Req) -> tuple[str, dict]:
     return _text(msg), _usage(msg)
 
 
+
+def _call_small(reqs: list[Req]) -> dict[str, tuple[str | None, dict]]:
+    """The `call_batch` contract, served by direct calls — see SYNC_AT_OR_BELOW.
+
+    Failures are returned, not raised, because that is what callers of
+    call_batch already handle: one bad input must not lose the others. Usage is
+    NOT marked `batch`, so the cost report shows what these actually cost.
+    """
+    print(f'    {len(reqs)} request(s) — calling directly, '
+          f'the batch queue is not worth the wait', flush=True)
+
+    def one(req: Req) -> tuple[str | None, dict]:
+        try:
+            return call(req)
+        except Exception as exc:  # noqa: BLE001 — mirrors the batch path
+            return (None, {'error': type(exc).__name__, 'detail': str(exc)[:200]})
+
+    with ThreadPoolExecutor(max_workers=len(reqs)) as pool:
+        results = list(pool.map(one, reqs))
+    return {str(req.custom_id): result for req, result in zip(reqs, results)}
+
+
 def call_batch(
     reqs: list[Req],
     *,
@@ -113,6 +152,12 @@ def call_batch(
     dupes = len(reqs) - len({r.custom_id for r in reqs})
     if dupes:
         raise ValueError(f"call_batch needs unique custom_ids ({dupes} duplicate(s))")
+    # After the contract checks, never before: results are keyed by custom_id
+    # whichever path serves them, so a caller that got away with a missing or
+    # duplicated id on a two-request submission would lose a result silently
+    # and only fail once the map grew past the threshold.
+    if len(reqs) <= SYNC_AT_OR_BELOW:
+        return _call_small(reqs)
 
     from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
     from anthropic.types.messages.batch_create_params import Request
