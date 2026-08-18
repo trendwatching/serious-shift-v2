@@ -194,7 +194,8 @@ def _validate_modules(modules, scope: str, path: str, contract: dict) -> list[Va
             if names != expected:
                 issues.append(ValidationIssue(
                     'industries_contract', f'{module_path}.data.items',
-                    'industries must contain all 15 canonical sectors exactly once and in order', True,
+                    f'industries must contain all {len(expected)} canonical sectors '
+                    'exactly once and in order', True,
                 ))
 
         if type_ in {'evidence', 'voices'}:

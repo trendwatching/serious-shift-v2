@@ -131,6 +131,13 @@ New service → **Deploy from repo**.
   - `SS_COST_ALERT_USD` (default 25) — notify threshold.
   - `SS_DISABLE_BATCH=1` — opt out of the Batch API (2x the cost; only for
     debugging, since batches take minutes to hours to return).
+  - `SS_SHIFTS_WEBHOOK_URL` — **synthesize service only** (`railway.synthesize.json`),
+    since that is the service that publishes. The key-shift/sub-shift list, grouped
+    by sphere, is POSTed there after every successful publication — including a
+    manual `--export-only` repair. Unset disables it. Delivery failure prints
+    `[shift-map] delivery failed: …` and the run still exits 0, deliberately: the
+    map has already committed and the site is already serving it. Payload contract:
+    `docs/SHIFT-MAP-WEBHOOK.md`.
 - On startup the run **applies any pending migrations**, then scrapes → processes.
   Synthesis is the separate Monday service. A candidate is validated before
   publication; failure exits non-zero and leaves `documents['map']` untouched.

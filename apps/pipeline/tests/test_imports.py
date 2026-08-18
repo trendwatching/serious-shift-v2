@@ -1,6 +1,12 @@
 """Import-smoke test: every module imports cleanly (catches syntax/name errors).
 The Anthropic SDK is imported lazily, so even the LLM-backed modules import
-without it installed."""
+without it installed.
+
+Keep this list complete. It is hand-maintained, and what it guards against is a
+module that exists on a developer's disk but never reached git: the pipeline
+image is built from the checkout, so a missing file is not a test failure but a
+cron that dies at import every week. `mapgen.publish_hook` was exactly that —
+imported by `mapgen.cli`, untracked, and absent from this list."""
 
 
 def test_all_modules_import():
@@ -27,7 +33,10 @@ def test_all_modules_import():
     import serious_shift_pipeline.mapgen.export  # noqa: F401
     import serious_shift_pipeline.mapgen.modules  # noqa: F401
     import serious_shift_pipeline.mapgen.parsers  # noqa: F401
+    import serious_shift_pipeline.mapgen.publish_hook  # noqa: F401
     import serious_shift_pipeline.mapgen.routing  # noqa: F401
+    import serious_shift_pipeline.mapgen.validation  # noqa: F401
+    import serious_shift_pipeline.mapgen.config  # noqa: F401
     import serious_shift_pipeline.mapgen.phases.attribution  # noqa: F401
     import serious_shift_pipeline.mapgen.phases.domains  # noqa: F401
     import serious_shift_pipeline.mapgen.phases.editorial  # noqa: F401

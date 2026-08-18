@@ -95,6 +95,7 @@ interrupted run now leaves a visible `running` row.
 | `SS_YTDLP_TIMEOUT` | no | seconds to wait for a YouTube channel listing, default `120`. YouTube refuses datacenter IPs and often stalls rather than erroring; a longer wait just burns run time. |
 | `SS_MAX_WORKERS` | no | parallelism for scrape/extract/generate (default `8`). Lower it if you hit API rate limits. |
 | `SS_MAX_TARGETED_REPAIR_SHIFTS` | no | maximum parent shifts in the single targeted repair pass, default `12` |
+| `SS_SHIFTS_WEBHOOK_URL` | no | POST the published key-shift/sub-shift list, grouped by sphere, to this endpoint after every successful publication — including the free `--export-only` recovery, so a receiver cannot go stale against a live site. Unset disables the hook. Delivery failure is logged, never fatal: the map has already committed. Payload contract: [`docs/SHIFT-MAP-WEBHOOK.md`](../../docs/SHIFT-MAP-WEBHOOK.md) |
 | `WEBSHARE_PROXY_USERNAME` / `WEBSHARE_PROXY_PASSWORD` | no | route YouTube transcript fetches through a Webshare residential proxy — needed on cloud hosts, where YouTube IP-blocks datacenter IPs. |
 | `YOUTUBE_PROXY_URL` | no | alternative to Webshare: any `http://user:pass@host:port` proxy for YouTube (used for both yt-dlp listing and transcripts). |
 | `YOUTUBE_PROXY_COST_USD_PER_REQUEST` | no | optional unit cost used to estimate proxy spend in run telemetry; default `0` |

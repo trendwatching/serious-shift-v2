@@ -25,6 +25,7 @@ from .phases.hero_stats import phase8_hero_stats
 from .phases.key_trends import phase3_key_trends
 from .phases.routing import phase2_claim_routing
 from .phases.sub_trends import phase4_sub_trends
+from .publish_hook import post_shift_map
 from .routing import route_claims_for_domain
 from .validation import PublicationValidationError, validate_map
 
@@ -204,6 +205,12 @@ def _publish_candidate(conn, out: dict, *, api_key: str = '', domain_claims=None
         _record_validation_failure(exc)
         raise exc
     _write_map_document(conn, out)
+    # Post-commit on purpose, and here rather than in main(): every publish path
+    # goes through this function — full rebuild, --editorial-only and the free
+    # --export-only recovery — so a receiver cannot go stale against a live site.
+    # The site is already serving this map, so a dead receiver must not be able to
+    # turn a good publication into a failed run; post_shift_map never raises.
+    post_shift_map(out)
     return out
 
 def _record_spend(out: dict) -> None:

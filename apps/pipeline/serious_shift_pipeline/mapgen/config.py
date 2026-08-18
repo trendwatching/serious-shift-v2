@@ -41,8 +41,11 @@ _CONTRACT = _load_contract()
 
 MODULE_ORDER = _CONTRACT.get('order') or {}
 
-#: The sixteen sectors, in the order the gate demands them. Read from the same
-#: file the validator reads, so the two cannot disagree.
+#: The canonical sectors, in the order the gate demands them. Read from the same
+#: file the validator reads, so the two cannot disagree. Deliberately not counted
+#: here: the count was "sixteen" in this comment for a week after the contract
+#: dropped to 15, and a stale number in a comment is how the 17 Aug 2026 run came
+#: to fail on a rule nobody had changed.
 INDUSTRY_SECTORS = _CONTRACT.get('industry_sectors') or []
 
 CLAIMS_PER_DOM  = 200   # claims sent to Key Trend generation per domain

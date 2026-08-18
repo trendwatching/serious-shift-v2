@@ -158,8 +158,8 @@ def clamp_words(text, limit: int) -> str:
     fixed amount of room for it; a body that overruns fails the gate. The model
     overruns some of these routinely — 53 of one run's 144 length failures were
     a single sector note running past 40 words — and asking again is a poor
-    remedy, because a shift carries sixteen sector notes and any one of them
-    being long would discard the other fifteen.
+    remedy, because a shift carries one sector note per canonical sector and any
+    one of them being long would discard all the others.
 
     So the cap is applied here instead, where it is one item's problem. Cutting
     at the last full sentence inside the limit keeps the note readable; only when
@@ -230,7 +230,7 @@ def _clamp_citations(ids) -> list:
 def _canonical_industries(items, sectors: list) -> list | None:
     """The model's sector notes, in the contract's order, with the canon complete.
 
-    The gate requires all sixteen canonical sectors, exactly once, in order.
+    The gate requires every canonical sector in the contract, exactly once, in order.
     Nothing put them in that order; `_as_pairs` passed through whatever came
     back, and three shifts on one run failed for a missing or reordered sector.
 
