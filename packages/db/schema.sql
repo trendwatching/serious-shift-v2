@@ -582,6 +582,7 @@ CREATE TABLE public.shift_art (
     CONSTRAINT shift_art_scope_check CHECK ((scope = ANY (ARRAY['key_trend'::text, 'sub_trend'::text]))),
     CONSTRAINT shift_art_size_check CHECK (((byte_size > 0) AND (byte_size <= 2097152)))
 );
+ALTER TABLE ONLY public.shift_art ALTER COLUMN bytes SET STORAGE EXTERNAL;
 
 
 --
@@ -1034,19 +1035,19 @@ ALTER TABLE ONLY public.scrape_sources
 
 
 --
--- Name: shift_art shift_art_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.shift_art
-    ADD CONSTRAINT shift_art_pkey PRIMARY KEY (scope, slug, frame);
-
-
---
 -- Name: shift_art_briefs shift_art_briefs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.shift_art_briefs
     ADD CONSTRAINT shift_art_briefs_pkey PRIMARY KEY (scope, slug);
+
+
+--
+-- Name: shift_art shift_art_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shift_art
+    ADD CONSTRAINT shift_art_pkey PRIMARY KEY (scope, slug, frame);
 
 
 --
@@ -1119,13 +1120,6 @@ ALTER TABLE ONLY public.thinkers
 
 ALTER TABLE ONLY public.thinkers
     ADD CONSTRAINT thinkers_pkey PRIMARY KEY (id);
-
-
---
--- Name: shift_art_prompt_sha256_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX shift_art_prompt_sha256_idx ON public.shift_art USING btree (prompt_sha256);
 
 
 --
@@ -1406,6 +1400,13 @@ CREATE UNIQUE INDEX idx_sources_url_unique ON public.sources USING btree (url) W
 --
 
 CREATE INDEX idx_thinkers_entity_kind ON public.thinkers USING btree (entity_kind);
+
+
+--
+-- Name: shift_art_prompt_sha256_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX shift_art_prompt_sha256_idx ON public.shift_art USING btree (prompt_sha256);
 
 
 --
