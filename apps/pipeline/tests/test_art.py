@@ -79,7 +79,7 @@ def test_the_style_and_the_no_text_guard_are_not_the_brief_to_argue_with():
     assert RAMP['consumers']['hot'] in prompt
     assert 'A queue of people at a doorway.' in prompt
     assert FRAMES['hero']['clause'] in prompt
-    assert 'No text, no letters' in prompt
+    assert 'Absolutely no text anywhere in the image' in prompt
 
 
 def test_an_unknown_sphere_falls_back_rather_than_raising():
