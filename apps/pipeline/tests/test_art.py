@@ -186,3 +186,34 @@ def test_the_route_is_not_nested_under_shift():
     document = _document()
     art._attach(document, {('key_trend', 'silent-commerce', 'hero'): {'sha256': 'a' * 64}})
     assert document['key_trends'][0]['hero_image'].startswith('/art/')
+
+
+# ── the publish stamp, against real Postgres ────────────────────────────
+
+@pytest.mark.skipif(not __import__('os').environ.get('DATABASE_URL'),
+                    reason='needs DATABASE_URL (integration)')
+def test_the_publish_stamp_runs_on_real_postgres():
+    """This is the one that cannot be faked.
+
+    `(scope, slug) = ANY(%s)` with a list of tuples type-checks fine in Python
+    and fails in Postgres with "input of anonymous composite types is not
+    implemented" — inside the publish transaction, after every image has already
+    been paid for. A fake connection would have accepted it happily.
+    """
+    from serious_shift_pipeline.core import db
+    from serious_shift_pipeline.mapgen.art import store
+
+    row = {'frame': 'hero', 'bytes': b'\xff\xd8jpeg', 'width': 1, 'height': 1,
+           'byte_size': 5, 'sha256': 'x' * 64, 'prompt_sha256': 'y' * 16,
+           'style': 'collage', 'model': 'm'}
+    with db.connect() as conn:
+        try:
+            store.upsert_art(conn, [{**row, 'scope': 'key_trend', 'slug': 'kept'},
+                                    {**row, 'scope': 'key_trend', 'slug': 'departed'}])
+            store.publish_art(conn, {('key_trend', 'kept')})
+            left = [r['slug'] for r in conn.execute(
+                'SELECT slug FROM shift_art ORDER BY slug').fetchall()]
+            assert 'kept' in left
+            assert 'departed' not in left
+        finally:
+            conn.rollback()

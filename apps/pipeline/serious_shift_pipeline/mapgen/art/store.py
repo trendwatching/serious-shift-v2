@@ -66,14 +66,21 @@ def publish_art(conn, live: set[tuple[str, str]]) -> int:
     art except the document being written in this same transaction, so a row no
     longer named is a row nothing can reach.
     """
-    if live:
-        conn.execute(
-            'UPDATE shift_art SET last_published_at = statement_timestamp() '
-            'WHERE (scope, slug) = ANY(%s)', (list(live),))
-        conn.execute(
-            'DELETE FROM shift_art WHERE (scope, slug) <> ALL(%s)', (list(live),))
-        removed = conn.execute(
-            'DELETE FROM shift_art_briefs WHERE (scope, slug) <> ALL(%s) RETURNING 1',
-            (list(live),)).fetchall()
-        return len(removed)
-    return 0
+    if not live:
+        return 0
+    # Two parallel arrays unnested into rows, NOT `(scope, slug) = ANY(%s)` with
+    # a list of tuples: Postgres answers that with "input of anonymous composite
+    # types is not implemented", and it would do so inside the publish
+    # transaction — after every image had already been paid for.
+    scopes = [scope for scope, _ in live]
+    slugs = [slug for _, slug in live]
+    pairs = 'SELECT * FROM unnest(%s::text[], %s::text[])'
+    conn.execute(
+        'UPDATE shift_art SET last_published_at = statement_timestamp() '
+        f'WHERE (scope, slug) IN ({pairs})', (scopes, slugs))
+    conn.execute(
+        f'DELETE FROM shift_art WHERE (scope, slug) NOT IN ({pairs})', (scopes, slugs))
+    removed = conn.execute(
+        f'DELETE FROM shift_art_briefs WHERE (scope, slug) NOT IN ({pairs}) RETURNING 1',
+        (scopes, slugs)).fetchall()
+    return len(removed)
