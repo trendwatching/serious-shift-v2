@@ -8,6 +8,7 @@ from ...core.text import url_slug as slugify
 from ...prompts import prompt_sub_trends
 from ..config import CLAIMS_PER_KT, DOMAINS
 from ..dbutil import _slugger
+from ..naming import choose_unique, name_key
 from ..llm import generate_json
 
 #: The publication contract requires exactly this many sub-shifts per shift.
@@ -231,8 +232,8 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         if not clashing:
             break
         if attempt == MAX_CLUSTER_ATTEMPTS:
-            print(f'    {len(clashing)} shift(s) still carry a duplicate sub-trend name — '
-                  'publication will reject them')
+            print(f'    {len(clashing)} shift(s) still carry a duplicate name after '
+                  f'{MAX_CLUSTER_ATTEMPTS} asks — resolving deterministically below')
             break
         print(f'    {len(clashing)} shift(s) reused a name — re-asking with '
               f'{len(taken)} taken (attempt {attempt}/{MAX_CLUSTER_ATTEMPTS})')
@@ -250,13 +251,27 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     # nothing (reset), on the repair path it is every other shift's children.
     slug = _slugger({r['slug'] for r in
                      conn.execute('SELECT slug FROM domain_sub_trends').fetchall()})
+    # The authoritative uniqueness pass. The asks above are a quality mechanism
+    # and may still leave a collision; this cannot, because it chooses rather
+    # than requests. Seeded with every key-shift name so no child is born
+    # wearing its parent's, and carried across shifts so each sees what the
+    # previous ones took.
+    claimed: set[str] = {name_key(name) for name in existing_names}
+    claimed |= {name_key(kt.get('name')) for _, kt, _ in work}
+    claimed.discard('')
+    promoted = 0
+    short: list[str] = []
     for (d_id, kt, claims), result in zip(work, results):
-        # Truncate rather than publish a sixth: the contract is exact, and a
-        # deterministic cut here beats a validation failure the repair pass then
-        # has to spend a call undoing.
+        # Choose BEFORE truncating. Truncating first threw away the spare that
+        # would have replaced a collider, which is what left the run with a
+        # duplicate the gate then rejected.
         allowed = {claim['id'] for claim in claims}
-        sub_trends = _top_up_claims(
-            _validated_sub_trends(result, allowed)[:REQUIRED_SUB_TRENDS], allowed)
+        candidates = _validated_sub_trends(result, allowed)
+        chosen, dropped = choose_unique(candidates, REQUIRED_SUB_TRENDS, claimed)
+        promoted += len(dropped)
+        if len(chosen) < REQUIRED_SUB_TRENDS:
+            short.append(kt['name'])
+        sub_trends = _top_up_claims(chosen, allowed)
         for i, st in enumerate(sub_trends, start=1):
             st_db_id = conn.execute("""
                 INSERT INTO domain_sub_trends
@@ -271,5 +286,11 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
                 except Exception:
                     pass
         print(f'  ✓  {kt["name"][:48]}: {len(sub_trends)} sub-trends')
+
+    if promoted or short:
+        print(f'    {promoted} colliding name(s) replaced from spare candidates; '
+              f'{len(short)} shift(s) publishing fewer than {REQUIRED_SUB_TRENDS} '
+              f'rather than a duplicate'
+              + (f' ({", ".join(n[:28] for n in short[:4])})' if short else ''))
 
     conn.commit()

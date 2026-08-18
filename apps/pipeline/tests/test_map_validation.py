@@ -529,3 +529,41 @@ def test_a_stat_figure_cannot_be_wider_than_the_band():
                                       'url': 'https://example.com/stat'}}]) == []
     # As is a band without clickable provenance (contract v6: url required).
     assert conform_modules([{'type': 'stat_band', 'data': {'value': '72%'}}]) == []
+
+
+def test_two_key_shifts_may_not_share_a_name():
+    """The check `duplicate_shift_slug` could never be. export.py disambiguates
+    before the gate runs, so by then the second "Moat Migration" is already
+    `moat-migration-2` and looks unique — a machine slug in a published URL that
+    nobody chose, and no issue raised anywhere."""
+    document = valid_map()
+    document['key_trends'][1]['name'] = document['key_trends'][0]['name']
+    assert 'duplicate_shift_name' in codes(document)
+
+
+def test_names_that_slugify_alike_are_one_name():
+    """Two names that produce the same URL are one page to a reader, a link and
+    every slug-keyed art manifest."""
+    document = valid_map()
+    document['key_trends'][0]['name'] = 'Proof Premium'
+    document['key_trends'][1]['name'] = 'proof  premium'
+    assert 'duplicate_shift_name' in codes(document)
+
+
+def test_two_sub_shifts_may_not_share_a_name():
+    document = valid_map()
+    document['sub_trends'][1]['name'] = document['sub_trends'][0]['name']
+    assert 'duplicate_sub_shift_name' in codes(document)
+
+
+def test_a_sub_shift_may_not_be_named_after_a_key_shift():
+    """Seven pages carried one name on the live site because the key shift had
+    it too, and nothing compared the two levels by name."""
+    document = valid_map()
+    document['sub_trends'][0]['name'] = document['key_trends'][0]['name']
+    assert 'sub_shift_shadows_shift_name' in codes(document)
+
+
+def test_a_clean_map_raises_none_of_the_name_gates():
+    assert not ({'duplicate_shift_name', 'duplicate_sub_shift_name',
+                 'sub_shift_shadows_shift_name'} & codes(valid_map()))

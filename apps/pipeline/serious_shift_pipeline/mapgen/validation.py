@@ -6,6 +6,7 @@ import re
 from dataclasses import asdict, dataclass
 from urllib.parse import urlparse
 
+from ..core.text import url_slug as slugify
 from .config import DOMAINS, MAX_KTS_PER_DOM, MIN_KTS_PER_DOM
 from .modules import (_LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE,
                       FIELD_WORD_LIMITS, LIST_ITEM_WORD_LIMITS, PAIR_TEXT_WORD_LIMITS,
@@ -88,6 +89,16 @@ def _load_contract() -> dict:
     from ..paths import contracts_dir
 
     return json.loads((contracts_dir() / 'shift_modules.json').read_text(encoding='utf-8'))
+
+
+def _name_key(value) -> str:
+    """Names compared the way URLs compare them.
+
+    Two names that slugify the same ARE one page as far as a reader, a link and
+    every slug-keyed manifest are concerned, so "Proof Premium", "proof premium"
+    and "Proof  Premium" must not be three distinct names here.
+    """
+    return slugify(str(value or '')) or ''
 
 
 def _duplicates(values) -> set:
@@ -488,6 +499,18 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
         issues.append(ValidationIssue('duplicate_shift_slug', 'key_trends',
                                       f'duplicate shift slug {duplicate!r}'))
 
+    # The check the slug check could never be. export.py disambiguates before
+    # the gate sees the document, so `duplicate_shift_slug` above is an export
+    # invariant that can only fire on an exporter regression — by the time it
+    # runs, the second "Moat Migration" is already `moat-migration-2` and looks
+    # unique. Nothing anywhere compared the NAMES, so two spheres could publish
+    # the same shift name indefinitely, one of them at a URL nobody chose.
+    for duplicate in sorted(_duplicates([_name_key(shift.get('name')) for shift in shifts
+                                         if isinstance(shift, dict)])):
+        if duplicate:
+            issues.append(ValidationIssue('duplicate_shift_name', 'key_trends',
+                                          f'two key shifts are named {duplicate!r}'))
+
     subs_by_parent: dict[str, list[dict]] = {}
     for index, sub in enumerate(subs):
         if not isinstance(sub, dict):
@@ -526,6 +549,32 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
                                          for sub in subs if isinstance(sub, dict)])):
         issues.append(ValidationIssue('duplicate_sub_shift_slug', 'sub_trends',
                                       f'duplicate sub-shift slug {duplicate!r}'))
+
+    # Names, not just slugs — same reason as duplicate_shift_name above.
+    #
+    # Not repairable, and deliberately so. naming.choose_unique makes this
+    # impossible at the point of writing: a colliding candidate is replaced by
+    # the next spare the model returned, and a shift publishes four children
+    # rather than a twin. So reaching here means the writer regressed, and the
+    # repair pass has nothing to offer — it re-runs editorial, which never
+    # renames anything. Failing loudly beats spending a call to change nothing.
+    for duplicate in sorted(_duplicates([_name_key(sub.get('name')) for sub in subs
+                                         if isinstance(sub, dict)])):
+        if duplicate:
+            issues.append(ValidationIssue(
+                'duplicate_sub_shift_name', 'sub_trends',
+                f'two sub-shifts are named {duplicate!r} — one name, one page'))
+
+    shift_name_keys = {_name_key(shift.get('name')) for shift in shifts
+                       if isinstance(shift, dict)} - {''}
+    for sub in subs:
+        if not isinstance(sub, dict):
+            continue
+        sub_name_key = _name_key(sub.get('name'))
+        if sub_name_key and sub_name_key in shift_name_keys:
+            issues.append(ValidationIssue(
+                'sub_shift_shadows_shift_name', f'sub_trends.{sub_name_key}',
+                f'sub-shift {sub_name_key!r} is named after a key shift'))
 
     # And across the two levels: a sub-shift must not wear a key shift's name.
     shift_slugs = {str(shift.get('slug') or '') for shift in shifts if isinstance(shift, dict)}
