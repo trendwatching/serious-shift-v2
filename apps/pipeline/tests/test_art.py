@@ -217,3 +217,38 @@ def test_the_publish_stamp_runs_on_real_postgres():
             assert 'departed' not in left
         finally:
             conn.rollback()
+
+
+def test_a_missing_pillow_cannot_take_the_cli_down(monkeypatch):
+    """Pillow is a decoration dependency and must behave like one.
+
+    `mapgen.cli` imports the art package eagerly, so a module-level
+    `from PIL import Image` in raster.py made Pillow a hard requirement of the
+    whole CLI — an environment without it could not run mapgen, could not
+    --export-only, and could not even collect this test suite. CI found that the
+    hard way: requirements-dev.lock had not been regenerated, and all eight
+    mapgen test modules failed to import.
+    """
+    import importlib
+    import sys
+
+    blocked = [name for name in sys.modules if name.split('.')[0] == 'PIL']
+    saved = {name: sys.modules.pop(name) for name in blocked}
+
+    class _Block:
+        def find_module(self, name, path=None):
+            return self if name.split('.')[0] == 'PIL' else None
+
+        def load_module(self, name):
+            raise ImportError('PIL blocked')
+
+    sys.meta_path.insert(0, _Block())
+    try:
+        for module in ('serious_shift_pipeline.mapgen.art.raster',
+                       'serious_shift_pipeline.mapgen.art',
+                       'serious_shift_pipeline.mapgen.cli'):
+            sys.modules.pop(module, None)
+            assert importlib.import_module(module) is not None
+    finally:
+        sys.meta_path.pop(0)
+        sys.modules.update(saved)

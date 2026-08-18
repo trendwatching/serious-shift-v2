@@ -13,18 +13,27 @@ import hashlib
 import io
 from math import ceil
 
-from PIL import Image
-from PIL.Image import Resampling
 
 
 def cover_crop(master: bytes, width: int, height: int, quality: int) -> tuple[bytes, str]:
     """Scale to cover `width`x`height`, centre-crop, encode JPEG.
+
+    Pillow is imported HERE, not at module scope. `mapgen.cli` imports the art
+    package eagerly, so a module-level `from PIL import Image` made Pillow a hard
+    requirement of the entire CLI: an environment without it could not run
+    mapgen at all, could not `--export-only`, could not even collect the test
+    suite. That is precisely the fragility the art package is supposed not to
+    have — art is decoration, and a missing decoration library must cost the
+    decoration.
 
     Returns `(jpeg_bytes, sha256_hex)`. The digest is over the ENCODED bytes, so
     it is the ETag the backend serves and the cache-buster the document carries —
     identical input therefore produces an identical URL, and a regenerated image
     always produces a different one.
     """
+    from PIL import Image
+    from PIL.Image import Resampling
+
     with Image.open(io.BytesIO(master)) as image:
         image.load()
         scale = max(width / image.width, height / image.height)
