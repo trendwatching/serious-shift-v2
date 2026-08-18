@@ -554,10 +554,18 @@ def _drop_bodyless_sub_shifts(conn) -> None:
     earlier: four real pages beat five with a broken one among them. It invents
     nothing — a page with no body has nothing to publish.
 
-    Guarded by MIN_SUB_TRENDS so a family can never fall below what the gate
-    accepts. A family that would drop below it keeps its bodyless child and the
-    gate refuses the run, which is correct: at that point the evidence, not the
-    formatting, is what failed.
+    Dropped unconditionally, including when it takes a family below the gate's
+    floor of four. Keeping the page to stay inside the range looked safer and was
+    a dead end: the family published four children, one of them blank, and the
+    nine `required_module` issues that produced are unfixable by any repair —
+    editorial had already been asked three times and the repair pass only asks
+    again.
+
+    Falling to three instead raises `sub_shift_count`, which IS repairable, and
+    whose repair deletes the family's children and re-clusters them from scratch
+    (cli._targeted_repair_once). So a blank page becomes a fresh family rather
+    than a refused publication. Measured on the dev rehearsal: this was the last
+    9 of 25 remaining issues.
     """
     rows = conn.execute("""
         SELECT st.id, st.kt_id, st.name, kt.name AS parent
@@ -570,22 +578,21 @@ def _drop_bodyless_sub_shifts(conn) -> None:
 
     sizes = {r['kt_id']: r['n'] for r in conn.execute(
         'SELECT kt_id, count(*) AS n FROM domain_sub_trends GROUP BY kt_id').fetchall()}
-    dropped, kept = [], []
+    dropped, thinned = [], []
     for row in rows:
-        if sizes.get(row['kt_id'], 0) - 1 >= MIN_SUB_TRENDS:
-            conn.execute('DELETE FROM domain_sub_trend_claims WHERE sub_trend_id=%s',
-                         (row['id'],))
-            conn.execute('DELETE FROM domain_sub_trends WHERE id=%s', (row['id'],))
-            sizes[row['kt_id']] = sizes.get(row['kt_id'], 0) - 1
-            dropped.append(f'{row["parent"]}/{row["name"]}')
-        else:
-            kept.append(f'{row["parent"]}/{row["name"]}')
+        conn.execute('DELETE FROM domain_sub_trend_claims WHERE sub_trend_id=%s',
+                     (row['id'],))
+        conn.execute('DELETE FROM domain_sub_trends WHERE id=%s', (row['id'],))
+        sizes[row['kt_id']] = sizes.get(row['kt_id'], 1) - 1
+        dropped.append(f'{row["parent"]}/{row["name"]}')
+        if sizes[row['kt_id']] < MIN_SUB_TRENDS:
+            thinned.append(row['parent'])
     conn.commit()
 
-    if dropped:
-        print(f'    dropped {len(dropped)} sub-shift(s) the editorial never filled, '
-              f'rather than publishing a blank page: {", ".join(dropped[:4])}'
-              + (' …' if len(dropped) > 4 else ''))
-    if kept:
-        print(f'    ⚠ {len(kept)} bodyless sub-shift(s) kept — their family would '
-              f'fall below {MIN_SUB_TRENDS}: {", ".join(kept)}')
+    print(f'    dropped {len(dropped)} sub-shift(s) the editorial never filled, '
+          f'rather than publishing a blank page: {", ".join(dropped[:4])}'
+          + (' …' if len(dropped) > 4 else ''))
+    if thinned:
+        print(f'    {len(set(thinned))} family/families now below {MIN_SUB_TRENDS} '
+              f'children — sub_shift_count will route them to the repair pass, '
+              f'which re-clusters: {", ".join(sorted(set(thinned)))}')
