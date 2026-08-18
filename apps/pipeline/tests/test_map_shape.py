@@ -357,3 +357,33 @@ def test_a_real_batch_still_goes_to_the_batch_api():
     from serious_shift_pipeline.core import llm
 
     assert llm.SYNC_AT_OR_BELOW < 44, 'a full map must never bypass the discount'
+
+
+def test_a_failed_run_still_records_what_it_spent(monkeypatch):
+    """_record_spend runs only after a successful publish, so every gate failure
+    booked $0.00 — while having already paid for the whole generation. Four
+    failed synthesize runs on 18 Aug 2026 read $0.00 between them, which is why
+    no full rebuild has ever been costed."""
+    from serious_shift_pipeline.mapgen import cli
+    from serious_shift_pipeline.mapgen.validation import (PublicationValidationError,
+                                                          ValidationIssue)
+
+    charged = {}
+
+    class FakeRun:
+        def __init__(self, *a, **k): pass
+        def start(self): pass
+        def add_usage(self, *, cost=None, detail=None, **k):
+            if cost is not None:
+                charged['cost'] = cost
+        def finish(self, **k): pass
+
+    monkeypatch.delenv('SS_RUN_ID', raising=False)
+    monkeypatch.setattr(cli, 'RunLog', FakeRun)
+    monkeypatch.setattr(cli.observability, 'new_run_id', lambda stage: 'run-1')
+
+    cli._record_validation_failure(PublicationValidationError(
+        [ValidationIssue('evidence_reuse', 'sub_trends[1]', 'over the cap', True)]))
+
+    assert charged.get('cost') is cli.mapgen_llm.COST, \
+        'the run row must carry the spend the failed generation already incurred'

@@ -65,15 +65,23 @@ def _record_validation_failure(exc: PublicationValidationError) -> None:
     orchestrated = bool(os.environ.get('SS_RUN_ID'))
     run_id = os.environ.get('SS_RUN_ID') or observability.new_run_id('synthesize')
     run = RunLog(run_id, 'synthesize')
+    # `cost=` on both paths. Spend was only recorded by _record_spend, which runs
+    # AFTER a successful publish, so every failed run booked $0.00 — and a run
+    # that fails at the gate has already paid for the whole generation. The
+    # ledger therefore showed nothing for the most expensive events in it: four
+    # failed synthesize runs on 18 Aug 2026 read $0.00 between them, which is
+    # also why no full rebuild has ever been costed and the budget ceilings had
+    # to be guessed.
     if orchestrated:
         # The row belongs to run.py, which closes it after the remaining steps.
         # `finish()` matches on run_id alone, so stamping it here set
         # finished_at and status='failed' while classify had yet to run — the
         # exact double-close `_open_export_run` documents avoiding, forty lines
         # below. Attach the detail and leave the lifecycle to its owner.
-        run.add_usage(detail=exc.detail())
+        run.add_usage(cost=mapgen_llm.COST, detail=exc.detail())
     else:
         run.start()
+        run.add_usage(cost=mapgen_llm.COST)
         run.finish(status='failed', detail=exc.detail())
     # Capped. A stale taxonomy produces thousands of issues — 2,004 in one real
     # case — and dumping them all buries the one line that says the work is
