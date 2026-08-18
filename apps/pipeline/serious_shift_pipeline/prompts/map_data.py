@@ -19,7 +19,11 @@ INSIGHTS_MODEL = os.environ.get('INSIGHTS_MODEL', 'claude-sonnet-4-6')
 
 # Single source of truth for how many Key Trends a domain carries — a range,
 # owned by mapgen (which also gates on it at publication).
-from ..mapgen.config import MAX_KTS_PER_DOM, MIN_KTS_PER_DOM  # noqa: E402
+from ..mapgen.config import (  # noqa: E402
+    KT_CHANGE_BUDGET,
+    MAX_KTS_PER_DOM,
+    MIN_KTS_PER_DOM,
+)
 
 
 def fmt_claims_block(claims: list, max_per: int | None = None) -> str:
@@ -59,10 +63,19 @@ def fmt_claims_block(claims: list, max_per: int | None = None) -> str:
 def prompt_domain_key_trends(domain: dict, claims: list,
                              min_kts: int = MIN_KTS_PER_DOM,
                              max_kts: int = MAX_KTS_PER_DOM,
-                             taken: list[str] | None = None) -> str:
+                             taken: list[str] | None = None,
+                             current: list[dict] | None = None,
+                             change_budget: int = KT_CHANGE_BUDGET) -> str:
     """`taken` carries the Key Trend names other domains already claimed this
     run, so the four phase-3 calls (now sequential) cannot mint near-twins of
-    each other — the same advisory-ledger pattern `prompt_sub_trends` uses."""
+    each other — the same advisory-ledger pattern `prompt_sub_trends` uses.
+
+    `current` is this sphere's live published shifts, which the CONTINUITY block
+    asks to have returned unchanged. It and `taken` must stay DISJOINT: `taken`
+    forbids reuse and even echoes of a name, so a sphere's own live names
+    appearing there would simultaneously demand and forbid the carry-forward.
+    The caller is responsible for that split — see phase3_key_trends.
+    """
     return load_and_render(
         "map/key_trends.txt",
         voice=VOICE,
@@ -71,6 +84,10 @@ def prompt_domain_key_trends(domain: dict, claims: list,
         min_kts=min_kts,
         max_kts=max_kts,
         taken='\n'.join(f'- {name}' for name in sorted(taken or [])) or '- (none yet)',
+        current_shifts='\n'.join(
+            f'- {s["name"]} — {s.get("subtitle") or ""}'.rstrip(' —')
+            for s in (current or [])) or '- (none)',
+        change_budget=change_budget,
         claim_count=len(claims),
         evidence=fmt_claims_block(claims, max_per=180),
     )

@@ -17,6 +17,7 @@ from .voice import VOICE
 from .map_data import (
     SYNTHESIS_MODEL,
     INSIGHTS_MODEL,
+    KT_CHANGE_BUDGET,
     MAX_KTS_PER_DOM,
     MIN_KTS_PER_DOM,
     fmt_claims_block,
@@ -40,6 +41,7 @@ __all__ = [
     "fmt_shift_catalogue",
     "SYNTHESIS_MODEL",
     "INSIGHTS_MODEL",
+    "KT_CHANGE_BUDGET",
     "MAX_KTS_PER_DOM",
     "MIN_KTS_PER_DOM",
     "fmt_claims_block",

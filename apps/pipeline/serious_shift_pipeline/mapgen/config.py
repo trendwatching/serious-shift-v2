@@ -21,6 +21,7 @@ Three text fields, three jobs, all four spheres:
 from __future__ import annotations
 
 import json
+import os
 
 from ..paths import contracts_dir
 
@@ -61,6 +62,19 @@ CLAIMS_PER_KT   = 100   # claims sent to sub-trend generation per KT
 #: source of truth — prompts/map_data.py imports it.
 MIN_KTS_PER_DOM = 7
 MAX_KTS_PER_DOM = 9
+
+#: How many key shifts one sphere should expect to change names in one week.
+#:
+#: A TARGET, expressed to the model in the prompt, and deliberately NOT a gate.
+#: The 18 Aug 2026 review was explicit: steer the drift, never fail a run for
+#: exceeding it. A week where a capability landed or a market broke is allowed
+#: to move the map, and a hard cap here would only teach the model to keep a
+#: name the evidence had abandoned.
+#:
+#: What makes an unbounded budget safe is carryover.pin_slugs: a renamed shift
+#: keeps its URL, so drift costs a label rather than a page's identity. The two
+#: have to stay together — this number alone would be a wish.
+KT_CHANGE_BUDGET = int(os.environ.get('SS_KT_CHANGE_BUDGET', '2'))
 
 DOMAINS = [
     {

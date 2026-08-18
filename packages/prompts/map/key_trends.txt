@@ -7,6 +7,30 @@ From the evidence below, identify {{min_kts}}–{{max_kts}} distinct KEY TRENDS 
 
 Prefer FEWER, more distinct trends over more, thinner ones. Before returning, check every pair of your candidates: if two tell the same underlying story from different angles — the same mechanism, the same evidence base, the same "so what" — merge them into the stronger one. A reader who cannot say in one sentence how two trends differ has been given one trend twice. Never invent a trend the claims do not back.
 
+CONTINUITY — THIS SPHERE MAY ALREADY HAVE A PUBLISHED MAP
+
+CURRENT KEY TRENDS (live right now, each at its own URL):
+{{current_shifts}}
+
+If that list reads "(none)", this is the first map for this sphere: name freely and ignore the rest of this section.
+
+Otherwise: the map is a running record, not a fresh opinion every week. Readers return to these pages, other sites link to them, and each one carries artwork, editorial and curated links. So START from the list above and return those trends back with the SAME NAMES, unless the evidence in front of you genuinely demands otherwise.
+
+Keeping a name does not mean keeping the subtitle. REFRESH every subtitle against this week's evidence — a subtitle is free to change, and should, whenever the evidence has sharpened. A name is not.
+
+Change a name only for one of these reasons:
+- renamed: the same trend, but the name no longer describes what the evidence shows it has become.
+- split:   the evidence now shows two distinct trends where the list has one.
+- merged:  two trends in the list have converged into one.
+- new:     the evidence shows a trend the list does not contain at all.
+- retired: the evidence no longer supports it. Simply do not return it.
+
+AIM to change at most {{change_budget}} names in this sphere. That is a target for an ordinary week, not a rule. If the evidence has genuinely moved — a capability landed, a market broke, a policy passed — change more and say why. Never manufacture change to look current, and never keep a name the evidence has abandoned just to stay under the number.
+
+For every trend you return, include:
+  "carried_from":  the EXACT name from the list above that this trend continues, or null if it is new.
+  "change_reason": kept | renamed | split | merged | new
+
 WHAT SYNTHESIS MEANS
 Synthesis is not summarizing. It is not finding the most common theme. It is not echoing what one thinker already said. Synthesis means holding two or more thinkers' claims together — including claims that tension or contradict each other — and finding the pattern that none of them named individually.
 
@@ -25,7 +49,7 @@ RULES FOR KEY TREND NAMES
 - Every Key Trend must be distinct from the others — no overlapping trends, and no two of your names sharing a noun. If you have "Trust Proxy" and "Trust Collapse", one is a sub-variant of the other: collapse them or differentiate them.
 - TEST: say the name out loud. Could it have been on a PowerPoint slide from 2019? Does it feel described rather than coined? Either way — rename it.
 
-TAKEN — these names already belong to other domains on this map. Do not reuse or closely echo any of them. Do not begin or end a name with a word that already begins or ends a TAKEN name ("Delegated X", "X Erosion", "X Gap" families count as echoes):
+TAKEN — these names belong to OTHER spheres on this map, and never to this one. Do not reuse or closely echo any of them. Do not begin or end a name with a word that already begins or ends a TAKEN name ("Delegated X", "X Erosion", "X Gap" families count as echoes). This sphere's own live names are listed under CURRENT KEY TRENDS above and are the ones you are being asked to return — they are deliberately absent here:
 {{taken}}
 
 RULES FOR SUBTITLES (mandatory — the name is never shown without one)
@@ -67,7 +91,7 @@ FINAL CHECK BEFORE OUTPUT
 □ Does the full list together feel like a complete, non-redundant map of what is shifting in this domain?
 
 Return ONLY valid JSON — no preamble, no markdown fences:
-{"key_trends":[{"name":"Key trend name here","subtitle":"One specific sentence explaining exactly what this trend is","velocity":"<breakout|accelerating|rising|steady>","claim_ids":[123,456,789]}]}
+{"key_trends":[{"name":"Key trend name here","subtitle":"One specific sentence explaining exactly what this trend is","velocity":"<breakout|accelerating|rising|steady>","carried_from":"Exact name from CURRENT KEY TRENDS, or null if new","change_reason":"kept|renamed|split|merged|new","claim_ids":[123,456,789]}]}
 
 STRATEGIC DOMAIN: {{domain_name}}
 DOMAIN DESCRIPTION: {{domain_description}}

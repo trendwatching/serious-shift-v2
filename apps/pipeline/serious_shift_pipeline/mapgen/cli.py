@@ -14,6 +14,7 @@ import sys
 from ..core import observability
 from ..core.observability import RunLog
 from . import llm as mapgen_llm
+from .carryover import load_published_taxonomy
 from .config import CLAIMS_PER_DOM, DOMAINS
 from .dbutil import get_conn, reset_v2_tables
 from .export import (
@@ -321,6 +322,15 @@ def main():
         print(f'   recorded as pipeline_runs stage=export run_id={run_id}')
         conn.close(); return
 
+    # Read what is live BEFORE the truncate. `reset_v2_tables` leaves
+    # documents['map'] alone, so this would still work afterwards — but a
+    # carry-forward that silently depends on which tables a reset happens to
+    # spare is a trap for whoever edits the reset next.
+    previous = load_published_taxonomy(conn)
+    if previous:
+        print(f'\nCarrying forward {sum(len(v) for v in previous.values())} '
+              f'published key shift(s) across {len(previous)} sphere(s).')
+
     # ── Always reset v2 tables ───────────────────────────────────────────────
     reset_v2_tables(conn)
 
@@ -350,7 +360,7 @@ def main():
     domain_claims = phase2_claim_routing(conn)
 
     # ── Phase 3: Key Trend generation per domain ─────────────────────────────
-    domain_kts = phase3_key_trends(conn, api_key, domain_claims)
+    domain_kts = phase3_key_trends(conn, api_key, domain_claims, previous=previous)
 
     # ── Phase 4: sub-trend clustering ────────────────────────────────────────
     phase4_sub_trends(conn, api_key, domain_claims, domain_kts)

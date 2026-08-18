@@ -10,6 +10,7 @@ from datetime import date
 from urllib.parse import urlparse
 
 from ..core.text import url_slug as slugify
+from .carryover import load_published_taxonomy, pin_slugs
 from .config import DOMAINS, MODULE_ORDER
 from .modules import conform_modules, scrub_module_tree
 from .validation import require_valid_map
@@ -41,6 +42,40 @@ def _http_url(value) -> str:
         return parsed.geturl() if parsed.scheme in {'http', 'https'} and parsed.netloc else ''
     except ValueError:
         return ''
+
+
+def assign_sub_tails(st_rows: list, kt_slugs: dict) -> tuple[dict, list[str]]:
+    """The last segment of each sub-shift's URL: `{parent}/{tail}`.
+
+    The path is two segments, but the TAIL is deduplicated GLOBALLY and against
+    every key-shift slug — not per parent, which is what this did until
+    18 Aug 2026.
+
+    That was a writer/gate disagreement, and the expensive kind. Validation has
+    always rejected a repeated tail (`duplicate_sub_shift_slug`) and a tail that
+    shadows a shift (`sub_shift_shadows_shift`), both unrepairable. Deduplicating
+    per parent meant the exporter could hand the gate a document the gate was
+    guaranteed to refuse — and it refused it only after every paid phase had run.
+    Conforming here is the repo's own lesson: conform at export, not at
+    generation.
+
+    Pure and separate from `build_map_json_v2` so the rule can be tested without
+    a database; the golden export fixture only runs against a populated one.
+
+    Returns `({sub_id: tail}, suffixed_tails)`.
+    """
+    seen: dict = {slug: 1 for slug in kt_slugs.values()}
+    tails: dict = {}
+    suffixed: list[str] = []
+    for st in st_rows:
+        base = slugify(st['name'])
+        n = seen.get(base, 0) + 1
+        seen[base] = n
+        tail = base if n == 1 else f'{base}-{n}'
+        if n > 1:
+            suffixed.append(tail)
+        tails[st['id']] = tail
+    return tails, suffixed
 
 
 def build_map_json_v2(conn) -> dict:
@@ -252,13 +287,23 @@ def build_map_json_v2(conn) -> dict:
     # publication died on a unique-constraint violation *after* passing the whole
     # editorial gate. An override keyed that way would also have silently applied
     # to the wrong sphere.
-    kt_slug_by_id: dict = {}
-    _seen_kt: dict = {}
-    for kt in kt_rows_all:
-        base = slugify(kt['name'])
-        n = _seen_kt.get(base, 0) + 1
-        _seen_kt[base] = n
-        kt_slug_by_id[kt['id']] = base if n == 1 else f'{base}-{n}'
+    #
+    # Slugs are also CARRIED FORWARD from the live publication wherever the same
+    # shift is still here — see carryover.pin_slugs. Deriving purely from the
+    # name was what made every rename move a page and leave its artwork, its
+    # overrides and its inbound links behind. Pinning happens here rather than in
+    # phase 3 because this is the one function every publish path passes through
+    # (full rebuild, --editorial-only, --export-only) and because the taxonomy is
+    # only final here: the targeted repair pass can re-cluster after phase 4.
+    kt_slug_by_id, slug_report = pin_slugs(list(kt_rows_all),
+                                           load_published_taxonomy(conn))
+    if slug_report['renames']:
+        print(f'  ↻ {len(slug_report["renames"])} shift(s) renamed; each keeps its '
+              f'URL so its artwork and links survive:')
+        for was, now in slug_report['renames']:
+            print(f'      {was!r} → {now!r}')
+    if slug_report['retired']:
+        print(f'  ⚠ {slug_report["retired"]} published shift(s) are not in this map')
     key_trends_j = []
     for kt in kt_rows_all:
         url_slug = kt_slug_by_id[kt['id']]
@@ -328,14 +373,9 @@ def build_map_json_v2(conn) -> dict:
         ORDER BY st.kt_id, st.sort_order
     """).fetchall()
     sub_trends_j = []
-    _seen_st: dict = {}
+    st_tail_by_id, _suffixed = assign_sub_tails(list(st_rows_all), kt_slug_by_id)
     for st in st_rows_all:
-        # A sub-shift slug is only unique beneath its parent, so the override key
-        # is the two-segment URL path. Same stable disambiguation as above.
-        base = slugify(st['name'])
-        n = _seen_st.get((st['kt_id'], base), 0) + 1
-        _seen_st[(st['kt_id'], base)] = n
-        url_slug = f'{kt_slug_by_id.get(st["kt_id"], "")}/{base if n == 1 else f"{base}-{n}"}'
+        url_slug = f'{kt_slug_by_id.get(st["kt_id"], "")}/{st_tail_by_id[st["id"]]}'
         st_modules, st_authored = resolve_modules('sub_trend', url_slug, st['modules'])
         sub_trends_j.append({
             'id':          f'st-{st["id"]}',
@@ -360,6 +400,14 @@ def build_map_json_v2(conn) -> dict:
                     {'type': 'evidence', 'data': {'items': evidence}},
                 )
         sub_trends_j[-1]['modules'] = _ordered(sub_trends_j[-1]['modules'], 'sub_trend')
+
+    # A numeric suffix in a live URL is a name nobody chose. It used to be
+    # applied silently; two pages sharing a name is an editorial problem and the
+    # only person who can fix it needs to be told it happened.
+    if _suffixed:
+        print(f'  ⚠  {len(_suffixed)} sub-shift(s) needed a numeric suffix — two '
+              f'pages share a name: {", ".join(_suffixed[:5])}'
+              + (' …' if len(_suffixed) > 5 else ''))
 
     unmatched = sorted(f'{s}:{sl}' for (s, sl) in overrides.keys() - used_overrides)
     if unmatched:

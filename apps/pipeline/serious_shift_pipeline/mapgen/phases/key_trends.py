@@ -31,23 +31,40 @@ def _valid_kts(result: object) -> list[dict]:
             if isinstance(kt, dict) and kt.get('name') and kt.get('subtitle')]
 
 
-def phase3_key_trends(conn, api_key: str, domain_claims: dict) -> dict:
+def phase3_key_trends(conn, api_key: str, domain_claims: dict,
+                      previous: dict | None = None) -> dict:
     """
     Returns {domain_id: [kt_dict_with_db_id, ...]}
     Writes MIN..MAX_KTS_PER_DOM Key Trends per domain to domain_key_trends.
+
+    `previous` is the live published taxonomy from `carryover`. Each sphere is
+    shown its OWN live shifts and asked to return them; every other sphere's
+    live names go in `taken` instead, which forbids them. Those two blocks have
+    to stay disjoint — `taken` forbids even echoing a name, so a sphere seeing
+    its own names there would be told to return and to avoid the same words.
     """
     print('\nPhase 3 — Generating Key Trends per domain (sequential, shared name ledger)…')
 
+    previous = previous or {}
     slug = _slugger()
     domain_kts: dict = {}
     taken: list[str] = []
     for d in DOMAINS:
         claims = domain_claims[d['id']]
+        current = previous.get(d['id']) or []
+        # Live names belonging to spheres this run has NOT reached yet. Without
+        # this, Society can coin the name Organizations is about to be asked to
+        # carry forward, three calls before Organizations is asked for it.
+        reserved = [entry['name']
+                    for dom_id, entries in previous.items() if dom_id != d['id']
+                    for entry in entries]
+        forbidden = sorted(set(taken) | set(reserved))
         kts: list[dict] = []
         for attempt in range(1, MAX_KT_ATTEMPTS + 1):
             [result] = generate_json(
                 [d],
-                lambda dom: prompt_domain_key_trends(dom, claims, taken=taken),
+                lambda dom: prompt_domain_key_trends(
+                    dom, claims, taken=forbidden, current=current),
                 default=lambda: {'key_trends': []},
                 describe=lambda dom: f"{dom['name']} (attempt {attempt})",
             )
@@ -57,7 +74,18 @@ def phase3_key_trends(conn, api_key: str, domain_claims: dict) -> dict:
             if attempt < MAX_KT_ATTEMPTS:
                 print(f'  {d["name"]}: only {len(kts)} KTs '
                       f'(target {MIN_KTS_PER_DOM}–{MAX_KTS_PER_DOM}) — re-asking')
-        if len(kts) < MIN_KTS_PER_DOM:
+        if len(kts) < MIN_KTS_PER_DOM and current:
+            # `generate_json` swallows a failed call into `default`, so a single
+            # HTTP error here used to cost a sphere its shifts. That was survivable
+            # while every run reminted the map anyway; against a published one it
+            # means retiring 7–9 live URLs — and everything keyed to them — because
+            # one batch timed out. Losing a week's refresh is the cheaper failure.
+            print(f'  {d["name"]}: only {len(kts)} KTs after {MAX_KT_ATTEMPTS} '
+                  f'attempts — carrying the published sphere forward unchanged '
+                  f'rather than retiring {len(current)} live shift(s)')
+            kts = [{'name': entry['name'], 'subtitle': entry.get('subtitle', ''),
+                    'velocity': 'steady', 'claim_ids': []} for entry in current]
+        elif len(kts) < MIN_KTS_PER_DOM:
             print(f'  {d["name"]}: only {len(kts)} KTs after {MAX_KT_ATTEMPTS} '
                   f'attempts — the kt_count gate will decide')
         # Deterministic truncation past MAX: the model lists its strongest
