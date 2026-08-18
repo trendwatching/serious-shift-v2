@@ -15,7 +15,7 @@ from .carryover import load_published_taxonomy, pin_slugs
 from .config import DOMAINS, MODULE_ORDER
 from .modules import (conform_modules, scrub_module_tree, stat_band_from_hero,
                       stat_claim_key)
-from .validation import require_valid_map
+from .validation import EVIDENCE_REUSE_SHARE, require_valid_map
 
 
 def _attr(stored):
@@ -419,6 +419,11 @@ def build_map_json_v2(conn) -> dict:
               f'pages share a name: {", ".join(_suffixed[:5])}'
               + (' …' if len(_suffixed) > 5 else ''))
 
+    reuse_report = reconcile_evidence_reuse(sub_trends_j)
+    if reuse_report['claims_trimmed']:
+        print(f"  ↳ {reuse_report['claims_trimmed']} over-reaching claim citation(s) "
+              f"trimmed — no claim anchors more than {reuse_report['cap']} pages.")
+
     # One claim, one page — settled here rather than asked of the writers.
     stat_report = reconcile_fronted_stats(key_trends_j, sub_trends_j)
     if stat_report['sub_bands_ceded'] or stat_report['sub_bands_deduped']:
@@ -517,6 +522,78 @@ def build_map_json_v2(conn) -> dict:
         'synthesis_insights':  insights_j,
     }
 
+
+
+#: A sub-shift below this has too little behind it to be worth publishing, so a
+#: reuse trim stops rather than hollow one out.
+MIN_CLAIMS_PER_SUB_ON_TRIM = 2
+
+
+def reconcile_evidence_reuse(sub_trends: list) -> dict:
+    """Keep a claim on the pages that most need it, and take it off the rest.
+
+    "The same evidence cannot anchor more than N pages" is a routing fact, and
+    routing is decided in phase 4. The targeted repair only rewrites editorial
+    prose, so it re-published the same claim_ids every time: on the 18 Aug 2026
+    run this was the LAST issue standing, survived a repair pass that fixed all
+    four of its neighbours, and would have failed the map on its own. Marking it
+    repairable (this morning) was not enough — nothing downstream could actually
+    repair it.
+
+    Which page cedes is decided by how much else it has to stand on: holders are
+    ranked by their own claim count, fewest first, so a page resting on three
+    claims keeps the evidence and a page with five gives it up. Ties break on
+    document order. A page is never trimmed below
+    MIN_CLAIMS_PER_SUB_ON_TRIM — the next-richest holder cedes instead, and if
+    none can, the claim is left over the cap for the gate to reject rather than
+    quietly gutting a page to pass.
+    """
+    cap = max(3, round(EVIDENCE_REUSE_SHARE * len(sub_trends)))
+    holders: dict[str, list[int]] = {}
+    for index, sub in enumerate(sub_trends):
+        # Only routing padding is trimmable: a claim the page's own editorial
+        # CITES cannot be un-routed here, because the citation would be left
+        # pointing outside the page's evidence and the prose would be making a
+        # point with its source removed. Blind trimming did exactly that on the
+        # first attempt — it fixed evidence_reuse and broke editorial_provenance
+        # on two pages instead. A cited claim over the cap is a clustering
+        # decision, and only phase 4 can take it back.
+        cited = set()
+        for module in sub.get('modules') or []:
+            if isinstance(module, dict) and module.get('type') == 'peel_tabs':
+                for value in (module.get('data') or {}).get('evidence_ids') or []:
+                    cited.add(f'c_{value}' if str(value).isdigit() else str(value))
+        for value in sub.get('claim_ids') or []:
+            if str(value) not in cited:
+                holders.setdefault(str(value), []).append(index)
+
+    total_holders: dict[str, int] = {}
+    for sub in sub_trends:
+        for value in sub.get('claim_ids') or []:
+            total_holders[str(value)] = total_holders.get(str(value), 0) + 1
+
+    trimmed = 0
+    for value, indexes in sorted(holders.items()):
+        indexes = indexes[:]  # local
+
+        # Re-read the length each time: an earlier claim's trim may already have
+        # taken pages off this one, and the counter has to be per-claim — a
+        # single running total let the second over-reaching claim exit
+        # immediately on the first claim's arithmetic.
+        over = total_holders.get(value, 0) - cap
+        if over <= 0:
+            continue
+        ranked = sorted(indexes, key=lambda i: (len(sub_trends[i]['claim_ids']), i))
+        for index in reversed(ranked):          # richest page cedes first
+            if over <= 0:
+                break
+            claims = sub_trends[index]['claim_ids']
+            if len(claims) - 1 < MIN_CLAIMS_PER_SUB_ON_TRIM:
+                continue
+            sub_trends[index]['claim_ids'] = [c for c in claims if str(c) != value]
+            over -= 1
+            trimmed += 1
+    return {'claims_trimmed': trimmed, 'cap': cap}
 
 
 def reconcile_fronted_stats(key_trends: list, sub_trends: list) -> dict:

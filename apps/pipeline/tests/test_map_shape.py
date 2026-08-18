@@ -18,6 +18,8 @@ from serious_shift_pipeline.mapgen.phases.sub_trends import (MIN_CLAIMS_PER_SUB,
 from serious_shift_pipeline.mapgen.validation import EVIDENCE_REUSE_SHARE
 
 from test_content_gates import full_map
+from serious_shift_pipeline.mapgen.validation import validate_map
+
 from test_map_validation import CONTRACT, codes, valid_map
 
 
@@ -235,3 +237,74 @@ def test_the_us_spelling_of_programmed_is_not_flagged_as_british():
     assert _BRITISH.search('a government programme')
     assert _BRITISH.search('two funding programmes')
     assert _BRITISH.search('they catalogued the results')
+
+
+# ── claim over-reach: routing, so prose regeneration cannot touch it ─────
+
+def test_the_page_with_the_most_to_stand_on_is_the_one_that_cedes():
+    from serious_shift_pipeline.mapgen.export import reconcile_evidence_reuse
+
+    subs = [{'claim_ids': ['c_1', 'c_2', 'c_3', 'c_4', 'c_5']},   # richest
+            {'claim_ids': ['c_1', 'c_9']},
+            {'claim_ids': ['c_1', 'c_7', 'c_8']},
+            {'claim_ids': ['c_1', 'c_6', 'c_7', 'c_8']}]
+    report = reconcile_evidence_reuse(subs)
+
+    assert report['claims_trimmed'] == 1
+    assert 'c_1' not in subs[0]['claim_ids'], 'the five-claim page gives it up'
+    assert all('c_1' in subs[i]['claim_ids'] for i in (1, 2, 3))
+
+
+def test_a_page_is_never_hollowed_out_to_pass_the_gate():
+    """If every over-cap holder is at the floor, the claim stays over the cap
+    and the gate rejects it — better a visible failure than four thin pages."""
+    from serious_shift_pipeline.mapgen.export import reconcile_evidence_reuse
+
+    subs = [{'claim_ids': ['c_1', 'c_2']} for _ in range(4)]
+    assert reconcile_evidence_reuse(subs)['claims_trimmed'] == 0
+    assert all(len(s['claim_ids']) == 2 for s in subs)
+
+
+def test_a_claim_the_page_actually_cites_is_never_un_routed():
+    """The first version trimmed on routing alone. It cleared evidence_reuse and
+    broke editorial_provenance on two pages, because the prose was left citing a
+    claim no longer routed to it — the point made, its source deleted."""
+    from serious_shift_pipeline.mapgen.export import reconcile_evidence_reuse
+
+    def page(extra):
+        return {'claim_ids': ['c_1', *extra],
+                'modules': [{'type': 'peel_tabs', 'data': {'evidence_ids': [1, *[
+                    int(c.split('_')[1]) for c in extra]]}}]}
+
+    subs = [page(['c_2', 'c_3', 'c_4']), page(['c_5']), page(['c_6']), page(['c_7'])]
+    assert reconcile_evidence_reuse(subs)['claims_trimmed'] == 0
+    assert all('c_1' in s['claim_ids'] for s in subs)
+
+
+def test_trimming_leaves_the_gate_nothing_to_find():
+    from serious_shift_pipeline.mapgen.export import reconcile_evidence_reuse
+
+    document = full_map()
+    subs = document['sub_trends']
+    # c_1001 is routed to six pages and cited by none of them — the filler-dump
+    # the cap exists to catch, and the only shape that is safe to trim.
+    for n, sub in enumerate(subs[:6]):
+        sub['claim_ids'] = ['c_1001', 'c_1002', f'c_{9000 + n}']
+        for module in sub['modules']:
+            if module.get('type') == 'peel_tabs':
+                module['data']['evidence_ids'] = [1002, 9000 + n]
+
+    def reuse_of(claim):
+        return [i for i in validate_map(document, CONTRACT)
+                if i.code == 'evidence_reuse' and claim in i.message]
+
+    # By claim, not by code: full_map() trips evidence_reuse on its own, and a
+    # bare `code in codes()` assertion passed whether or not the trim worked.
+    assert reuse_of('c_1001'), 'fixture must trip the gate on this claim'
+    provenance_before = [i for i in validate_map(document, CONTRACT)
+                         if i.code == 'editorial_provenance']
+    reconcile_evidence_reuse(subs)
+    assert not reuse_of('c_1001')
+    assert [i.path for i in validate_map(document, CONTRACT)
+            if i.code == 'editorial_provenance'] == [i.path for i in provenance_before], \
+        'the trim must not orphan a citation'
