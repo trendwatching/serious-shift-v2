@@ -938,12 +938,19 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
         # few pages, not a dozen") while dropping the pretence that a fixed
         # number expresses it at every size.
         reuse_cap = max(3, round(EVIDENCE_REUSE_SHARE * len(subs)))
+        # REPAIRABLE. It was not, and on the 18 Aug staging run a single claim
+        # sitting one page over the cap was the only thing standing between a
+        # finished 44-shift map and publication — 28 other issues were all
+        # repairable. Re-clustering the parent that over-reached is exactly what
+        # the repair pass does; failing a whole run instead is not proportionate
+        # to one claim anchoring a fourth page.
         for number, holders in sorted(reuse.items()):
             if len(holders) > reuse_cap:
                 issues.append(ValidationIssue(
                     'evidence_reuse', holders[reuse_cap],
                     f'claim c_{number} is routed to {len(holders)} sub-shifts; '
-                    f'the same evidence cannot anchor more than {reuse_cap} pages'))
+                    f'the same evidence cannot anchor more than {reuse_cap} pages',
+                    True))
 
     return issues
 

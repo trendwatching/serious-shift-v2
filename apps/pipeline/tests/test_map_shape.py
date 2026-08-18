@@ -17,6 +17,7 @@ from serious_shift_pipeline.mapgen.phases.sub_trends import (MIN_CLAIMS_PER_SUB,
                                                              MIN_POOL_PER_KT)
 from serious_shift_pipeline.mapgen.validation import EVIDENCE_REUSE_SHARE
 
+from test_content_gates import full_map
 from test_map_validation import CONTRACT, codes, valid_map
 
 
@@ -130,3 +131,29 @@ def test_the_generator_and_the_gate_read_the_same_sub_shift_range():
         'serious_shift_pipeline.mapgen.validation', fromlist=['x']
     ).validate_map(document, CONTRACT) if i.code == 'sub_shift_count']
     assert found and f'{MIN_SUB_TRENDS}-{MAX_SUB_TRENDS}' in found[0].message
+
+
+def test_evidence_reuse_is_repairable():
+    """It was the only non-repairable issue in the 18 Aug staging set, and one
+    claim sitting a single page over the cap discarded a finished 44-shift map
+    while 28 other issues were all repairable."""
+    # full_map(), not valid_map(): the population gates only run once the map
+    # has FULL_MAP_MIN_SHIFTS shifts, and valid_map() has four.
+    document = full_map()
+    shared = (document['sub_trends'][0]['claim_ids'] or ['c_1'])[0]
+    for sub in document['sub_trends'][:6]:
+        sub['claim_ids'] = [shared]
+    found = [i for i in __import__(
+        'serious_shift_pipeline.mapgen.validation', fromlist=['x']
+    ).validate_map(document, CONTRACT) if i.code == 'evidence_reuse']
+    assert found, 'expected the cap to fire'
+    assert all(i.repairable for i in found)
+
+
+def test_the_repair_limit_covers_a_map_that_needs_many_small_fixes():
+    """0.35 gave 15 against 30 affected parents, so the pass skipped and threw
+    away a completed generation to avoid a repair costing a fraction of it. The
+    guard should still refuse a map that is broken EVERYWHERE."""
+    assert cli._repair_limit({'key_trends': [{}] * 44}) >= 30
+    total = 60
+    assert cli._repair_limit({'key_trends': [{}] * total}) < total

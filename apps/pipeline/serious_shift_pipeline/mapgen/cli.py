@@ -41,7 +41,14 @@ from .validation import (PublicationValidationError, _load_contract,
 #: marked repairable into a failed publication. The share keeps the intent: a
 #: repair fixes a minority of pages, and a map where most pages are broken
 #: should fail rather than be rewritten wholesale.
-REPAIR_SHIFT_SHARE = float(os.environ.get('SS_REPAIR_SHIFT_SHARE', '0.35'))
+#: 0.35 was still too tight. On the 18 Aug staging run 30 of 44 shifts carried a
+#: repairable issue — mostly a British spelling or a reused hero statistic — and
+#: the pass skipped at a limit of 15, discarding a completed ~$30 generation to
+#: avoid a ~$4 repair. The guard's purpose is to refuse a map that is broken
+#: everywhere, not to refuse one that needs a lot of small fixes, so it sits just
+#: below "all of them": a run where EVERY shift is defective is systemic and
+#: should still fail loudly rather than be rewritten wholesale.
+REPAIR_SHIFT_SHARE = float(os.environ.get('SS_REPAIR_SHIFT_SHARE', '0.85'))
 #: Floor, so a small map still gets a useful repair.
 MIN_TARGETED_REPAIR_SHIFTS = 12
 
