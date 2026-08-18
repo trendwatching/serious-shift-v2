@@ -3,10 +3,17 @@
  * The per-sphere palette exists twice, and this asserts the two copies agree.
  *
  * tokens.css holds it as CSS custom properties, scoped by `[data-domain]`.
- * lib/theme.js holds four of the same values as JS literals, because the chrome
- * that uses them — the deck panels, the breadcrumb pill — renders ABOVE the
- * element that sets `data-domain`, so `var(--a-crumb)` would resolve to the
- * `:root` default (Society's) rather than to the sphere in view.
+ * lib/theme.js holds some of the same values as JS literals, because the chrome
+ * that uses them — the breadcrumb pill — renders ABOVE the element that sets
+ * `data-domain`, so `var(--a-crumb)` would resolve to the `:root` default
+ * (Society's) rather than to the sphere in view.
+ *
+ * `eyebrow` was a third pair here until the 18 Aug 2026 review removed the deck
+ * panel's "What's shifting right now" label, which was the only thing reading
+ * `DOMAIN_THEME.eyebrow`. The `--a-eyebrow` TOKEN is still live — the shift
+ * pages' module eyebrows use it — but nothing duplicates it in JS any more, so
+ * there are no longer two copies to drift apart. Checking a pair with one side
+ * missing just fails.
  *
  * That is a real constraint, not laziness, so the duplication stays. What
  * cannot stay is the drift: nothing stops someone deepening `--a-crumb` in
@@ -73,13 +80,15 @@ for (const sphere of SPHERES) {
   const pairs = [
     ['grad', `--grad-${sphere}`],
     ['crumb', '--a-crumb'],
-    ['eyebrow', '--a-eyebrow'],
   ]
   for (const [field, token] of pairs) {
     const js = themeField(sphere, field)
     let css = cssVar(sphere, token)
-    // Society's eyebrow is the token's own default, spelled as a var().
-    if (css === 'var(--color-yellow)') css = TOKENS.match(/--color-yellow:\s*([^;]+);/)[1].trim()
+    // A token whose sphere value is spelled as a var() indirection.
+    if (css?.startsWith('var(')) {
+      const alias = css.slice(4, -1).trim()
+      css = TOKENS.match(new RegExp(`${alias}:\\s*([^;]+);`))?.[1].trim() ?? css
+    }
     if (!js || !css) { fail(`${sphere}: cannot read ${field} / ${token}`); continue }
     if (norm(js) !== norm(css)) {
       fail(`${sphere}.${field} is ${js} but ${token} is ${css} — the two palettes have drifted`)
