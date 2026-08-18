@@ -37,8 +37,10 @@
   }
 
   /* The universal section label: 11px / 700 / 0.2em / uppercase. This one
-     IS fully specified, because the build uses the identical treatment in
-     all sixteen places it appears. */
+     IS fully specified, because the build uses the identical treatment
+     everywhere it appears. (/about's section headers used to be among them;
+     they moved to .about-eyebrow on the 18 Aug 2026 review. No count is named
+     here on purpose — the last one went stale the moment that happened.) */
   .t-eyebrow {
     font-family: var(--font-display);
     font-size: var(--t-eyebrow);
@@ -91,6 +93,27 @@
      Capped here, released by desktop.css — a 290px measure sitting inside a
      660px column reads as a mistake, not as a short line. */
   .measure { max-width: var(--measure, 300px); }
+
+  /* /about's section headers. These were `.t-eyebrow` — the same 11px label
+     the shift modules use — and the 18 Aug 2026 review asked for them "WAY
+     bigger… across the entire page, so METHODOLOGY, and SERVICES etc". They
+     are the page's only navigational landmarks, so they now sit on their own
+     ramp between the eyebrow and the 52–76px H1 rather than borrowing the
+     furniture scale. `.t-eyebrow` itself is untouched: it still labels the
+     shift modules, the deck and the failure states, none of which were in
+     scope — including "THE POINT" on this very page, which is a label inside
+     the statement band rather than one of the page's section headers.
+
+     Tracking drops from 0.2em to 0.01em. At 11px that wide spacing is what
+     makes a label read as a label; at 30px+ it reads as a gap. */
+  .about-eyebrow {
+    font-family: var(--font-display);
+    font-size: var(--t-about-sec);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.04;
+    text-transform: uppercase;
+  }
 
   /* An About section's picture and its prose. Stacked on a phone, side by side
      on a desktop — and the `display` lives HERE rather than as a `flex` utility

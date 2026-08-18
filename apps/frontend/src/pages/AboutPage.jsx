@@ -15,14 +15,22 @@ import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { Footer } from '../chrome/Footer'
 import { ABOUT_URL, CONTACT_URL, METHODOLOGY_URL, SUBSCRIBE_URL, TRENDWATCHING_URL, WHATSAPP_URL } from '../lib/site'
 
-/** Inline link: black text, magenta underline. The design's own treatment. */
+/**
+ * Inline link: black text, black underline.
+ *
+ * The underline was magenta — the design's own treatment — until the 18 Aug
+ * 2026 review: "red looks like pointing out a spelling error". The hover still
+ * goes magenta, so the link keeps a colour response; only the resting rule is
+ * ink. This is the site's only coloured text-decoration, so "everywhere" is
+ * this one component.
+ */
 const A = ({ href, children }) => (
   <a
     href={href}
     target={href.startsWith('#') ? undefined : '_blank'}
     rel="noopener noreferrer"
     className="!text-[var(--color-ink)] underline decoration-[1.5px] underline-offset-[3px] transition-colors hover:!text-[#ED026B]"
-    style={{ textDecorationColor: '#ED026B' }}
+    style={{ textDecorationColor: 'var(--color-ink)' }}
   >
     {children}
   </a>
@@ -79,7 +87,7 @@ const Section = ({ id, image, alt, eyebrow, children, after }) => (
         </div>
       )}
       <div className="flex flex-col gap-3.5">
-        <h2 className="t-eyebrow">{eyebrow}</h2>
+        <h2 className="about-eyebrow">{eyebrow}</h2>
         {children}
       </div>
     </div>
@@ -134,12 +142,10 @@ export default function About() {
         <h1 className="t-display leading-none" style={{ marginTop: 20, fontSize: 'var(--t-about)', letterSpacing: '-0.035em' }}>
           About<span className="italic">.</span>
         </h1>
-        {/* `.measure`, not `max-w-[300px]`: the 300px cap is a phone constraint,
-            and the desktop layer releases it the way it does every other
-            standfirst on the site. */}
-        <p className="measure mt-4 text-[16.5px] leading-[1.45]" style={{ color: 'var(--color-ink-soft)' }}>
-          Why Serious Shift exists, how we build it, and who is behind it.
-        </p>
+        {/* The standfirst that sat here ("Why Serious Shift exists, how we
+            build it, and who is behind it.") came out on the 18 Aug 2026
+            review. It survives as the page's meta description, which is where
+            a summary of the page belongs. */}
       </header>
 
       <Section
@@ -171,7 +177,7 @@ export default function About() {
       </Section>
 
       <Section id="services" image="/shift/about-team.jpg" alt="The TrendWatching team in a workshop" eyebrow="Services">
-        <P>The TrendWatching team behind Serious Shift is developing a portfolio of bonus services. First up:</P>
+        <P>The TrendWatching team behind Serious Shift is developing a portfolio of services. First up:</P>
         <ServiceCard n="1" title="Bonus Content">
           TrendWatching Pioneer and Enterprise <A href={ABOUT_URL}>members</A> will soon receive a forever-updated report on <strong>AI × Consumer Behaviour Shifts</strong> + a new Serious Shift Ideation <A href={ABOUT_URL}>Playbook</A>.
         </ServiceCard>

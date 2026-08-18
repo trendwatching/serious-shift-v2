@@ -132,6 +132,7 @@
   --t-hero:       min(clamp(46px, 40.338px + 1.441vw, 68px), 11.7vw);  /* sphere H1      */
   --t-sub:        min(clamp(32px, 28.397px + 0.917vw, 46px), 8.14vw);  /* sub-shift H1   */
   --t-about:      clamp(52px, 45.823px + 1.572vw, 76px);   /* About H1       */
+  --t-about-sec:  clamp(30px, 25.882px + 1.048vw, 46px);   /* About section  */
   --t-trust:      clamp(23px, 21.198px + 0.458vw, 30px);   /* footer trust   */
   --t-stat:       clamp(25px, 22.684px + 0.589vw, 34px);   /* stat figure    */
   --t-nav:        clamp(20px, 18.456px + 0.393vw, 26px);   /* nav menu label */
@@ -142,7 +143,7 @@
   /* ── Furniture ────────────────────────────────────────────────────────
    * Labels, counters, chips and pills. These were literal pixels at every
    * width, which is why a 1920 display showed an 11px eyebrow next to a 92px
-   * headline. `--t-eyebrow` alone carries seventeen call sites.
+   * headline. `--t-eyebrow` alone carries call sites across most of the site.
    * A handful of sites override these DOWNWARD (10, 10.5, 11.5, 12); those
    * are multipliers of the token now, not new literals, so the whole set
    * moves together. Body copy is deliberately absent — see the note above.

@@ -1,17 +1,34 @@
 # Sphere background images — generation prompts
 
-> **Superseded 2026-08-12.** Design's own human-made illustration set landed via the
-> "Serious Shift Homepage Animation" export and now ships as `public/shift/domain-*-bg.jpg`
-> (society 884×791, the other three ~1200×1550 portrait, recompressed to JPEG q80 ≤1600px).
-> `scripts/generate-sphere-bg.mjs` is retired — running it would overwrite the delivered art.
-> Everything below is kept as the record of the interim generated set and its art direction.
+> **Superseded twice. What ships today (2026-08-18) is design's photographic set**, taken from
+> the later variants in the "Serious Shift Homepage Animation" export:
+>
+> | Sphere | File | Source variant | Subject |
+> |---|---|---|---|
+> | Society | `public/shift/domain-society-bg-v2.jpg` | `domain-society-bg-v2.jpg` | Festival crowd, faces lit |
+> | Economy | `public/shift/domain-economy-bg-v3.jpg` | `domain-economy-bg-v3.jpg` | Aerial over logistics sheds |
+> | Consumers | `public/shift/domain-consumers-bg-v2.jpg` | `domain-consumers-bg-v2.jpg` | Storefront, mannequins |
+> | Organizations | `public/shift/domain-organizations-bg-v4.jpg` | `domain-organizations-bg-v4.jpg` | Boardroom down the table |
+>
+> Raw duotone photographs, no copy baked in. That last part is the reason for the swap: the
+> 12 Aug illustration set they replace broke the brief's own "no copy in images" rule —
+> Society carried TRUST · BELONGING · TRUTH and Economy carried PRODUCING WORK / PROVING A
+> HUMAN JUDGED IT rendered into the pixels.
+>
+> The variant suffix is deliberate and stays in the filename: it records which delivered file
+> shipped, and `public/` is served unhashed, so a fresh name is also what stops a cached copy
+> of the old art surviving a deploy.
+>
+> The 12 Aug illustration set is the first thing this notice superseded, and
+> `scripts/generate-sphere-bg.mjs` — the interim generated set before that — is retired.
+> Everything below is kept as the record of that interim set and its art direction.
 
 No literal image-generation prompt existed on the Miro board (full sweep, 2026-08-12); what the
 board gives is an art direction: Reinier's 2026-08-04 selection of **Abstract & Conceptual
 Surrealism + Mid-Century Realism** from the Frame 7 moodboard, with the constraints "NOT AI
 design-ish… mixes graphics with real photos… RAW, not polished… real objects, real people, real
 situations… people of all ages, ethnicities, genders, body shapes" and "no copy in images".
-The shipped Society background (`public/shift/domain-society-bg.jpg`, 884×791) is the visual mold:
+The Society background of that era (`domain-society-bg.jpg`, 884×791, no longer in the repo) was the mold:
 a single-hue duotone illustration — silhouetted figures lit by their devices, a soft crowd behind,
 fine network lines, three glowing keyword nodes naming the sphere's stakes.
 

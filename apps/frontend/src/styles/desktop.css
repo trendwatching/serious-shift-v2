@@ -334,12 +334,27 @@
     .panel-canvas { justify-content: center; }
     .panel-shifting { margin-top: 52px !important; }
 
-    /* The sphere hero is a ~3:1 letterbox here painting portrait art;
-       `center top` showed the picture's top strip — sky, spotlight, a cart
-       icon — and cropped the people out. The figures sit mid-frame in all
-       four illustrations, so the band tracks them. Phones keep `top`: the
-       tall panel shows most of the picture anyway. */
+    /* The sphere hero is a ~3:1 letterbox here painting a taller picture;
+       `center top` showed the top strip — sky, ceiling, signage — and cropped
+       the subject out. Three of the four photographs carry theirs near the
+       vertical middle, so the band tracks that. Phones keep `top`: the tall
+       panel shows most of the picture anyway. */
     .sphere-art { background-position: center 38%; }
+
+    /* Organizations is the one sphere the shared aim fails. Its photograph
+       looks down a boardroom table into a bright window, so the 38% band is
+       the palest part of the picture: the H1 measured 3.3:1 and the blurb
+       3.6:1 there, both under AA. Aiming at 85% puts the near end of the
+       table — chairs, shadow — behind the type, and 0.62 finishes the job.
+       Together they measure 4.2:1 large / 4.6:1 normal. Phones keep `top`
+       and the shared scrim; the tall panel never lands on the window. */
+    [data-domain="organizations"] {
+      --hero-scrim: 0.62;
+    }
+
+    [data-domain="organizations"] .sphere-art {
+      background-position: center 85%;
+    }
 
   }
 }

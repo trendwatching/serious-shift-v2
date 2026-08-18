@@ -6,17 +6,18 @@
  * single-hue duotone field, silhouetted people lit by the devices they hold,
  * a soft crowd behind them, fine network lines, and three glowing keyword
  * nodes naming the sphere's stakes. This drew the other three spheres in
- * that family as interim stand-ins. RETIRED 12 Aug 2026: design's own
- * human-made illustration set landed (the "Serious Shift Homepage Animation"
- * export) and now lives in public/shift/domain-*-bg.jpg — running this would
- * overwrite it. Kept for the drawing technique, not for running.
+ * that family as interim stand-ins. RETIRED 12 Aug 2026, when design's own
+ * illustration set landed; superseded again 18 Aug 2026 by design's
+ * photographic set, which ships as public/shift/domain-{id}-bg-v{N}.jpg (see
+ * docs/sphere-image-prompts.md). The paths below no longer exist. Kept for the
+ * drawing technique, not for running.
  *
  * Deterministic: no randomness at runtime, same input → same JPEG bytes
  * modulo JPEG encoder wobble. Society is never overwritten.
  *
  *   node scripts/generate-sphere-bg.mjs
  *
- * Writes public/shift/domain-{economy,organizations,consumers}-bg.jpg at
+ * Wrote public/shift/domain-{economy,organizations,consumers}-bg.jpg at
  * 884×791 (the Society asset's exact frame), JPEG q82, no baked scrim —
  * DomainPage and DomainPanel apply their own gradients.
  * ════════════════════════════════════════════════════════════════════════ */

@@ -1,11 +1,13 @@
 /**
  * Per-domain identity, verbatim from the delivered build's DECK table.
  *
- * `crumb` is the breadcrumb "you are here" fill and `eyebrow` the colour of a
- * label set on the domain's own gradient — white for Organizations, because
- * brand yellow on olive is barely a colour change. Both are literals rather
- * than `var(--a-*)` because the chrome that uses them renders above the element
+ * `crumb` is the breadcrumb "you are here" fill. It is a literal rather than
+ * `var(--a-crumb)` because the chrome that uses it renders above the element
  * that sets `data-domain`.
+ *
+ * There was an `eyebrow` colour here too, for a label set on the domain's own
+ * gradient. Its last reader was the deck panel's "What's shifting right now",
+ * dropped on the 18 Aug 2026 review.
  */
 export const DOMAIN_ORDER = ['society', 'economy', 'consumers', 'organizations']
 
@@ -23,19 +25,19 @@ export const isSphere = (slug) => DOMAIN_ORDER.includes(String(slug ?? ''))
 
 export const DOMAIN_THEME = {
   society: {
-    num: '01', dot: '#ED026B', crumb: '#7A0038', eyebrow: '#FDFF85',
+    num: '01', dot: '#ED026B', crumb: '#7A0038',
     grad: 'linear-gradient(135deg, #FF0B85 0%, #ED026B 46%, #9A0046 100%)',
   },
   economy: {
-    num: '02', dot: '#0A7FDA', crumb: '#023F6C', eyebrow: '#FDFF85',
+    num: '02', dot: '#0A7FDA', crumb: '#023F6C',
     grad: 'linear-gradient(135deg, #0F91EE 0%, #0A7FDA 46%, #04528B 100%)',
   },
   consumers: {
-    num: '03', dot: '#E74707', crumb: '#6E2202', eyebrow: '#FDFF85',
+    num: '03', dot: '#E74707', crumb: '#6E2202',
     grad: 'linear-gradient(135deg, #F65510 0%, #E74707 46%, #922E03 100%)',
   },
   organizations: {
-    num: '04', dot: '#9A9A43', crumb: '#41500A', eyebrow: '#FFFFFF',
+    num: '04', dot: '#9A9A43', crumb: '#41500A',
     grad: 'linear-gradient(135deg, #ADB03A 0%, #9A9A43 42%, #5F6E13 100%)',
   },
 }

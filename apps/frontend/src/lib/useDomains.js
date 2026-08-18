@@ -253,7 +253,6 @@ export function useDomains() {
         // falls back to the authored copy in site.js.
         intro: first(live?.intro, deck.intro) || '',
         crumb: theme.crumb,
-        eyebrow: theme.eyebrow,
         count: first(live?.key_shift_count, keyShifts.length),
         keyShifts,
         insights: (detail?.domain?.id === id ? detail.insights || [] : [])

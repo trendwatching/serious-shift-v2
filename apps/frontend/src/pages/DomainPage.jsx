@@ -7,15 +7,17 @@ import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
 import { Loading, Missing, Unavailable } from './states'
 
-// All four are design's own human-made illustrations, taken from the
-// "Serious Shift Homepage Animation" export on the 12 Aug 2026 review —
-// replacing the interim generated set (scripts/generate-sphere-bg.mjs,
-// retired; provenance in docs/sphere-image-prompts.md).
+// Design's photographic set from the "Serious Shift Homepage Animation"
+// export — the later delivered variants, replacing the 12 Aug illustrations
+// (which broke the brief's "no copy in images" rule). The variant lives in the
+// filename: it records what shipped and stops a cached copy of the old art
+// surviving a deploy, since public/ is served unhashed. Provenance in
+// docs/sphere-image-prompts.md; scripts/generate-sphere-bg.mjs stays retired.
 const HERO_IMAGE = {
-  society: '/shift/domain-society-bg.jpg',
-  economy: '/shift/domain-economy-bg.jpg',
-  organizations: '/shift/domain-organizations-bg.jpg',
-  consumers: '/shift/domain-consumers-bg.jpg',
+  society: '/shift/domain-society-bg-v2.jpg',
+  economy: '/shift/domain-economy-bg-v3.jpg',
+  organizations: '/shift/domain-organizations-bg-v4.jpg',
+  consumers: '/shift/domain-consumers-bg-v2.jpg',
 }
 
 export default function DomainPage() {
@@ -64,9 +66,18 @@ export default function DomainPage() {
             style={{ inset: -2, backgroundImage: cssUrl(photo), backgroundSize: 'cover' }}
           />
         )}
+        {/* Deepened and started higher on the 18 Aug 2026 art swap. Against the
+            illustrations, 34%→0.34 was enough; against the photographs it was
+            not — the olive boardroom put the H1 at 2.9:1 and the storefront put
+            the blurb at 3.8:1, both under WCAG AA. Measured across all four
+            images at the H1's and the blurb's real y-bands, 10%→0.55 is the
+            shallowest wash that clears 3:1 large / 4.5:1 normal on every
+            sphere, which is why one value serves all four rather than each
+            carrying its own — Organizations alone takes a deeper `--hero-scrim`
+            on desktop, where its letterbox lands on the pale table. */}
         <span
           aria-hidden="true" className="absolute inset-0 z-[1]"
-          style={{ backgroundImage: 'linear-gradient(180deg, rgba(27,22,32,0) 34%, rgba(27,22,32,0.34) 100%)' }}
+          style={{ backgroundImage: 'linear-gradient(180deg, rgba(27,22,32,0) 10%, rgba(27,22,32,var(--hero-scrim, 0.55)) 100%)' }}
         />
         <div className="canvas gutter relative z-[2] mt-auto">
           {/* Uppercase in the DOM, not by CSS — the breadcrumb directly above
