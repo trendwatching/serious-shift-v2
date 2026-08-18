@@ -73,6 +73,11 @@ class Step:
     #: Only runs when new claims landed, unless --force. The map is a pure
     #: function of the claims: regenerating on unchanged input is pure spend.
     gated: bool = False
+    #: A failure here ends the stage. Steps are deliberately independent — an
+    #: ingest source that dies must not stop the others — but a synthesize step
+    #: that produces the input the next one reads is not independent, and
+    #: carrying on produces confidently wrong output rather than none.
+    aborts_stage: bool = False
 
     def command(self) -> list[str]:
         return [PYTHON, '-m', f'{MOD}.{self.args[0]}', *self.args[1:]]
@@ -92,7 +97,8 @@ STEPS: list[Step] = [
     Step('evaluate', 'ingest', ['steps.evaluate'],
          'Evaluate predictions + thinker credibility'),
     Step('mapgen', 'synthesize', ['mapgen.cli'],
-         'Rebuild the trend map (Claude API clustering)', gated=True),
+         'Rebuild the trend map (Claude API clustering)', gated=True,
+         aborts_stage=True),
     # After mapgen, so it classifies against the map that was just published
     # rather than last week's. Also runs standalone on an hourly cron with
     # SS_CLASSIFY_MODEL=0, where it is pure SQL and costs nothing on a quiet
@@ -438,6 +444,19 @@ def run_stage(
                 exc=RuntimeError(f'{step.name} exited with code {rc}'),
                 retry_attempted=False, outcome='failed', stage=stage,
             )
+            if step.aborts_stage:
+                # classify reads the map mapgen just failed to publish. Running
+                # it anyway classified innovations against LAST week's map and
+                # recorded the result as this week's — output indistinguishable
+                # from a good run, which is worse than no output at all.
+                remaining = [other for other in selected
+                             if other is not step
+                             and selected.index(other) > selected.index(step)]
+                for other in remaining:
+                    outcomes[other.name] = f'skipped ({step.name} failed)'
+                print(f"\n  {step.label} failed — skipping the rest of "
+                      f"'{stage}': {', '.join(o.name for o in remaining) or '(none)'}")
+                break
     return outcomes
 
 

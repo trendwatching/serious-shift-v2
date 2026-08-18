@@ -12,6 +12,7 @@ import re
 import sys
 
 from ..core import observability
+from ..core.config import BudgetExceeded
 from ..core.observability import RunLog
 from . import llm as mapgen_llm
 from .carryover import load_published_taxonomy
@@ -28,7 +29,8 @@ from .phases.routing import phase2_claim_routing
 from .phases.sub_trends import phase4_sub_trends
 from .publish_hook import post_shift_map
 from .routing import route_claims_for_domain
-from .validation import PublicationValidationError, validate_map
+from .validation import (PublicationValidationError, _load_contract,
+                         validate_map)
 
 MAX_TARGETED_REPAIR_SHIFTS = int(os.environ.get('SS_MAX_TARGETED_REPAIR_SHIFTS', '12'))
 # How many validation issues reach the terminal. The rest stay on the run row.
@@ -37,11 +39,19 @@ MAX_PRINTED_ISSUES = int(os.environ.get('SS_MAX_PRINTED_ISSUES', '25'))
 
 def _record_validation_failure(exc: PublicationValidationError) -> None:
     """Persist structured failure detail for both orchestrated and manual runs."""
+    orchestrated = bool(os.environ.get('SS_RUN_ID'))
     run_id = os.environ.get('SS_RUN_ID') or observability.new_run_id('synthesize')
     run = RunLog(run_id, 'synthesize')
-    if not os.environ.get('SS_RUN_ID'):
+    if orchestrated:
+        # The row belongs to run.py, which closes it after the remaining steps.
+        # `finish()` matches on run_id alone, so stamping it here set
+        # finished_at and status='failed' while classify had yet to run — the
+        # exact double-close `_open_export_run` documents avoiding, forty lines
+        # below. Attach the detail and leave the lifecycle to its owner.
+        run.add_usage(detail=exc.detail())
+    else:
         run.start()
-    run.finish(status='failed', detail=exc.detail())
+        run.finish(status='failed', detail=exc.detail())
     # Capped. A stale taxonomy produces thousands of issues — 2,004 in one real
     # case — and dumping them all buries the one line that says the work is
     # recoverable under a screen-height of JSON nobody scrolls back through.
@@ -99,6 +109,20 @@ def _close_export_run(run: RunLog | None, *, status: str, detail: dict | None = 
         run.finish(status=status, detail=detail)
 
 
+def _db_id(shift_id: object) -> int | None:
+    """The numeric row id behind a document id like `kt-42`, or None.
+
+    Unguarded `int(...removeprefix('kt-'))` raised ValueError from INSIDE the
+    repair pass, which turned a recoverable gate failure into an unhandled
+    traceback — destroying the one message that tells the operator the map is
+    intact and re-publishable for free.
+    """
+    try:
+        return int(str(shift_id or '').removeprefix('kt-'))
+    except (TypeError, ValueError):
+        return None
+
+
 def _issue_shift_ids(out: dict, issues) -> set[str]:
     """Resolve repairable issue paths back to parent shift document IDs."""
     shift_ids: set[str] = set()
@@ -150,7 +174,8 @@ def _targeted_repair_once(conn, api_key: str, out: dict, issues,
               f'limit is {MAX_TARGETED_REPAIR_SHIFTS}')
         return repaired_heroes
 
-    db_ids = {int(shift_id.removeprefix('kt-')) for shift_id in shift_ids}
+    db_ids = {db_id for shift_id in shift_ids
+              for db_id in [_db_id(shift_id)] if db_id is not None}
     filtered = {
         domain_id: [kt for kt in items if kt.get('_db_id') in db_ids]
         for domain_id, items in domain_kts.items()
@@ -169,8 +194,10 @@ def _targeted_repair_once(conn, api_key: str, out: dict, issues,
         if shifts_match
     }
     count_db_ids = {
-        int((out.get('key_trends') or [])[index]['id'].removeprefix('kt-'))
-        for index in count_ids
+        db_id for index in count_ids
+        for db_id in [_db_id((out.get('key_trends') or [])[index].get('id')
+                             if index < len(out.get('key_trends') or []) else None)]
+        if db_id is not None
     }
     if count_db_ids:
         conn.execute(
@@ -322,6 +349,31 @@ def main():
         print(f'   recorded as pipeline_runs stage=export run_id={run_id}')
         conn.close(); return
 
+    # Load the publication contract before anything is written. validation's
+    # loader raises where config's degrades, and it is only called at the gate —
+    # so a mis-copied image or a bad SS_PACKAGES_DIR cost a full 25-minute
+    # generation and then crashed inside _write_map_document. Failing here costs
+    # milliseconds and nothing else.
+    try:
+        _load_contract()
+    except (OSError, ValueError, RuntimeError) as exc:
+        print(f'ERROR: cannot read the publication contract — {exc}\n'
+              '  The gate reads it too, so generating first would only waste the '
+              'run. Check SS_PACKAGES_DIR / packages/contracts.', file=sys.stderr)
+        sys.exit(1)
+
+    if args.dry_run:
+        # Touches NOTHING. This used to truncate the v2 tables before printing
+        # its preview — "no API calls made" was true, "no changes" was not,
+        # which made it unusable as a pre-flight against a live database.
+        print('\nPhase 2 preview — claim counts per domain (dry run):')
+        for d in DOMAINS:
+            claims = route_claims_for_domain(conn, d, limit=CLAIMS_PER_DOM)
+            thinkers = len({c['thinker'] for c in claims})
+            print(f'  {d["name"]:<15}  {len(claims):3d} claims  |  {thinkers} thinkers')
+        print('\n--dry-run: stopping. No API calls made, nothing written.')
+        conn.close(); return
+
     # Read what is live BEFORE the truncate. `reset_v2_tables` leaves
     # documents['map'] alone, so this would still work afterwards — but a
     # carry-forward that silently depends on which tables a reset happens to
@@ -337,17 +389,14 @@ def main():
     # ── Phase 1 (free) ───────────────────────────────────────────────────────
     phase1_domain_definitions(conn)
 
-    if args.dry_run or args.phase1:
-        # Show claim counts per domain
-        print('\nPhase 2 preview — claim counts per domain (dry run):')
+    if args.phase1:
+        # --phase1 legitimately does DB setup, so the reset above is its job.
+        print('\nPhase 2 preview — claim counts per domain:')
         for d in DOMAINS:
             claims = route_claims_for_domain(conn, d, limit=CLAIMS_PER_DOM)
             thinkers = len({c['thinker'] for c in claims})
             print(f'  {d["name"]:<15}  {len(claims):3d} claims  |  {thinkers} thinkers')
-        if args.phase1:
-            print('\n--phase1: stopping after DB setup. Run without --phase1 to continue.')
-        else:
-            print('\n--dry-run: stopping. No API calls made.')
+        print('\n--phase1: stopping after DB setup. Run without --phase1 to continue.')
         conn.close(); return
 
     # ── Need API key for paid phases ─────────────────────────────────────────
@@ -356,21 +405,48 @@ def main():
         print('ERROR: ANTHROPIC_API_KEY not set.')
         sys.exit(1)
 
-    # ── Phase 2: claim routing (free, SQL) ───────────────────────────────────
-    domain_claims = phase2_claim_routing(conn)
+    # The spend ceiling raises from inside whichever phase happens to cross it,
+    # and every phase writes as it goes. Uncaught, that surfaced as a raw
+    # traceback with the v2 tables half-populated — and the standing advice
+    # after a failure ("re-publish for free with --export-only") is actively
+    # WRONG in that state: it would publish a partial map over a good one.
+    try:
+        # ── Phase 2: claim routing (free, SQL) ───────────────────────────────
+        domain_claims = phase2_claim_routing(conn)
 
-    # ── Phase 3: Key Trend generation per domain ─────────────────────────────
-    domain_kts = phase3_key_trends(conn, api_key, domain_claims, previous=previous)
+        # ── Phase 3: Key Trend generation per domain ─────────────────────────
+        domain_kts = phase3_key_trends(conn, api_key, domain_claims, previous=previous)
 
-    # ── Phase 4: sub-trend clustering ────────────────────────────────────────
-    phase4_sub_trends(conn, api_key, domain_claims, domain_kts)
+        # ── Phase 4: sub-trend clustering ────────────────────────────────────
+        phase4_sub_trends(conn, api_key, domain_claims, domain_kts)
 
-    # ── Hero stats (free, SQL) — must precede the editorial phase, whose
-    #    stat_band module is built from hero_stat.value. ────────────────────────
-    phase8_hero_stats(conn)
+        # ── Hero stats (free, SQL) — must precede the editorial phase, whose
+        #    stat_band module is built from hero_stat.value. ──────────────────
+        phase8_hero_stats(conn)
 
-    # ── Phase 4b: editorial modules ──────────────────────────────────────────
-    phase4b_editorial(conn, api_key, domain_claims, domain_kts)
+        # ── Phase 4b: editorial modules ──────────────────────────────────────
+        phase4b_editorial(conn, api_key, domain_claims, domain_kts)
+    except BudgetExceeded as exc:
+        orchestrated_id = os.environ.get('SS_RUN_ID')
+        if not orchestrated_id:
+            run_id = observability.new_run_id('synthesize')
+            budget_run = RunLog(run_id, 'synthesize')
+            budget_run.start()
+            budget_run.finish(status='failed', detail={'budget': {'error': str(exc)}})
+        else:
+            RunLog(orchestrated_id, 'synthesize').add_usage(
+                detail={'budget': {'error': str(exc)}})
+        print(
+            f'\nERROR: spend ceiling reached — {exc}\n'
+            '  The v2 tables now hold a PARTIAL map. Nothing was published:\n'
+            "  documents['map'] is untouched and the site is still serving the "
+            'last good one.\n'
+            '  Do NOT run --export-only — it would publish this partial map over '
+            'that one.\n'
+            '  Raise SS_MAP_BUDGET_USD and re-run in full.',
+            file=sys.stderr,
+        )
+        conn.close(); sys.exit(1)
 
     # ── Phases 5 (attribution/voices), 6 (interrelatedness/links) and
     # 7 (synthesis insights) are DORMANT — deliberately not called. They were
