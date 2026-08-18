@@ -74,7 +74,12 @@ export default function ShiftPage() {
   // to satisfy `!shift` while its body is still in flight, so the page would
   // paint a hero with nothing under it and then grow. Same failure the sphere
   // page had at 0.39 — see the note in DomainPage.
-  if (loading && !shift?.modules?.length) return <Loading hero="hero-tall" />
+  // Not `modules.length`: a shift found in the index's four-shift preview has
+  // its modules PROJECTED, so a length check opens this guard on a stub and the
+  // page jumps when the real body lands — 0.51 of layout shift, measured. An
+  // empty body is legal, so presence of modules is the wrong signal; where the
+  // row came from is the right one.
+  if (loading && (!shift || shift.preview)) return <Loading hero="hero-tall" />
   if (unavailable) return <Unavailable error={error} onRetry={retry} />
   if (!domain || !shift) return <Missing what="shift" />
 

@@ -11,7 +11,9 @@ from __future__ import annotations
 import copy
 
 from serious_shift_pipeline.mapgen import validation
-from serious_shift_pipeline.mapgen.validation import validate_map
+from serious_shift_pipeline.mapgen.validation import (CRUTCH_ENTITY_PAGE_LIMIT,
+                                                     STAT_COVERAGE_FLOOR,
+                                                     validate_map)
 
 from test_map_validation import CONTRACT, DOMAINS, valid_map
 
@@ -146,11 +148,24 @@ def test_hero_from_outside_the_subtree_is_rejected():
 
 
 def test_stat_coverage_floor():
+    """Derived from the floor, not from a fixed fraction.
+
+    Stripping "half" tripped a 0.6 floor and passed a 0.45 one, so the test
+    measured the fixture rather than the rule. Strip until coverage is one page
+    below the floor and the gate has to fire whatever the floor is set to.
+    """
     document = full_map()
-    for shift in document['key_trends'][: int(len(document['key_trends']) * 0.5)]:
+    total = len(document['key_trends'])
+    keep = int(total * STAT_COVERAGE_FLOOR) - 1
+    for shift in document['key_trends'][keep:]:
         shift['hero_stat'] = None
         shift['modules'] = [m for m in shift['modules'] if m['type'] != 'stat_band']
     assert 'stat_coverage' in codes(document)
+
+
+def test_stat_coverage_at_the_floor_passes():
+    document = full_map()
+    assert 'stat_coverage' not in codes(document)
 
 
 # ── prose hygiene ─────────────────────────────────────────────────────────────
@@ -225,13 +240,20 @@ def test_single_bucket_velocity_is_rejected():
 
 
 def test_crutch_entity_beyond_the_page_limit_is_rejected():
+    """Two pages past the allowance, whatever the allowance is.
+
+    The literals here were 6 pages and 2 issues against a limit of 4. That reads
+    as a rule and is really a subtraction, so it broke the moment the limit
+    scaled with the map.
+    """
     document = full_map()
-    for shift in document['key_trends'][:6]:
+    over = CRUTCH_ENTITY_PAGE_LIMIT + 2
+    assert over <= len(document['key_trends']), 'fixture too small for the limit'
+    for shift in document['key_trends'][:over]:
         for module in shift['modules']:
             if module['type'] == 'dek':
                 module['data']['text'] = 'Adam Raine went looking and the map answered.'
     issues = _issues(document, 'crutch_frequency')
-    # 6 pages carrying one entity, allowance 4 → the 2 over the limit flag.
     assert len(issues) == 2
     assert 'adam raine' in issues[0].message
 

@@ -36,9 +36,19 @@ export default function DomainPage() {
   // 1100px down the page. That was 0.39 of layout shift — the worst on the site,
   // and the one thing here a reader would actually describe as a stutter.
   //
-  // Once loading ends this guard opens regardless, so a sphere that genuinely
-  // has no key shifts still renders rather than hanging on the skeleton.
-  if (loading && !domain?.keyShifts?.length) return <Loading hero="hero-short" sheet />
+  // `>= count`, not "any". The index fragment carries a PREVIEW of the first
+  // four shifts per sphere, so `keyShifts.length` was 4 the moment the index
+  // landed and this guard opened on a partial list — the sheet painted four
+  // rows and then jumped to the full set. At nine shifts that was a 4→9 jump
+  // nobody had measured; at the fifteen the 18 Aug 2026 review allows it is
+  // 4→15, about 1,600px, which is the same stutter this guard was written to
+  // stop.
+  //
+  // Once loading ends the guard opens regardless, so a sphere that genuinely
+  // has fewer shifts than its own count claims still renders rather than
+  // hanging on the skeleton.
+  const complete = (domain?.keyShifts?.length ?? 0) >= (domain?.count ?? 0)
+  if (loading && !complete) return <Loading hero="hero-short" sheet />
   if (unavailable) return <Unavailable error={error} onRetry={retry} />
   if (!domain) return <Missing what="domain" />
 

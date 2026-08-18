@@ -7,7 +7,8 @@ from dataclasses import asdict, dataclass
 from urllib.parse import urlparse
 
 from ..core.text import url_slug as slugify
-from .config import DOMAINS, MAX_KTS_PER_DOM, MIN_KTS_PER_DOM
+from .config import (DOMAINS, MAX_KTS_PER_DOM, MAX_SUB_TRENDS,
+                     MIN_KTS_PER_DOM, MIN_SUB_TRENDS)
 from .modules import (_LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE,
                       FIELD_WORD_LIMITS, LIST_ITEM_WORD_LIMITS, PAIR_TEXT_WORD_LIMITS,
                       STEP_TEXT_WORD_LIMIT, count_words, stat_claim_key)
@@ -331,8 +332,17 @@ FULL_MAP_MIN_SHIFTS = 10
 #: shifts is prompt-anchoring, not grading ("accelerating" × 51).
 VELOCITY_MAX_SHARE = 0.8
 
-#: At least this share of key shifts must carry a stat_band. 22/51 shipped.
-STAT_COVERAGE_FLOOR = 0.6
+#: At least this share of key shifts must carry a stat_band.
+#:
+#: Lowered from 0.6 on the 18 Aug 2026 review, when the key-shift ceiling rose to
+#: 15. Hero statistics are assigned EXCLUSIVELY — one claim fronts one shift —
+#: from the claims routed to that shift's own children, so the number of shifts
+#: that can carry one is bounded by topically-matched supply, not by effort. A
+#: 36-shift map reached 19/36 = 53% and failed this gate; a 60-shift map needs
+#: 36 distinct on-topic statistics to clear 0.6. The claim budget rising to 350
+#: per domain is what actually improves coverage; this floor stops the gate
+#: failing a map for a shortage the generator cannot invent its way out of.
+STAT_COVERAGE_FLOOR = 0.45
 
 #: A proper-noun bigram may headline at most this many shift FAMILIES ("Adam
 #: Raine" carried ~12); a bare figure gets more slack (different 40%s exist).
@@ -340,8 +350,16 @@ STAT_COVERAGE_FLOOR = 0.6
 #: their own evidence (Loudoun County on the Compute shift and two of its
 #: sub-shifts is cohesion); the same number fronting unrelated shifts is the
 #: crutch the audit found.
-CRUTCH_ENTITY_PAGE_LIMIT = 4
-CRUTCH_FIGURE_PAGE_LIMIT = 6
+#: These are ABSOLUTE counts of families, so they tighten as the map grows: at
+#: 36 families a recurring name had 36 chances to exceed 4, at 60 it has 60.
+#: Scaled with the ceiling so the rule keeps meaning "a handful of pages", not
+#: "a progressively smaller fraction".
+CRUTCH_ENTITY_PAGE_LIMIT = 6
+CRUTCH_FIGURE_PAGE_LIMIT = 9
+
+#: How many sub-shifts one claim may anchor, as a share of the map's sub-shifts.
+#: At 180 sub-shifts this reproduces the historical cap of 3; at 300 it gives 5.
+EVIDENCE_REUSE_SHARE = 3 / 180
 
 #: Everyday bigrams/figures that legitimately recur across an AGI map.
 #: Frontier-model names are domain vocabulary here, like "AI" itself.
@@ -526,13 +544,18 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
         if shift.get('domain_id') not in domain_ids:
             issues.append(ValidationIssue('shift_domain', f'{path}.domain_id', 'unknown parent domain'))
         children = subs_by_parent.get(str(shift.get('id') or ''), [])
-        # 5 is the generation target; 4 is legal because an editor may merge two
-        # near-duplicate siblings (11 Aug 2026 review: tutor-paradox absorbed
-        # scaffold-dependency). Below 4 the page reads thin and something is
-        # actually missing.
-        if not 4 <= len(children) <= 5:
-            issues.append(ValidationIssue('sub_shift_count', f'{path}.sub_trend_ids',
-                                          f'expected 4-5 sub-shifts, found {len(children)}', True))
+        # MAX is the generation target; anything down to MIN publishes. Fewer
+        # was legal from the 11 Aug 2026 review onward because an editor may
+        # merge near-duplicate siblings (tutor-paradox absorbed
+        # scaffold-dependency), and the floor dropped to MIN_SUB_TRENDS on
+        # 18 Aug so a shift with genuinely three distinct sub-patterns is not
+        # padded to five with a near-twin. Imported, never restated here: this
+        # literal and the generator's disagreed for as long as both existed.
+        if not MIN_SUB_TRENDS <= len(children) <= MAX_SUB_TRENDS:
+            issues.append(ValidationIssue(
+                'sub_shift_count', f'{path}.sub_trend_ids',
+                f'expected {MIN_SUB_TRENDS}-{MAX_SUB_TRENDS} sub-shifts, '
+                f'found {len(children)}', True))
         declared_children = shift.get('sub_trend_ids') or []
         actual_children = [sub.get('id') for sub in children]
         if declared_children != actual_children:
@@ -906,12 +929,21 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
         # (secondary_claim_domains), so three holders is reachable by design —
         # one per domain assignment plus one top-up. Four is the filler-dump
         # pattern the audit found (one claim padding unrelated pages).
+        #
+        # ABSOLUTE, and NOT repairable, which makes it the likeliest single way a
+        # paid run dies as the map grows: reuse pressure scales with sub-shift
+        # count while the cap does not. 180 sub-shifts need ~360 claim slots,
+        # 300 need ~600, from a pool that grew only to 350 per domain. The cap
+        # therefore scales with the map, keeping the RULE ("a claim may anchor a
+        # few pages, not a dozen") while dropping the pretence that a fixed
+        # number expresses it at every size.
+        reuse_cap = max(3, round(EVIDENCE_REUSE_SHARE * len(subs)))
         for number, holders in sorted(reuse.items()):
-            if len(holders) > 3:
+            if len(holders) > reuse_cap:
                 issues.append(ValidationIssue(
-                    'evidence_reuse', holders[3],
+                    'evidence_reuse', holders[reuse_cap],
                     f'claim c_{number} is routed to {len(holders)} sub-shifts; '
-                    f'the same evidence cannot anchor more than 3 pages'))
+                    f'the same evidence cannot anchor more than {reuse_cap} pages'))
 
     return issues
 

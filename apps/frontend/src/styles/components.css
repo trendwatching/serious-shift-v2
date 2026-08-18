@@ -334,6 +334,10 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    /* The label is a bare text node in an inline-flex box, so "ALL 15 KEY
+       SHIFTS" could wrap to two lines and grow the pill's height rather than
+       its width. Two digits arrived with the 18 Aug 2026 count change. */
+    white-space: nowrap;
     /* Derived from the Footer's CTA, which already solved this shape with
        `--cta-h`. These two pills are the copies that never adopted it and so
        stayed 44 and 40px tall while the one beside them grew. */

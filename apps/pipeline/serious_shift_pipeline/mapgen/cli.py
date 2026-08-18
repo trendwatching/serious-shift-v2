@@ -34,7 +34,21 @@ from .routing import route_claims_for_domain
 from .validation import (PublicationValidationError, _load_contract,
                          validate_map)
 
-MAX_TARGETED_REPAIR_SHIFTS = int(os.environ.get('SS_MAX_TARGETED_REPAIR_SHIFTS', '12'))
+#: How many parent shifts one targeted repair may regenerate, as a SHARE of the
+#: map. It was a flat 12, which is a third of a 36-shift map and a fifth of a
+#: 60-shift one — so a constant defect RATE would quietly cross it as the map
+#: grew and the repair pass would skip entirely, turning issues the gate had
+#: marked repairable into a failed publication. The share keeps the intent: a
+#: repair fixes a minority of pages, and a map where most pages are broken
+#: should fail rather than be rewritten wholesale.
+REPAIR_SHIFT_SHARE = float(os.environ.get('SS_REPAIR_SHIFT_SHARE', '0.35'))
+#: Floor, so a small map still gets a useful repair.
+MIN_TARGETED_REPAIR_SHIFTS = 12
+
+
+def _repair_limit(out: dict) -> int:
+    shifts = len(out.get('key_trends') or [])
+    return max(MIN_TARGETED_REPAIR_SHIFTS, round(shifts * REPAIR_SHIFT_SHARE))
 # How many validation issues reach the terminal. The rest stay on the run row.
 MAX_PRINTED_ISSUES = int(os.environ.get('SS_MAX_PRINTED_ISSUES', '25'))
 
@@ -171,9 +185,10 @@ def _targeted_repair_once(conn, api_key: str, out: dict, issues,
         phase8_hero_stats(conn)
         repaired_heroes = True
     shift_ids = _issue_shift_ids(out, repairable)
-    if not shift_ids or len(shift_ids) > MAX_TARGETED_REPAIR_SHIFTS:
+    limit = _repair_limit(out)
+    if not shift_ids or len(shift_ids) > limit:
         print(f'  targeted repair skipped: {len(shift_ids)} parent shift(s), '
-              f'limit is {MAX_TARGETED_REPAIR_SHIFTS}')
+              f'limit is {limit}')
         return repaired_heroes
 
     db_ids = {db_id for shift_id in shift_ids

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from ...prompts import prompt_kt_editorial, prompt_st_editorial
-from ..config import CLAIMS_PER_KT, DOMAINS
+from ..config import CLAIMS_PER_KT, DOMAINS, MIN_SUB_TRENDS
 from ..llm import generate_json
 from ..modules import _jsonb, _short_figure, count_words, kt_modules, st_modules
 
@@ -537,9 +537,9 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     _drop_bodyless_sub_shifts(conn)
 
 
-#: The gate accepts 4–5 children, the slack existing so an editor can merge two.
-#: That slack is what makes dropping a bodyless page possible at all.
-MIN_SUB_TRENDS = 4
+#: Imported from config, not restated. This was a third independent copy of the
+#: floor — config.py, validation.py and here — which is exactly the shape a
+#: writer/gate disagreement takes.
 
 
 def _drop_bodyless_sub_shifts(conn) -> None:
@@ -554,18 +554,21 @@ def _drop_bodyless_sub_shifts(conn) -> None:
     earlier: four real pages beat five with a broken one among them. It invents
     nothing — a page with no body has nothing to publish.
 
-    Dropped unconditionally, including when it takes a family below the gate's
-    floor of four. Keeping the page to stay inside the range looked safer and was
-    a dead end: the family published four children, one of them blank, and the
-    nine `required_module` issues that produced are unfixable by any repair —
-    editorial had already been asked three times and the repair pass only asks
-    again.
+    Dropped unconditionally, whatever it leaves the family with. Keeping a blank
+    page to stay inside the count range is always the wrong trade: the nine
+    `required_module` issues an empty page raises are unfixable by any repair —
+    editorial has already been asked three times and the repair pass only asks
+    again — whereas a thinner family is either legal or repairable.
 
-    Falling to three instead raises `sub_shift_count`, which IS repairable, and
-    whose repair deletes the family's children and re-clusters them from scratch
-    (cli._targeted_repair_once). So a blank page becomes a fresh family rather
-    than a refused publication. Measured on the dev rehearsal: this was the last
-    9 of 25 remaining issues.
+    Since the floor became MIN_SUB_TRENDS (3), most families that lose a page
+    simply publish shorter and the run proceeds. A family that falls BELOW the
+    floor raises `sub_shift_count`, which is repairable and whose repair deletes
+    the family's children and re-clusters them from scratch
+    (cli._targeted_repair_once) — so even then a blank page becomes a fresh
+    family rather than a refused publication.
+
+    Measured on the dev rehearsal before the floor moved: dropping these took a
+    run from 94 gate issues to 18.
     """
     rows = conn.execute("""
         SELECT st.id, st.kt_id, st.name, kt.name AS parent

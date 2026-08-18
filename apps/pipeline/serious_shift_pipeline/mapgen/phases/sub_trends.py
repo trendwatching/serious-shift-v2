@@ -6,15 +6,14 @@ import math
 from ...core.matching import normalize
 from ...core.text import url_slug as slugify
 from ...prompts import prompt_sub_trends
-from ..config import CLAIMS_PER_KT, DOMAINS
+from ..config import CLAIMS_PER_KT, DOMAINS, MAX_SUB_TRENDS, MIN_SUB_TRENDS
 from ..dbutil import _slugger
 from ..naming import choose_unique, name_key
 from ..llm import generate_json
 
-#: The publication contract requires exactly this many sub-shifts per shift.
-#: Fewer means missing pages and a failed gate; more is truncated deterministically
-#: rather than left for the validator to reject.
-REQUIRED_SUB_TRENDS = 5
+#: Aim for the maximum; publish anything from the minimum up. Both come from
+#: mapgen.config so the generator and the gate cannot disagree — they were
+#: separate literals in three files until 18 Aug 2026.
 
 #: Re-asks for a shift whose taxonomy came back short. Cheap — it is one call per
 #: shift, and only the shortfall is retried.
@@ -27,10 +26,13 @@ MAX_CLUSTER_ATTEMPTS = 3
 #: it, because the evidence to cite does not exist.
 MIN_CLAIMS_PER_SUB = 2
 
-#: The smallest pool a KT can cluster five sub-shifts from: MIN_CLAIMS_PER_SUB
-#: per child plus citation headroom. Pools below this are filled from
-#: zero-overlap spares — a thin on-topic pool beats an unpublishable one.
-MIN_POOL_PER_KT = 12
+#: The smallest pool a KT can cluster a PUBLISHABLE set of sub-shifts from:
+#: MIN_CLAIMS_PER_SUB per child at the minimum child count, plus citation
+#: headroom. Derived rather than written down, because it was 12 — sized for
+#: five children — and would have stayed sized for five. Pools below this are
+#: filled from zero-overlap spares: a thin on-topic pool beats an unpublishable
+#: one.
+MIN_POOL_PER_KT = MIN_SUB_TRENDS * MIN_CLAIMS_PER_SUB + 6
 
 
 def _pool_idf(pool: list[dict]) -> dict[str, float]:
@@ -153,21 +155,45 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     # Top-up is topical and exclusive: ranked by overlap with the KT's own
     # framing, and a spare consumed by one KT never pads a sibling's pool.
     work = []  # (domain_id, kt, preferred_claims)
+    starved: list[str] = []
     for d in DOMAINS:
         full_pool = domain_claims[d['id']]
         idf = _pool_idf(full_pool)
         topup_ledger: set[int] = set(routed_elsewhere)
-        for kt in domain_kts.get(d['id'], []):
+        shifts = domain_kts.get(d['id'], [])
+        # A FAIR SHARE of the spares, not a greedy grab.
+        #
+        # Every shift used to be offered up to CLAIMS_PER_KT from one shared
+        # ledger, so demand was n_kts x 100 against a pool of a few hundred and
+        # the first two or three shifts in a sphere consumed all the spares.
+        # That was survivable at nine shifts and starves the tail at fifteen:
+        # the last shifts run on their phase-3 assignments alone, their children
+        # fall under MIN_CLAIMS_PER_SUB, and the editorial then has nothing
+        # citable — which the gate reports as missing modules, three steps away
+        # from the actual cause.
+        share = max(MIN_POOL_PER_KT, len(full_pool) // max(len(shifts), 1))
+        for kt in shifts:
             preferred_ids = set(kt.get('_claim_ids', []))
             preferred = sorted(
                 (all_domain_claims[cid] for cid in preferred_ids if cid in all_domain_claims),
                 key=lambda c: c['id'])
-            remaining = CLAIMS_PER_KT - len(preferred)
+            remaining = min(CLAIMS_PER_KT, share) - len(preferred)
             if remaining > 0:
                 preferred += _topical_top_up(kt, full_pool, preferred_ids,
                                              topup_ledger, remaining, idf)
             if preferred:
                 work.append((d['id'], kt, preferred))
+            else:
+                # Previously this shift just vanished from `work` — no error, no
+                # warning. It surfaced much later as `sub_shift_count: found 0`,
+                # and the repair pass re-ran phase 4 against the same exhausted
+                # pool and re-failed. Say it here, where the cause is visible.
+                starved.append(f'{d["id"]}/{kt.get("name")}')
+
+    if starved:
+        print(f'  ⚠  {len(starved)} key shift(s) got no routed claims and will have '
+              f'no sub-shifts — the domain pool is exhausted: {", ".join(starved[:5])}'
+              + (' …' if len(starved) > 5 else ''))
 
     # One call per Key Trend, re-requesting any that did not come back with a
     # publishable taxonomy. The contract is *exactly* five sub-shifts per shift;
@@ -194,7 +220,10 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     describe = lambda item: item[1]['name'][:30]  # noqa: E731
 
     def usable(item, result) -> bool:
-        return len(_validated_sub_trends(result, {c['id'] for c in item[2]})) >= REQUIRED_SUB_TRENDS
+        # The MINIMUM, not the maximum. This predicate decides whether to spend
+        # another paid attempt, and a shift that already has enough to publish
+        # is not worth three of them.
+        return len(_validated_sub_trends(result, {c['id'] for c in item[2]})) >= MIN_SUB_TRENDS
 
     results = generate_json(work, prompt_of, default=lambda: {'sub_trends': []},
                             describe=describe)
@@ -202,7 +231,7 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         pending = [i for i, (item, r) in enumerate(zip(work, results)) if not usable(item, r)]
         if not pending:
             break
-        print(f'    {len(pending)} shift(s) short of {REQUIRED_SUB_TRENDS} sub-trends — '
+        print(f'    {len(pending)} shift(s) short of {MIN_SUB_TRENDS} sub-trends — '
               f'attempt {attempt}/{MAX_CLUSTER_ATTEMPTS}')
         retried = generate_json([work[i] for i in pending], prompt_of,
                                 default=lambda: {'sub_trends': []}, describe=describe)
@@ -267,9 +296,9 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         # duplicate the gate then rejected.
         allowed = {claim['id'] for claim in claims}
         candidates = _validated_sub_trends(result, allowed)
-        chosen, dropped = choose_unique(candidates, REQUIRED_SUB_TRENDS, claimed)
+        chosen, dropped = choose_unique(candidates, MAX_SUB_TRENDS, claimed)
         promoted += len(dropped)
-        if len(chosen) < REQUIRED_SUB_TRENDS:
+        if len(chosen) < MIN_SUB_TRENDS:
             short.append(kt['name'])
         sub_trends = _top_up_claims(chosen, allowed)
         for i, st in enumerate(sub_trends, start=1):
@@ -289,7 +318,7 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
 
     if promoted or short:
         print(f'    {promoted} colliding name(s) replaced from spare candidates; '
-              f'{len(short)} shift(s) publishing fewer than {REQUIRED_SUB_TRENDS} '
+              f'{len(short)} shift(s) publishing fewer than {MIN_SUB_TRENDS} '
               f'rather than a duplicate'
               + (f' ({", ".join(n[:28] for n in short[:4])})' if short else ''))
 

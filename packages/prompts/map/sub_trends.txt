@@ -3,24 +3,24 @@
 You are synthesizing trend intelligence for Serious Shift — a consumer trend platform tracking AGI-driven shifts.
 
 TASK
-Identify exactly 5 coherent SUB-TRENDS that emerge from the evidence below. Each sub-trend is a distinct, named micro-pattern that a brand strategist or consumer researcher would recognize as real. Return 5; the publication accepts 4 only when an editor later merges two of them, so never pad to 5 with a near-duplicate — but do not return fewer yourself.
+Identify {{min_subs}}–{{max_subs}} coherent SUB-TRENDS that emerge from the evidence below. Each sub-trend is a distinct, named micro-pattern that a brand strategist or consumer researcher would recognize as real. Return as many as the evidence genuinely supports, up to {{max_subs}}. {{min_subs}} strong, clearly distinct sub-trends are better than {{max_subs}} where two are near-duplicates — never pad to reach the ceiling, and never return fewer than {{min_subs}}.
 
 WHAT SYNTHESIS MEANS HERE
 The Key Trend is a synthesis. Each sub-trend must also be synthesized — not a direct echo of one thinker's claim, but a pattern that requires at least two claims combined. Before naming any sub-trend, ask:
 1. Is this the Key Trend, just smaller? A restatement is not a sub-trend. Zoom into a specific mechanism, actor group, or consequence — do not restate the headline.
 2. Could a single source have named this alone? Then it is a summary, not a synthesis.
-3. Do the five together reveal different LAYERS of the Key Trend? At minimum: one should explain a cause or driver, one should describe a specific observable behavior, one should track a consequence or tension emerging from the shift. If all five describe the same kind of thing, stop and check what layer is missing.
-4. No two sub-trends may anchor on the same source, study, or anecdote as their primary evidence. If two of your candidates both need the same study to exist, they are one sub-trend — merge them and find a fifth elsewhere in the evidence.
+3. Do they together reveal different LAYERS of the Key Trend? At minimum: one should explain a cause or driver, one should describe a specific observable behavior, one should track a consequence or tension emerging from the shift. If they all describe the same kind of thing, stop and check what layer is missing.
+4. No two sub-trends may anchor on the same source, study, or anecdote as their primary evidence. If two of your candidates both need the same study to exist, they are one sub-trend — merge them and find another elsewhere in the evidence, or return one fewer.
 5. Two sub-trends that state the same mechanism from opposite valences are one sub-trend. If one candidate's "to" state is another's thesis inverted ("works only when X" / "fails because not-X"), collapse them into the one that carries both sides.
 6. Swap test: exchange two candidates' subtitles. If each subtitle still roughly fits the other's name, the two are not distinct — sharpen or merge.
 
 RULES FOR SUB-TREND NAMES
 - 1–2 words. Short, intriguing, memorable (NOT "AI Adoption", "Trust Issues", "Changing Behavior"). Alliteration welcome, not required.
 - Names feel coined, not described: compound words, portmanteaus, or unexpected two-word pairings that name the specific manifestation, not the category. "Signal Fatigue" names a behavioral response; "Trust Issues" names a topic.
-- Do not use the Key Trend's name (or part of it) in a sub-trend name, and no two of your five names may share a noun. Each name must be distinguishable from its siblings at a glance — if the subtitle is needed to tell two apart, the names are not distinct enough.
+- Do not use the Key Trend's name (or part of it) in a sub-trend name, and no two of your names may share a noun. Each name must be distinguishable from its siblings at a glance — if the subtitle is needed to tell two apart, the names are not distinct enough.
 - Do not begin or end a name with a word that already begins or ends a TAKEN name ("Delegated X", "X Erosion", "X Gap" families count as echoes).
 - TEST: could this name appear under a completely different Key Trend? Then it is not specific enough. Does it feel described rather than coined? Rename it.
-- UNIQUE ACROSS THE WHOLE MAP. Every name under TAKEN below is already in use by another shift or sub-trend somewhere in the map — do not reuse any of them, and do not return the same name twice within your own five. A name is the page's identity: two pages called the same thing are two pages a reader cannot tell apart.
+- UNIQUE ACROSS THE WHOLE MAP. Every name under TAKEN below is already in use by another shift or sub-trend somewhere in the map — do not reuse any of them, and do not return the same name twice within your own set. A name is the page's identity: two pages called the same thing are two pages a reader cannot tell apart.
 
 TAKEN — do not reuse any of these names:
 {{taken}}

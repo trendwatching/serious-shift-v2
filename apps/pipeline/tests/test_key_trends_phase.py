@@ -1,6 +1,10 @@
 """Phase 3 must deliver a bounded COUNT RANGE of Key Trends per domain,
-sequentially, with a cross-domain name ledger — the taxonomy-consolidation
-contract behind the 7–9-per-domain map."""
+sequentially, with a cross-domain name ledger.
+
+Derived from MIN/MAX_KTS_PER_DOM throughout: the overshoot case used to return a
+literal 14, which silently stopped testing truncation the moment the ceiling
+rose above it.
+"""
 
 import serious_shift_pipeline.mapgen.phases.key_trends as kt_phase
 
@@ -34,7 +38,8 @@ def test_overshoot_is_truncated_at_max(monkeypatch):
     monkeypatch.setattr(
         kt_phase, 'generate_json',
         lambda items, prompt_of, default=None, describe=None:
-            [{'key_trends': [_kt(f'Trend {i}') for i in range(14)]}])
+            [{'key_trends': [_kt(f'Trend {i}')
+                            for i in range(kt_phase.MAX_KTS_PER_DOM + 5)]}])
     out = kt_phase.phase3_key_trends(_FakeConn(), 'key', {'d1': []})
     assert len(out['d1']) == kt_phase.MAX_KTS_PER_DOM
 

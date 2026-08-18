@@ -150,6 +150,9 @@ function toShift(src, i, domain) {
     title,
     dek,
     velocity: src.velocity,
+    //: True when this row came from the index's four-shift preview rather than
+    //: the route's own fragment. A listing may render it; a page must wait.
+    preview: Boolean(src._preview),
     read: first(src.read_time, readTimeOf(dek)),
     modules: inReadingOrder(nonEmpty(src.modules) || projectKtModules(src), 'key_shift'),
     // Same-origin path served by the backend once art exists for this shift.
@@ -245,7 +248,12 @@ export function useDomains() {
         ))
         rows = [{ ...detail.parent_shift, sub_trends: subRows }]
       } else if (Array.isArray(summary?.key_shifts)) {
-        rows = summary.key_shifts
+        // The index ships a FOUR-SHIFT preview per sphere. It is the right
+        // source for a listing — the sphere page shows something immediately —
+        // and the wrong source for a page, which would paint a projected stub
+        // and then jump when the real fragment landed. Flagged so a page can
+        // tell the difference; nothing else about the row changes.
+        rows = summary.key_shifts.map((row) => ({ ...row, _preview: true }))
       }
 
       const keyShifts = rows.map((row, i) => toShift(row, i, domainRef))

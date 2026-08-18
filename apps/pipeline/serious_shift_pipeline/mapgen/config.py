@@ -49,19 +49,44 @@ MODULE_ORDER = _CONTRACT.get('order') or {}
 #: to fail on a rule nobody had changed.
 INDUSTRY_SECTORS = _CONTRACT.get('industry_sectors') or []
 
-CLAIMS_PER_DOM  = 200   # claims sent to Key Trend generation per domain
+#: Claims routed per domain, and offered per key shift for sub-trend clustering.
+#:
+#: CLAIMS_PER_DOM has to scale with MAX_KTS_PER_DOM, and does not scale itself.
+#: Phase 4 asks each key shift for up to CLAIMS_PER_KT from the domain's pool
+#: through a SHARED top-up ledger, so demand is n_kts x CLAIMS_PER_KT against a
+#: fixed supply: 900 against 200 at nine shifts, 1,500 at fifteen. The tail of
+#: each sphere runs on its phase-3 assignments alone once the spares are gone,
+#: and a shift that ends up with none is dropped from the work list entirely.
+#: 350 keeps roughly the ratio nine shifts had.
+CLAIMS_PER_DOM  = 350   # claims sent to Key Trend generation per domain
 CLAIMS_PER_KT   = 100   # claims sent to sub-trend generation per KT
 
-#: How many Key Trends each domain carries: a RANGE, not a floor. The old
-#: floor-only prompt ("at least 8 … prefer more trends over fewer") produced
-#: 51 shifts telling ~30 distinct stories — the 2026-08-10 audit found an
-#: evaluation cluster of seven shifts and a jobs cluster of six. 7–9 per
-#: domain gives 28–36 total, which is insight granularity rather than
-#: database granularity. Phase 3 truncates past MAX deterministically and the
-#: publication gate rejects a count outside the range. This is the single
-#: source of truth — prompts/map_data.py imports it.
+#: How many Key Trends each domain carries: a RANGE, not a floor, and spheres
+#: are not required to match each other — the gate checks each one against this
+#: range independently, so a sphere with thinner evidence simply carries fewer.
+#:
+#: The old ceiling was 9, chosen after the 2026-08-10 audit found a floor-only
+#: prompt producing 51 shifts telling ~30 distinct stories. The ceiling rose to
+#: 15 on the 18 Aug 2026 review. What keeps that from repeating the 2026-08-10
+#: failure is not the number but the prompt: it asks for as many as the evidence
+#: genuinely supports and still requires every pair to be distinguishable in one
+#: sentence. Phase 3 truncates past MAX deterministically and the publication
+#: gate rejects a count outside the range. Single source of truth —
+#: prompts/map_data.py imports it.
 MIN_KTS_PER_DOM = 7
-MAX_KTS_PER_DOM = 9
+MAX_KTS_PER_DOM = 15
+
+#: How many sub-shifts a key shift carries. Also a range, from the same review.
+#:
+#: This used to be "exactly 5" in the generator and 4-5 in the gate, written out
+#: as separate literals in three files that had no idea about each other
+#: (phases/sub_trends.py, phases/editorial.py, validation.py). That is precisely
+#: the shape of a writer/gate disagreement, so it lives here now and every one of
+#: them imports it. MAX is what generation aims for; MIN is what publication
+#: accepts, and the slack is what lets a colliding or bodyless child be dropped
+#: rather than fail a whole run.
+MIN_SUB_TRENDS = 3
+MAX_SUB_TRENDS = 5
 
 #: How many key shifts one sphere should expect to change names in one week.
 #:
@@ -74,7 +99,24 @@ MAX_KTS_PER_DOM = 9
 #: What makes an unbounded budget safe is carryover.pin_slugs: a renamed shift
 #: keeps its URL, so drift costs a label rather than a page's identity. The two
 #: have to stay together — this number alone would be a wish.
-KT_CHANGE_BUDGET = int(os.environ.get('SS_KT_CHANGE_BUDGET', '2'))
+#: Expressed as a SHARE of the sphere rather than a count, because 2 renames is
+#: 29% of a seven-shift sphere and 13% of a fifteen-shift one — the same number
+#: would silently tighten the steer as the map grew.
+KT_CHANGE_SHARE = float(os.environ.get('SS_KT_CHANGE_SHARE', '0.25'))
+
+
+def kt_change_budget(published: int) -> int:
+    """How many renames to ask a sphere for, given how many shifts it publishes.
+
+    Never zero: a sphere must always be allowed to correct one name that the
+    evidence has genuinely abandoned.
+    """
+    return max(1, round(max(published, MIN_KTS_PER_DOM) * KT_CHANGE_SHARE))
+
+
+#: Back-compat default for callers with no sphere in hand (the prompt builder's
+#: keyword default). A real call passes the sphere's own budget.
+KT_CHANGE_BUDGET = kt_change_budget(MIN_KTS_PER_DOM)
 
 DOMAINS = [
     {

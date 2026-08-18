@@ -6,17 +6,33 @@
  * exists on one laptop and nowhere else, so all six of its tests failed the
  * moment CI ran them. A spec that cannot run on the runner is not a gate.
  */
+// Society carries the ceiling the 18 Aug 2026 review allows, so the CLS spec
+// exercises the case that actually hurts: the backend caps the index preview at
+// four shifts, and the sphere page used to paint those four and then jump to
+// the full list.
+const SOCIETY_SHIFTS = 15
+const societyShifts = Array.from({ length: SOCIETY_SHIFTS }, (_, i) => ({
+  id: `kt-${i + 1}`, domain_id: 'society', slug: i === 0 ? 'trust-machines' : `shift-${i + 1}`,
+  name: i === 0 ? 'Trust Machines' : `Shift ${i + 1}`,
+  subtitle: `Subtitle ${i + 1}`, read_time: '4 min read',
+}))
+
 const domains = [
   ['society', 'Society', '2028'],
   ['economy', 'Economy', '2027'],
   ['organizations', 'Organizations', '2026'],
   ['consumers', 'Consumers', '2026'],
-].map(([id, name, horizon]) => ({ id, name, horizon, short_description: `${name} shifts`, key_shift_count: id === 'society' ? 2 : 1 }))
+].map(([id, name, horizon]) => ({ id, name, horizon, short_description: `${name} shifts`, key_shift_count: id === 'society' ? SOCIETY_SHIFTS : 1 }))
 
 const index = {
   updated: '2026-08-02',
-  totals: { domains: 4, key_shifts: 5, sub_shifts: 25 },
-  domains,
+  totals: { domains: 4, key_shifts: SOCIETY_SHIFTS + 3, sub_shifts: 25 },
+  // `key_shifts` is the backend's `.take(4)` preview (main.rs). Omitting it
+  // meant every spec ran against a payload production never sends, and the
+  // sphere page's partial-paint bug could not be reproduced.
+  domains: domains.map((d) => (d.id === 'society'
+    ? { ...d, key_shifts: societyShifts.slice(0, 4) }
+    : d)),
 }
 const shift = {
   id: 'kt-1', domain_id: 'society', slug: 'trust-machines', name: 'Trust Machines',
@@ -36,7 +52,7 @@ const shiftDetail = { updated: index.updated, domain: domains[0], shift, sibling
 const domainDetail = {
   updated: index.updated,
   domain: domains[0],
-  key_shifts: [shift, shiftTwo].map((s) => ({ ...s, modules: undefined })),
+  key_shifts: [shift, ...societyShifts.slice(1)].map((s) => ({ ...s, modules: undefined })),
   insights: [],
 }
 const subDetail = {

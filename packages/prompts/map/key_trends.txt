@@ -5,7 +5,7 @@ You are synthesizing trend intelligence for Serious Shift — a consumer trend p
 TASK
 From the evidence below, identify {{min_kts}}–{{max_kts}} distinct KEY TRENDS for this domain. Each Key Trend is a named signal — a shift already underway in this domain, grounded in the claims. Together they map the most important things happening in this domain.
 
-Prefer FEWER, more distinct trends over more, thinner ones. Before returning, check every pair of your candidates: if two tell the same underlying story from different angles — the same mechanism, the same evidence base, the same "so what" — merge them into the stronger one. A reader who cannot say in one sentence how two trends differ has been given one trend twice. Never invent a trend the claims do not back.
+Return as many as the evidence genuinely supports, anywhere in that range — spheres are not expected to match each other, and a sphere with thinner evidence should return fewer rather than pad. What the range never buys is thinner trends: before returning, check every pair of your candidates: if two tell the same underlying story from different angles — the same mechanism, the same evidence base, the same "so what" — merge them into the stronger one. A reader who cannot say in one sentence how two trends differ has been given one trend twice. Never invent a trend the claims do not back.
 
 CONTINUITY — THIS SPHERE MAY ALREADY HAVE A PUBLISHED MAP
 

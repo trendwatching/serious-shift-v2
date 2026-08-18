@@ -104,8 +104,9 @@ def codes(document) -> set[str]:
     return {issue.code for issue in validate_map(document, CONTRACT)}
 
 
-@pytest.mark.parametrize(('count', 'valid'), [(0, False), (3, False), (4, True), (5, True), (6, False)])
-def test_four_or_five_sub_shifts(count, valid):
+@pytest.mark.parametrize(('count', 'valid'),
+                         [(0, False), (2, False), (3, True), (4, True), (5, True), (6, False)])
+def test_sub_shift_count_range(count, valid):
     document = valid_map()
     parent = document['key_trends'][0]
     children = [sub for sub in document['sub_trends'] if sub['key_trend_id'] == parent['id']]
@@ -232,7 +233,8 @@ def test_promotion_records_an_identity_for_every_addressable_shift():
 def test_targeted_repair_never_exceeds_parent_limit(monkeypatch):
     document = valid_map()
     issues = validate_map({**document, 'sub_trends': []}, CONTRACT)
-    monkeypatch.setattr(cli, 'MAX_TARGETED_REPAIR_SHIFTS', 1)
+    monkeypatch.setattr(cli, 'MIN_TARGETED_REPAIR_SHIFTS', 1)
+    monkeypatch.setattr(cli, 'REPAIR_SHIFT_SHARE', 0.0)
     connection = RecordingConnection()
     repaired = cli._targeted_repair_once(
         connection, 'unused', document, issues,

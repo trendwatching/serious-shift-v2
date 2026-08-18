@@ -20,9 +20,12 @@ INSIGHTS_MODEL = os.environ.get('INSIGHTS_MODEL', 'claude-sonnet-4-6')
 # Single source of truth for how many Key Trends a domain carries — a range,
 # owned by mapgen (which also gates on it at publication).
 from ..mapgen.config import (  # noqa: E402
+    CLAIMS_PER_DOM,
     KT_CHANGE_BUDGET,
     MAX_KTS_PER_DOM,
+    MAX_SUB_TRENDS,
     MIN_KTS_PER_DOM,
+    MIN_SUB_TRENDS,
 )
 
 
@@ -89,7 +92,9 @@ def prompt_domain_key_trends(domain: dict, claims: list,
             for s in (current or [])) or '- (none)',
         change_budget=change_budget,
         claim_count=len(claims),
-        evidence=fmt_claims_block(claims, max_per=180),
+        # Raised with CLAIMS_PER_DOM. Capping the window at 180 while routing
+        # 350 would route claims the model that assigns them never sees.
+        evidence=fmt_claims_block(claims, max_per=CLAIMS_PER_DOM),
     )
 
 
@@ -112,6 +117,11 @@ def prompt_sub_trends(kt_name: str, kt_subtitle: str, claims: list,
         kt_name=kt_name,
         kt_subtitle=kt_subtitle,
         claim_count=len(claims),
+        # These MUST be passed: _loader.render raises KeyError on a token the
+        # caller did not supply, so templating the .txt without touching this
+        # call is a hard crash in phase 4 rather than a stale prompt.
+        min_subs=MIN_SUB_TRENDS,
+        max_subs=MAX_SUB_TRENDS,
         taken='\n'.join(f'- {name}' for name in sorted(taken or [])) or '- (none yet)',
         evidence=fmt_claims_block(claims, max_per=90),
     )
