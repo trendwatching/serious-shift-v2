@@ -183,7 +183,13 @@ pub fn build_index(doc: &str) -> SiteIndex {
         idx.add(
             format!("/{domain}/{slug}"),
             PageMeta {
-                image: Some(format!("/shift/og/{slug}.jpg")),
+                // The pipeline-generated card wins when the document names one;
+                // the committed static file stays as the fallback, so a shift
+                // whose art failed to generate still has a card.
+                image: Some(match s(&kt, "og_image") {
+                    published if !published.is_empty() => published,
+                    _ => format!("/shift/og/{slug}.jpg"),
+                }),
                 title: format!("{} — {SITE_NAME}", trend_title(&name)),
                 description: clamp(&s(&kt, "subtitle")),
             },
@@ -209,11 +215,14 @@ pub fn build_index(doc: &str) -> SiteIndex {
             PageMeta {
                 // A sub-shift's slug carries its parent, so the parent segment
                 // is the card — the same inheritance the hero art uses.
-                image: slug
-                    .split('/')
-                    .next()
-                    .filter(|parent| !parent.is_empty())
-                    .map(|parent| format!("/shift/og/{parent}.jpg")),
+                image: match s(&st, "og_image") {
+                    published if !published.is_empty() => Some(published),
+                    _ => slug
+                        .split('/')
+                        .next()
+                        .filter(|parent| !parent.is_empty())
+                        .map(|parent| format!("/shift/og/{parent}.jpg")),
+                },
                 title: format!("{} — {SITE_NAME}", trend_title(&name)),
                 description: clamp(&desc),
             },

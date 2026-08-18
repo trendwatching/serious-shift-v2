@@ -246,3 +246,28 @@ def prompt_synthesis_insights(domain_name: str, domain_desc: str, claims: list) 
         domain_description=domain_desc[:300],
         evidence=fmt_claims_block(claims, max_per=50),
     )
+
+
+# ── Art briefs: one image description per shift and sub-shift ───────────────
+
+def prompt_art_brief(kt_name: str, kt_subtitle: str, kt_context: str,
+                     sub_trends: list) -> str:
+    """One call per Key Trend, covering the shift and all of its children.
+
+    Batched the way `prompt_st_editorial` is, so a partial answer stays
+    recoverable per sub-shift by name, and so the five sub-briefs are written
+    with sight of each other — which is the only way "each one is a different
+    detail of the same world" can be asked for at all.
+    """
+    lines = []
+    for st in sub_trends:
+        subtitle = str(st.get('subtitle') or st.get('description') or '').strip()
+        lines.append(f"- {st['name']}" + (f" — {subtitle}" if subtitle else ''))
+    return load_and_render(
+        "map/art_brief.txt",
+        voice=VOICE,
+        kt_name=kt_name,
+        kt_subtitle=kt_subtitle,
+        kt_context=kt_context,
+        sub_trends='\n'.join(lines) or '- (none)',
+    )

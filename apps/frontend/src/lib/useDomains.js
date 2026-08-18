@@ -3,6 +3,7 @@ import CONTRACT from '../../../../packages/contracts/shift_modules.json'
 import HERO_GENERATED from './heroes.json'
 import SUB_GENERATED from './sub-art.json'
 import HERO_WIDE from './heroes-wide.json'
+import AI_ART from './ai-art.json'
 import { useMemo } from 'react'
 import { useLocation } from './router'
 import { useData } from './useData'
@@ -118,14 +119,20 @@ function toSubShift(src, i, parentSlug) {
     context: src.context,
     dek: src.description || src.subtitle || '',
     modules: inReadingOrder(nonEmpty(src.modules) || projectStModules(src), 'sub_shift'),
-    heroImage: src.hero_image || SUB_HERO_ART[slug] || HERO_GEN[parentSlug] || null,
+    heroImage: SUB_HERO_ART[slug] || src.hero_image || AI_ART.heroes[parentSlug] || HERO_GEN[parentSlug] || null,
     // Only the GENERATED poster has a landscape twin. The pipeline's own art and
     // the two hand-made JPGs do not, so the wide slot stays null and the CSS
     // falls back to the portrait rather than 404ing on a file that was never
     // drawn. Note a sub-shift page inherits its PARENT's poster — the 640px
     // fragment is tile art and stays square.
-    heroImageWide: !src.hero_image && !SUB_HERO_ART[slug] ? HERO_WIDE[parentSlug] || null : null,
-    tileImage: SUB_GEN[`${parentSlug}/${slug}`] || null,
+    heroImageWide: src.hero_image_wide
+      || (!SUB_HERO_ART[slug]
+        ? AI_ART.heroesWide[parentSlug] || HERO_WIDE[parentSlug] || null
+        : null),
+    // `tile_image` is the sub-shift's own square art, and the only art on the
+    // page that is not inherited from the parent. It had no pipeline-supplied
+    // slot at all, so a published tile URL was simply ignored.
+    tileImage: src.tile_image || AI_ART.subs[`${parentSlug}/${slug}`] || SUB_GEN[`${parentSlug}/${slug}`] || null,
   }
 }
 
@@ -148,8 +155,16 @@ function toShift(src, i, domain) {
     // Same-origin path served by the backend once art exists for this shift.
     // Absent is the normal case and the hero falls back to its gradient, which
     // is a finished design rather than a placeholder.
-    heroImage: src.hero_image || HERO_ART[src.slug] || HERO_GEN[src.slug] || null,
-    heroImageWide: !src.hero_image && !HERO_ART[src.slug] ? HERO_WIDE[src.slug] || null : null,
+    // HERO_ART first: it is hand art-direction and the quality bar generation is
+    // judged against, so a generated substitute must not silently replace it —
+    // which is exactly what happened while `src.hero_image` sorted above it.
+    heroImage: HERO_ART[src.slug] || src.hero_image || AI_ART.heroes[src.slug] || HERO_GEN[src.slug] || null,
+    // The pipeline now draws a landscape twin, so this can no longer be forced
+    // to null whenever the pipeline supplied a hero. It was a correct rule while
+    // the only wide art was the generated poster; it silently discarded every
+    // pipeline wide frame the moment one existed.
+    heroImageWide: src.hero_image_wide
+      || (!HERO_ART[src.slug] ? AI_ART.heroesWide[src.slug] || HERO_WIDE[src.slug] || null : null),
     subshifts: subs.map((s, k) => toSubShift(s, k, first(src.slug, slugify(title)))),
   }
 }

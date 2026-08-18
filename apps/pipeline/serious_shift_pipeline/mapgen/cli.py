@@ -15,12 +15,14 @@ from ..core import observability
 from ..core.config import BudgetExceeded
 from ..core.observability import RunLog
 from . import llm as mapgen_llm
+from .art import generate_and_attach
 from .carryover import load_published_taxonomy
 from .config import CLAIMS_PER_DOM, DOMAINS
 from .dbutil import get_conn, reset_v2_tables
 from .export import (
     _write_map_document, build_map_json_v2, load_kts_from_db,
 )
+from .phases.art_briefs import phase10_art_briefs
 from .phases.domains import phase1_domain_definitions
 from .phases.editorial import phase4b_editorial
 from .phases.hero_stats import phase8_hero_stats
@@ -232,6 +234,24 @@ def _publish_candidate(conn, out: dict, *, api_key: str = '', domain_claims=None
         exc = PublicationValidationError(issues)
         _record_validation_failure(exc)
         raise exc
+
+    # Artwork, after the gate and before the write. The taxonomy is final here
+    # and nowhere earlier — the repair pass above can re-cluster sub-shifts and
+    # mint new slugs, and art is keyed by slug. Both calls swallow their own
+    # failures: a Gemini outage, a missing key or a spend ceiling costs this
+    # week's new images and never a publication.
+    art_stats = {}
+    try:
+        briefs = phase10_art_briefs(conn, out)
+        art_stats = generate_and_attach(conn, out, briefs)
+    except Exception as exc:  # noqa: BLE001 — decoration must not block content
+        print(f'  art: skipped ({type(exc).__name__}: {exc})')
+    if art_stats:
+        print(f'  art: {art_stats.get("generated", 0)} generated, '
+              f'{art_stats.get("reused", 0)} reused, {art_stats.get("failed", 0)} failed, '
+              f'{art_stats.get("attached", 0)} URL(s) on the map '
+              f'(${art_stats.get("cost_usd", 0):.2f})')
+
     _write_map_document(conn, out)
     # Post-commit on purpose, and here rather than in main(): every publish path
     # goes through this function — full rebuild, --editorial-only and the free

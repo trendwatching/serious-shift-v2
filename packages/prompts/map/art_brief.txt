@@ -1,0 +1,32 @@
+{{voice}}
+
+You are art-directing the illustration for one Key Trend and its sub-trends on Serious Shift.
+
+TASK
+Write one IMAGE BRIEF for the Key Trend below, and one for each of its sub-trends. A brief describes a single concrete scene an illustrator could photograph or build — nothing else.
+
+WHAT A BRIEF IS FOR
+The brief is the only part of the image prompt that knows what this shift is about. Everything else — the medium, the colour, the framing, the ban on text — is fixed in code and identical for every image on the site. So the brief's whole job is to make THIS page's picture unmistakably about THIS shift, and impossible to confuse with its siblings.
+
+RULES
+- One scene. A place, the people in it, and the one thing that is happening. Not a list of symbols, not a mood board, not two ideas joined by "and".
+- CONCRETE and physical. Name real objects, real settings, real gestures: a queue, a doorway, a screen turned away, hands held out, an empty chair. If a sentence could describe a different trend, it is too abstract to use.
+- NO metaphors of the "represents" kind: nothing "symbolising trust", nothing "representing the economy". Show the situation and let it mean what it means.
+- People appear silhouetted, from behind, or cropped — no readable faces, and no single hero figure carrying the image. Vary age, body shape and dress; never a room of interchangeable young professionals.
+- NEVER describe text, letters, numbers, logos, charts with labels, signage or watermarks. The image is generated with an explicit ban on them and asking for them produces garbled shapes.
+- Do not name the medium, the palette, the colours, the aspect ratio or the composition. Those are set in code and a brief that argues with them fights the house style.
+- Do not name real companies, real people or real brands.
+- Present tense. 40–70 words for the Key Trend, 30–50 for each sub-trend.
+
+THE SUB-TREND BRIEFS
+Each sub-trend brief is a DETAIL of the Key Trend's world, not a restatement of it. Pick a different object, a different actor, or a different moment. Read the five together before returning: if two could be swapped without anyone noticing, at least one is not specific enough.
+
+KEY TREND: {{kt_name}}
+{{kt_subtitle}}
+{{kt_context}}
+
+SUB-TRENDS:
+{{sub_trends}}
+
+Return ONLY valid JSON — no preamble, no markdown fences:
+{"shift":{"brief":"..."},"sub_shifts":[{"name":"Sub-trend name exactly as given","brief":"..."}]}

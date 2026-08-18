@@ -10,6 +10,7 @@ from datetime import date
 from urllib.parse import urlparse
 
 from ..core.text import url_slug as slugify
+from .art.store import publish_art
 from .carryover import load_published_taxonomy, pin_slugs
 from .config import DOMAINS, MODULE_ORDER
 from .modules import conform_modules, scrub_module_tree
@@ -512,6 +513,17 @@ def _write_map_document(conn, out):
         ON CONFLICT (key) DO UPDATE SET body = EXCLUDED.body, updated_at = now()""",
         (encoded,))
     _publish_shift_refs(conn, out)
+    # Art is stamped and pruned inside the SAME transaction as the document that
+    # names it, which is what makes "the art goes live with the map" true rather
+    # than nearly true. Nothing links to art but this document, so a row it no
+    # longer names is a row nothing can reach.
+    live = {('key_trend', str(shift.get('slug') or ''))
+            for shift in out.get('key_trends') or []}
+    live |= {('sub_trend', str(sub.get('slug') or ''))
+             for sub in out.get('sub_trends') or []}
+    pruned = publish_art(conn, live - {('key_trend', ''), ('sub_trend', '')})
+    if pruned:
+        print(f'  ⚠  {pruned} art brief(s) pruned for shifts no longer published')
     conn.commit()
 
 

@@ -362,6 +362,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/api/innovations/:id/cover-image",
             get(innovations::cover_image),
         )
+        .route("/art/:frame/*path", get(shift_art))
         .route(
             "/api/innovations/ingest",
             post(innovations::ingest).layer(DefaultBodyLimit::max(1024 * 1024)),
@@ -742,6 +743,85 @@ fn key_shift_summary(shift: &Value, sub_count: usize) -> Value {
     })
 }
 
+/// `GET /art/{frame}/{slug}.jpg` — generated shift artwork, served from Postgres.
+///
+/// Deliberately NOT under `/shift`: that prefix is already a `ServeDir`
+/// `nest_service`, and an overlapping route panics at router construction.
+///
+/// `frame` is hero | wide | og | tile. `path` is the slug plus `.jpg`; for a
+/// tile it is the two-segment `parent/child.jpg`, which is why it is a wildcard
+/// rather than a single segment. The scope follows from the frame — only a
+/// sub-shift has a tile — so the URL does not have to carry it.
+async fn shift_art(
+    State(s): State<AppState>,
+    AxumPath((frame, path)): AxumPath<(String, String)>,
+    headers: HeaderMap,
+    Query(q): Query<std::collections::HashMap<String, String>>,
+) -> Result<Response, AppError> {
+    let not_found = || {
+        AppError::public(
+            StatusCode::NOT_FOUND,
+            "not_found",
+            "No artwork for that shift.",
+        )
+    };
+    if !matches!(frame.as_str(), "hero" | "wide" | "og" | "tile") {
+        return Err(not_found());
+    }
+    // The slug is a path segment from a wildcard, so it is untrusted input even
+    // though only our own document ever produces one.
+    let slug = path.strip_suffix(".jpg").ok_or_else(not_found)?;
+    if slug.is_empty() || slug.len() > 200 || slug.contains("..") || slug.starts_with('/') {
+        return Err(not_found());
+    }
+    let scope = if frame == "tile" { "sub_trend" } else { "key_trend" };
+
+    let row: Option<(Vec<u8>, String, String)> = sqlx::query_as(
+        "SELECT bytes, mime, sha256 FROM shift_art
+          WHERE scope = $1 AND slug = $2 AND frame = $3",
+    )
+    .bind(scope)
+    .bind(slug)
+    .bind(&frame)
+    .fetch_optional(&s.pool)
+    .await?;
+    let Some((bytes, mime, sha)) = row else {
+        return Err(not_found());
+    };
+
+    let etag = HeaderValue::from_str(&format!("\"{sha}\"")).map_err(AppError::internal)?;
+    // `?v=` is the content hash the document publishes, so a matching one
+    // addresses these exact bytes and can be cached forever. Anything else gets
+    // the ordinary artwork window.
+    let versioned = q
+        .get("v")
+        .is_some_and(|value| sha.starts_with(value.as_str()) && value.len() >= 12);
+    let cache = if versioned { IMMUTABLE } else { ARTWORK };
+
+    if headers
+        .get(header::IF_NONE_MATCH)
+        .is_some_and(|value| value == etag)
+    {
+        let mut response = StatusCode::NOT_MODIFIED.into_response();
+        response.headers_mut().insert(header::ETAG, etag);
+        response
+            .headers_mut()
+            .insert(header::CACHE_CONTROL, HeaderValue::from_static(cache));
+        return Ok(response);
+    }
+
+    let mut response = (StatusCode::OK, bytes).into_response();
+    let headers_mut = response.headers_mut();
+    headers_mut.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_str(&mime).unwrap_or(HeaderValue::from_static("image/jpeg")),
+    );
+    headers_mut.insert(header::ETAG, etag);
+    headers_mut.insert(header::CACHE_CONTROL, HeaderValue::from_static(cache));
+    Ok(response)
+}
+
+
 fn sub_shift_summary(sub: &Value) -> Value {
     let full_slug = string_field(sub, "slug");
     json!({
@@ -752,6 +832,12 @@ fn sub_shift_summary(sub: &Value) -> Value {
         "name": sub.get("name").cloned().unwrap_or(Value::Null),
         "subtitle": sub.get("subtitle").cloned().unwrap_or(Value::Null),
         "description": sub.get("description").cloned().unwrap_or(Value::Null),
+        // Pipeline-generated artwork. A strict whitelist, so anything not named
+        // here never reaches the client — which is why the tile art has to be
+        // added explicitly rather than riding along with the row.
+        "tile_image": sub.get("tile_image").cloned().unwrap_or(Value::Null),
+        "hero_image": sub.get("hero_image").cloned().unwrap_or(Value::Null),
+        "hero_image_wide": sub.get("hero_image_wide").cloned().unwrap_or(Value::Null),
     })
 }
 
