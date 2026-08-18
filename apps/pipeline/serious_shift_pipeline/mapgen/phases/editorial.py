@@ -534,3 +534,58 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     conn.commit()
     expected_subs = sum(len(item[3]) for item in work)
     print(f'  ✓  {kt_done}/{len(work)} shifts and {st_done}/{expected_subs} sub-shifts given a validated editorial body.')
+    _drop_bodyless_sub_shifts(conn)
+
+
+#: The gate accepts 4–5 children, the slack existing so an editor can merge two.
+#: That slack is what makes dropping a bodyless page possible at all.
+MIN_SUB_TRENDS = 4
+
+
+def _drop_bodyless_sub_shifts(conn) -> None:
+    """Remove sub-shifts the retry ladder never managed to write a body for.
+
+    After three asks some sub-shifts still have no modules — routinely the LAST
+    child of a family, because the model truncates the tail of a long answer.
+    Each one is nine `required_module` issues, so eight of them is 72, and the
+    whole publication is refused for pages that would have been blank anyway.
+
+    Dropping them is the same trade `naming.choose_unique` makes one phase
+    earlier: four real pages beat five with a broken one among them. It invents
+    nothing — a page with no body has nothing to publish.
+
+    Guarded by MIN_SUB_TRENDS so a family can never fall below what the gate
+    accepts. A family that would drop below it keeps its bodyless child and the
+    gate refuses the run, which is correct: at that point the evidence, not the
+    formatting, is what failed.
+    """
+    rows = conn.execute("""
+        SELECT st.id, st.kt_id, st.name, kt.name AS parent
+          FROM domain_sub_trends st JOIN domain_key_trends kt ON kt.id = st.kt_id
+         WHERE COALESCE(jsonb_array_length(st.modules), 0) = 0
+         ORDER BY st.kt_id, st.sort_order DESC
+    """).fetchall()
+    if not rows:
+        return
+
+    sizes = {r['kt_id']: r['n'] for r in conn.execute(
+        'SELECT kt_id, count(*) AS n FROM domain_sub_trends GROUP BY kt_id').fetchall()}
+    dropped, kept = [], []
+    for row in rows:
+        if sizes.get(row['kt_id'], 0) - 1 >= MIN_SUB_TRENDS:
+            conn.execute('DELETE FROM domain_sub_trend_claims WHERE sub_trend_id=%s',
+                         (row['id'],))
+            conn.execute('DELETE FROM domain_sub_trends WHERE id=%s', (row['id'],))
+            sizes[row['kt_id']] = sizes.get(row['kt_id'], 0) - 1
+            dropped.append(f'{row["parent"]}/{row["name"]}')
+        else:
+            kept.append(f'{row["parent"]}/{row["name"]}')
+    conn.commit()
+
+    if dropped:
+        print(f'    dropped {len(dropped)} sub-shift(s) the editorial never filled, '
+              f'rather than publishing a blank page: {", ".join(dropped[:4])}'
+              + (' …' if len(dropped) > 4 else ''))
+    if kept:
+        print(f'    ⚠ {len(kept)} bodyless sub-shift(s) kept — their family would '
+              f'fall below {MIN_SUB_TRENDS}: {", ".join(kept)}')
