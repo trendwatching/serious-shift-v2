@@ -39,9 +39,13 @@ def collage(ramp: dict[str, str]) -> str:
     )
 
 
+#: Verbatim from the .mjs. Image models volunteer signage, headlines and UI the
+#: moment a prompt mentions institutions or screens, and a baked-in word fights
+#: the real headline the page sets over the art. Paraphrasing it is not safe:
+#: this exact wording is what was tested against the model.
 NO_TEXT = (
-    ' No text, no letters, no numbers, no words, no logos, no watermarks, '
-    'no signage anywhere in the image.'
+    ' Absolutely no text anywhere in the image: no words, no letters, no numbers, '
+    'no signage, no logos, no watermarks, no captions.'
 )
 
 #: The four output frames. `og` is not generated — it is cropped from the wide
