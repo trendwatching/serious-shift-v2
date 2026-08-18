@@ -774,7 +774,11 @@ async fn shift_art(
     if slug.is_empty() || slug.len() > 200 || slug.contains("..") || slug.starts_with('/') {
         return Err(not_found());
     }
-    let scope = if frame == "tile" { "sub_trend" } else { "key_trend" };
+    let scope = if frame == "tile" {
+        "sub_trend"
+    } else {
+        "key_trend"
+    };
 
     let row: Option<(Vec<u8>, String, String)> = sqlx::query_as(
         "SELECT bytes, mime, sha256 FROM shift_art
@@ -820,7 +824,6 @@ async fn shift_art(
     headers_mut.insert(header::CACHE_CONTROL, HeaderValue::from_static(cache));
     Ok(response)
 }
-
 
 fn sub_shift_summary(sub: &Value) -> Value {
     let full_slug = string_field(sub, "slug");

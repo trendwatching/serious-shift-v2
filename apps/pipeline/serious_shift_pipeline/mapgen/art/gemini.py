@@ -5,6 +5,7 @@ import base64
 import os
 import random
 import time
+from typing import Any
 
 import requests
 
@@ -47,7 +48,9 @@ def generate_image(prompt: str, aspect: str, *, model: str = '') -> bytes:
         raise GeminiError('GEMINI_API_KEY is not set')
     used_model = model or MODEL
     url = f'{API_BASE}/{used_model}:generateContent'
-    payload = {
+    # Annotated: inferred as dict[str, Collection[Collection[str]]], which some
+    # mypy/types-requests combinations reject against requests' JsonType.
+    payload: dict[str, Any] = {
         'contents': [{'parts': [{'text': prompt}]}],
         'generationConfig': {
             'responseModalities': ['IMAGE'],
