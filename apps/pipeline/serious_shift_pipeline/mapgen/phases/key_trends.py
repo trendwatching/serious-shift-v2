@@ -192,7 +192,7 @@ def phase3_key_trends(conn, api_key: str, domain_claims: dict,
             taken.append(str(kt['name']))
         domain_kts[d['id']] = written
         print(f'  ✓  {d["name"]}: {len(written)} KTs')
-        _print_arena_mix(d['name'], written, claims)
+        _print_arena_mix(str(d['name']), written, claims)
 
     conn.commit()
     return domain_kts
