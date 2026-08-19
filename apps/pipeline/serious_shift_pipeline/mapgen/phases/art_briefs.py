@@ -287,7 +287,7 @@ def phase10_art_briefs(conn, out: dict) -> dict[tuple[str, str], str]:
 
     stored = store.load_briefs(conn)
     briefs: dict[tuple[str, str], str] = {}
-    work: list[tuple[dict, list[dict], str]] = []
+    work: list[tuple[dict, list[dict], str, bool]] = []
 
     for shift in out.get('key_trends') or []:
         slug = str(shift.get('slug') or '')
@@ -296,21 +296,43 @@ def phase10_art_briefs(conn, out: dict) -> dict[tuple[str, str], str]:
         subs = subs_by_parent.get(slug, [])
         digest = brief_inputs_sha256(shift, subs)
         current = stored.get(('key_trend', slug))
-        if current and current['input_sha256'] == digest:
-            briefs[('key_trend', slug)] = current['brief']
+        kept = (current['brief']
+                if current is not None and current['input_sha256'] == digest else None)
+        # A sub-shift with no stored brief is not "current", whatever its parent
+        # says. It is usually one the written-matter guard rejected, and skipping
+        # the family on the parent's word alone left it with no art FOREVER: the
+        # parent stays current every week, so the retry never comes. A rejected
+        # KEY shift self-heals (its missing row makes the family stale); a
+        # rejected sub-shift did not, and that asymmetry was invisible until a
+        # publish left four sub-shifts art-less. Found 2026-08-20.
+        gaps = [s for s in subs if not stored.get(('sub_trend', str(s.get('slug'))))]
+        if kept is not None and not gaps:
+            briefs[('key_trend', slug)] = kept
             for sub in subs:
                 held = stored.get(('sub_trend', str(sub.get('slug'))))
                 if held:
                     briefs[('sub_trend', str(sub.get('slug')))] = held['brief']
             continue
-        work.append((shift, subs, digest))
+        # `fresh` means the editorial has not moved and we are here only to fill
+        # gaps: keep every brief that already exists so its images stay cached,
+        # and adopt only the ones that are missing. Rewriting the whole family
+        # would re-pay for siblings that are already correct.
+        if kept is not None:
+            briefs[('key_trend', slug)] = kept
+            for sub in subs:
+                held = stored.get(('sub_trend', str(sub.get('slug'))))
+                if held:
+                    briefs[('sub_trend', str(sub.get('slug')))] = held['brief']
+        work.append((shift, subs, digest, kept is not None))
 
     if not work:
         print(f'  art briefs: all {len(briefs)} current, nothing to write')
         return briefs
 
+    gap_fills = sum(1 for item in work if item[3])
     print(f'  art briefs: writing {len(work)} shift family/families '
-          f'({len(briefs)} already current)…')
+          f'({len(briefs)} already current'
+          f'{f", {gap_fills} filling gaps only" if gap_fills else ""})…')
     results = generate_json(
         work,
         lambda item: prompt_art_brief(item[0].get('name', ''),
@@ -324,9 +346,15 @@ def phase10_art_briefs(conn, out: dict) -> dict[tuple[str, str], str]:
     )
 
     rows: list[dict] = []
-    for (shift, subs, digest), result in zip(work, results):
+    for (shift, subs, digest, fresh), result in zip(work, results):
         slug = str(shift.get('slug') or '')
         shift_brief, sub_briefs = briefs_from_result(result, slug, subs)
+        if fresh:
+            # Gap-fill only: never overwrite a brief that already exists, or its
+            # images all re-pay for nothing.
+            shift_brief = '' if ('key_trend', slug) in briefs else shift_brief
+            sub_briefs = [(sub_slug, brief) for sub_slug, brief in sub_briefs
+                          if ('sub_trend', sub_slug) not in briefs]
         # A missing key-shift brief costs that shift its art this week and nothing
         # else: the existing row (if any) stays, _jobs skips it, and the absent
         # row makes the family non-current so the next run retries it. Its

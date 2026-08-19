@@ -232,6 +232,47 @@ def test_the_guard_does_not_reject_a_scene_with_nothing_written_in_it(brief):
     assert not describes_written_matter(brief)
 
 
+def test_a_sub_shift_with_no_brief_makes_its_family_stale(monkeypatch):
+    """A rejected KEY shift self-heals — its missing row makes the family stale
+    next run. A rejected SUB-shift did not: the parent stayed current every week,
+    the family was skipped on the parent's word, and the sub had no art forever.
+    A publish on 2026-08-20 left four sub-shifts art-less exactly this way."""
+    from serious_shift_pipeline.mapgen.phases import art_briefs as ab
+
+    shift = {'slug': 'p', 'name': 'P', 'subtitle': 's', 'modules': []}
+    subs = [{'slug': 'p/a', 'name': 'A'}, {'slug': 'p/b', 'name': 'B'}]
+    out = {'key_trends': [shift], 'sub_trends': subs}
+    digest = ab.brief_inputs_sha256(shift, subs)
+
+    # Parent and ONE sub stored; the other was rejected and has no row.
+    monkeypatch.setattr(ab.store, 'load_briefs', lambda conn: {
+        ('key_trend', 'p'): {'brief': 'parent scene', 'input_sha256': digest},
+        ('sub_trend', 'p/a'): {'brief': 'a scene', 'input_sha256': digest},
+    })
+    asked: list = []
+
+    def fake_generate(items, prompt_of, **kwargs):
+        asked.extend(items)
+        return [{'shift': {'brief': 'NEW parent'},
+                 'sub_shifts': [{'name': 'A', 'brief': 'NEW a'},
+                                {'name': 'B', 'brief': 'b scene'}]}]
+
+    monkeypatch.setattr(ab, 'generate_json', fake_generate)
+    monkeypatch.setattr(ab.store, 'upsert_briefs', lambda conn, rows: None)
+    briefs = ab.phase10_art_briefs(_FakeConn(), out)
+
+    assert asked, 'the family must be re-asked to fill the gap'
+    assert briefs[('sub_trend', 'p/b')] == 'b scene', 'the missing brief is adopted'
+    # The ones that already existed keep their exact text, or every sibling image
+    # re-pays for nothing.
+    assert briefs[('key_trend', 'p')] == 'parent scene'
+    assert briefs[('sub_trend', 'p/a')] == 'a scene'
+
+
+class _FakeConn:
+    def commit(self): pass
+
+
 def test_a_rejected_parent_does_not_take_its_sub_shifts_down_with_it():
     """Losing five pages of artwork to one bad word on the parent is a far worse
     trade than the parent going a week without."""
