@@ -45,7 +45,7 @@ RULES FOR KEY TREND NAMES
 - Name what is changing, not what the domain is about. "Delegated Desire" names a shift (desire is being handed off). "AI Shopping" names a topic. Do not use the domain name in a trend name, and do not use words that could describe any trend anywhere: "Transformation", "Evolution", "Disruption", "Emergence".
 - Right: "Synthetic Trust", "Delegated Desire", "Proof Premium", "Silent Commerce"
 - Wrong: "AI Changes Consumer Behavior" (descriptive, not a name), "The Rise of Authenticity" (generic), "Trust Issues" (category label)
-- The audience is brand strategists and executives, not AI researchers. Name and subtitle must parse for a curious executive on first read. Never build a name on AI-insider jargon: no "Benchmark", "Eval", "Alignment", "Pacing", "Agentic", "Compute", "Open-Source/Open Parity", "Scaffolding", "Inference" or similar terms of art. If the shift is about one of those things, name the human or commercial consequence instead.
+- The audience is brand strategists and executives, not AI researchers. Name and subtitle must parse for a curious executive on first read. Never build a name on AI-insider jargon: no "Benchmark", "Eval", "Alignment", "Pacing", "Agentic", "Compute", "Open-Source/Open Parity", "Scaffolding", "Inference", "Checkpoint", "Weights", "Frontier" or similar terms of art. The same goes for an economist's vocabulary ("Autarky", "Kaldor", "Baumol" — or any researcher's surname): a name a curious executive would have to search has failed before the subtitle loads. If the shift is about one of those things, name the human or commercial consequence instead.
 - Every Key Trend must be distinct from the others — no overlapping trends, and no two of your names sharing a noun. If you have "Trust Proxy" and "Trust Collapse", one is a sub-variant of the other: collapse them or differentiate them.
 - TEST: say the name out loud. Could it have been on a PowerPoint slide from 2019? Does it feel described rather than coined? Either way — rename it.
 
@@ -67,6 +67,7 @@ Before anything gets named, it must pass four tests. Failing any one means it is
 2. DECISION-MAKER URGENCY — read the trend as a senior CMO or Innovation Director would. It must carry a commercial or strategic consequence a decision-maker could build a response to, not just be true and interesting. Reject purely descriptive trends.
 3. DISTINCTNESS — for each pair of your trends: same underlying cause told at two magnifications is one trend plus a sub-trend. Merge or cut. If cutting one trend would leave no meaningful gap, cut it.
 4. KEY TREND vs SUB-TREND — a Key Trend is a broad structural shift several different things could be symptoms of. A specific manifestation of a broader shift already in your list is a sub-trend: demote it.
+5. ARENA SPREAD — step back from your full list and name each trend's arena in one word: government, work, commerce, identity, information, money, health. If more than a third of your trends share one arena, the sphere is telling one story several times — a reader meeting five government trends in a row hears "institutions are losing grip" five times, however distinct the mechanisms. Merge the weakest same-arena pair and go find what the evidence says about the arenas you have not covered. A sphere is a map, not a beat.
 
 RULES FOR CLAIM ASSIGNMENT
 - Assign each claim_id to the single Key Trend it best supports
@@ -84,7 +85,8 @@ COVERAGE CHECK BEFORE FINALIZING
 Ask: what would a sophisticated reader — a senior executive who has already thought carefully about AI — notice is missing? The list should together answer the most commercially urgent questions for decision-makers in this domain. If it cannot, check whether the evidence supports trends that were missed or whether existing trends need reframing to be more commercially specific. Do not invent trends the evidence does not back.
 
 FINAL CHECK BEFORE OUTPUT
-□ Does each trend pass all four selection tests?
+□ Does each trend pass all five selection tests?
+□ Do any three trends share one arena? Rebalance before returning.
 □ Does each name feel coined rather than described? If it reads as a topic header, rename.
 □ Does each subtitle contain a specific anchor (named thinker, company, country, or technology — not a statistic)?
 □ Are any two trends saying the same thing? Merge or cut.

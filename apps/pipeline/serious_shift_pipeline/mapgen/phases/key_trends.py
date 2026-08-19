@@ -31,6 +31,29 @@ def _valid_kts(result: object) -> list[dict]:
             if isinstance(kt, dict) and kt.get('name') and kt.get('subtitle')]
 
 
+def _print_arena_mix(domain_name: str, kts: list[dict], claims: list) -> None:
+    """The sphere's topical mix, printed so an operator can see clustering.
+
+    Report-only, deliberately no gate: the only machine-readable topic signal
+    is `claims.domain`, and "government-related" spans two of its buckets while
+    missing others — a gate that cannot measure the defect it polices would be
+    a second opinion, not an invariant. The prompt's ARENA SPREAD test is the
+    fix; this line is how the operator sees whether it worked (the 2026-08-19
+    review counted 5 of Society's 10 shifts on one governmental note).
+    """
+    by_id = {c['id']: str(c.get('claim_domain') or '?') for c in claims
+             if isinstance(c, dict) and 'id' in c}
+    counts: dict[str, int] = {}
+    for kt in kts:
+        buckets = {by_id[cid] for cid in kt.get('_claim_ids') or [] if cid in by_id}
+        for bucket in buckets or {'?'}:
+            counts[bucket] = counts.get(bucket, 0) + 1
+    if counts:
+        mix = ', '.join(f'{k}:{v}' for k, v in
+                        sorted(counts.items(), key=lambda kv: -kv[1]))
+        print(f'     {domain_name} claim-domain mix (shifts drawing on each): {mix}')
+
+
 def phase3_key_trends(conn, api_key: str, domain_claims: dict,
                       previous: dict | None = None) -> dict:
     """
@@ -107,6 +130,7 @@ def phase3_key_trends(conn, api_key: str, domain_claims: dict,
             taken.append(str(kt['name']))
         domain_kts[d['id']] = written
         print(f'  ✓  {d["name"]}: {len(written)} KTs')
+        _print_arena_mix(d['name'], written, claims)
 
     conn.commit()
     return domain_kts
