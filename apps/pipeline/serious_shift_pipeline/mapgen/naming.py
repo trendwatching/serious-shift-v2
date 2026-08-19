@@ -86,6 +86,7 @@ def breaches_family_cap(name: object, families: Counter,
 def choose_unique(candidates: list[dict], want: int, claimed: set[str],
                   families: Counter | None = None,
                   family_cap: int = NAME_FAMILY_CAP,
+                  min_want: int = 0,
                   ) -> tuple[list[dict], list[str]]:
     """The first `want` candidates whose names nobody else is already wearing.
 
@@ -104,9 +105,19 @@ def choose_unique(candidates: list[dict], want: int, claimed: set[str],
     collider, and every kept name's families are counted. Pass the same Counter
     shift after shift (and sphere after sphere) and the cap holds map-wide.
     `families=None` disables the check entirely.
+
+    `min_want` is the floor the family cap must yield to. On the 2026-08-19
+    remediation run the cap starved the LAST families to choose: with ~200
+    names already claimed, every candidate of a late shift echoed some family
+    and the strict walk left it 0–2 children against a publication gate of 3 —
+    a failed run, to avoid a name echo the gate itself treats as advisory. So
+    the strict pass runs first, and only if it kept fewer than `min_want` does
+    a second pass re-admit family-breaching (never exact-colliding) spares, in
+    the model's own order, up to `min_want`. An echoing name on a publishable
+    page beats a page that cannot publish.
     """
     kept: list[dict] = []
-    dropped: list[str] = []
+    dropped: list[dict] = []
     for candidate in candidates:
         if len(kept) >= want:
             break
@@ -116,10 +127,25 @@ def choose_unique(candidates: list[dict], want: int, claimed: set[str],
                 families is not None
                 and breaches_family_cap(name, families, family_cap)):
             if name:
-                dropped.append(name)
+                dropped.append(candidate)
             continue
         claimed.add(key)
         if families is not None:
             families.update(family_keys(name))
         kept.append(candidate)
-    return kept, dropped
+
+    if len(kept) < min_want:
+        for candidate in dropped[:]:
+            if len(kept) >= min_want:
+                break
+            name = str(candidate.get('name') or '').strip()
+            key = name_key(name)
+            if not key or key in claimed:
+                continue  # exact twins stay out, whatever the floor
+            claimed.add(key)
+            if families is not None:
+                families.update(family_keys(name))
+            kept.append(candidate)
+            dropped.remove(candidate)
+
+    return kept, [str(c.get('name') or '').strip() for c in dropped]

@@ -137,3 +137,31 @@ def test_families_none_preserves_old_behavior():
 
 def test_the_cap_is_two():
     assert NAME_FAMILY_CAP == 2, "the review's finding: a pair rhymes, three is a tic"
+
+
+def test_the_family_cap_yields_to_the_sub_count_floor():
+    """2026-08-19: with ~200 names claimed, every candidate of a late family
+    echoed something and the strict walk left shifts 0-2 children against a
+    gate of 3. Family-breaching spares are re-admitted up to min_want; exact
+    twins never are."""
+    families = family_counter(['Evaluation Premium', 'Collapse Premium',
+                               'Origin Debt', 'Privacy Debt'])
+    claimed = {name_key('Toil Premium')}
+    kept, dropped = choose_unique(
+        [_sub('Toil Premium'),      # exact collision — stays out even at the floor
+         _sub('Slippage Premium'),  # family breach — re-admitted at the floor
+         _sub('Graph Debt'),        # family breach — re-admitted at the floor
+         _sub('Craft Amnesia')],    # clean — kept strictly
+        5, claimed, families=families, min_want=3)
+    assert [k['name'] for k in kept] == ['Craft Amnesia', 'Slippage Premium', 'Graph Debt']
+    assert dropped == ['Toil Premium']
+
+
+def test_the_floor_never_readmits_when_the_strict_walk_suffices():
+    families = family_counter(['Evaluation Premium', 'Collapse Premium'])
+    kept, dropped = choose_unique(
+        [_sub('Craft Amnesia'), _sub('Vernacular Suspicion'), _sub('Gut Veto'),
+         _sub('Toil Premium')],
+        3, set(), families=families, min_want=3)
+    assert [k['name'] for k in kept] == ['Craft Amnesia', 'Vernacular Suspicion', 'Gut Veto']
+    assert dropped == []  # never visited: want was satisfied before its turn

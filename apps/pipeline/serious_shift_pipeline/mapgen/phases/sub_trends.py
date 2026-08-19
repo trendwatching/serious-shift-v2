@@ -319,8 +319,12 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         # duplicate the gate then rejected.
         allowed = {claim['id'] for claim in claims}
         candidates = _validated_sub_trends(result, allowed)
+        # min_want: the family cap yields to the sub-count floor — the strict
+        # walk starved late families to 0-2 children on 2026-08-19, failing
+        # the run over echoes the gate itself only reports as advisory.
         chosen, dropped = choose_unique(candidates, MAX_SUB_TRENDS, claimed,
-                                        families=chosen_families)
+                                        families=chosen_families,
+                                        min_want=MIN_SUB_TRENDS)
         promoted += len(dropped)
         if len(chosen) < MIN_SUB_TRENDS:
             short.append(kt['name'])
