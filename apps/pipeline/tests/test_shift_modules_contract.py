@@ -301,3 +301,31 @@ def test_contract_version_is_pinned():
     mirrors (module_policy.rs DEFAULT_HIDDEN, innovations.rs MODULE_ORDER_*),
     re-export the live document, and then bump this number in the same PR."""
     assert _contract()["version"] == 8
+
+
+def test_dashes_are_conformed_at_export_not_asked_of_the_writer():
+    """The voice file's em-dash ban was ignored 748 times on the 2026-08-19
+    live map — punctuation is mechanical, so export conforms it and the gate
+    stays as the invariant."""
+    assert gm.normalize_dashes('The shift is structural — and pricing lags.') == \
+        'The shift is structural, and pricing lags.'
+    assert gm.normalize_dashes('APIs — rails — are the product.') == \
+        'APIs, rails, are the product.'
+    # a digit range keeps a dash; a comma would change its meaning
+    assert gm.normalize_dashes('the 2026—2028 window') == 'the 2026–2028 window'
+    assert gm.normalize_dashes('ages 18–34 respond') == 'ages 18–34 respond'
+    assert gm.normalize_dashes('a spaced – aside') == 'a spaced, aside'
+
+
+def test_conform_normalizes_authored_prose_and_spares_quotes_and_evidence():
+    modules = [
+        {'type': 'dek', 'data': {'text': 'A claim — and a dash.'}},
+        {'type': 'pull_quote', 'data': {'quote': 'Their words — verbatim.'}},
+        {'type': 'evidence', 'data': {'items': [{
+            'text': 'Source — dash.', 'thinker': 'A',
+            'url': 'https://example.com/e'}]}},
+    ]
+    out = {m['type']: m['data'] for m in gm.conform_modules(modules)}
+    assert out['dek']['text'] == 'A claim, and a dash.'
+    assert out['pull_quote']['quote'] == 'Their words — verbatim.'
+    assert out['evidence']['items'][0]['text'] == 'Source — dash.'

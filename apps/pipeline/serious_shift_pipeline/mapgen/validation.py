@@ -11,8 +11,8 @@ from .config import (DOMAINS, MAX_KTS_PER_DOM, MAX_SUB_TRENDS,
                      MIN_KTS_PER_DOM, MIN_SUB_TRENDS)
 from .modules import (_LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE,
                       FIELD_WORD_LIMITS, LIST_ITEM_WORD_LIMITS, PAIR_TEXT_WORD_LIMITS,
-                      STEP_TEXT_WORD_LIMIT, count_words, figure_echoes,
-                      stat_claim_key)
+                      STEP_TEXT_WORD_LIMIT, UNAUTHORED_MODULE_TYPES, count_words,
+                      figure_echoes, stat_claim_key)
 from .naming import NAME_FAMILY_CAP, family_keys
 from .phases.hero_stats import stat_matches_shift
 
@@ -324,8 +324,9 @@ _QUOTED = frozenset({'quote'})
 #: Module types whose text is scraped source material or code-derived data,
 #: not authored editorial. A lint that fires on a source author's em dash asks
 #: the repair pass to rewrite a quotation it must never touch — the issue can
-#: only loop. Shared by the duplicate-editorial check and every prose lint.
-_UNAUTHORED_TYPES = frozenset({'evidence', 'voices', 'stat_band', 'related_shifts'})
+#: only loop. One definition, in modules.py, shared with the dash-conform pass
+#: so the writer and the gate agree on what "authored" means.
+_UNAUTHORED_TYPES = UNAUTHORED_MODULE_TYPES
 
 #: An em dash, or a spaced en dash doing an em dash's job. The voice file has
 #: banned them since the redesign ("No em dashes; use a period or a comma") and

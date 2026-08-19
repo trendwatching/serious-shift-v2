@@ -13,8 +13,8 @@ from ..core.text import url_slug as slugify
 from .art.store import publish_art
 from .carryover import load_published_taxonomy, pin_slugs
 from .config import DOMAINS, MODULE_ORDER
-from .modules import (conform_modules, figure_echoes, scrub_module_tree,
-                      stat_band_from_hero, stat_claim_key)
+from .modules import (conform_modules, figure_echoes, normalize_dashes,
+                      scrub_module_tree, stat_band_from_hero, stat_claim_key)
 from .validation import EVIDENCE_REUSE_SHARE, require_valid_map
 
 
@@ -315,8 +315,8 @@ def build_map_json_v2(conn) -> dict:
             'db_id':       kt['id'],
             'domain_id':   kt['domain_id'],
             'name':        kt['name'],
-            'subtitle':    kt['subtitle'],
-            'description': kt['subtitle'],   # back-compat alias
+            'subtitle':    normalize_dashes(kt['subtitle']),
+            'description': normalize_dashes(kt['subtitle']),   # back-compat alias
             'velocity':    kt['velocity'] or 'rising',
             'hero_stat':   kt['hero_stat'],  # {value, thinker, source, year} or null
             'sub_trend_ids': [f'st-{i}' for i in st_ids_by_kt.get(kt['id'], [])],
@@ -393,8 +393,11 @@ def build_map_json_v2(conn) -> dict:
             'key_trend_id': f'kt-{st["kt_id"]}',
             'domain_id':   st['domain_id'],
             'name':        st['name'],
-            'subtitle':    st['subtitle'],
-            'description': st['description'],
+            # Same dash conform as module prose: subtitle/description are
+            # phase-3/4 authored copy, and seo.rs publishes the description
+            # verbatim as the meta description.
+            'subtitle':    normalize_dashes(st['subtitle']),
+            'description': normalize_dashes(st['description']),
             'claim_ids':   [f'c_{i}' for i in claim_ids_by_st.get(st['id'], [])],
             'slug':    url_slug,
             'modules': st_modules,

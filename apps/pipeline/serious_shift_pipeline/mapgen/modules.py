@@ -137,6 +137,50 @@ def scrub_module_tree(value):
     return value
 
 
+#: The voice file has said "No em dashes; use a period or a comma" since the
+#: redesign, and the model ignored it 748 times on the 2026-08-19 live map —
+#: far more than one repair pass may rewrite. Punctuation is mechanical, so it
+#: is conformed here at export (the same reasoning as scrub_module_tree: the
+#: offending strings are already baked into published rows, and --export-only
+#: cleans them for free) and the em_dash gate stays as the invariant.
+_EM_DASH_RANGE = re.compile(r'(?<=\d)\s*—\s*(?=\d)')
+_EM_DASH_PROSE = re.compile(r'\s*—\s*')
+_SPACED_EN_DASH = re.compile(r'\s+–\s+')
+
+
+def normalize_dashes(text) -> str:
+    """`text` with rhetorical dashes replaced by the comma the voice file asks
+    for. A digit range keeps a dash — "2026—2028" becomes "2026–2028", never
+    "2026, 2028", which would change its meaning."""
+    t = str(text)
+    t = _EM_DASH_RANGE.sub('–', t)
+    t = _EM_DASH_PROSE.sub(', ', t)
+    t = _SPACED_EN_DASH.sub(', ', t)
+    return t
+
+
+#: Keys whose text is someone else's or code-derived: a quoted human's dash is
+#: theirs, and source/label strings are attribution, not prose.
+_DASH_EXEMPT_KEYS = frozenset({'quote', 'source', 'label'})
+
+#: Module types whose data is scraped or derived, never authored editorial.
+#: Mirrored by validation._UNAUTHORED_TYPES; the gate and this conform pass
+#: must agree on what "authored" means or the gate flags text nobody wrote.
+UNAUTHORED_MODULE_TYPES = frozenset({'evidence', 'voices', 'stat_band',
+                                     'related_shifts'})
+
+
+def _normalize_dash_tree(value, skip=_DASH_EXEMPT_KEYS):
+    if isinstance(value, dict):
+        return {k: v if (k in NOT_PROSE or k in skip) else _normalize_dash_tree(v, skip)
+                for k, v in value.items()}
+    if isinstance(value, list):
+        return [_normalize_dash_tree(v, skip) for v in value]
+    if isinstance(value, str):
+        return normalize_dashes(value)
+    return value
+
+
 #: How the publication gate counts a word. `str.split()` is NOT the same
 #: measure: it treats "cost/benefit", "U.S." and "2026—2028" as one word each,
 #: where this counts them as two, three and two. Clamping by one definition and
@@ -515,6 +559,11 @@ def conform_modules(modules: list) -> list:
             continue
         type_ = module.get('type')
         data = dict(module.get('data') or {})
+
+        # Authored prose only: a source author's dash is theirs, and the
+        # em_dash gate exempts the same types and keys, so the two agree.
+        if type_ not in UNAUTHORED_MODULE_TYPES:
+            data = _normalize_dash_tree(data)
 
         for (limited_type, field), limit in FIELD_WORD_LIMITS.items():
             if type_ == limited_type and data.get(field):
