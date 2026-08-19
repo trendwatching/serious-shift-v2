@@ -7,6 +7,7 @@ a Gemini outage must cost this week's images rather than the taxonomy.
 from __future__ import annotations
 
 import io
+from pathlib import Path
 
 import pytest
 from PIL import Image
@@ -15,7 +16,15 @@ from serious_shift_pipeline.mapgen import art
 from serious_shift_pipeline.mapgen.art import gemini, raster
 from serious_shift_pipeline.mapgen.art.prompts import (concept_from_modules,
                                                        image_prompt, prompt_sha256)
-from serious_shift_pipeline.mapgen.art.style import FRAMES, OG, RAMP, ramp_for
+from serious_shift_pipeline.mapgen.art.style import (FRAMES, MASTER_PIXELS, OG, RAMP,
+                                                      ramp_for)
+from serious_shift_pipeline.mapgen.phases.art_briefs import (ART_BRIEF_PROMPT_VERSION,
+                                                             CONTEXT_LIMIT, REGISTERS,
+                                                             _context, _with_registers,
+                                                             brief_inputs_sha256,
+                                                             briefs_from_result,
+                                                             describes_written_matter,
+                                                             register_for)
 
 
 def _png(width=1024, height=1024, colour=(120, 30, 90)) -> bytes:
@@ -74,12 +83,73 @@ def test_the_digest_is_over_the_encoded_bytes():
 
 # ── prompt assembly and idempotency ──────────────────────────────────────
 
-def test_the_style_and_the_no_text_guard_are_not_the_brief_to_argue_with():
+def test_the_style_and_the_guards_are_not_the_brief_to_argue_with():
     prompt = image_prompt('consumers', 'hero', 'A queue of people at a doorway.')
     assert RAMP['consumers']['hot'] in prompt
     assert 'A queue of people at a doorway.' in prompt
     assert FRAMES['hero']['clause'] in prompt
     assert 'Absolutely no text anywhere in the image' in prompt
+    assert 'No explanatory symbols of any kind' in prompt
+
+
+def test_the_image_prompt_bans_what_the_first_fleet_kept_drawing():
+    """19 Aug 2026 review: arrows, lightning and people at screens, everywhere.
+
+    The brief prompt bans these too, but a brief is written by a different model
+    from the image, and this one volunteers them unprompted.
+    """
+    prompt = image_prompt('society', 'wide', 'A field after rain.')
+    for banned in ('no arrows', 'no lightning bolts', 'no circuitry',
+                   'no rising graphs', 'nobody looking at a screen'):
+        assert banned in prompt
+
+
+def test_the_register_is_stable_for_a_slug_and_spread_across_the_set():
+    """The register reaches the image through the brief, and the brief is hashed.
+
+    Anything that moved — a position in a list, a count of siblings — would re-pay
+    for a family's images the first time the repair pass re-clustered a sub-shift.
+    """
+    assert register_for('silent-commerce') == register_for('silent-commerce')
+    assert register_for('') in REGISTERS
+    picks = {register_for(f'shift-{i}') for i in range(60)}
+    assert picks == set(REGISTERS), 'every register should be reachable'
+
+
+def test_no_two_siblings_get_the_same_register():
+    """Independent hashing was tried first: with six registers and four siblings a
+    collision is more likely than not, and the sub tiles are exactly where it
+    shows — they sit next to each other on one page."""
+    subs = [{'slug': f'parent/sub-{i}'} for i in range(5)]
+    for parent in ('parent', 'another-parent', 'a-third'):
+        picked = [sub['register'] for sub in _with_registers(subs, parent)]
+        assert len(set(picked)) == len(picked), picked
+        assert register_for(parent) not in picked, 'a child repeats its parent'
+
+
+def test_sibling_registers_survive_a_reordered_export():
+    """Ranked by slug, not by array position: a document the export happened to
+    emit in another order must not repaint the family."""
+    subs = [{'slug': f'parent/sub-{i}'} for i in range(4)]
+    forward = {s['slug']: s['register'] for s in _with_registers(subs, 'parent')}
+    backward = {s['slug']: s['register']
+                for s in _with_registers(list(reversed(subs)), 'parent')}
+    assert forward == backward
+
+
+def test_the_register_is_not_stapled_onto_the_image_prompt():
+    """It was, first. A register picked in code contradicts the scene as often as
+    it shapes it — "a crowd seen whole" landing under a brief about two people in
+    a doorway — so it is given to the brief writer, which cannot disagree with
+    itself."""
+    prompt = image_prompt('society', 'hero', 'Two people in a flooded doorway.')
+    assert not any(register in prompt for register in REGISTERS)
+
+
+def test_the_hero_frame_no_longer_mandates_a_crowd():
+    """It used to read "lands on the crowd in the lower third", which put the same
+    composition under every key shift and left the register nothing to vary."""
+    assert 'crowd' not in FRAMES['hero']['clause']
 
 
 def test_an_unknown_sphere_falls_back_rather_than_raising():
@@ -104,6 +174,118 @@ def test_the_fallback_concept_keeps_a_sentence_case_initial_intact():
     concept = concept_from_modules('X', arc_from='Trust in brands',
                                    arc_to='Trust in agents')
     assert 'trust in brands' in concept
+
+
+# ── what the brief writer is allowed to read ─────────────────────────────
+
+def _shift_with_modules():
+    return {'name': 'X', 'subtitle': 'y', 'modules': [
+        {'type': 'from_to', 'data': {'from': 'A', 'to': 'B'}},
+        {'type': 'dek', 'data': {'text': 'The dek.'}},
+        {'type': 'peel_tabs', 'data': {'whats_changing': 'CHANGING',
+                                       'why_now': 'NOW'}},
+        {'type': 'tension_band', 'data': {'quote': 'TENSION'}},
+        {'type': 'human_needs', 'data': {'unlocked': 'UNLOCKED',
+                                         'threatened': 'THREATENED'}},
+        {'type': 'industries', 'data': {'items': ['FURNITURE']}},
+        {'type': 'territories', 'data': {'items': ['FURNITURE']}},
+        {'type': 'timeline', 'data': {'steps': ['FURNITURE']}},
+    ]}
+
+
+def test_the_brief_reads_the_thesis_and_not_the_page_furniture():
+    """The tension is what a metaphor is drawn from, and it used to be withheld —
+    which is why the first fleet illustrated the subject matter instead."""
+    context = _context(_shift_with_modules())
+    for wanted in ('A', 'B', 'The dek.', 'CHANGING', 'NOW', 'TENSION',
+                   'UNLOCKED', 'THREATENED'):
+        assert wanted in context
+    # Industries, territories and timeline stay out: hand those over and the brief
+    # describes the page rather than the shift.
+    assert 'FURNITURE' not in context
+
+
+@pytest.mark.parametrize('brief', [
+    'the numbers are still impressed into the paper, legible as grooves',
+    'A hand-lettered placard leans against the doorway.',
+    'A price tag pinned through the produce.',
+    'Rows of jars, each with a paper label.',
+])
+def test_a_brief_that_describes_writing_is_rejected(brief):
+    """Seen on the first metaphor-first sample run: a brief about ink and numbers
+    came back as a picture full of garbled figures. The image prompt's ban on text
+    cannot un-ask for a price tag, so the brief has to be stopped instead."""
+    assert describes_written_matter(brief)
+
+
+@pytest.mark.parametrize('brief', [
+    'A number of people wait at the gate.',
+    'Any number of crates stacked against the wall.',
+    'Shelves of unlabelled jars in a cold room.',
+    'A vast airport concourse, hundreds of travellers moving in loose streams.',
+    'A wooden crate on a concrete floor, packing straw spilling over the edge.',
+])
+def test_the_guard_does_not_reject_a_scene_with_nothing_written_in_it(brief):
+    """A false positive costs a shift its new artwork for the week, so the common
+    quantity idiom is excused and "unlabelled" — a scene with no writing in it —
+    must pass."""
+    assert not describes_written_matter(brief)
+
+
+def test_a_rejected_parent_does_not_take_its_sub_shifts_down_with_it():
+    """Losing five pages of artwork to one bad word on the parent is a far worse
+    trade than the parent going a week without."""
+    result = {'shift': {'brief': 'A wall of handwritten numbers.'},
+              'sub_shifts': [{'name': 'Charm Collapse', 'brief': 'A knot in weathered timber.'}]}
+    subs = [{'name': 'Charm Collapse', 'slug': 'silent-commerce/charm-collapse'}]
+    shift_brief, sub_briefs = briefs_from_result(result, 'silent-commerce', subs)
+    assert shift_brief == ''
+    assert sub_briefs == [('silent-commerce/charm-collapse', 'A knot in weathered timber.')]
+
+
+def test_the_sample_tool_filters_exactly_like_the_phase():
+    """The sample is what the team reviews before a fleet regeneration. One that
+    parsed or filtered differently would be a review of the wrong thing — which is
+    what happened when it had its own copy and let a handwritten card through."""
+    from serious_shift_pipeline.mapgen.art import sample
+    assert sample.briefs_from_result is briefs_from_result
+
+
+def test_a_runaway_context_is_cut_on_a_word_boundary():
+    """A 900-char cap used to bite on the first real shift tried, and it took the
+    last slot — the human need threatened — with it. That slot is the tension the
+    brief is asked to draw, so losing it silently is the expensive failure."""
+    shift = {'modules': [{'type': 'peel_tabs',
+                          'data': {'whats_changing': 'word ' * 2000}}]}
+    context = _context(shift)
+    assert len(context) <= CONTEXT_LIMIT + 1        # +1 for the ellipsis
+    assert context.endswith('…')
+    assert 'wor…' not in context
+
+
+def test_a_normal_shift_is_never_truncated():
+    """The cap is a runaway guard, not a budget: every field feeding it is already
+    word-capped by FIELD_WORD_LIMITS."""
+    assert '…' not in _context(_shift_with_modules())
+
+
+def test_the_context_orders_itself_not_the_export():
+    """Two documents that differ only in module order must hash the same, or a
+    reordering that changes nothing a reader sees re-pays for every image."""
+    shift = _shift_with_modules()
+    shuffled = {**shift, 'modules': list(reversed(shift['modules']))}
+    assert brief_inputs_sha256(shift, []) == brief_inputs_sha256(shuffled, [])
+
+
+def test_bumping_the_prompt_version_rewrites_every_brief(monkeypatch):
+    """Editing art_brief.txt alone is a silent no-op — the hash covers the shift's
+    editorial, not the prompt. The version constant is the only thing that makes a
+    prompt change reach the model."""
+    shift = _shift_with_modules()
+    before = brief_inputs_sha256(shift, [])
+    monkeypatch.setattr('serious_shift_pipeline.mapgen.phases.art_briefs.'
+                        'ART_BRIEF_PROMPT_VERSION', ART_BRIEF_PROMPT_VERSION + 1)
+    assert brief_inputs_sha256(shift, []) != before
 
 
 # ── the rule: art never blocks a publish ─────────────────────────────────
@@ -169,6 +351,78 @@ def test_urls_carry_the_content_digest_so_a_swap_is_instant():
     # A sub-shift PAGE inherits the parent's poster; only its tile is its own.
     assert sub['hero_image'] == shift['hero_image']
     assert attached == 4
+
+
+def test_a_sub_shift_wears_its_own_poster_not_its_parents():
+    """It used to wear its parent's, which made five sibling pages look like one
+    page. The tile was the only thing that was its own."""
+    document = _document()
+    art._attach(document, {
+        ('key_trend', 'silent-commerce', 'hero'): {'sha256': 'a' * 64},
+        ('key_trend', 'silent-commerce', 'wide'): {'sha256': 'b' * 64},
+        ('sub_trend', 'silent-commerce/charm-arithmetic', 'hero'): {'sha256': 'c' * 64},
+        ('sub_trend', 'silent-commerce/charm-arithmetic', 'wide'): {'sha256': 'd' * 64},
+    })
+    sub = document['sub_trends'][0]
+    assert sub['hero_image'].startswith('/art/hero/silent-commerce/charm-arithmetic.jpg')
+    assert sub['hero_image_wide'].startswith('/art/wide/silent-commerce/charm-arithmetic.jpg')
+    assert 'c' * 12 in sub['hero_image'], 'the digest should be the sub\'s own'
+
+
+def test_a_sub_shift_falls_back_to_its_parent_rather_than_to_a_gradient():
+    """Art is decoration and a failed generation must not strip the page bare.
+    seo.rs reads og_image straight off the row, so without the fallback a
+    sub-shift's link preview would regress to the committed static card."""
+    document = _document()
+    art._attach(document, {('key_trend', 'silent-commerce', 'hero'): {'sha256': 'a' * 64},
+                           ('key_trend', 'silent-commerce', 'og'): {'sha256': 'b' * 64}})
+    sub = document['sub_trends'][0]
+    assert sub['hero_image'] == document['key_trends'][0]['hero_image']
+    assert sub['og_image'] == document['key_trends'][0]['og_image']
+
+
+def test_a_sub_shift_generates_two_masters_and_gets_four_frames():
+    """Two generations, four frames: the poster is a crop of the tile master and
+    the share card a crop of the wide one, so the extra frames cost nothing."""
+    jobs = art._jobs(_document(), {('key_trend', 'silent-commerce'): 'c',
+                                   ('sub_trend', 'silent-commerce/charm-arithmetic'): 'c'})
+    sub_jobs = [j for j in jobs if j['scope'] == 'sub_trend']
+    assert sorted(j['frame'] for j in sub_jobs) == ['tile', 'wide']
+    master = _png()
+    frames = {row['frame'] for job in sub_jobs for row in art._outputs(job, master)}
+    assert frames == {'tile', 'hero', 'wide', 'og'}
+
+
+def test_every_derived_frame_is_a_downscale_of_its_master():
+    """A frame that rides along free must not be a softer frame. Checked against
+    the master sizes Gemini really returns (style.MASTER_PIXELS), not against an
+    assumed 1024 square — 21:9 comes back 1584x672, and guessing got this wrong."""
+    for (scope, master_frame), derived in art.DERIVED.items():
+        source_w, source_h = MASTER_PIXELS[master_frame]
+        for frame in derived:
+            spec = art.spec_for(frame)
+            scale = max(spec['width'] / source_w, spec['height'] / source_h)
+            assert scale <= 1.0, (f'{scope}/{master_frame} -> {frame} upscales '
+                                  f'{scale:.2f}x from {source_w}x{source_h}')
+
+
+def test_the_generated_frames_are_the_ones_we_measured():
+    """MASTER_PIXELS is only as good as its coverage: a new generated frame with
+    no measurement would silently skip the check above."""
+    generated = {job_frame for _, job_frame in art.DERIVED} | {'hero', 'wide', 'tile'}
+    assert generated <= set(MASTER_PIXELS)
+
+
+def test_the_art_route_reads_the_scope_off_the_slug_not_the_frame():
+    """The backend used to infer scope from the frame — only a sub-shift had a
+    tile. Sub-shifts now have heroes too, so that inference 404s every one."""
+    source = (Path(__file__).resolve().parents[3]
+              / 'apps' / 'backend' / 'src' / 'main.rs')
+    if not source.exists():
+        pytest.skip('backend not present (installed layout)')
+    body = source.read_text(encoding='utf-8')
+    assert 'let scope = if slug.contains(\'/\')' in body
+    assert 'let scope = if frame == "tile"' not in body
 
 
 def test_a_missing_frame_leaves_the_key_off_entirely():

@@ -261,23 +261,34 @@ def prompt_synthesis_insights(domain_name: str, domain_desc: str, claims: list) 
 # ── Art briefs: one image description per shift and sub-shift ───────────────
 
 def prompt_art_brief(kt_name: str, kt_subtitle: str, kt_context: str,
-                     sub_trends: list) -> str:
+                     sub_trends: list, kt_register: str = '') -> str:
     """One call per Key Trend, covering the shift and all of its children.
 
     Batched the way `prompt_st_editorial` is, so a partial answer stays
     recoverable per sub-shift by name, and so the five sub-briefs are written
     with sight of each other — which is the only way "each one is a different
     detail of the same world" can be asked for at all.
+
+    Each sub-trend carries its own visual register on its own line. Assigning
+    them here rather than letting the model vary the scenes by itself is what
+    stopped the first fleet converging: asked for variety it produced the same
+    composition every time, and asked for a landscape it produced a landscape.
+    `register` on a sub-trend dict is optional — an omitted one simply leaves the
+    choice to the model, which is the pre-19-Aug-2026 behaviour.
     """
     lines = []
     for st in sub_trends:
         subtitle = str(st.get('subtitle') or st.get('description') or '').strip()
         lines.append(f"- {st['name']}" + (f" — {subtitle}" if subtitle else ''))
+        register = str(st.get('register') or '').strip()
+        if register:
+            lines.append(f"  REGISTER: {register}")
     return load_and_render(
         "map/art_brief.txt",
         voice=VOICE,
         kt_name=kt_name,
         kt_subtitle=kt_subtitle,
         kt_context=kt_context,
+        kt_register=kt_register or '(your choice — vary it from the sub-trends below)',
         sub_trends='\n'.join(lines) or '- (none)',
     )

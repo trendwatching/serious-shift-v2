@@ -8,22 +8,42 @@ Write one IMAGE BRIEF for the Key Trend below, and one for each of its sub-trend
 WHAT A BRIEF IS FOR
 The brief is the only part of the image prompt that knows what this shift is about. Everything else — the medium, the colour, the framing, the ban on text — is fixed in code and identical for every image on the site. So the brief's whole job is to make THIS page's picture unmistakably about THIS shift, and impossible to confuse with its siblings.
 
+THE METHOD
+Do not illustrate the subject matter. Work these three steps in order, then write only what step 3 produces.
+
+1. NAME THE TENSION. In one sentence to yourself: what does this shift gain and what does it cost at the same time — or what is the before and the after it turns on? The tension is in the reading below, not in the title. Read all of it before deciding.
+2. FIND THE ANALOGUE. A concrete physical situation with that same SHAPE, taken from a domain far away from the shift's subject matter: weather, water, food, building work, repair, transport, land, animals, household life, anything done with the hands. If the shift is about AI, computing or software, nothing in the scene may be a computer. If it is about retail, the scene is not a shop. If it is about money, the scene is not a bank. The analogue must not appear literally anywhere in the reading — if the text mentions floods, do not choose a flood, and for a shift about pricing a price tag is the subject itself, not an analogue for it.
+3. WRITE THE SCENE, in the REGISTER you are given. One place, what is in it, and the one thing that is happening. Never explain the connection, never name the shift's subject, never gloss what the scene means.
+
+THE REGISTER
+Each brief below is assigned a visual register — the KIND of picture it has to be. It is not a suggestion, and it is not negotiable: pick an analogue in step 2 that can be staged that way. Every shift on this site is drawn in one house style, so if the registers do not vary the pictures do not either, and the whole map ends up looking like one image drawn many times.
+
+NEVER
+These are the reflexes an image model reaches for when it is illustrating a topic instead of drawing a scene. None of them may appear in a brief:
+- arrows, lightning bolts, circuit boards or circuitry, glowing brains, glowing orbs, rising graphs or charts, networks of dots or connecting lines, robots, holograms, floating interfaces
+- anyone looking at, holding, or standing in front of a screen, laptop, phone, tablet or monitor
+- the stock-metaphor shelf: handshakes, light bulbs, chess pieces, jigsaw pieces, tightropes, crossroads, doorways opening onto bright light, seedlings in cupped hands, falling dominoes, keys and locks, scales and balances
+- OBJECTS WHOSE WHOLE JOB IS TO CARRY WRITING: menus, price tags, receipts, signs, departure boards, noticeboards, posters, newspapers, leaflets, certificates, tickets, labels, screens. Do not put one in the scene even empty, even blank, even with the writing "lifted away" — the model fills it in anyway. Choose an object that would be silent in life. This trap is easiest to fall into on shifts about pricing, signals or information, which is exactly when you must not.
+- WRITING OF ANY KIND. Not handwriting, printed figures, numbers, letters, labels, price tags, receipts, ledgers, signage, captions or logos — and not "illegible" or "faded" ones either. The image is generated with an absolute ban on text, so a brief that puts writing in the scene does not get smudged writing, it gets a picture full of garbled characters. If your scene contains a surface that would carry writing in life, the writing is simply not in the picture. Describe the surface, the wear and the light instead.
+
 RULES
 - One scene. A place, the people in it, and the one thing that is happening. Not a list of symbols, not a mood board, not two ideas joined by "and".
 - CONCRETE and physical. Name real objects, real settings, real gestures: a queue, a doorway, a screen turned away, hands held out, an empty chair. If a sentence could describe a different trend, it is too abstract to use.
-- NO metaphors of the "represents" kind: nothing "symbolising trust", nothing "representing the economy". Show the situation and let it mean what it means.
-- People appear silhouetted, from behind, or cropped — no readable faces, and no single hero figure carrying the image. Vary age, body shape and dress; never a room of interchangeable young professionals.
+- The scene IS the meaning; it is never labelled with one. A room where the chairs have been carried out is a brief. Anything "symbolising trust" or "representing the economy" is not — the moment you write what a thing stands for, you have stopped describing a picture.
+- MATERIALS, SCALE AND LIGHT are yours, and they carry more than symbols do: what things are made of, how worn they are, how big one is against another, where the light falls and what it leaves dark. Use them. Do NOT name the medium, the palette, the colours, the aspect ratio or the composition — those are set in code and a brief that argues with them fights the house style.
+- People appear silhouetted, from behind, or cropped — no readable faces, and no single hero figure carrying the image. Vary age, body shape and dress; never a room of interchangeable young professionals. A scene with no people in it at all is allowed and often stronger.
 - NEVER describe text, letters, numbers, logos, charts with labels, signage or watermarks. The image is generated with an explicit ban on them and asking for them produces garbled shapes.
-- Do not name the medium, the palette, the colours, the aspect ratio or the composition. Those are set in code and a brief that argues with them fights the house style.
 - Do not name real companies, real people or real brands.
 - Present tense. 40–70 words for the Key Trend, 30–50 for each sub-trend.
 
 THE SUB-TREND BRIEFS
-Each sub-trend brief is a DETAIL of the Key Trend's world, not a restatement of it. Pick a different object, a different actor, or a different moment. Read the five together before returning: if two could be swapped without anyone noticing, at least one is not specific enough.
+Each sub-trend brief is a DIFFERENT SCENE inside the Key Trend's world, not a restatement of it and not the same scene with the props swapped. Run step 1 again for each: a sub-trend has its own tension, and it earns its own analogue. Vary the kind of scene across the set — if one is a wide landscape, another is a pair of hands at work, another is one object close up, another is a room with no one in it. Read them together before returning: if two could be swapped without anyone noticing, at least one is not specific enough.
 
 KEY TREND: {{kt_name}}
 {{kt_subtitle}}
 {{kt_context}}
+
+REGISTER for the Key Trend brief: {{kt_register}}
 
 SUB-TRENDS:
 {{sub_trends}}

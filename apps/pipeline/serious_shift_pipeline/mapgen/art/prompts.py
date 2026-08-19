@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import hashlib
 
-from .style import FRAMES, NO_TEXT, collage, ramp_for
+from .style import FRAMES, NO_SYMBOLS, NO_TEXT, collage, ramp_for
 
 
 def _lower_initial(text: str) -> str:
@@ -35,17 +35,23 @@ def concept_from_modules(name: str, dek: str = '', arc_from: str = '',
 
 
 def image_prompt(sphere: str, frame: str, concept: str) -> str:
-    """style + concept + frame clause + the no-text guard, in that order.
+    """style + concept + frame clause + the two guards, in that order.
 
-    The brief occupies the concept slot and nothing else. Style, ramp, framing
-    and the no-text rule stay in code so an authored brief cannot argue with the
-    art direction — which is the failure mode of letting a model describe its own
-    composition.
+    The brief occupies the concept slot and nothing else. Style, ramp, framing and
+    the bans stay in code so an authored brief cannot argue with the art direction
+    — which is the failure mode of letting a model describe its own composition.
+
+    The visual register is the one piece of art direction that is NOT here. It
+    varies per shift, and a register chosen in code can contradict the scene the
+    brief describes outright — "stage it as a crowd seen whole" landing under a
+    brief about two people in a doorway. So it is handed to the brief writer
+    instead (`phases/art_briefs.REGISTERS`) and reaches the image in the brief's
+    own words, which are more specific than a generic clause could be.
     """
     spec = FRAMES[frame]
     return (f'{collage(ramp_for(sphere))} '
             f'{concept.strip()} '
-            f'{spec["clause"]}{NO_TEXT}')
+            f'{spec["clause"]}{NO_TEXT}{NO_SYMBOLS}')
 
 
 def prompt_sha256(model: str, aspect: str, prompt: str) -> str:
