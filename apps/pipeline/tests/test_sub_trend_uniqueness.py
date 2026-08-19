@@ -8,7 +8,9 @@ candidates the model already returned rather than asking for new ones.
 """
 from __future__ import annotations
 
-from serious_shift_pipeline.mapgen.naming import choose_unique, name_key
+from serious_shift_pipeline.mapgen.naming import (
+    NAME_FAMILY_CAP, breaches_family_cap, choose_unique, family_counter,
+    family_keys, name_key)
 
 
 def _sub(name):
@@ -80,3 +82,58 @@ def test_a_nameless_candidate_is_skipped_without_being_reported():
     kept, dropped = choose_unique([{'name': '  '}, _sub('Real')], 5, claimed)
     assert [k['name'] for k in kept] == ['Real']
     assert dropped == []
+
+
+# ── Name families ────────────────────────────────────────────────────────────
+# The 2026-08-19 content review counted nine "…Blindspot"s and seven
+# "…Premium"s — every one legal by exact-slug uniqueness, together a monotone.
+
+
+def test_blind_spot_and_blindspot_are_one_family():
+    assert family_keys('Deflation Blind Spot') & family_keys('Proxy Blindspot')
+    assert family_keys('Liability Blind Spot') & family_keys('Deflation Blindspot')
+
+
+def test_short_and_stop_words_never_form_a_family():
+    # "AI" (2 chars) and "of" must not register; nothing here collides
+    assert not (family_keys('AI Shift') & family_keys('AI Premium'))
+
+
+def test_no_stemming_blindness_is_not_blindspot():
+    assert not (family_keys('Proxy Blindness') & family_keys('Proxy Blindspot') - {'proxy'})
+
+
+def test_the_third_family_member_is_walked_past():
+    families = family_counter(['Evaluation Premium', 'Collapse Premium'])
+    assert breaches_family_cap('Toil Premium', families)
+    kept, dropped = choose_unique(
+        [_sub('Toil Premium'), _sub('Craft Amnesia')], 1, set(), families=families)
+    assert [k['name'] for k in kept] == ['Craft Amnesia']
+    assert dropped == ['Toil Premium']
+
+
+def test_kept_names_count_toward_the_cap():
+    families = family_counter(['Origin Debt'])
+    kept, dropped = choose_unique(
+        [_sub('Privacy Debt'), _sub('Graph Debt'), _sub('Verification Gap')],
+        3, set(), families=families)
+    # second "Debt" fills the cap; the third is rejected
+    assert [k['name'] for k in kept] == ['Privacy Debt', 'Verification Gap']
+    assert dropped == ['Graph Debt']
+
+
+def test_head_words_form_families_too():
+    families = family_counter(['Context Capture', 'Context Ransom'])
+    assert breaches_family_cap('Context Prerequisite', families)
+
+
+def test_families_none_preserves_old_behavior():
+    claimed: set = set()
+    kept, dropped = choose_unique(
+        [_sub('Evaluation Premium'), _sub('Collapse Premium'), _sub('Toil Premium')],
+        3, claimed)
+    assert len(kept) == 3 and dropped == []
+
+
+def test_the_cap_is_two():
+    assert NAME_FAMILY_CAP == 2, "the review's finding: a pair rhymes, three is a tic"

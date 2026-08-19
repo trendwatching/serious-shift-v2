@@ -25,6 +25,8 @@ bar compares. Anything looser here and the two disagree again.
 """
 from __future__ import annotations
 
+from collections import Counter
+
 from ..core.text import url_slug as slugify
 
 
@@ -33,7 +35,57 @@ def name_key(value: object) -> str:
     return slugify(str(value or '')) or ''
 
 
+#: How many pages one family word may headline across the whole map. The
+#: 2026-08-19 content review counted nine "…Blindspot"s, seven "…Premium"s and
+#: six "…Arithmetic"s — every one a legal name by the exact-slug rule, and
+#: together a map that reads like one author's tic. Two is the cap because a
+#: pair can still be a deliberate rhyme; three is a pattern.
+NAME_FAMILY_CAP = 2
+
+
+def family_keys(value: object) -> set[str]:
+    """The name patterns a name occupies: its head word, its tail word, and the
+    joined tail bigram.
+
+    The bigram is what makes "Deflation Blind Spot" and "Deflation Blindspot"
+    the same family — the first registers {deflation, spot, blindspot} and the
+    second {deflation, blindspot, deflationblindspot}; they collide on
+    `blindspot` no matter how the model spaces it. Tokens shorter than four
+    characters are dropped so "AI" or "of" never counts as a family.
+
+    Deliberately no stemming: "Blindness" and "Blindspot" stay distinct. The
+    british-spelling lint's calibration note applies here too — an overgreedy
+    matcher produces false hits, gets distrusted, and gets switched off. Exact
+    squeezed tokens keep the false-positive rate at zero and accept the
+    residual.
+    """
+    tokens = [t for t in name_key(value).split('-') if t]
+    keys = set()
+    if len(tokens) >= 2:
+        keys.add(tokens[-2] + tokens[-1])
+    for token in (tokens[0], tokens[-1]) if tokens else ():
+        if len(token) >= 4:
+            keys.add(token)
+    return keys
+
+
+def family_counter(names) -> Counter:
+    """Seed a family ledger from names that already exist on the map."""
+    counts: Counter = Counter()
+    for name in names:
+        counts.update(family_keys(name))
+    return counts
+
+
+def breaches_family_cap(name: object, families: Counter,
+                        cap: int = NAME_FAMILY_CAP) -> bool:
+    """Whether taking `name` would push any of its families past `cap`."""
+    return any(families[key] >= cap for key in family_keys(name))
+
+
 def choose_unique(candidates: list[dict], want: int, claimed: set[str],
+                  families: Counter | None = None,
+                  family_cap: int = NAME_FAMILY_CAP,
                   ) -> tuple[list[dict], list[str]]:
     """The first `want` candidates whose names nobody else is already wearing.
 
@@ -46,6 +98,12 @@ def choose_unique(candidates: list[dict], want: int, claimed: set[str],
     spares run out — publishing four children is explicitly allowed by the gate
     (`4 <= len(children) <= 5`, there so an editor can merge two), and four real
     names beat five with a twin among them.
+
+    When a `families` Counter is passed, a candidate whose name would push any
+    of its `family_keys` past `family_cap` is walked past exactly like a slug
+    collider, and every kept name's families are counted. Pass the same Counter
+    shift after shift (and sphere after sphere) and the cap holds map-wide.
+    `families=None` disables the check entirely.
     """
     kept: list[dict] = []
     dropped: list[str] = []
@@ -54,10 +112,14 @@ def choose_unique(candidates: list[dict], want: int, claimed: set[str],
             break
         name = str(candidate.get('name') or '').strip()
         key = name_key(name)
-        if not key or key in claimed:
+        if not key or key in claimed or (
+                families is not None
+                and breaches_family_cap(name, families, family_cap)):
             if name:
                 dropped.append(name)
             continue
         claimed.add(key)
+        if families is not None:
+            families.update(family_keys(name))
         kept.append(candidate)
     return kept, dropped
