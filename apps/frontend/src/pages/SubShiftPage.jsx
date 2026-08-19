@@ -4,6 +4,7 @@ import { cssUrl } from '../lib/safeUrl'
 import { useResolved } from '../lib/useDomains'
 import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
+import { WorkWithUs } from '../chrome/WorkWithUs'
 import { Modules } from '../modules'
 import { Loading, Missing, Unavailable } from './states'
 import { isSphere, quoted, trendTitle, unquote } from '../lib/theme'
@@ -88,6 +89,9 @@ export default function SubShiftPage() {
           </p>
         )}
         <Modules modules={sub.modules} ctx={{ scope: 'sub_shift', domain, subs: [] }} />
+        {/* See the note on the key-shift page: the last module, and the only
+            one the reader is asked to act on. */}
+        <WorkWithUs />
       </div>
 
       <div style={{ marginTop: 10 }}><Footer /></div>

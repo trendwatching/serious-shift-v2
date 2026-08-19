@@ -222,6 +222,11 @@
     /* The bands run edge to edge; their contents keep the page's measure. */
     .footer-inner { max-width: var(--wide); }
 
+    /* Wide, the band has room the phone does not; its card keeps its own
+       measure, which is what leaves the collage visible either side of it. */
+    .wwu { padding-block: 52px; background-position: center; }
+    .wwu-card { max-width: 560px; }
+
     /* Released: the column is the measure now. */
     .measure { max-width: none; }
 

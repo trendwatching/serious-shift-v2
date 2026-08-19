@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { MemoryRouter } from '../src/lib/router'
 import { Header } from '../src/chrome/Header'
 import { HumanNeeds, PeelTabs } from '../src/modules/interactive'
+import { WorkWithUs } from '../src/chrome/WorkWithUs'
 import { Modules } from '../src/modules'
 import { innovationItems } from './fixtures'
 
@@ -50,6 +51,18 @@ describe('modules', () => {
     expect(screen.queryByRole('link', { name: /Bare minimum/i })).not.toBeInTheDocument()
   })
 
+  it('leaves the territories rail to its own cards', () => {
+    // The Work With Us CTA used to be the last cell here, which is why it only
+    // ever reached Consumers — the three other spheres hide this module.
+    render(
+      <MemoryRouter>
+        <Modules modules={[{ type: 'territories', data: { items: [{ name: 'Proof rails', text: 'Sell the receipt.' }] } }]} ctx={ctx} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('Proof rails')).toBeInTheDocument()
+    expect(screen.queryByText(/Ready for the shift/i)).not.toBeInTheDocument()
+  })
+
   it('drops an empty module rather than rendering an empty band', () => {
     render(<Modules modules={[{ type: 'innovations', data: { items: [] } }]} ctx={ctx} />)
     expect(screen.queryByText(/Innovations in the wild/i)).not.toBeInTheDocument()
@@ -79,5 +92,13 @@ describe('header navigation', () => {
 
     fireEvent.keyDown(document, { key: 'Escape' })
     await waitFor(() => expect(trigger).toHaveFocus())
+  })
+})
+
+describe('work with us', () => {
+  it('is a band of its own, pointing at the About page services section', () => {
+    render(<MemoryRouter><WorkWithUs /></MemoryRouter>)
+    expect(screen.getByRole('heading', { name: /Ready for the shift/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Talk To Us/i })).toHaveAttribute('href', '/about#services')
   })
 })

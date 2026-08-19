@@ -358,24 +358,85 @@
     box-shadow: 0 12px 22px rgba(27, 22, 32, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
 
-  /* The Work With Us CTA — 40px, not 44. */
+  /* The Work With Us CTA.
+     Orange carrying white, at the footer CTA's full height. It was a 40px
+     yellow pill while it lived on a sunset card, where yellow was the only
+     colour with any contrast left; on the white card of the standalone band
+     yellow has no edge at all, so it takes the brand orange the footer's
+     subscribe button already uses. `--color-orange` and not the mockup's
+     brighter #F04E09 — see the token, which was deepened precisely so that
+     white on it clears AA. check-contrast.mjs gates the pair. */
   .pill-contact {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    height: calc(var(--cta-h) * 0.8);
-    padding: 0 16px;
+    justify-content: center;
+    /* The label is a bare text node, so a narrow card must widen the pill
+       rather than break "Talk To Us" over two lines. */
+    white-space: nowrap;
+    height: var(--cta-h);
+    padding: 0 clamp(30px, 24.5px + 1.4vw, 50px);
     border-radius: 999px;
-    background: var(--color-yellow);
-    color: var(--color-ink);
+    background: var(--color-orange);
+    color: #fff;
     font-family: var(--font-display);
-    font-size: 13.5px;
+    font-size: var(--t-cta);
     font-weight: 700;
+    letter-spacing: -0.01em;
+    box-shadow: 0 6px 15px color-mix(in srgb, var(--color-orange) 26%, transparent);
     transition: transform 0.28s var(--ease-out), box-shadow 0.28s ease;
   }
   .pill-contact:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+    /* Tinted with the button's own colour, like `.ss-cta` — a neutral black
+       shadow under a saturated pill reads as dirt. */
+    box-shadow: 0 14px 26px color-mix(in srgb, var(--color-orange) 45%, transparent);
+  }
+}
+
+@layer components {
+  /* ── Work with us ────────────────────────────────────────────────────
+   * The CTA reads as the page's last module, so it is shaped like one: the
+   * column's width, the house card radius, the house resting shadow. What
+   * makes it a step outside the reading flow is the art, not the geometry.
+   * ------------------------------------------------------------------- */
+  .wwu {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    padding: clamp(26px, 22px + 1vw, 44px) clamp(18px, 12px + 1.5vw, 40px);
+    border-radius: 20px;
+    /* Brand yellow is the GROUND, not a fallback to be tidied away later: the
+       collage export sits on the same yellow, so the band is the right colour
+       whether or not the art has landed, and the art can be swapped without
+       touching anything else here. */
+    background-color: var(--color-yellow);
+    background-image: url('/shift/work-with-us.jpg');
+    background-size: cover;
+    /* The art is a 2.47:1 banner and a phone column is nearer 1.3:1, so `cover`
+       throws away half its width. Biased left rather than centred, because
+       what centring keeps is the torn-paper middle and what it crops is the
+       meeting table and the eye — the people, on the one block that asks the
+       reader to come and work with people. Released to centre on desktop,
+       where the column is wide enough to hold both ends. */
+    background-position: 20% center;
+    box-shadow: 0 3px 12px rgba(27, 22, 32, 0.05);
+  }
+
+  /* Opaque white, one radius step in from its container — nested rounds have
+     to step down or the corners read as parallel, not concentric. */
+  .wwu-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 520px;
+    margin-inline: auto;
+    padding: clamp(24px, 20px + 1vw, 34px) clamp(20px, 12px + 2vw, 40px);
+    border-radius: 16px;
+    background: #fff;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(27, 22, 32, 0.12);
   }
 }
 
