@@ -195,6 +195,45 @@ def test_short_figure_extraction():
         assert gm._short_figure(raw) == want, f"{raw!r} -> {gm._short_figure(raw)!r}, want {want!r}"
 
 
+def test_figure_key_folds_spellings_of_one_figure():
+    for a, b in [
+        ("$54.2 million", "54.2M"), ("72 percent", "72%"),
+        ("3.5×", "3.5x"), ("3.5 times", "3.5x"), ("30-fold", "30x"),
+        ("660,000", "660000"), ("$1,300", "1300"),
+    ]:
+        assert gm.figure_key(a) == gm.figure_key(b), (a, b)
+    # distinct figures stay distinct
+    assert gm.figure_key("72%") != gm.figure_key("27%")
+    assert gm.figure_key("54.2M") != gm.figure_key("54.2B")
+
+
+def test_distinctive_figures_exclude_coincidence():
+    for token in ["72%", "$54.2M", "3.5x", "660,000", "10874", "2.78T"]:
+        assert gm.is_distinctive_figure(token), token
+    # bare small integers and years collide across unrelated prose
+    for token in ["30", "88", "2026", "2025", "", None, "multi-hop"]:
+        assert not gm.is_distinctive_figure(token), token
+
+
+def test_figure_echoes_finds_the_restated_stat():
+    hits = gm.figure_echoes(
+        "3.5x conversion rate vs. keyword search, Amazon voice AI shoppers",
+        [("subtitle", "Amazon's assistant converts at 3.5 times... at 3.5x the rate"),
+         ("dek", "The agent has displaced the brand website."),
+         ("why_now", "75% of US adults now use AI tools for shopping.")])
+    assert [p for p, _ in hits] == ["subtitle"]
+
+    # long-form and reduced spellings of the fronted value behave the same
+    for fronted in ("$54.2 million in fines", "$54.2M"):
+        hits = gm.figure_echoes(fronted, [("lede", "regulators booked 54.2M in fines")])
+        assert hits, fronted
+
+    # a fronted value with no distinctive figure can never echo — a bare "30"
+    # matching by coincidence is not a repetition
+    assert gm.figure_echoes("30 of the labs", [("dek", "30 labs agreed")]) == []
+    assert gm.figure_echoes("", [("dek", "72% of adults")]) == []
+
+
 def test_stat_band_needs_a_value_not_just_prose():
     """stat_text alone can't render the band — the numeral comes from hero_stat."""
     kt = gm.kt_modules({"subtitle": "d", "hero_stat": None}, {"stat_text": "prose only"})
