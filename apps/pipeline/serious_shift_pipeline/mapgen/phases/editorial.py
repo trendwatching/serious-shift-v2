@@ -4,7 +4,8 @@ from __future__ import annotations
 from ...prompts import prompt_kt_editorial, prompt_st_editorial
 from ..config import CLAIMS_PER_KT, DOMAINS, MIN_SUB_TRENDS
 from ..llm import generate_json
-from ..modules import _jsonb, _short_figure, count_words, kt_modules, st_modules
+from ..modules import (_jsonb, _short_figure, count_words, figure_echoes,
+                       kt_modules, st_modules)
 
 
 KT_REQUIRED = {
@@ -119,7 +120,49 @@ def _overlong_fields(editorial: object) -> list[str]:
     return over
 
 
-def _feedback_block(missing: list[str], overlong: list[str]) -> str:
+def _authored_texts(editorial: dict) -> list[tuple[str, str]]:
+    """Every prose field a body carries, as (path, text) pairs for the echo
+    check — the same fields the publication gate scans, so what this refuses
+    to accept, the gate would refuse to publish."""
+    if not isinstance(editorial, dict):
+        return []
+    texts: list[tuple[str, str]] = []
+    for field in ('dek', 'lede', 'from', 'to', 'pull_quote', 'quote',
+                  'tension', 'consumer_tension', 'whats_changing', 'why_now'):
+        if editorial.get(field):
+            texts.append((field, str(editorial[field])))
+    for field in ('human_needs', 'timeline'):
+        nested = editorial.get(field)
+        if isinstance(nested, dict):
+            texts += [(f'{field}.{k}', str(v)) for k, v in nested.items() if v]
+    for field in ('signals', 'counter_signals'):
+        for i, item in enumerate(editorial.get(field) or []):
+            if item:
+                texts.append((f'{field}[{i + 1}]', str(item)))
+    for field in ('industries', 'territories', 'opportunities'):
+        for item in editorial.get(field) or []:
+            if isinstance(item, dict) and item.get('text'):
+                texts.append((f'{field} "{str(item.get("name") or "")[:30]}"',
+                              str(item['text'])))
+    return texts
+
+
+def _echoing_fields(fronted_value, editorial) -> list[str]:
+    """Fields that restate the figure the page already fronts, for feedback.
+
+    The prompts have forbidden this since contract v7 and are ignored on 36 of
+    the 2026-08-19 live map's 237 pages; naming the offending field is what
+    makes a retry converge where restating the rule did not. Shares
+    `figure_echoes` with phase 8, export and the gate — one definition of
+    "repeats the headline statistic" everywhere.
+    """
+    return [f'{path} (restates {figure})'
+            for path, figure in figure_echoes(fronted_value,
+                                              _authored_texts(editorial))]
+
+
+def _feedback_block(missing: list[str], overlong: list[str],
+                    echoing: list[str] | None = None) -> str:
     """The retry addendum: name exactly what failed, ask for the same JSON."""
     lines = ['', '', 'YOUR PREVIOUS RESPONSE WAS REJECTED. Fix ONLY these and '
                      'return the complete corrected JSON:']
@@ -128,11 +171,15 @@ def _feedback_block(missing: list[str], overlong: list[str]) -> str:
     for entry in overlong:
         lines.append(f'- OVER THE WORD CAP: {entry} — tighten it; do not pad '
                      f'elsewhere to compensate')
+    for entry in echoing or []:
+        lines.append(f'- REPEATS THE HEADLINE STATISTIC: {entry} — the stat '
+                     f'band already displays this figure; make the point '
+                     f'without the number')
     return '\n'.join(lines)
 
 
 def _generate_until_complete(items, prompt_of, is_complete, *, describe, label,
-                             diagnose=None):
+                             diagnose=None, echoes_of=None):
     """Generate one body per item, then re-request only the ones that failed.
 
     Incomplete or overlong bodies used to be written as a NULL module list, which
@@ -141,22 +188,28 @@ def _generate_until_complete(items, prompt_of, is_complete, *, describe, label,
     them cost the entire run.
 
     A retry carries feedback: `diagnose(item, result)` returns the list of
-    missing fields, which — together with the overlong fields — is appended to
-    the prompt. Re-sending the identical prompt converged on the identical
+    missing fields, which — together with the overlong fields and any fields
+    restating the page's fronted figure (`echoes_of`) — is appended to the
+    prompt. Re-sending the identical prompt converged on the identical
     mistake; naming the defect is what makes attempt two different from
     attempt one.
     """
+    def echoing(item, r) -> list[str]:
+        return echoes_of(item, r) if echoes_of else []
+
     results = generate_json(items, prompt_of, default=dict, describe=describe)
     for attempt in range(2, MAX_EDITORIAL_ATTEMPTS + 1):
         pending = [i for i, (item, r) in enumerate(zip(items, results))
-                   if not is_complete(item, r) or _overlong_fields(r)]
+                   if not is_complete(item, r) or _overlong_fields(r)
+                   or echoing(item, r)]
         if not pending:
             break
-        print(f'    {label}: {len(pending)} incomplete or overlong — '
-              f'attempt {attempt}/{MAX_EDITORIAL_ATTEMPTS}')
+        print(f'    {label}: {len(pending)} incomplete, overlong or repeating '
+              f'their statistic — attempt {attempt}/{MAX_EDITORIAL_ATTEMPTS}')
         feedback = {
             i: _feedback_block(diagnose(items[i], results[i]) if diagnose else [],
-                               _overlong_fields(results[i]))
+                               _overlong_fields(results[i]),
+                               echoing(items[i], results[i]))
             for i in pending
         }
         retried = generate_json(
@@ -169,9 +222,10 @@ def _generate_until_complete(items, prompt_of, is_complete, *, describe, label,
                 continue
             # Never trade a structurally complete body for a merely shorter
             # one unless the retry also stayed complete — which it did, here —
-            # and does not overrun harder than what it replaces.
-            if not was_complete or len(_overlong_fields(result)) <= len(
-                    _overlong_fields(results[index])):
+            # and does not carry more defects than what it replaces.
+            def _defects(r, item=items[index]):
+                return len(_overlong_fields(r)) + len(echoing(item, r))
+            if not was_complete or _defects(result) <= _defects(results[index]):
                 results[index] = result
     still = sum(1 for item, r in zip(items, results) if not is_complete(item, r))
     if still:
@@ -262,8 +316,17 @@ def _generate_sub_editorial(items, *, describe, avoid_of=None):
     return accumulated
 
 
-def _verified_stat(editorial: dict, claims: list[dict]) -> dict | None:
-    """Attach provenance from our database, never from model-authored text."""
+def _verified_stat(editorial: dict, claims: list[dict],
+                   page_texts: list[tuple[str, str]] | None = None) -> dict | None:
+    """Attach provenance from our database, never from model-authored text.
+
+    `page_texts` is the page's other copy — its name, subtitle, description and
+    the body's own prose. A stat whose figure already appears there is refused:
+    the copy half of that pair cannot move (name and subtitle are phase-4
+    prose no repair rewrites), so the movable half cedes, exactly as
+    `export.reconcile_self_echo` does for persisted picks. The stat is
+    optional on a sub-shift, so refusing it costs a band, never the page.
+    """
     raw = editorial.get('stat') if isinstance(editorial, dict) else None
     if not isinstance(raw, dict):
         return None
@@ -278,6 +341,8 @@ def _verified_stat(editorial: dict, claims: list[dict]) -> dict | None:
     value = _short_figure(claim.get('statistic')) if claim else None
     url = str(claim.get('source_url') or '') if claim else ''
     if not claim or not claim.get('has_statistic') or not value or not url.startswith(('http://', 'https://')):
+        return None
+    if page_texts and figure_echoes(claim.get('statistic'), page_texts):
         return None
     source = claim.get('thinker') or claim.get('source_title') or ''
     date = str(claim.get('date_published') or '')[:4]
@@ -471,6 +536,10 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
                            'carry a source_url)')
         return missing
 
+    def _kt_hero_value(item):
+        hero = (kt_rows.get(item[1]['_db_id']) or {}).get('hero_stat')
+        return hero.get('value') if isinstance(hero, dict) else None
+
     kt_results = _generate_until_complete(
         work,
         lambda item: prompt_kt_editorial(
@@ -479,6 +548,9 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
             hero_stat=(kt_rows.get(item[1]['_db_id']) or {}).get('hero_stat')),
         kt_is_complete, describe=describe, label='shift editorial',
         diagnose=kt_diagnose,
+        # The hero is fixed before this phase runs, so a body restating its
+        # figure is the body's defect — re-ask with the field named.
+        echoes_of=lambda item, r: _echoing_fields(_kt_hero_value(item), r),
     )
     with_subs = [item for item in work if item[3]]
     st_results = _generate_sub_editorial(
@@ -523,7 +595,12 @@ def phase4b_editorial(conn, api_key: str, domain_claims: dict, domain_kts: dict)
                            and len(cited) >= 2 and cited <= allowed_ids)
             if complete_st:
                 se = dict(se)
-                se['stat'] = _verified_stat(se, allowed)
+                se['stat'] = _verified_stat(
+                    se, allowed,
+                    page_texts=[('name', sub['name']),
+                                ('subtitle', sub['subtitle']),
+                                ('description', sub['description'])]
+                    + _authored_texts(se))
             conn.execute(
                 'UPDATE domain_sub_trends SET modules=%s::jsonb WHERE id=%s',
                 (_jsonb(st_modules(sub, se)) if complete_st else None, sub['id']),

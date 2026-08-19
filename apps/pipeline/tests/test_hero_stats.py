@@ -161,6 +161,23 @@ def test_a_shift_with_only_off_topic_candidates_gets_none():
     assert assign_heroes(kts, by_kt) == {20: None}
 
 
+def test_a_hero_never_restates_the_subtitle_figure():
+    """The subtitle is phase-3 copy no later pass rewrites, so a hero echoing
+    it puts the same number on the page twice, forever — 32 pages on the
+    2026-08-19 live map. The next-ranked non-echoing candidate wins instead."""
+    from serious_shift_pipeline.mapgen.phases.hero_stats import assign_heroes
+    kts = [{'id': 50, 'name': 'Silent Commerce',
+            'subtitle': 'Amazon voice shopping converts at 3.5x the rate of keyword search'}]
+    echoing = _cand(1, '3.5x conversion rate for voice shopping',
+                    'Amazon voice shopping assistants convert shoppers', 9.0)
+    clean = _cand(2, '75% of adults use AI shopping tools',
+                  'AI shopping tools reach mainstream adoption at Amazon', 5.0)
+    picked = assign_heroes(kts, {50: [echoing, clean]})[50]
+    assert picked is not None and picked['value'].startswith('75%')
+    # when every on-topic candidate echoes, the shift goes without a statistic
+    assert assign_heroes(kts, {50: [echoing]})[50] is None
+
+
 def test_a_claim_a_child_already_fronts_is_a_last_resort_not_a_veto():
     """This used to be a hard exclusion, and it inverted the gate.
 

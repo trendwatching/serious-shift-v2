@@ -13,8 +13,8 @@ from ..core.text import url_slug as slugify
 from .art.store import publish_art
 from .carryover import load_published_taxonomy, pin_slugs
 from .config import DOMAINS, MODULE_ORDER
-from .modules import (conform_modules, scrub_module_tree, stat_band_from_hero,
-                      stat_claim_key)
+from .modules import (conform_modules, figure_echoes, scrub_module_tree,
+                      stat_band_from_hero, stat_claim_key)
 from .validation import EVIDENCE_REUSE_SHARE, require_valid_map
 
 
@@ -424,6 +424,16 @@ def build_map_json_v2(conn) -> dict:
         print(f"  ↳ {reuse_report['claims_trimmed']} over-reaching claim citation(s) "
               f"trimmed — no claim anchors more than {reuse_report['cap']} pages.")
 
+    # A page must not restate the figure it fronts — its fixed copy can't move,
+    # so the fronted half cedes. Runs BEFORE the cross-page dedup so a doomed
+    # hero never claims seniority over a sub-shift band it would then not use.
+    echo_report = reconcile_self_echo(key_trends_j, sub_trends_j)
+    if echo_report['shift_heroes_dropped'] or echo_report['sub_bands_dropped']:
+        gone = echo_report['shift_heroes_dropped'] + echo_report['sub_bands_dropped']
+        print(f"  ↳ {len(gone)} fronted statistic(s) dropped for restating the "
+              f"page's own name or subtitle: {', '.join(gone[:5])}"
+              + (' …' if len(gone) > 5 else ''))
+
     # One claim, one page — settled here rather than asked of the writers.
     stat_report = reconcile_fronted_stats(key_trends_j, sub_trends_j)
     if stat_report['sub_bands_ceded'] or stat_report['sub_bands_deduped']:
@@ -664,6 +674,55 @@ def reconcile_fronted_stats(key_trends: list, sub_trends: list) -> dict:
 
     return {'shift_heroes_dropped': dropped,
             'sub_bands_ceded': ceded, 'sub_bands_deduped': deduped}
+
+
+def reconcile_self_echo(key_trends: list, sub_trends: list) -> dict:
+    """Drop a fronted statistic the page's own fixed copy already states.
+
+    A hero whose figure sits in the shift's name or subtitle puts the same
+    number on the page twice, and the copy half of that pair cannot move: the
+    subtitle is phase-3/4 prose the repair pass never rewrites, and there is no
+    safe deterministic edit that removes a number from a sentence. So — same
+    policy as `reconcile_fronted_stats` above — the movable half cedes: the
+    hero (and the band derived from it) is stripped, and the page renders as a
+    shift without a statistic rather than a shift that says one thing twice.
+
+    Phase 8 now avoids picking such heroes at all, so on a fresh run this is a
+    no-op. It exists because --export-only republishes persisted picks without
+    re-running phase 8, and a pick made before the avoidance landed (all 32
+    subtitle echoes on the 2026-08-19 live map) must not survive an export.
+    """
+    heroes_dropped: list[str] = []
+    bands_dropped: list[str] = []
+
+    for index, shift in enumerate(key_trends):
+        hero = shift.get('hero_stat')
+        if not isinstance(hero, dict) or not hero.get('value'):
+            continue
+        if figure_echoes(hero.get('value'),
+                         [('name', shift.get('name')),
+                          ('subtitle', shift.get('subtitle'))]):
+            shift['hero_stat'] = None
+            shift['modules'] = [m for m in shift.get('modules') or []
+                                if not (isinstance(m, dict) and m.get('type') == 'stat_band')]
+            heroes_dropped.append(shift.get('slug') or f'key_trends[{index}]')
+
+    for index, sub in enumerate(sub_trends):
+        kept = []
+        for module in sub.get('modules') or []:
+            if (isinstance(module, dict) and module.get('type') == 'stat_band'
+                    and (module.get('data') or {}).get('value')
+                    and figure_echoes(module['data'].get('value'),
+                                      [('name', sub.get('name')),
+                                       ('subtitle', sub.get('subtitle')),
+                                       ('description', sub.get('description'))])):
+                bands_dropped.append(sub.get('slug') or f'sub_trends[{index}]')
+                continue
+            kept.append(module)
+        sub['modules'] = kept
+
+    return {'shift_heroes_dropped': heroes_dropped, 'sub_bands_dropped': bands_dropped}
+
 
 def _write_map_document(conn, out):
     """Validate and atomically promote a candidate, rotating the last good map."""

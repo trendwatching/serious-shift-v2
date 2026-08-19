@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 
 from ...core.matching import normalize
-from ..modules import _short_figure, stat_claim_key
+from ..modules import _short_figure, figure_echoes, stat_claim_key
 
 #: Attributions render as a single small line under the statistic. A scraped
 #: article title can be 200+ characters of pipe-separated newsletter sections,
@@ -131,6 +131,14 @@ def assign_heroes(kt_rows: list[dict],
             if _short_figure(row['statistic']) is not None
             and stat_matches_shift(kt['name'], kt['subtitle'],
                                    row['statistic'], row['claim_text'])
+            # Never front a figure the shift's own fixed copy already states:
+            # the subtitle is phase-3 prose no later pass can rewrite, so a
+            # hero echoing it puts the same number on the page twice, forever.
+            # The topicality test above wants VOCABULARY overlap; this rejects
+            # only the FIGURE recurring — the two must never be merged.
+            and not figure_echoes(row['statistic'],
+                                  [('name', kt['name']),
+                                   ('subtitle', kt['subtitle'])])
         ]
         # Stable partition, so strength order survives inside each half.
         rows.sort(key=lambda r: stat_claim_key(r['statistic'], r['url']) in fronted)

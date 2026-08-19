@@ -227,6 +227,43 @@ def test_reconciliation_leaves_the_gate_nothing_to_find():
     assert 'duplicate_hero_claim' not in codes(document)
 
 
+def test_a_hero_restating_its_own_subtitle_is_dropped_at_export():
+    """The subtitle cannot move (phase-3 copy, no repair rewrites it) and there
+    is no safe deterministic edit that removes a number from a sentence, so the
+    movable half — the fronted statistic — cedes. --export-only republishes
+    persisted picks without re-running phase 8; this is its safety net."""
+    from serious_shift_pipeline.mapgen.export import reconcile_self_echo
+
+    echoing = _shift('silent-commerce', '3.5x conversion rate', 'u1')
+    echoing['subtitle'] = 'Amazon voice AI converts at 3.5 times the rate of keyword search'
+    clean = _shift('psyche-capture', '72% report attachment', 'u2')
+    clean['subtitle'] = 'AI companions rewire what users expect from each other'
+    report = reconcile_self_echo([echoing, clean], [])
+
+    assert report['shift_heroes_dropped'] == ['silent-commerce']
+    assert echoing['hero_stat'] is None
+    assert 'stat_band' not in [m['type'] for m in echoing['modules']]
+    assert clean['hero_stat'] is not None
+    assert 'stat_band' in [m['type'] for m in clean['modules']]
+
+
+def test_a_sub_band_restating_its_own_fixed_copy_is_dropped_at_export():
+    from serious_shift_pipeline.mapgen.export import reconcile_self_echo
+
+    sub = _sub('660,000', 'u1')
+    sub.update(slug='permeable-embargo', name='Permeable Embargo',
+               subtitle='An estimated 660,000 smuggled H100-equivalents reached China',
+               description='Export controls are failing at the border.')
+    report = reconcile_self_echo([], [sub])
+    assert report['sub_bands_dropped'] == ['permeable-embargo']
+    assert 'stat_band' not in [m['type'] for m in sub['modules']]
+
+    untouched = _sub('72%', 'u2')
+    untouched.update(name='Clean Page', subtitle='No numbers here', description='')
+    assert reconcile_self_echo([], [untouched])['sub_bands_dropped'] == []
+    assert 'stat_band' in [m['type'] for m in untouched['modules']]
+
+
 def test_the_us_spelling_of_programmed_is_not_flagged_as_british():
     """`programme(?:s|d)?` matched "programmed", which is the US past tense of
     "program" — three correct sentences failed the 18 Aug 2026 run on it. The
