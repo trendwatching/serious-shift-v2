@@ -61,7 +61,7 @@ def family_keys(value: object) -> set[str]:
     """
     tokens = [t for t in name_key(value).split('-') if t]
     keys = set()
-    if len(tokens) >= 2:
+    if len(tokens) >= 2 and len(tokens[-2] + tokens[-1]) >= 4:
         keys.add(tokens[-2] + tokens[-1])
     for token in (tokens[0], tokens[-1]) if tokens else ():
         if len(token) >= 4:

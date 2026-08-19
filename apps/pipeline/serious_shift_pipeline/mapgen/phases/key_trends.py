@@ -17,6 +17,7 @@ from ...prompts import fmt_claims_block  # noqa: F401  (kept for prompt helpers)
 from ..config import DOMAINS
 from ..dbutil import _slugger
 from ..llm import generate_json
+from ..naming import breaches_family_cap, family_counter, family_keys, name_key
 
 #: One re-ask for a domain that came back under MIN. Bounded: a second short
 #: answer publishes short and the kt_count gate decides.
@@ -29,6 +30,45 @@ def _valid_kts(result: object) -> list[dict]:
         return []
     return [kt for kt in raw
             if isinstance(kt, dict) and kt.get('name') and kt.get('subtitle')]
+
+
+def _select_kts(kts: list[dict], want: int, current_keys: set[str],
+                reserved: set[str], accepted: set[str],
+                families) -> tuple[list[dict], list[str]]:
+    """The first `want` candidates that keep the map's names distinct.
+
+    A candidate is walked past — the same spare-walking `choose_unique` does
+    for sub-shifts — when its name is already accepted this run, or when it is
+    NEW and would either reuse another sphere's live name (`reserved`) or push
+    a name family past its cap ("Cognition Stake" in Society and "Cognition
+    Bleed" in Consumers were both legal by exact equality; the 2026-08-19
+    review named three such pairs).
+
+    A CARRIED name — one this sphere is publishing right now — is exempt from
+    the family test: continuity beats the lint, and retiring a live label is a
+    deliberate act, not a side-effect. Its families are pre-counted by the
+    caller, so keeping it never double-counts.
+    """
+    kept: list[dict] = []
+    dropped: list[str] = []
+    for kt in kts:
+        if len(kept) >= want:
+            break
+        name = str(kt.get('name') or '').strip()
+        key = name_key(name)
+        if not key or key in accepted:
+            if name:
+                dropped.append(name)
+            continue
+        if key not in current_keys and (
+                key in reserved or breaches_family_cap(name, families)):
+            dropped.append(name)
+            continue
+        accepted.add(key)
+        if key not in current_keys:
+            families.update(family_keys(name))
+        kept.append(kt)
+    return kept, dropped
 
 
 def _print_arena_mix(domain_name: str, kts: list[dict], claims: list) -> None:
@@ -72,6 +112,18 @@ def phase3_key_trends(conn, api_key: str, domain_claims: dict,
     slug = _slugger()
     domain_kts: dict = {}
     taken: list[str] = []
+    # One family ledger for the whole map, pre-counting every live published
+    # name once (carried names are exempt from the cap and must not count
+    # again when their sphere returns them). Threaded through `_select_kts`
+    # sphere after sphere, exactly like the `taken` name ledger.
+    live_by_key: dict[str, str] = {}
+    for entries in previous.values():
+        for entry in entries:
+            key = name_key(entry['name'])
+            if key:
+                live_by_key.setdefault(key, entry['name'])
+    families = family_counter(live_by_key.values())
+    accepted: set[str] = set()
     for d in DOMAINS:
         claims = domain_claims[d['id']]
         current = previous.get(d['id']) or []
@@ -111,10 +163,20 @@ def phase3_key_trends(conn, api_key: str, domain_claims: dict,
         elif len(kts) < MIN_KTS_PER_DOM:
             print(f'  {d["name"]}: only {len(kts)} KTs after {MAX_KT_ATTEMPTS} '
                   f'attempts — the kt_count gate will decide')
-        # Deterministic truncation past MAX: the model lists its strongest
+        # Deterministic selection up to MAX: the model lists its strongest
         # candidates first, and a sixth-through-Nth thin trend is exactly what
-        # the range exists to prevent.
-        kts = kts[:MAX_KTS_PER_DOM]
+        # the range exists to prevent. Selection rather than bare truncation,
+        # so a family collider is replaced by the next spare instead of kept —
+        # and never rejected when it is a name this sphere already publishes.
+        current_keys = {name_key(entry['name']) for entry in current}
+        reserved_keys = {name_key(name) for name in reserved} - current_keys
+        kts, family_dropped = _select_kts(
+            kts, MAX_KTS_PER_DOM, current_keys, reserved_keys, accepted, families)
+        if family_dropped:
+            print(f'  {d["name"]}: {len(family_dropped)} candidate name(s) walked '
+                  f'past for echoing an existing name family: '
+                  f'{", ".join(family_dropped[:4])}'
+                  + (' …' if len(family_dropped) > 4 else ''))
 
         written = []
         for j, kt in enumerate(kts, start=1):

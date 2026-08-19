@@ -8,7 +8,8 @@ from ...core.text import url_slug as slugify
 from ...prompts import prompt_sub_trends
 from ..config import CLAIMS_PER_KT, DOMAINS, MAX_SUB_TRENDS, MIN_SUB_TRENDS
 from ..dbutil import _slugger
-from ..naming import choose_unique, name_key
+from ..naming import (breaches_family_cap, choose_unique, family_counter,
+                      family_keys, name_key)
 from ..llm import generate_json
 
 #: Aim for the maximum; publish anything from the minimum up. Both come from
@@ -242,17 +243,28 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     # ── Collision pass ────────────────────────────────────────────────────
     #
     # Walk the results in a fixed order, claiming names as we go. A shift whose
-    # sub-trends collide with anything already claimed is re-asked with the
-    # accumulated list, which is the only point at which a call can know what
-    # every other call produced. Deterministic order so a rerun makes the same
-    # decisions; validation.py hard-fails anything that survives.
+    # sub-trends collide with anything already claimed — exactly, or by pushing
+    # a name FAMILY past its cap (nine "…Blindspot"s were all exact-unique) —
+    # is re-asked with the accumulated list, which is the only point at which a
+    # call can know what every other call produced. Deterministic order so a
+    # rerun makes the same decisions; validation.py hard-fails exact twins that
+    # survive, and choose_unique below resolves family breaches by walking to a
+    # spare.
     for attempt in range(1, MAX_CLUSTER_ATTEMPTS + 1):
+        families = family_counter(display[key] for key in sorted(taken))
         clashing = []
         for index, (item, result) in enumerate(zip(work, results)):
             names = [str(sub.get('name') or '').strip()
                      for sub in (result.get('sub_trends') or [])]
             keys = [n.lower() for n in names if n]
-            if any(k in taken for k in keys) or len(set(keys)) != len(keys):
+            breach = False
+            batch = family_counter(())
+            for name in names:
+                if breaches_family_cap(name, families + batch):
+                    breach = True
+                    break
+                batch.update(family_keys(name))
+            if any(k in taken for k in keys) or len(set(keys)) != len(keys) or breach:
                 clashing.append(index)
                 continue
             for name, key in zip(names, keys):
@@ -288,6 +300,17 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
     claimed: set[str] = {name_key(name) for name in existing_names}
     claimed |= {name_key(kt.get('name')) for _, kt, _ in work}
     claimed.discard('')
+    # The family ledger, seeded the same way: what the map already wears counts
+    # toward every cap, so a run against a published map cannot re-grow the
+    # "…Blindspot" monotone one legal name at a time. Deduplicated on name_key
+    # first — existing_names already contains this run's key trends, and a name
+    # counted twice would saturate its families on its own.
+    seed_names: dict[str, str] = {}
+    for name in list(existing_names) + [str(kt.get('name') or '') for _, kt, _ in work]:
+        key = name_key(name)
+        if key:
+            seed_names.setdefault(key, name)
+    chosen_families = family_counter(seed_names.values())
     promoted = 0
     short: list[str] = []
     for (d_id, kt, claims), result in zip(work, results):
@@ -296,7 +319,8 @@ def phase4_sub_trends(conn, api_key: str, domain_claims: dict, domain_kts: dict)
         # duplicate the gate then rejected.
         allowed = {claim['id'] for claim in claims}
         candidates = _validated_sub_trends(result, allowed)
-        chosen, dropped = choose_unique(candidates, MAX_SUB_TRENDS, claimed)
+        chosen, dropped = choose_unique(candidates, MAX_SUB_TRENDS, claimed,
+                                        families=chosen_families)
         promoted += len(dropped)
         if len(chosen) < MIN_SUB_TRENDS:
             short.append(kt['name'])
