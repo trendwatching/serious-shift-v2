@@ -32,7 +32,7 @@ from .phases.sub_trends import phase4_sub_trends
 from .publish_hook import post_shift_map
 from .routing import route_claims_for_domain
 from .validation import (PublicationValidationError, _load_contract,
-                         validate_map)
+                         advisory_issues, skipped_issue_codes, validate_map)
 
 #: How many parent shifts one targeted repair may regenerate, as a SHARE of the
 #: map. It was a flat 12, which is a third of a 36-shift map and a fifth of a
@@ -185,7 +185,12 @@ def _issue_shift_ids(out: dict, issues) -> set[str]:
 #: and topicality are assignment decisions, and stat coverage can recover when
 #: the assignment shuffles. Runs before any paid editorial regen, because the
 #: stat_band the editorial builds is derived from hero_stat.
-HERO_REPAIR_CODES = {'duplicate_hero_claim', 'hero_topicality', 'stat_coverage'}
+#: `stat_echo_subtitle` belongs here because the copy half of that pair can
+#: never move — phase 8 (which now avoids echoing candidates) reassigns the
+#: hero, and export's reconcile_self_echo mops up the sub-shift bands.
+HERO_REPAIR_CODES = {'duplicate_hero_claim', 'hero_topicality', 'stat_coverage',
+                     'stat_echo_subtitle'}
+
 
 
 def _targeted_repair_once(conn, api_key: str, out: dict, issues,
@@ -254,16 +259,32 @@ def _targeted_repair_once(conn, api_key: str, out: dict, issues,
 
 def _publish_candidate(conn, out: dict, *, api_key: str = '', domain_claims=None,
                        domain_kts=None, allow_repair: bool = False) -> dict:
-    issues = validate_map(out)
+    def _blocking(found):
+        skipped_codes = skipped_issue_codes()
+        skipped = [i for i in found if i.code in skipped_codes]
+        if skipped:
+            print(f'  SS_SKIP_ISSUE_CODES: {len(skipped)} issue(s) printed but '
+                  f'not blocking ({", ".join(sorted({i.code for i in skipped}))}):')
+            for issue in skipped[:MAX_PRINTED_ISSUES]:
+                print(f'    - {issue.code} at {issue.path}')
+        return [i for i in found if i.code not in skipped_codes]
+
+    issues = _blocking(validate_map(out))
     if issues and allow_repair and api_key and domain_claims is not None and domain_kts is not None:
         print(f'Candidate invalid ({len(issues)} issue(s)); running one targeted repair pass…')
         if _targeted_repair_once(conn, api_key, out, issues, domain_claims, domain_kts):
             out = build_map_json_v2(conn)
-            issues = validate_map(out)
+            issues = _blocking(validate_map(out))
     if issues:
         exc = PublicationValidationError(issues)
         _record_validation_failure(exc)
         raise exc
+
+    # Advisory findings ride every publish as a report: real defects the
+    # machine cannot fix (name-family monotony, an em dash in a subtitle) that
+    # must reach the operator without holding the map hostage.
+    for issue in advisory_issues(out)[:MAX_PRINTED_ISSUES]:
+        print(f'  advisory: {issue.code} at {issue.path} — {issue.message}')
 
     # Artwork, after the gate and before the write. The taxonomy is final here
     # and nowhere earlier — the repair pass above can re-cluster sub-shifts and
