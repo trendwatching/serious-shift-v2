@@ -71,7 +71,8 @@ def test_a_succeeding_stage_still_runs_every_step(monkeypatch):
 
     outcomes = run_mod.run_stage(
         'synthesize', args=_Args(), error_log=_Log(), subprocess_env=None)
-    assert outcomes == {'mapgen': 'ok', 'classify': 'ok'}
+    assert outcomes == {'scan': 'ok', 'score': 'ok', 'dedupe': 'ok',
+                        'mapgen': 'ok', 'classify': 'ok'}
 
 
 # ── the orchestrator's run row is not mapgen's to close ──────────────────

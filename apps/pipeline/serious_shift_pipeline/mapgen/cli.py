@@ -17,7 +17,7 @@ from ..core.observability import RunLog
 from . import llm as mapgen_llm
 from .art import generate_and_attach
 from .carryover import load_published_taxonomy
-from .config import CLAIMS_PER_DOM, DOMAINS
+from .config import CLAIMS_PER_DOM, DOMAINS, load_gates
 from .dbutil import get_conn, reset_v2_tables
 from .export import (
     _write_map_document, build_map_json_v2, load_kts_from_db,
@@ -27,6 +27,7 @@ from .phases.domains import phase1_domain_definitions
 from .phases.editorial import phase4b_editorial
 from .phases.hero_stats import phase8_hero_stats
 from .phases.key_trends import phase3_key_trends
+from .phases.research_topup import phase3b_research_topup
 from .phases.routing import phase2_claim_routing
 from .phases.sub_trends import phase4_sub_trends
 from .publish_hook import post_shift_map
@@ -48,9 +49,12 @@ from .validation import (PublicationValidationError, _load_contract,
 #: everywhere, not to refuse one that needs a lot of small fixes, so it sits just
 #: below "all of them": a run where EVERY shift is defective is systemic and
 #: should still fail loudly rather than be rewritten wholesale.
-REPAIR_SHIFT_SHARE = float(os.environ.get('SS_REPAIR_SHIFT_SHARE', '0.85'))
+#: The value lives in packages/contracts/gates.json — a reviewed file, not an
+#: env var, so loosening it is a diff someone signed off on (the
+#: SS_REPAIR_SHIFT_SHARE override this replaced left no trace).
+REPAIR_SHIFT_SHARE = float(load_gates().get('repair_shift_share', 0.85))
 #: Floor, so a small map still gets a useful repair.
-MIN_TARGETED_REPAIR_SHIFTS = 12
+MIN_TARGETED_REPAIR_SHIFTS = int(load_gates().get('min_targeted_repair_shifts', 12))
 
 
 def _repair_limit(out: dict) -> int:
@@ -189,7 +193,7 @@ def _issue_shift_ids(out: dict, issues) -> set[str]:
 #: never move — phase 8 (which now avoids echoing candidates) reassigns the
 #: hero, and export's reconcile_self_echo mops up the sub-shift bands.
 HERO_REPAIR_CODES = {'duplicate_hero_claim', 'hero_topicality', 'stat_coverage',
-                     'stat_echo_subtitle'}
+                     'stat_echo_subtitle', 'hero_stat_undated'}
 
 
 
@@ -263,7 +267,7 @@ def _publish_candidate(conn, out: dict, *, api_key: str = '', domain_claims=None
         skipped_codes = skipped_issue_codes()
         skipped = [i for i in found if i.code in skipped_codes]
         if skipped:
-            print(f'  SS_SKIP_ISSUE_CODES: {len(skipped)} issue(s) printed but '
+            print(f'  gates.json skip_issue_codes: {len(skipped)} issue(s) printed but '
                   f'not blocking ({", ".join(sorted({i.code for i in skipped}))}):')
             for issue in skipped[:MAX_PRINTED_ISSUES]:
                 print(f'    - {issue.code} at {issue.path}')
@@ -487,6 +491,11 @@ def main():
 
         # ── Phase 3: Key Trend generation per domain ─────────────────────────
         domain_kts = phase3_key_trends(conn, api_key, domain_claims, previous=previous)
+
+        # ── Phase 3b: per-shift research top-up (web) — each named shift gets
+        #    its own deep-research pass; verified claims join the pools phase 4
+        #    and the editorial read. ────────────────────────────────────────────
+        phase3b_research_topup(conn, domain_claims, domain_kts)
 
         # ── Phase 4: sub-trend clustering ────────────────────────────────────
         phase4_sub_trends(conn, api_key, domain_claims, domain_kts)

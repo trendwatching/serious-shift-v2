@@ -83,21 +83,22 @@ class Step:
         return [PYTHON, '-m', f'{MOD}.{self.args[0]}', *self.args[1:]]
 
 
+# The ingest stage was RETIRED on 2026-08-20: the scraped-thinker corpus is no
+# longer the map's raw material. Content is researched on the live web inside
+# `synthesize` — a sphere-scan discovery step first, then a per-shift research
+# top-up inside mapgen (phase 3b) — with every quote span-verified against a
+# document we fetched and stored. The retired step modules stay in the tree
+# (steps/scraper, process_raw, primary_chase, resolve_predictions, evaluate)
+# but nothing schedules them.
 STEPS: list[Step] = [
-    Step('discover', 'ingest', ['steps.discover'],
-         'Discover (gated arXiv/OpenAlex expansion)', opt_in=True),
-    Step('scrape', 'ingest', ['steps.scraper', '--all'],
-         'Scrape (append-only, per-source watermark)'),
-    Step('extract', 'ingest', ['steps.process_raw'],
-         'Extract claims (Claude API)'),
-    Step('score', 'ingest', ['steps.scoring'],
+    Step('scan', 'synthesize', ['steps.research', '--sphere-scan'],
+         'Sphere scan (live-web discovery, span-verified evidence)'),
+    Step('score', 'synthesize', ['steps.scoring'],
          'Score claims (source_depth, freshness, claim_weight)'),
-    Step('dedupe', 'ingest', ['steps.deduplicate', '--execute'],
-         'Deduplicate claims (mark duplicate_of)'),
-    Step('evaluate', 'ingest', ['steps.evaluate'],
-         'Evaluate predictions + thinker credibility'),
+    Step('dedupe', 'synthesize', ['steps.deduplicate', '--execute'],
+         'Deduplicate claims + corroboration counts'),
     Step('mapgen', 'synthesize', ['mapgen.cli'],
-         'Rebuild the trend map (Claude API clustering)', gated=True,
+         'Rebuild the trend map (per-shift research + generation)', gated=True,
          aborts_stage=True),
     # After mapgen, so it classifies against the map that was just published
     # rather than last week's. Also runs standalone on an hourly cron with
@@ -108,7 +109,7 @@ STEPS: list[Step] = [
          'Map innovations onto the shifts they exemplify'),
 ]
 
-STAGES = ('ingest', 'synthesize')
+STAGES = ('synthesize',)
 
 
 def steps_for(stage: str, *, only: str | None, discover: bool) -> list[Step]:
@@ -322,6 +323,7 @@ def check_escalation(
     previous_runs: list[dict],
     failed_sources: int,
     quiet_sources: list[str] | None = None,
+    blocked_sources: int = 0,
     no_notify: bool = False,
     _notify_fn=None,     # injectable for tests
 ) -> list[str]:
@@ -334,9 +336,22 @@ def check_escalation(
       3. >= FAILED_SOURCES_THRESHOLD sources in 'failed' state
       4. Zero new claims AND the previous run also processed nothing
       5. Individual sources silent for two consecutive runs of this stage
+      6. Sources IP-blocked while no proxy credential is configured — a
+         configuration gap with a known remedy, alarmed on so a whole platform
+         (all 11 YouTube sources, at one point) cannot stay dark for weeks
+         with only a per-run console line to show for it.
     """
     _fn = _notify_fn or notify
     alerts: list[str] = []
+
+    if blocked_sources and not (
+        os.environ.get('YOUTUBE_PROXY_URL')
+        or os.environ.get('WEBSHARE_PROXY_USERNAME')
+    ):
+        alerts.append(
+            f"{blocked_sources} source(s) IP-blocked and no proxy configured — "
+            f"set WEBSHARE_PROXY_USERNAME/WEBSHARE_PROXY_PASSWORD (or "
+            f"YOUTUBE_PROXY_URL) to bring them back")
 
     if run_row:
         cost = float(run_row.get('cost_usd') or 0)
@@ -360,12 +375,12 @@ def check_escalation(
             f"(threshold: {FAILED_SOURCES_THRESHOLD})")
 
     # Compared against the previous run *of this stage*. Synthesis never
-    # processes files and never adds claims, so measuring it against "whatever
-    # ran last" made every back-to-back `synthesize` report silent breakage —
-    # an alert that cries wolf is worse than no alert. Only ingest-shaped stages
-    # carry the signal, so only they are judged on it.
+    # Since the 2026-08-20 pivot, `synthesize` is the stage that ADDS claims
+    # (the sphere scan researches the live web), so it is the stage judged on
+    # producing none — two scan runs yielding zero verified evidence is the
+    # new shape of silent breakage.
     stage = (run_row or {}).get('stage')
-    if new_claims == 0 and stage in ('ingest', 'full'):
+    if new_claims == 0 and stage in ('synthesize', 'full'):
         same_stage = [r for r in previous_runs if r.get('stage') == stage]
         if same_stage and (same_stage[0].get('files_processed') or 0) == 0:
             alerts.append(
@@ -480,7 +495,10 @@ def gate_reason(stage: str, *, dry_run: bool) -> str | None:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description='Serious Shift pipeline', prog='serious_shift_pipeline.run')
-    p.add_argument('stage', nargs='?', default='all', choices=[*STAGES, 'all'],
+    # 'ingest' stays accepted so a stale cron or muscle memory exits cleanly
+    # instead of red-flagging the deploy — it prints a retirement notice.
+    p.add_argument('stage', nargs='?', default='all',
+                   choices=[*STAGES, 'ingest', 'all'],
                    help="Which stage to run (default: all)")
     p.add_argument('--only', metavar='STEP',
                    help='Run a single step of the stage (e.g. --only scrape)')
@@ -501,6 +519,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
+
+    if args.stage == 'ingest':
+        print('The ingest stage was retired on 2026-08-20: content is now '
+              'researched on the live web inside `synthesize` '
+              '(steps.research sphere scan + mapgen phase 3b). Nothing to do.')
+        return 0
 
     if args.list_steps:
         for stage in STAGES:
@@ -637,17 +661,16 @@ def main() -> int:
               + (f" … and {len(quiet) - 8} more" if len(quiet) > 8 else ''))
     print('=' * 60)
 
-    blocked = count_blocked_sources()
-    if blocked:
-        print(f"\n  {blocked} source(s) blocked by the host from this IP "
-              f"(set YOUTUBE_PROXY_URL or WEBSHARE_PROXY_USERNAME/PASSWORD).")
-
     alerts = check_escalation(
         errors=errors,
         new_claims=new_claims,
         run_row=run_row,
         previous_runs=previous,
-        failed_sources=count_failed_sources(),
+        # The scraper is retired (2026-08-20): source_state is frozen history,
+        # so its failed/blocked counts would alarm forever about feeds nothing
+        # reads any more.
+        failed_sources=0,
+        blocked_sources=0,
         quiet_sources=quiet,
         no_notify=args.no_notify,
     )

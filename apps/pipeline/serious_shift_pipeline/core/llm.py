@@ -62,22 +62,38 @@ def client():
 @dataclass
 class Req:
     """One Claude request. `custom_id` is required on the batch path, where it is
-    how results are matched back to inputs."""
+    how results are matched back to inputs.
+
+    `tools` carries SERVER tools (web_search / web_fetch) — the API executes
+    them inside one request, so there is no client-side agent loop to run.
+    Tool-bearing requests are sync-only: the research pass is iterative and
+    interactive by nature, and the Batch API contract here stays simple.
+    `documents` are content blocks (e.g. citation-enabled document blocks)
+    prepended to the user turn. `betas` routes the call through the beta
+    client surface (web_fetch requires its beta header)."""
     user: str
     system: list[dict] | None = None
     model: str | None = None
     max_tokens: int = 4096
     custom_id: str | None = None
+    tools: list[dict] | None = None
+    documents: list[dict] | None = None
+    betas: list[str] | None = None
     metadata: dict = field(default_factory=dict)  # caller's own bookkeeping
 
     def params(self) -> dict:
+        content: str | list[dict] = self.user
+        if self.documents:
+            content = [*self.documents, {"type": "text", "text": self.user}]
         p = {
             "model": self.model or EXTRACTION_MODEL,
             "max_tokens": self.max_tokens,
-            "messages": [{"role": "user", "content": self.user}],
+            "messages": [{"role": "user", "content": content}],
         }
         if self.system:
             p["system"] = self.system
+        if self.tools:
+            p["tools"] = self.tools
         return p
 
 
@@ -85,29 +101,49 @@ def _text(msg) -> str:
     return "".join(b.text for b in msg.content if b.type == "text")
 
 
+def msg_text(msg) -> str:
+    """Concatenated text blocks of a raw message (public counterpart of _text,
+    for callers of call_raw that also read tool-result blocks)."""
+    return _text(msg)
+
+
 def _usage(msg, *, batch: bool = False) -> dict:
     """Normalised usage. Carries the model so cost is priced correctly, and the
-    cache counters so a cache that silently isn't working shows up."""
+    cache counters so a cache that silently isn't working shows up. Server
+    tool use (web search requests) is billed per use, so it rides along too."""
     u = msg.usage
+    server_tools = getattr(u, "server_tool_use", None)
     return {
         "model": msg.model,
         "input_tokens": u.input_tokens,
         "output_tokens": u.output_tokens,
         "cache_read_input_tokens": getattr(u, "cache_read_input_tokens", 0) or 0,
         "cache_creation_input_tokens": getattr(u, "cache_creation_input_tokens", 0) or 0,
+        "web_search_requests": getattr(server_tools, "web_search_requests", 0) or 0,
         "batch": batch,
     }
 
 
-def call(req: Req) -> tuple[str, dict]:
-    """Send one request now. Returns (text, usage)."""
+def call_raw(req: Req):
+    """Send one request now; return (message, usage) with content blocks
+    intact — for callers that read more than the text (citations, tool
+    results). Beta-flagged requests go through the beta surface."""
     p = req.params()
+    surface = client().beta.messages if req.betas else client().messages
+    if req.betas:
+        p["betas"] = req.betas
     if req.max_tokens > _STREAM_ABOVE_MAX_TOKENS:
-        with client().messages.stream(**p) as stream:
+        with surface.stream(**p) as stream:
             msg = stream.get_final_message()
     else:
-        msg = client().messages.create(**p)
-    return _text(msg), _usage(msg)
+        msg = surface.create(**p)
+    return msg, _usage(msg)
+
+
+def call(req: Req) -> tuple[str, dict]:
+    """Send one request now. Returns (text, usage)."""
+    msg, usage = call_raw(req)
+    return _text(msg), usage
 
 
 
@@ -146,6 +182,11 @@ def call_batch(
     """
     if not reqs:
         return {}
+    tooled = [i for i, r in enumerate(reqs) if r.tools or r.betas]
+    if tooled:
+        raise ValueError(
+            f"call_batch does not take tool/beta requests (at {tooled[:5]}) — "
+            "server-tool research calls are sync-only, use call()/call_raw()")
     missing = [i for i, r in enumerate(reqs) if not r.custom_id]
     if missing:
         raise ValueError(f"call_batch needs custom_id on every Req (missing at {missing[:5]})")
