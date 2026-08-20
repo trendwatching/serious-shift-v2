@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 from ..core.text import url_slug as slugify
 from .config import (DOMAINS, MAX_KTS_PER_DOM, MAX_SUB_TRENDS,
-                     MIN_KTS_PER_DOM, MIN_SUB_TRENDS)
+                     MIN_KTS_PER_DOM, MIN_SUB_TRENDS, load_gates)
 from .modules import (_LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE,
                       FIELD_WORD_LIMITS, LIST_ITEM_WORD_LIMITS, PAIR_TEXT_WORD_LIMITS,
                       STEP_TEXT_WORD_LIMIT, UNAUTHORED_MODULE_TYPES, count_words,
@@ -366,12 +366,16 @@ _METHODS_AUDIT = re.compile(
 # is map-sized — the unit-test fixtures are four shifts and would trip them
 # meaninglessly.
 
+# Threshold VALUES live in packages/contracts/gates.json so every change is a
+# reviewed diff; the rationale for each number stays here, beside its consumer.
+_GATES = load_gates()
+
 #: Below this many key shifts, population-level gates stay quiet.
-FULL_MAP_MIN_SHIFTS = 10
+FULL_MAP_MIN_SHIFTS = int(_GATES.get('full_map_min_shifts', 10))
 
 #: A velocity distribution where one bucket holds more than this share of
 #: shifts is prompt-anchoring, not grading ("accelerating" × 51).
-VELOCITY_MAX_SHARE = 0.8
+VELOCITY_MAX_SHARE = float(_GATES.get('velocity_max_share', 0.8))
 
 #: At least this share of key shifts must carry a stat_band.
 #:
@@ -383,7 +387,7 @@ VELOCITY_MAX_SHARE = 0.8
 #: 36 distinct on-topic statistics to clear 0.6. The claim budget rising to 350
 #: per domain is what actually improves coverage; this floor stops the gate
 #: failing a map for a shortage the generator cannot invent its way out of.
-STAT_COVERAGE_FLOOR = 0.45
+STAT_COVERAGE_FLOOR = float(_GATES.get('stat_coverage_floor', 0.45))
 
 #: A proper-noun bigram may headline at most this many shift FAMILIES ("Adam
 #: Raine" carried ~12); a bare figure gets more slack (different 40%s exist).
@@ -395,12 +399,12 @@ STAT_COVERAGE_FLOOR = 0.45
 #: 36 families a recurring name had 36 chances to exceed 4, at 60 it has 60.
 #: Scaled with the ceiling so the rule keeps meaning "a handful of pages", not
 #: "a progressively smaller fraction".
-CRUTCH_ENTITY_PAGE_LIMIT = 6
-CRUTCH_FIGURE_PAGE_LIMIT = 9
+CRUTCH_ENTITY_PAGE_LIMIT = int(_GATES.get('crutch_entity_page_limit', 6))
+CRUTCH_FIGURE_PAGE_LIMIT = int(_GATES.get('crutch_figure_page_limit', 9))
 
 #: How many sub-shifts one claim may anchor, as a share of the map's sub-shifts.
 #: At 180 sub-shifts this reproduces the historical cap of 3; at 300 it gives 5.
-EVIDENCE_REUSE_SHARE = 3 / 180
+EVIDENCE_REUSE_SHARE = float(_GATES.get('evidence_reuse_share', 3 / 180))
 
 #: Everyday bigrams/figures that legitimately recur across an AGI map.
 #: Frontier-model names are domain vocabulary here, like "AI" itself.
@@ -852,6 +856,13 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
             issues.append(ValidationIssue(
                 'hero_topicality', path,
                 'hero statistic shares no topical vocabulary with the shift it fronts', True))
+        # Backstop for the dated-candidates filter in phase 8: an undated
+        # figure fronting a page gives the reader no way to tell last month
+        # from 2019. Repairable — the hero re-run only offers dated claims.
+        if not str(hero.get('year') or '').strip():
+            issues.append(ValidationIssue(
+                'hero_stat_undated', path,
+                'hero statistic carries no year — undated figures cannot front a page', True))
 
     # Sub-shift stat bands join the same exclusivity registry as the heroes,
     # so a child fronting its parent's headline — or another family's — is
@@ -1122,20 +1133,23 @@ def advisory_issues(document: dict) -> list[ValidationIssue]:
 
 
 def skipped_issue_codes() -> set[str]:
-    """Operator valve for a remediation publish: issue codes listed in
-    SS_SKIP_ISSUE_CODES (comma-separated) are reported but never block.
+    """Remediation valve: issue codes listed under `skip_issue_codes` in
+    packages/contracts/gates.json are reported but never block.
 
     Exists for the first publish after a new lint lands, when the live map may
-    violate it more widely than one repair pass can absorb. Read at call time,
-    not import time, so a wrapper script can set it per publish. Honored by
-    `require_valid_map` — the write-time gate — and by the CLI's publish path,
-    so the two can never disagree about what blocks. Empty by default; never
-    set it in cron.
+    violate it more widely than one repair pass can absorb. This replaced the
+    SS_SKIP_ISSUE_CODES env var: every silent gate loosening in the August
+    audit traced back to valves that left no diff, so the list now lives in a
+    versioned file and changing it is a reviewed edit. Read at call time, not
+    import time, so a remediation branch can carry the list and the next
+    deploy drops it. Honored by `require_valid_map` — the write-time gate —
+    and by the CLI's publish path, so the two can never disagree about what
+    blocks. Empty on main; keep it that way.
     """
-    import os
-    return {code.strip()
-            for code in os.environ.get('SS_SKIP_ISSUE_CODES', '').split(',')
-            if code.strip()}
+    from . import config as _config  # attribute lookup at call time, not import
+    return {str(code).strip()
+            for code in _config.load_gates().get('skip_issue_codes') or []
+            if str(code).strip()}
 
 
 def require_valid_map(document: dict, contract: dict | None = None) -> None:

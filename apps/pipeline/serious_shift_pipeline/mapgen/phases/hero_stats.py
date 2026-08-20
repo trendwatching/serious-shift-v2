@@ -59,7 +59,12 @@ def _hero_candidates(conn) -> dict[int, list[dict]]:
         SELECT DISTINCT ON (st.kt_id, c.id)
                st.kt_id, c.id AS claim_id, c.statistic, c.claim_text,
                t.name AS thinker, s.title AS source,
-               s.date_published AS pub_date, s.url,
+               -- A chased statistic fronts its shift with the ORIGIN's URL and
+               -- date (claims.primary_source_id), not the newsletter that
+               -- quoted it. Keying dedup on the primary URL also collapses two
+               -- commentators quoting the same study into one hero.
+               COALESCE(ps.date_published, s.date_published) AS pub_date,
+               COALESCE(NULLIF(ps.url, ''), s.url) AS url,
                COALESCE(c.claim_weight, 0)
                  * (GREATEST(COALESCE(t.credibility_score, 50.0), 30.0) / 100.0)
                  AS score
@@ -68,10 +73,16 @@ def _hero_candidates(conn) -> dict[int, list[dict]]:
         JOIN claims c   ON c.id = stc.claim_id
         JOIN thinkers t ON t.id = c.thinker_id
         JOIN sources s  ON s.id = c.source_id
+        LEFT JOIN sources ps ON ps.id = c.primary_source_id
+                            AND ps.url ~* '^https?://'
         WHERE c.has_statistic IS TRUE
           AND c.statistic IS NOT NULL
           AND s.url ~* '^https?://'
           AND c.duplicate_of IS NULL
+          -- An undated figure cannot front a page: the reader has no way to
+          -- know if it is from last month or 2019. Same rule as the
+          -- hero_stat_undated gate, so writer and gate cannot disagree.
+          AND COALESCE(ps.date_published, s.date_published) IS NOT NULL
         ORDER BY st.kt_id, c.id
     """).fetchall()
     by_kt: dict[int, list[dict]] = {}

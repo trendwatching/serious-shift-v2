@@ -7,13 +7,11 @@ and interrelatedness — omit it for the same reason.
 from __future__ import annotations
 
 import json
-import os
-
-from ._loader import load_and_render
 
 #: Haiku. The deterministic pass has already narrowed this to a shortlist of at
 #: most eight, so the model is breaking a tie rather than searching a catalogue.
-CLASSIFY_MODEL = os.environ.get('SS_CLASSIFY_MODEL_ID', 'claude-haiku-4-5')
+from ..core.config import CLASSIFY_MODEL  # noqa: F401 — re-exported
+from ._loader import load_and_render
 
 
 def fmt_shift_catalogue(shifts: list[dict]) -> str:

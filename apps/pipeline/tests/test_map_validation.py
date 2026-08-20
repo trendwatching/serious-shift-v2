@@ -671,13 +671,27 @@ def test_name_families_are_advisory_never_blocking():
 
 
 def test_skip_valve_unblocks_only_the_named_codes(monkeypatch):
+    from serious_shift_pipeline.mapgen import config as mapgen_config
     from serious_shift_pipeline.mapgen.validation import require_valid_map
     document = valid_map()
     document['key_trends'][0]['modules'][0]['data']['text'] = 'A claim — and a dash.'
     with pytest.raises(PublicationValidationError):
         require_valid_map(document, CONTRACT)
-    monkeypatch.setenv('SS_SKIP_ISSUE_CODES', 'em_dash')
+    monkeypatch.setattr(mapgen_config, 'load_gates',
+                        lambda: {'skip_issue_codes': ['em_dash']})
     require_valid_map(document, CONTRACT)   # must not raise
-    monkeypatch.setenv('SS_SKIP_ISSUE_CODES', 'ai_tell')
+    monkeypatch.setattr(mapgen_config, 'load_gates',
+                        lambda: {'skip_issue_codes': ['ai_tell']})
+    with pytest.raises(PublicationValidationError):
+        require_valid_map(document, CONTRACT)
+
+
+def test_env_skip_valve_is_dead(monkeypatch):
+    """SS_SKIP_ISSUE_CODES was the untracked loosening vector — the skip list
+    now lives only in the versioned gates.json, so the env var must do nothing."""
+    from serious_shift_pipeline.mapgen.validation import require_valid_map
+    document = valid_map()
+    document['key_trends'][0]['modules'][0]['data']['text'] = 'A claim — and a dash.'
+    monkeypatch.setenv('SS_SKIP_ISSUE_CODES', 'em_dash')
     with pytest.raises(PublicationValidationError):
         require_valid_map(document, CONTRACT)

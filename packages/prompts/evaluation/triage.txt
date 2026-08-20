@@ -1,0 +1,22 @@
+You are triaging a prediction extracted from a commentator's writing, deciding whether it can ever be objectively resolved.
+
+PREDICTION: {{claim_text}}
+STATED TIMEFRAME: {{timeframe}}
+MADE ON: {{made_on}}
+TODAY: {{today}}
+
+Classify it:
+- "resolvable": a neutral analyst could, by a specific date, decide true/false from public evidence. Requires a concrete event, quantity, or threshold AND an explicit or inferable deadline.
+- "vague": points at something real but too loosely to score ("AI will transform retail").
+- "unfalsifiable": no evidence could ever settle it (values, unbounded timeframes, "eventually").
+
+Respond with ONLY a JSON object:
+{"triage": "resolvable" | "vague" | "unfalsifiable",
+ "resolution_criteria": "one or two sentences a neutral analyst could apply: what must be observed, by when, from what kind of source, for TRUE; what counts as FALSE" or null,
+ "resolve_by": "YYYY-MM-DD" or null,
+ "search_terms": "3 to 6 words naming the entities/metrics involved, for evidence retrieval" or null}
+
+Rules:
+- resolve_by: use the prediction's own deadline; a stated year means the last day of that year ("by 2027" -> 2027-12-31). A relative window counts from MADE ON. If no deadline is stated or inferable, the prediction is NOT resolvable.
+- Criteria must be checkable against published evidence, not private knowledge.
+- Do not soften the prediction to make it resolvable; triage what was actually said.

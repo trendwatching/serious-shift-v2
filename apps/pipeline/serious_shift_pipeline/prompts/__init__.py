@@ -30,7 +30,7 @@ from .map_data import (
     prompt_interrelatedness_batch,
     prompt_synthesis_insights,
 )
-from .extraction import extraction_prompt
+from .extraction import extraction_prompt, primary_origin_prompt
 from .dedup import DEDUP_MODEL, dedup_prompt
 from .ingest import INGEST_MODEL, ingest_prompt
 from .classify import CLASSIFY_MODEL, classify_prompt, fmt_shift_catalogue
@@ -55,6 +55,7 @@ __all__ = [
     "prompt_interrelatedness_batch",
     "prompt_synthesis_insights",
     "extraction_prompt",
+    "primary_origin_prompt",
     "DEDUP_MODEL",
     "dedup_prompt",
     "INGEST_MODEL",

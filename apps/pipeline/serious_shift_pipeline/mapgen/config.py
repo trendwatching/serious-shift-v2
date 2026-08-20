@@ -38,6 +38,18 @@ def _load_contract() -> dict:
         return {}
 
 
+def load_gates() -> dict:
+    """packages/contracts/gates.json — publication-gate thresholds and the
+    remediation skip list, or an empty mapping if unreadable (consumers fall
+    back to their historical defaults). Not cached: skipped_issue_codes() reads
+    it at call time so a remediation branch can carry a skip list and the next
+    deploy drops it."""
+    try:
+        return json.loads((contracts_dir() / 'gates.json').read_text())
+    except (ValueError, OSError, RuntimeError):
+        return {}
+
+
 _CONTRACT = _load_contract()
 
 MODULE_ORDER = _CONTRACT.get('order') or {}

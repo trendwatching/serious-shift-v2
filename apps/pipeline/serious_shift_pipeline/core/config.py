@@ -3,9 +3,25 @@ cost tracking don't pull in the Anthropic SDK."""
 import os
 import threading
 
+# ── Model roster ──────────────────────────────────────────────────────────────
+# Every model assignment in the pipeline lives HERE, in one block, so an
+# upgrade is one diff and a comment can never drift from a default defined in
+# some other file (INSIGHTS_MODEL's comment once claimed Opus while its
+# default was Sonnet). Prompt modules re-export these names for compatibility.
+
 # Extraction runs on the cheapest capable model: it is by far the highest-volume
 # call (one per raw source file) and the task is structured extraction.
 EXTRACTION_MODEL = os.environ.get("EXTRACTION_MODEL", "claude-haiku-4-5")
+# Map synthesis (key trends, sub-trends, editorial) — the highest-stakes prose.
+SYNTHESIS_MODEL = os.environ.get("SS_SYNTHESIS_MODEL", "claude-sonnet-4-6")
+# Synthesis insights (dormant phase 7). Follows SYNTHESIS_MODEL unless overridden.
+INSIGHTS_MODEL = os.environ.get("INSIGHTS_MODEL", SYNTHESIS_MODEL)
+# Pair judgement on pre-shortlisted claim pairs: tie-breaking, not searching.
+DEDUP_MODEL = os.environ.get("SS_DEDUP_MODEL", "claude-haiku-4-5")
+# Ad-hoc single-URL ingest (tools/ingest) — low volume, quality matters.
+INGEST_MODEL = os.environ.get("SS_INGEST_MODEL", "claude-sonnet-4-6")
+# Innovation→shift classification on a deterministic shortlist of ≤8.
+CLASSIFY_MODEL = os.environ.get("SS_CLASSIFY_MODEL_ID", "claude-haiku-4-5")
 
 # USD per 1M tokens, (input, output), by model-id prefix. Prefix matching so a
 # dated id ("claude-haiku-4-5-20251001") resolves to the same rates as the alias.
@@ -46,6 +62,10 @@ def rates_for(model: str | None) -> tuple[float, float]:
     return _FALLBACK_PER_M[0] / 1_000_000, _FALLBACK_PER_M[1] / 1_000_000
 
 
+# Server web search is billed per request on top of tokens ($10 / 1k searches).
+WEB_SEARCH_USD = 0.01
+
+
 def cost_of(usage: dict) -> float:
     """USD for one call, from the usage dict core.llm returns."""
     inp_rate, out_rate = rates_for(usage.get("model"))
@@ -55,7 +75,8 @@ def cost_of(usage: dict) -> float:
         + (usage.get("cache_creation_input_tokens") or 0) * inp_rate * CACHE_WRITE_MULTIPLIER
         + (usage.get("output_tokens") or 0) * out_rate
     )
-    return cost * BATCH_MULTIPLIER if usage.get("batch") else cost
+    cost = cost * BATCH_MULTIPLIER if usage.get("batch") else cost
+    return cost + (usage.get("web_search_requests") or 0) * WEB_SEARCH_USD
 
 
 class BudgetExceeded(RuntimeError):

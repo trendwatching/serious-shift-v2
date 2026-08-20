@@ -4,9 +4,8 @@ Prompt builder for ad-hoc single-URL ingest (tools/ingest).
 Lighter-weight cousin of the extraction prompt: fewer fields, 5-15 claims, with
 the thinker's existing positions/predictions as context for position-change flags.
 """
+from ..core.config import INGEST_MODEL  # noqa: F401 — re-exported
 from ._loader import load_and_render
-
-INGEST_MODEL = "claude-sonnet-4-6"
 
 
 def ingest_prompt(thinker_name: str, content: str, context: dict) -> str:

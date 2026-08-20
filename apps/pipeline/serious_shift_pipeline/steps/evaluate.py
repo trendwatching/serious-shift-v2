@@ -15,6 +15,14 @@ from ..core import db
 
 _ACCURACY = {"true": 1.0, "partially_true": 0.5, "false": 0.0, "expired": 0.3}
 
+#: Shrinkage prior weight (pseudo-observations of the 0.5 prior). Accuracy is
+#: pulled toward 0.5 by K virtual coin-flips, so two lucky calls cannot mint
+#: an oracle and one miss cannot sink a veteran — distance from the prior is
+#: EARNED at roughly n/(n+K). With resolutions now actually flowing
+#: (steps/resolve_predictions), an unshrunk mean over n=2 would swing routing
+#: harder than 20 resolved calls ever could.
+SHRINKAGE_K = 6.0
+
 #: Ceiling for the source-authority fallback. INVARIANT: an entity with no
 #: evaluated predictions must never outrank the band where named people sit
 #: (~50-54 while accuracy defaults to 0.5). Before this cap, `authority*100`
@@ -28,17 +36,17 @@ def score_thinker(predictions: list[tuple[str, float | None]]) -> dict:
     """Compute credibility for one thinker from their predictions.
 
     `predictions` is a list of (status, consensus_alignment). Formula:
-      accuracy = mean(status->score) over evaluable predictions (else 0.5)
+      accuracy = shrunk mean of status->score over evaluable predictions:
+                 (0.5*K + sum(scores)) / (K + n)   [K = SHRINKAGE_K]
+                 — 0.5 exactly at n=0, approaches the raw mean as n grows
       outlier  = 0.5 + (avg_consensus * 0.5)
       credibility = (accuracy*0.85 + outlier*0.15) * 100
     """
     total = len(predictions)
     evaluable = [(s, c) for s, c in predictions if s != "pending"]
 
-    if evaluable:
-        accuracy = sum(_ACCURACY.get(s, 0.5) for s, _ in evaluable) / len(evaluable)
-    else:
-        accuracy = 0.5
+    score_sum = sum(_ACCURACY.get(s, 0.5) for s, _ in evaluable)
+    accuracy = (0.5 * SHRINKAGE_K + score_sum) / (SHRINKAGE_K + len(evaluable))
 
     avg_consensus = (sum((c or 0.0) for _, c in predictions) / total) if total else 0.5
     outlier = 0.5 + (avg_consensus * 0.5)

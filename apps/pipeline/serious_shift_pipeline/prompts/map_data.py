@@ -6,16 +6,10 @@ with values computed in code. Response parsing (parse_thinker_attribution, …)
 stays in the step — these functions only build requests.
 """
 import json
-import os
 
+from ..core.config import INSIGHTS_MODEL, SYNTHESIS_MODEL  # noqa: F401 — re-exported
 from ._loader import load_and_render
 from .voice import VOICE
-
-# ── Model assignment ─────────────────────────────────────────
-# Editorial synthesis (Key Trends, sub-trends, attribution) runs on Sonnet 4.6.
-SYNTHESIS_MODEL = 'claude-sonnet-4-6'
-# Synthesis insights — the most editorially demanding, lowest-volume phase — runs on Opus 4.7.
-INSIGHTS_MODEL = os.environ.get('INSIGHTS_MODEL', 'claude-sonnet-4-6')
 
 # Single source of truth for how many Key Trends a domain carries — a range,
 # owned by mapgen (which also gates on it at publication).

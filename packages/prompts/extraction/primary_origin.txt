@@ -1,0 +1,22 @@
+You are auditing the provenance of a statistic quoted in a commentary source (a newsletter, blog post, or transcript).
+
+CLAIM: {{claim_text}}
+STATISTIC AS EXTRACTED: {{statistic}}
+
+PASSAGE (the part of the commentary where the statistic appears):
+---
+{{context}}
+---
+
+Question: does the passage attribute this figure to an EXTERNAL ORIGIN — the study, survey, report, dataset, filing, or organization that originally produced the number (for example "per Stanford HAI", "a Propeller Insights survey of 4,040 adults", "BLS data show")? The commentary author citing their own analysis or opinion does not count as an external origin.
+
+Respond with ONLY a JSON object, no other text:
+{"has_external_origin": true or false,
+ "origin_name": "the producing organization or study, e.g. 'Stanford HAI AI Index 2026'" or null,
+ "origin_url": "URL of that origin, ONLY if that URL appears verbatim in the passage" or null,
+ "confidence": "high" or "medium" or "low"}
+
+Rules:
+- origin_url must be copied character-for-character from the passage. NEVER invent, complete, or guess a URL. If the passage names an origin without linking it, origin_url is null.
+- A URL in the passage that points to the commentary itself, or to an unrelated page, is not the origin — leave origin_url null.
+- If you cannot tell, use has_external_origin=false.

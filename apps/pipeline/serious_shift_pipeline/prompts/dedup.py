@@ -4,9 +4,8 @@ Prompt builder for claim deduplication (steps/deduplicate).
 Given a batch of ambiguous claim pairs, asks Claude to judge each DUPLICATE or
 UNIQUE. The step parses the "N: DUPLICATE/UNIQUE" lines back out.
 """
+from ..core.config import DEDUP_MODEL  # noqa: F401 — re-exported
 from ._loader import load_and_render
-
-DEDUP_MODEL = "claude-haiku-4-5"
 
 
 def dedup_prompt(batch: list) -> str:

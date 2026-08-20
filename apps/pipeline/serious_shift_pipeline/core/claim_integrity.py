@@ -150,6 +150,67 @@ def statistic_verifies(statistic: str, source_text: str) -> bool:
     return True
 
 
+def _normalize_with_map(text: str) -> tuple[str, list[int]]:
+    """normalize_text, plus for every normalized character the index of the raw
+    character it came from — so a normalized match maps back to a raw span."""
+    raw = str(text or '')
+    chars: list[str] = []
+    idx: list[int] = []
+    pending_space = False
+    for i, ch in enumerate(raw):
+        for tc in ch.translate(_SMART_CHARS):
+            if tc.isspace():
+                pending_space = True
+                continue
+            if pending_space and chars:
+                chars.append(' ')
+                idx.append(i)
+            pending_space = False
+            chars.append(tc.lower())
+            idx.append(i)
+    return ''.join(chars), idx
+
+
+def locate_quote(quote: str, source_text: str) -> tuple[int, int] | None:
+    """(start, end) character span of `quote` in the RAW source text, or None.
+
+    The span is what claims.quote_start/quote_end store: from then on the
+    quote check is an exact slice comparison (`verify_at_offset`) instead of a
+    fuzzy search. Located via exact raw match first, then an exact match in
+    normalized space mapped back to raw indices. A quote that only passes the
+    fuzzy `quote_verifies` window gets no span — it stays verifiable only at
+    the (weaker) fuzzy tier, which is the honest description of it.
+    """
+    raw = str(source_text or '')
+    q_raw = str(quote or '').strip()
+    if not q_raw:
+        return None
+    pos = raw.find(q_raw)
+    if pos != -1:
+        return pos, pos + len(q_raw)
+    q_norm = normalize_text(q_raw)
+    if not q_norm:
+        return None
+    norm, idx = _normalize_with_map(raw)
+    npos = norm.find(q_norm)
+    if npos == -1:
+        return None
+    return idx[npos], idx[npos + len(q_norm) - 1] + 1
+
+
+def verify_at_offset(quote: str, source_text: str,
+                     start: int | None, end: int | None) -> bool:
+    """True when the stored span still contains exactly this quote.
+
+    Deterministic and cheap: no search, no fuzz. This is the check a
+    re-verification sweep runs against the stored full_text (whose
+    content_sha256 proves the text itself is unchanged)."""
+    raw = str(source_text or '')
+    if start is None or end is None or not (0 <= start < end <= len(raw)):
+        return False
+    return normalize_text(raw[start:end]) == normalize_text(quote)
+
+
 def verify_claim_against_source(claim: dict, source_text: str) -> tuple[dict, list[str]]:
     """Downgrade unverifiable fields in an extracted claim dict.
 

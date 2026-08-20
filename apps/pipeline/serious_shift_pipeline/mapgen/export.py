@@ -180,25 +180,42 @@ def build_map_json_v2(conn) -> dict:
             links_by_kt.setdefault(src, []).append((dst, r['relationship'], r['reasoning']))
 
     claim_rows_by_st: dict = {}
+    # A claim whose statistic was chased to its verified origin
+    # (claims.primary_source_id) publishes the PRIMARY document's URL and
+    # title, with the commentator kept visible as the via — the reader lands
+    # on the study, not on the newsletter that quoted it.
     for r in conn.execute("""
         SELECT stc.sub_trend_id, c.claim_text, t.name AS thinker, s.title AS source,
-               s.date_published, s.url, c.signal_strength, c.consumer_implication
+               s.date_published, s.url, c.signal_strength, c.consumer_implication,
+               ps.title AS primary_title, ps.url AS primary_url,
+               ps.date_published AS primary_date
         FROM domain_sub_trend_claims stc
         JOIN claims c   ON c.id = stc.claim_id
         JOIN thinkers t ON t.id = c.thinker_id
-        LEFT JOIN sources s ON s.id = c.source_id
+        LEFT JOIN sources s  ON s.id = c.source_id
+        LEFT JOIN sources ps ON ps.id = c.primary_source_id
         WHERE c.duplicate_of IS NULL AND c.claim_text IS NOT NULL
         ORDER BY stc.sub_trend_id, COALESCE(c.claim_weight, 0) DESC, c.id
     """).fetchall():
         source_url = _http_url(r['url'])
-        if not source_url:
+        primary_url = _http_url(r['primary_url'])
+        if not source_url and not primary_url:
             continue
+        source_label = r['source'] or ''
+        date = r['date_published']
+        if primary_url:
+            primary_label = (r['primary_title'] or '').strip()
+            if primary_label and source_label:
+                source_label = f'{primary_label} (via {source_label})'
+            elif primary_label:
+                source_label = primary_label
+            date = r['primary_date'] or date
         claim_rows_by_st.setdefault(r['sub_trend_id'], []).append({
             'text': r['claim_text'],
             'thinker': r['thinker'] or '',
-            'source': r['source'] or '',
-            'date': str(r['date_published'])[:10] if r['date_published'] else '',
-            'url': source_url,
+            'source': source_label,
+            'date': str(date)[:10] if date else '',
+            'url': primary_url or source_url,
             'strength': r['signal_strength'] or '',
             'implication': r['consumer_implication'] or '',
         })
@@ -478,20 +495,36 @@ def build_map_json_v2(conn) -> dict:
         rows = conn.execute("""
             SELECT c.id, c.claim_text, c.consumer_implication,
                    t.name AS thinker,
-                   s.title AS source_title, s.date_published, s.url AS source_url
+                   s.title AS source_title, s.date_published, s.url AS source_url,
+                   ps.title AS primary_title, ps.url AS primary_url,
+                   ps.date_published AS primary_date
             FROM claims c
             JOIN thinkers t ON c.thinker_id = t.id
-            LEFT JOIN sources s ON c.source_id = s.id
+            LEFT JOIN sources s  ON c.source_id = s.id
+            LEFT JOIN sources ps ON ps.id = c.primary_source_id
             WHERE c.id = ANY(%s)
         """, (list(all_cids),)).fetchall()
         for r in rows:
+            # Chased statistics publish the origin's URL/title/date; the
+            # commentator stays visible as the via (same rule as the evidence
+            # module above, so the whole document points one way).
+            primary_url = _http_url(r['primary_url'])
+            title = r['source_title'] or ''
+            date = r['date_published']
+            if primary_url:
+                primary_title = (r['primary_title'] or '').strip()
+                if primary_title and title:
+                    title = f'{primary_title} (via {title})'
+                elif primary_title:
+                    title = primary_title
+                date = r['primary_date'] or date
             claims_j.append({
                 'id':                f'c_{r["id"]}',
                 'text':              r['claim_text'] or '',
                 'thinker':           r['thinker'] or '',
-                'source_title':      r['source_title'] or '',
-                'source_date':       r['date_published'] or '',
-                'source_url':        _http_url(r['source_url']),
+                'source_title':      title,
+                'source_date':       date or '',
+                'source_url':        primary_url or _http_url(r['source_url']),
                 'consumer_implication': r['consumer_implication'] or '',
             })
 

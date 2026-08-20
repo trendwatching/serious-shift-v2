@@ -6,8 +6,12 @@ downgrade, never a rejection — the claim survives, the fabricated field dies.
 """
 
 from serious_shift_pipeline.core.claim_integrity import (
+    _normalize_with_map,
+    locate_quote,
+    normalize_text,
     quote_verifies,
     statistic_verifies,
+    verify_at_offset,
     verify_claim_against_source,
 )
 
@@ -105,3 +109,46 @@ class TestDowngrade:
         claim = {"quote": "anything", "has_statistic": True, "statistic": "34%"}
         _, drops = verify_claim_against_source(claim, "")
         assert sorted(drops) == ["quote", "statistic"]
+
+
+class TestSpanAnchor:
+    """locate_quote/verify_at_offset — the exact-slice tier claims.quote_start/
+    quote_end store, so 'does the source say this' never needs a search again."""
+
+    def test_raw_exact_match_span(self):
+        quote = "34% of US consumers used an AI tool"
+        span = locate_quote(quote, SOURCE)
+        assert span is not None
+        start, end = span
+        assert SOURCE[start:end] == quote
+        assert verify_at_offset(quote, SOURCE, start, end)
+
+    def test_smart_punctuation_maps_back_to_raw_span(self):
+        # Straight-quote claim text against the curly-quote source.
+        quote = "they didn't go back"
+        span = locate_quote(quote, SOURCE)
+        assert span is not None
+        start, end = span
+        assert normalize_text(SOURCE[start:end]) == normalize_text(quote)
+        assert verify_at_offset(quote, SOURCE, start, end)
+
+    def test_whitespace_collapse_still_locates(self):
+        source = "adoption\n  turned   sharply\nin 2025, she said"
+        span = locate_quote("adoption turned sharply in 2025", source)
+        assert span is not None
+        assert verify_at_offset("adoption turned sharply in 2025", source, *span)
+
+    def test_absent_quote_has_no_span(self):
+        assert locate_quote("brands are dead and everyone knows it", SOURCE) is None
+        assert locate_quote("", SOURCE) is None
+
+    def test_wrong_or_out_of_bounds_span_fails(self):
+        assert not verify_at_offset("34% of US consumers", SOURCE, 0, 19)
+        assert not verify_at_offset("anything", SOURCE, None, None)
+        assert not verify_at_offset("anything", SOURCE, 5, len(SOURCE) + 40)
+
+    def test_normalize_with_map_agrees_with_normalize_text(self):
+        for text in (SOURCE, "…ellipsis — and nbsp “x”", "  padded  ", ""):
+            norm, idx = _normalize_with_map(text)
+            assert norm == normalize_text(text)
+            assert len(idx) == len(norm)

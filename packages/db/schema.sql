@@ -1,6 +1,6 @@
 \restrict dbmate
 
--- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
+-- Dumped from database version 18.4 (Homebrew)
 -- Dumped by pg_dump version 18.4 (Homebrew)
 
 SET statement_timeout = 0;
@@ -40,6 +40,10 @@ CREATE TABLE public.claims (
     has_statistic boolean DEFAULT false,
     statistic text,
     created_at timestamp with time zone DEFAULT now(),
+    quote_start integer,
+    quote_end integer,
+    primary_source_id bigint,
+    corroboration_count integer,
     CONSTRAINT claims_signal_strength_check CHECK ((signal_strength = ANY (ARRAY['noise'::text, 'background'::text, 'signal'::text, 'strong_signal'::text]))),
     CONSTRAINT claims_specificity_check CHECK (((specificity >= 1) AND (specificity <= 5)))
 );
@@ -259,6 +263,34 @@ CREATE TABLE public.domains_v2 (
 
 
 --
+-- Name: evidence_packs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.evidence_packs (
+    id bigint NOT NULL,
+    shift_slug text NOT NULL,
+    run_id text NOT NULL,
+    item_ids bigint[] DEFAULT '{}'::bigint[] NOT NULL,
+    coverage jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: evidence_packs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.evidence_packs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.evidence_packs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: innovation_assets; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -470,9 +502,20 @@ CREATE TABLE public.predictions (
     evaluation_date date,
     evaluation_notes text,
     created_at timestamp with time zone DEFAULT now(),
+    triage_status text,
+    resolution_criteria text,
+    resolve_by date,
+    search_terms text,
+    forecast_prob double precision,
+    resolution_method text,
+    resolved_at timestamp with time zone,
+    evidence_claim_ids bigint[],
     CONSTRAINT predictions_consensus_alignment_check CHECK (((consensus_alignment >= (0.0)::double precision) AND (consensus_alignment <= (1.0)::double precision))),
+    CONSTRAINT predictions_forecast_prob_check CHECK (((forecast_prob > (0.0)::double precision) AND (forecast_prob < (1.0)::double precision))),
+    CONSTRAINT predictions_resolution_method_check CHECK ((resolution_method = ANY (ARRAY['judge'::text, 'deterministic'::text, 'human'::text]))),
     CONSTRAINT predictions_specificity_check CHECK (((specificity >= 1) AND (specificity <= 5))),
-    CONSTRAINT predictions_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'partially_true'::text, 'true'::text, 'false'::text, 'expired'::text])))
+    CONSTRAINT predictions_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'partially_true'::text, 'true'::text, 'false'::text, 'expired'::text]))),
+    CONSTRAINT predictions_triage_status_check CHECK ((triage_status = ANY (ARRAY['resolvable'::text, 'vague'::text, 'unfalsifiable'::text])))
 );
 
 
@@ -723,6 +766,7 @@ CREATE TABLE public.sources (
     peer_reviewed boolean,
     authors jsonb,
     authority double precision,
+    content_sha256 text,
     CONSTRAINT sources_signal_strength_check CHECK ((signal_strength = ANY (ARRAY['noise'::text, 'background'::text, 'signal'::text, 'strong_signal'::text])))
 );
 
@@ -767,8 +811,13 @@ CREATE TABLE public.thinkers (
     authority_score double precision,
     external_ids jsonb,
     discovered boolean DEFAULT false NOT NULL,
+    stance text,
+    region text,
+    discipline text,
+    incentive text,
     CONSTRAINT thinkers_importance_score_check CHECK (((importance_score >= 1) AND (importance_score <= 10))),
-    CONSTRAINT thinkers_reputation_tier_check CHECK (((reputation_tier >= 1) AND (reputation_tier <= 5)))
+    CONSTRAINT thinkers_reputation_tier_check CHECK (((reputation_tier >= 1) AND (reputation_tier <= 5))),
+    CONSTRAINT thinkers_stance_check CHECK ((stance = ANY (ARRAY['advocate'::text, 'critic'::text, 'analyst'::text])))
 );
 
 
@@ -904,6 +953,22 @@ ALTER TABLE ONLY public.domain_synthesis_insights
 
 ALTER TABLE ONLY public.domains_v2
     ADD CONSTRAINT domains_v2_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: evidence_packs evidence_packs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.evidence_packs
+    ADD CONSTRAINT evidence_packs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: evidence_packs evidence_packs_slug_run_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.evidence_packs
+    ADD CONSTRAINT evidence_packs_slug_run_key UNIQUE (shift_slug, run_id);
 
 
 --
@@ -1120,6 +1185,20 @@ ALTER TABLE ONLY public.thinkers
 
 ALTER TABLE ONLY public.thinkers
     ADD CONSTRAINT thinkers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: claims_primary_source_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX claims_primary_source_id_idx ON public.claims USING btree (primary_source_id);
+
+
+--
+-- Name: evidence_packs_slug_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX evidence_packs_slug_idx ON public.evidence_packs USING btree (shift_slug, created_at DESC);
 
 
 --
@@ -1403,6 +1482,13 @@ CREATE INDEX idx_thinkers_entity_kind ON public.thinkers USING btree (entity_kin
 
 
 --
+-- Name: predictions_due_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX predictions_due_idx ON public.predictions USING btree (resolve_by) WHERE ((status = 'pending'::text) AND (triage_status = 'resolvable'::text));
+
+
+--
 -- Name: shift_art_prompt_sha256_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1415,6 +1501,14 @@ CREATE INDEX shift_art_prompt_sha256_idx ON public.shift_art USING btree (prompt
 
 ALTER TABLE ONLY public.claims
     ADD CONSTRAINT claims_duplicate_of_fkey FOREIGN KEY (duplicate_of) REFERENCES public.claims(id);
+
+
+--
+-- Name: claims claims_primary_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.claims
+    ADD CONSTRAINT claims_primary_source_id_fkey FOREIGN KEY (primary_source_id) REFERENCES public.sources(id);
 
 
 --
@@ -1622,4 +1716,8 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260807100100'),
     ('20260809080000'),
     ('20260809140000'),
-    ('20260818110000');
+    ('20260818110000'),
+    ('20260820120000'),
+    ('20260820150000'),
+    ('20260820160000'),
+    ('20260820180000');
