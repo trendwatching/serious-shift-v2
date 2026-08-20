@@ -105,6 +105,30 @@ def clean_items(raw) -> tuple[list[dict], list[str]]:
     return items, rejects
 
 
+def salvage_item_array(text: str) -> list | None:
+    """Recover the complete items of a TRUNCATED JSON array response.
+
+    Items are independent evidence pointers, so a response cut mid-item
+    should cost exactly the partial tail, not the whole sweep. Walks '}'
+    positions backwards from the end, closing the array after each, and
+    returns the first parse that yields a non-empty list."""
+    start = text.find("[")
+    if start == -1:
+        return None
+    body = text[start:]
+    pos = len(body)
+    for _attempt in range(60):
+        pos = body.rfind("}", 1, pos)
+        if pos == -1:
+            return None
+        try:
+            parsed = json.loads(body[:pos + 1] + "]")
+        except ValueError:
+            continue
+        return parsed if isinstance(parsed, list) and parsed else None
+    return None
+
+
 def coverage_of(stored: list[dict], dropped: dict) -> dict:
     hosts = Counter(item["host"] for item in stored)
     return {
@@ -210,18 +234,41 @@ def build_pack(conn, shift: dict, run_id: str, cost_tracker: CostTracker,
         print(prompt[:1200])
         return None
 
-    msg, usage = llm.call_raw(llm.Req(
-        user=prompt, model=SYNTHESIS_MODEL, max_tokens=20000,
-        tools=research_tools(), betas=["web-fetch-2025-09-10"],
-        custom_id=f"research-{shift['slug']}"))
-    cost_tracker.add(usage, thinker_name=f"RESEARCH:{shift['slug']}")
-    api_docs = api_fetched_docs(msg)
-    try:
-        items, rejects = clean_items(llm.parse_model_json(llm.msg_text(msg)))
-    except ValueError as exc:
-        error_log.record(step="research", thinker=shift["slug"], exc=exc,
-                         retry_attempted=False, outcome="skipped")
+    # One poisoned fetch (the API 400s on e.g. a corrupt PDF it fetched) or a
+    # truncated final array must cost ONE attempt, never the sweep and never
+    # the run — the first live run died exactly this way, twice.
+    msg = None
+    for attempt in (1, 2):
+        try:
+            msg, usage = llm.call_raw(llm.Req(
+                user=prompt if attempt == 1 else prompt +
+                "\nNOTE: a previous attempt failed on an unreadable PDF; "
+                "prefer HTML pages this pass.",
+                model=SYNTHESIS_MODEL, max_tokens=20000,
+                tools=research_tools(), betas=["web-fetch-2025-09-10"],
+                custom_id=f"research-{shift['slug']}-a{attempt}"))
+            cost_tracker.add(usage, thinker_name=f"RESEARCH:{shift['slug']}")
+            break
+        except Exception as exc:  # noqa: BLE001 — contained per shift, retried once
+            error_log.record(step="research", thinker=shift["slug"], exc=exc,
+                             retry_attempted=(attempt == 1), outcome="retried"
+                             if attempt == 1 else "skipped")
+            msg = None
+    if msg is None:
         return None
+    api_docs = api_fetched_docs(msg)
+    text = llm.msg_text(msg)
+    try:
+        parsed = llm.parse_model_json(text)
+    except ValueError as exc:
+        parsed = salvage_item_array(text)
+        if parsed is None:
+            error_log.record(step="research", thinker=shift["slug"], exc=exc,
+                             retry_attempted=False, outcome="skipped")
+            return None
+        print(f"  {shift['slug']}: salvaged {len(parsed)} items from a "
+              f"truncated response")
+    items, rejects = clean_items(parsed)
 
     from .scraper.content import fetch_article_text
     stored_items, item_ids = [], []
@@ -388,25 +435,30 @@ def main() -> int:
     cost_tracker = CostTracker()
     error_log = ErrorLog(run_id)
 
-    with db.connect() as conn:
-        if args.sphere_scan:
-            detail = sphere_scan(conn, run_id, cost_tracker, error_log,
-                                 dry_run=args.dry_run)
-        else:
-            if args.shift:
-                shift = _shift_from_map(conn, args.shift)
-                if not shift:
-                    sys.exit(f"ERROR: no published shift with slug {args.shift!r}")
-            elif args.name and args.sphere:
-                shift = {"slug": url_slug(args.name), "name": args.name,
-                         "subtitle": args.subtitle, "sphere": args.sphere}
+    detail: dict = {}
+    try:
+        with db.connect() as conn:
+            if args.sphere_scan:
+                detail = sphere_scan(conn, run_id, cost_tracker, error_log,
+                                     dry_run=args.dry_run)
             else:
-                sys.exit("ERROR: pass --sphere-scan, --shift SLUG, or --name and --sphere.")
-            coverage = build_pack(conn, shift, run_id, cost_tracker, error_log,
-                                  dry_run=args.dry_run)
-            detail = {shift["slug"]: coverage or {}}
-
-    run.add_usage(cost=cost_tracker, detail={"research": detail})
+                if args.shift:
+                    shift = _shift_from_map(conn, args.shift)
+                    if not shift:
+                        sys.exit(f"ERROR: no published shift with slug {args.shift!r}")
+                elif args.name and args.sphere:
+                    shift = {"slug": url_slug(args.name), "name": args.name,
+                             "subtitle": args.subtitle, "sphere": args.sphere}
+                else:
+                    sys.exit("ERROR: pass --sphere-scan, --shift SLUG, or --name and --sphere.")
+                coverage = build_pack(conn, shift, run_id, cost_tracker, error_log,
+                                      dry_run=args.dry_run)
+                detail = {shift["slug"]: coverage or {}}
+    finally:
+        # Book spend even on a crash — the first live run paid for ~14
+        # research calls and recorded $0.00 because this line was never
+        # reached.
+        run.add_usage(cost=cost_tracker, detail={"research": detail})
     if not orchestrated:
         run.finish(status="ok")
     if cost_tracker.cost > SHIFT_USD_NOTE:

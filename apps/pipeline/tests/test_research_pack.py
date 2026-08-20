@@ -87,6 +87,31 @@ def test_api_fetched_docs_handles_both_sdk_shapes_and_canonical():
     assert norm_url("https://b.com") not in docs
 
 
+def test_salvage_recovers_complete_items_from_truncation():
+    from serious_shift_pipeline.steps.research import salvage_item_array
+    full = ('Here is what I found:\n[\n{"url": "https://a.com", "quote": "q1"},'
+            '\n{"url": "https://b.com", "quote": "q2"},'
+            '\n{"url": "https://c.com", "quo')   # cut mid-item
+    items = salvage_item_array(full)
+    assert [i["url"] for i in items] == ["https://a.com", "https://b.com"]
+    assert salvage_item_array("no array here") is None
+    assert salvage_item_array("[") is None
+
+
+def test_merge_usages_sums_counters_keeps_identity():
+    merged = llm.merge_usages([
+        {"model": "m", "input_tokens": 10, "output_tokens": 5,
+         "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0,
+         "web_search_requests": 3, "batch": False},
+        {"model": "m", "input_tokens": 7, "output_tokens": 2,
+         "cache_read_input_tokens": 1, "cache_creation_input_tokens": 0,
+         "web_search_requests": 2, "batch": False},
+    ])
+    assert merged["input_tokens"] == 17 and merged["output_tokens"] == 7
+    assert merged["web_search_requests"] == 5
+    assert merged["model"] == "m"
+
+
 def test_req_params_carry_tools_and_documents():
     req = llm.Req(user="q", tools=[{"type": "web_search_20250305",
                                     "name": "web_search", "max_uses": 5}],

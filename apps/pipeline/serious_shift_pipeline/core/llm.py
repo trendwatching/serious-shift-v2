@@ -124,20 +124,65 @@ def _usage(msg, *, batch: bool = False) -> dict:
     }
 
 
+#: How many pause_turn continuations one logical call may make. Long
+#: server-tool research turns legitimately pause several times; a turn that
+#: pauses more than this is runaway.
+MAX_TURN_SEGMENTS = 6
+
+
+def merge_usages(usages: list[dict]) -> dict:
+    """One usage dict for a multi-segment (pause_turn-continued) call: token
+    and search counters sum; identity fields come from the last segment."""
+    merged = dict(usages[-1])
+    for key in ("input_tokens", "output_tokens", "cache_read_input_tokens",
+                "cache_creation_input_tokens", "web_search_requests"):
+        merged[key] = sum((u.get(key) or 0) for u in usages)
+    return merged
+
+
+def _one_call(surface, p: dict, max_tokens: int):
+    if max_tokens > _STREAM_ABOVE_MAX_TOKENS:
+        with surface.stream(**p) as stream:
+            return stream.get_final_message()
+    return surface.create(**p)
+
+
 def call_raw(req: Req):
     """Send one request now; return (message, usage) with content blocks
     intact — for callers that read more than the text (citations, tool
-    results). Beta-flagged requests go through the beta surface."""
+    results). Beta-flagged requests go through the beta surface.
+
+    A long server-tool turn can stop with `pause_turn`; the API contract is to
+    resend the conversation with the paused assistant message appended, and it
+    continues. This loops that up to MAX_TURN_SEGMENTS times and returns a
+    message whose `content` is every segment's blocks in order (tool results
+    from early segments matter to callers) with usage summed across segments.
+    """
     p = req.params()
     surface = client().beta.messages if req.betas else client().messages
     if req.betas:
         p["betas"] = req.betas
-    if req.max_tokens > _STREAM_ABOVE_MAX_TOKENS:
-        with surface.stream(**p) as stream:
-            msg = stream.get_final_message()
-    else:
-        msg = surface.create(**p)
-    return msg, _usage(msg)
+
+    contents: list = []
+    usages: list[dict] = []
+    msg = None
+    for _segment in range(MAX_TURN_SEGMENTS):
+        msg = _one_call(surface, p, req.max_tokens)
+        usages.append(_usage(msg))
+        contents.extend(msg.content)
+        if getattr(msg, "stop_reason", None) != "pause_turn":
+            break
+        p = dict(p)
+        p["messages"] = [*p["messages"],
+                         {"role": "assistant", "content": msg.content}]
+
+    assert msg is not None  # MAX_TURN_SEGMENTS >= 1, so the loop ran
+    if len(usages) == 1:
+        return msg, usages[0]
+    from types import SimpleNamespace
+    merged = SimpleNamespace(content=contents, model=msg.model,
+                             stop_reason=getattr(msg, "stop_reason", None))
+    return merged, merge_usages(usages)
 
 
 def call(req: Req) -> tuple[str, dict]:
