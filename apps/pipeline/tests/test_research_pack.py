@@ -87,6 +87,20 @@ def test_api_fetched_docs_handles_both_sdk_shapes_and_canonical():
     assert norm_url("https://b.com") not in docs
 
 
+def test_hard_stops_pass_through_containment():
+    from serious_shift_pipeline.core.config import BudgetExceeded
+    from serious_shift_pipeline.steps.research import (UsageLockout,
+                                                       reraise_hard_stops)
+    with pytest.raises(BudgetExceeded):
+        reraise_hard_stops(BudgetExceeded("phase 'map' spend $132 exceeded"))
+    with pytest.raises(UsageLockout):
+        reraise_hard_stops(RuntimeError(
+            "Error code: 400 - You have reached your specified API usage "
+            "limits. You will regain access on 2026-09-01"))
+    # Ordinary failures stay containable.
+    reraise_hard_stops(ValueError("a poisoned PDF"))
+
+
 def test_salvage_recovers_complete_items_from_truncation():
     from serious_shift_pipeline.steps.research import salvage_item_array
     full = ('Here is what I found:\n[\n{"url": "https://a.com", "quote": "q1"},'

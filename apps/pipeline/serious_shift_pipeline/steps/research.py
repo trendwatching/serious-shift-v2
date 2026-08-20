@@ -46,6 +46,33 @@ MAX_FETCHES = int(os.environ.get("SS_RESEARCH_MAX_FETCHES", "40"))
 SHIFT_USD_NOTE = float(os.environ.get("SS_RESEARCH_SHIFT_USD", "2.50"))
 MAX_ITEMS = 30
 
+#: A pack researched this recently is REUSED, not re-paid-for: the reuse row
+#: is copied forward under the new run_id so downstream lookups hit it. This
+#: is both the re-run safety net (attempt 2 banked $130 of research and then
+#: died in generation) and the weekly-cadence economy (an unchanged shift does
+#: not re-research the same week).
+FRESH_DAYS = int(os.environ.get("SS_RESEARCH_FRESH_DAYS", "6"))
+MIN_REUSE_ITEMS = int(os.environ.get("SS_RESEARCH_MIN_REUSE_ITEMS", "8"))
+
+
+class UsageLockout(RuntimeError):
+    """The organization's monthly API usage limit is exhausted — every further
+    call this month 400s. Retrying per shift is pure log spam; the run must
+    stop NOW and say why."""
+
+
+def reraise_hard_stops(exc: Exception) -> None:
+    """Containment boundary police. build_pack contains per-shift failures (a
+    poisoned fetch must cost one attempt) — but two failure classes must NEVER
+    be contained: the run budget brake, and the monthly usage lockout. Attempt
+    2 spent $32 past its cap because a bare `except Exception` swallowed
+    BudgetExceeded and kept iterating shifts."""
+    from ..core.config import BudgetExceeded
+    if isinstance(exc, BudgetExceeded):
+        raise exc
+    if "reached your specified api usage limits" in str(exc).lower():
+        raise UsageLockout(str(exc)) from exc
+
 DOMAIN_VALID = {"agi_timeline", "labor", "consumer_behavior", "technology_capability",
                 "economy", "regulation", "existential_risk", "enterprise",
                 "education", "geopolitics"}
@@ -234,9 +261,35 @@ def build_pack(conn, shift: dict, run_id: str, cost_tracker: CostTracker,
         print(prompt[:1200])
         return None
 
+    # Reuse a fresh pack instead of re-paying for the research.
+    fresh = db.query_one(conn, """
+        SELECT item_ids, coverage, created_at FROM evidence_packs
+        WHERE shift_slug = %s
+          AND created_at > now() - make_interval(days => %s)
+          AND COALESCE((coverage->>'items')::int, 0) >= %s
+        ORDER BY created_at DESC LIMIT 1""",
+        (shift["slug"], FRESH_DAYS, MIN_REUSE_ITEMS))
+    if fresh:
+        coverage = dict(fresh["coverage"])
+        coverage["reused_from"] = str(fresh["created_at"])[:16]
+        db.execute(conn, """INSERT INTO evidence_packs
+            (shift_slug, run_id, item_ids, coverage)
+            VALUES (%s,%s,%s,%s::jsonb)
+            ON CONFLICT (shift_slug, run_id)
+            DO UPDATE SET item_ids = EXCLUDED.item_ids, coverage = EXCLUDED.coverage""",
+            (shift["slug"], run_id, list(fresh["item_ids"] or []),
+             json.dumps(coverage)))
+        conn.commit()
+        print(f"  {shift['slug']}: reusing the {coverage['reused_from']} pack "
+              f"({coverage.get('items')} items) — researched within "
+              f"{FRESH_DAYS} days")
+        return coverage
+
     # One poisoned fetch (the API 400s on e.g. a corrupt PDF it fetched) or a
     # truncated final array must cost ONE attempt, never the sweep and never
-    # the run — the first live run died exactly this way, twice.
+    # the run — the first live run died exactly this way, twice. But the
+    # budget brake and the monthly usage lockout must pass through, or
+    # containment turns a hard stop into an expensive loop (attempt 2).
     msg = None
     for attempt in (1, 2):
         try:
@@ -250,6 +303,7 @@ def build_pack(conn, shift: dict, run_id: str, cost_tracker: CostTracker,
             cost_tracker.add(usage, thinker_name=f"RESEARCH:{shift['slug']}")
             break
         except Exception as exc:  # noqa: BLE001 — contained per shift, retried once
+            reraise_hard_stops(exc)
             error_log.record(step="research", thinker=shift["slug"], exc=exc,
                              retry_attempted=(attempt == 1), outcome="retried"
                              if attempt == 1 else "skipped")
