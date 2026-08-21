@@ -12,11 +12,20 @@ def test_no_evaluable_predictions_defaults_to_neutral():
     assert s["evaluable"] == 0 and s["total"] == 2
 
 
-def test_all_true_high_consensus():
+def test_two_lucky_calls_cannot_mint_an_oracle():
+    # Shrinkage: (0.5*6 + 2) / (6 + 2) = 0.625, not 1.0.
     s = score_thinker([("true", 1.0), ("true", 1.0)])
-    assert s["accuracy"] == 1.0
+    assert s["accuracy"] == 0.62
     assert s["outlier"] == 1.0
-    assert s["credibility"] == 100.0
+    assert s["credibility"] == 68.1
+
+
+def test_accuracy_distance_is_earned_with_volume():
+    two = score_thinker([("true", 0.5)] * 2)
+    twenty = score_thinker([("true", 0.5)] * 20)
+    assert two["accuracy"] < twenty["accuracy"] < 1.0
+    # (0.5*6 + 20) / 26 = 0.8846…
+    assert twenty["accuracy"] == 0.88
 
 
 def test_mixed_statuses_average():

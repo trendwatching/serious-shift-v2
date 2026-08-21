@@ -5,6 +5,7 @@ import { cssUrl } from '../lib/safeUrl'
 import { useResolved } from '../lib/useDomains'
 import { Breadcrumb } from '../chrome/Breadcrumb'
 import { Footer } from '../chrome/Footer'
+import { WorkWithUs } from '../chrome/WorkWithUs'
 import { Modules } from '../modules'
 import { Loading, Missing, Unavailable } from './states'
 import { isSphere, quoted, trendTitle, unquote } from '../lib/theme'
@@ -163,6 +164,11 @@ export default function ShiftPage() {
             basePath: `/${domain.slug}/${shift.slug}`,
           }}
         />
+        {/* The last module on the page, and the only one the reader is asked
+            to act on rather than read. It is not a contract type — see
+            chrome/WorkWithUs.jsx — but it sits inside the canvas so it takes
+            the column and the module gap like everything above it. */}
+        <WorkWithUs />
       </div>
 
       {/* Outside the canvas, not inside it with the gutter cancelled: a footer

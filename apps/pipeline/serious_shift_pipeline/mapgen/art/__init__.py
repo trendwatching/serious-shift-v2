@@ -21,7 +21,7 @@ import time
 from ...core import parallel
 from . import gemini, raster, store
 from .prompts import image_prompt, prompt_sha256
-from .style import FRAMES, OG, STYLE_NAME
+from .style import DERIVED, FRAMES, STYLE_NAME, spec_for
 
 #: Off switch. The lever to pull at 2am without deploying anything.
 ENABLED = os.environ.get('SS_ART', '1') != '0'
@@ -66,27 +66,30 @@ def _jobs(out: dict, briefs: dict) -> list[dict]:
         concept = briefs.get(('sub_trend', slug))
         if not concept:
             continue
-        jobs.append({'scope': 'sub_trend', 'slug': slug, 'frame': 'tile',
-                     'sphere': str(sub.get('domain_id') or ''),
-                     'prompt': image_prompt(sub.get('domain_id'), 'tile', concept)})
+        # Two masters, the same as a key shift: the tile master also yields the
+        # 4:5 poster and the wide master also yields the share card, so this is
+        # two generations for four frames.
+        for frame in ('tile', 'wide'):
+            jobs.append({'scope': 'sub_trend', 'slug': slug, 'frame': frame,
+                         'sphere': str(sub.get('domain_id') or ''),
+                         'prompt': image_prompt(sub.get('domain_id'), frame, concept)})
     return jobs
 
 
 def _outputs(job: dict, master: bytes) -> list[dict]:
-    """The rows one generated master produces. `wide` also yields `og`, free."""
+    """The rows one generated master produces — itself, plus its free crops.
+
+    See `style.DERIVED` for which crops ride on which master and why. Every one
+    of them is a downscale from the 1K master, so a derived frame is not a
+    cheaper-looking frame.
+    """
     rows = []
-    spec = FRAMES[job['frame']]
-    encoded, digest = raster.cover_crop(master, int(spec['width']), int(spec['height']),
-                                        int(spec['quality']))
-    rows.append({**job, 'bytes': encoded, 'sha256': digest,
-                 'width': spec['width'], 'height': spec['height'],
-                 'byte_size': len(encoded), 'style': STYLE_NAME,
-                 'model': gemini.MODEL})
-    if job['frame'] == OG['from']:
-        encoded, digest = raster.cover_crop(master, int(OG['width']), int(OG['height']),
-                                            int(OG['quality']))
-        rows.append({**job, 'frame': 'og', 'bytes': encoded, 'sha256': digest,
-                     'width': OG['width'], 'height': OG['height'],
+    for frame in (job['frame'], *DERIVED.get((job['scope'], job['frame']), ())):
+        spec = spec_for(frame)
+        encoded, digest = raster.cover_crop(master, int(spec['width']), int(spec['height']),
+                                            int(spec['quality']))
+        rows.append({**job, 'frame': frame, 'bytes': encoded, 'sha256': digest,
+                     'width': spec['width'], 'height': spec['height'],
                      'byte_size': len(encoded), 'style': STYLE_NAME,
                      'model': gemini.MODEL})
     return rows
@@ -122,21 +125,23 @@ def _attach(out: dict, art: dict) -> int:
 
     for sub in out.get('sub_trends') or []:
         slug = str(sub.get('slug') or '')
-        tile = url('sub_trend', slug, 'tile')
-        if tile:
-            sub['tile_image'] = tile
-            attached += 1
-        # A sub-shift page inherits its parent's poster and its link-preview
-        # card; only the tile is its own. seo.rs reads og_image straight off the
-        # row, so without this a sub-shift page would fall back to the committed
-        # static card while its parent used the generated one.
-        hero, wide, og = hero_by_shift.get(_sub_parent(sub), (None, None, None))
-        if hero:
-            sub['hero_image'] = hero
-        if wide:
-            sub['hero_image_wide'] = wide
-        if og:
-            sub['og_image'] = og
+        # Its own first, the parent's only where its own is missing. A sub-shift
+        # used to wear its parent's poster on every one of its pages, which made
+        # five sibling pages look like one page; now the parent is the fallback
+        # that keeps a failed generation showing artwork rather than a gradient.
+        # seo.rs reads og_image straight off the row, so the fallback also stops
+        # a sub-shift's link preview regressing to the committed static card.
+        inherited = hero_by_shift.get(_sub_parent(sub), (None, None, None))
+        for key, frame, fallback in (('tile_image', 'tile', None),
+                                     ('hero_image', 'hero', inherited[0]),
+                                     ('hero_image_wide', 'wide', inherited[1]),
+                                     ('og_image', 'og', inherited[2])):
+            value = url('sub_trend', slug, frame)
+            if value:
+                attached += 1
+            value = value or fallback
+            if value:
+                sub[key] = value
     return attached
 
 

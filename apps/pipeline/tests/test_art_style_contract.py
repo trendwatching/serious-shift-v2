@@ -16,7 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from serious_shift_pipeline.mapgen.art.style import FRAMES, NO_TEXT, OG, RAMP, collage
+from serious_shift_pipeline.mapgen.art.style import (FRAMES, NO_SYMBOLS, NO_TEXT, OG,
+                                                      RAMP, collage)
 
 _MJS = (Path(__file__).resolve().parents[3]
         / 'apps' / 'frontend' / 'scripts' / 'generate-art.mjs')
@@ -28,6 +29,19 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture(scope='module')
 def source() -> str:
     return _MJS.read_text(encoding='utf-8')
+
+
+def _joined_string(source: str, name: str) -> str:
+    """Reassemble a `const NAME = 'a' + 'b'` declaration from the .mjs."""
+    block = re.search(rf"const {name}\s*=\s*((?:\s*\+?\s*'[^']*')+)", source)
+    assert block, f'{name} not found in generate-art.mjs'
+    return ''.join(re.findall(r"[`']((?:[^`'\\]|\\.)*)[`']", block.group(1)))
+
+
+def _clause(source: str, frame: str) -> str:
+    found = re.search(rf"{frame}:\s*\{{[^}}]*?clause:\s*'([^']*)'", source, re.S)
+    assert found, f'{frame} clause not found in generate-art.mjs'
+    return found.group(1)
 
 
 @pytest.mark.parametrize('sphere', sorted(RAMP))
@@ -56,6 +70,17 @@ def test_the_collage_style_renders_the_same_words(source):
                     .replace('${ramp.hot}', ramp['hot'])
                     .replace('${ramp.tone}', ramp['tone']))
         assert collage(ramp) == expected, f'collage style drifted for {sphere}'
+
+
+@pytest.mark.parametrize('frame', ['hero', 'wide'])
+def test_the_frame_clauses_match(source, frame):
+    """Only the pixel geometry was checked here until 19 Aug 2026, so the clause —
+    which is half the composition — could drift between the two files unnoticed."""
+    assert FRAMES[frame]['clause'] == _clause(source, frame)
+
+
+def test_the_tile_clause_matches_the_javascripts_sub_clause(source):
+    assert FRAMES['tile']['clause'] == _clause(source, 'sub')
 
 
 @pytest.mark.parametrize('frame', ['hero', 'wide'])
@@ -94,7 +119,11 @@ def test_the_og_crop_matches(source):
 
 def test_the_no_text_guard_is_word_for_word(source):
     """Weaken this and the model starts writing garbled signage into posters."""
-    block = re.search(r"const NO_TEXT\s*=\s*((?:\s*\+?\s*'[^']*')+)", source)
-    assert block, 'NO_TEXT not found in generate-art.mjs'
-    parts = re.findall(r"[`']((?:[^`'\\]|\\.)*)[`']", block.group(1))
-    assert NO_TEXT == ''.join(parts)
+    assert NO_TEXT == _joined_string(source, 'NO_TEXT')
+
+
+def test_the_symbol_ban_is_word_for_word(source):
+    """The 19 Aug 2026 answer to a fleet of arrows, lightning bolts and people at
+    screens. It is a ban, so a partial copy in one of the two files is worse than
+    none: the tools would disagree about what the house style forbids."""
+    assert NO_SYMBOLS == _joined_string(source, 'NO_SYMBOLS')

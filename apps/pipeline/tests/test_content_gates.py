@@ -109,6 +109,19 @@ def test_duplicate_hero_claim_is_rejected():
     assert 'duplicate_hero_claim' in codes(document)
 
 
+def test_undated_hero_is_rejected():
+    """An undated figure cannot front a page — the reader has no way to tell
+    last month from 2019. Phase 8 only offers dated candidates, so this gate
+    is the backstop, and it is hero-repairable rather than run-fatal."""
+    document = full_map()
+    document['key_trends'][0]['hero_stat'] = dict(
+        document['key_trends'][0]['hero_stat'], year='')
+    assert 'hero_stat_undated' in codes(document)
+    assert all(issue.repairable for issue in _issues(document, 'hero_stat_undated'))
+    document['key_trends'][0]['hero_stat']['year'] = '2026'
+    assert 'hero_stat_undated' not in codes(document)
+
+
 def test_hero_and_sub_stat_band_collide_across_value_forms():
     """A KT hero carries the claim's long-form sentence while a sub band
     carries its _short_figure reduction, so the old raw-prose key never

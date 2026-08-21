@@ -18,6 +18,8 @@ from serious_shift_pipeline.mapgen.phases.sub_trends import (MIN_CLAIMS_PER_SUB,
 from serious_shift_pipeline.mapgen.validation import EVIDENCE_REUSE_SHARE
 
 from test_content_gates import full_map
+from serious_shift_pipeline.mapgen.validation import validate_map
+
 from test_map_validation import CONTRACT, codes, valid_map
 
 
@@ -157,3 +159,268 @@ def test_the_repair_limit_covers_a_map_that_needs_many_small_fixes():
     assert cli._repair_limit({'key_trends': [{}] * 44}) >= 30
     total = 60
     assert cli._repair_limit({'key_trends': [{}] * total}) < total
+
+
+# ── one claim, one page: settled at export, not asked of the writers ─────
+
+def _shift(slug, value, url):
+    return {'slug': slug, 'hero_stat': {'value': value, 'url': url},
+            'modules': [{'type': 'dek', 'data': {'text': 'x'}},
+                        {'type': 'stat_band', 'data': {'value': value, 'url': url}}]}
+
+
+def _sub(value, url):
+    return {'modules': [{'type': 'stat_band', 'data': {'value': value, 'url': url}},
+                        {'type': 'dek', 'data': {'text': 'x'}}]}
+
+
+def test_a_child_cedes_its_stat_band_to_its_parent():
+    """The gate registers key shifts first and blames the SUB, so the writer has
+    to resolve it the same way round. The band is dropped, not blanked — a band
+    without a figure is not a band."""
+    from serious_shift_pipeline.mapgen.export import reconcile_fronted_stats
+
+    # Long-form on the parent, the _short_figure reduction on the child: the
+    # two forms that keyed differently before 2026-08-12.
+    shifts = [_shift('governance-void',
+                     '~1,337 employees across major Western AI labs signed', 'u1')]
+    subs = [_sub('1,337', 'u1'), _sub('72%', 'u2')]
+    report = reconcile_fronted_stats(shifts, subs)
+
+    assert report['sub_bands_ceded'] == 1
+    assert [m['type'] for m in subs[0]['modules']] == ['dek']
+    assert shifts[0]['hero_stat'] is not None, 'the parent keeps its figure'
+    assert [m['type'] for m in subs[1]['modules']] == ['stat_band', 'dek']
+
+
+def test_two_parents_on_one_figure_leaves_the_later_shift_without_one():
+    """Exclusive assignment is by claim id, but the key is (figure, source) —
+    two claim rows quoting the same figure from the same article collide anyway,
+    and there is no second place to put a hero."""
+    from serious_shift_pipeline.mapgen.export import reconcile_fronted_stats
+
+    shifts = [_shift('first', '41% choose agent shopping', 'u1'),
+              _shift('second', '41% choose agent shopping', 'u1')]
+    report = reconcile_fronted_stats(shifts, [])
+
+    assert report['shift_heroes_dropped'] == ['second']
+    assert shifts[1]['hero_stat'] is None
+    assert 'stat_band' not in [m['type'] for m in shifts[1]['modules']]
+    assert 'stat_band' in [m['type'] for m in shifts[0]['modules']]
+
+
+def test_reconciliation_leaves_the_gate_nothing_to_find():
+    """The point of doing it at export: whatever this returns must pass the
+    very gate that used to reject it."""
+    from serious_shift_pipeline.mapgen.export import reconcile_fronted_stats
+
+    document = full_map()
+    shared = {'value': '41% choose agent shopping', 'url': 'https://e.com/a'}
+    for shift in document['key_trends'][:3]:
+        shift['hero_stat'] = dict(shared)
+    for sub in document['sub_trends'][:4]:
+        sub['modules'] = [{'type': 'stat_band', 'data': dict(shared)}] + [
+            m for m in sub.get('modules') or [] if m.get('type') != 'stat_band']
+
+    assert 'duplicate_hero_claim' in codes(document), 'fixture must trip the gate'
+    reconcile_fronted_stats(document['key_trends'], document['sub_trends'])
+    assert 'duplicate_hero_claim' not in codes(document)
+
+
+def test_a_hero_restating_its_own_subtitle_is_dropped_at_export():
+    """The subtitle cannot move (phase-3 copy, no repair rewrites it) and there
+    is no safe deterministic edit that removes a number from a sentence, so the
+    movable half — the fronted statistic — cedes. --export-only republishes
+    persisted picks without re-running phase 8; this is its safety net."""
+    from serious_shift_pipeline.mapgen.export import reconcile_self_echo
+
+    echoing = _shift('silent-commerce', '3.5x conversion rate', 'u1')
+    echoing['subtitle'] = 'Amazon voice AI converts at 3.5 times the rate of keyword search'
+    clean = _shift('psyche-capture', '72% report attachment', 'u2')
+    clean['subtitle'] = 'AI companions rewire what users expect from each other'
+    report = reconcile_self_echo([echoing, clean], [])
+
+    assert report['shift_heroes_dropped'] == ['silent-commerce']
+    assert echoing['hero_stat'] is None
+    assert 'stat_band' not in [m['type'] for m in echoing['modules']]
+    assert clean['hero_stat'] is not None
+    assert 'stat_band' in [m['type'] for m in clean['modules']]
+
+
+def test_a_sub_band_restating_its_own_fixed_copy_is_dropped_at_export():
+    from serious_shift_pipeline.mapgen.export import reconcile_self_echo
+
+    sub = _sub('660,000', 'u1')
+    sub.update(slug='permeable-embargo', name='Permeable Embargo',
+               subtitle='An estimated 660,000 smuggled H100-equivalents reached China',
+               description='Export controls are failing at the border.')
+    report = reconcile_self_echo([], [sub])
+    assert report['sub_bands_dropped'] == ['permeable-embargo']
+    assert 'stat_band' not in [m['type'] for m in sub['modules']]
+
+    untouched = _sub('72%', 'u2')
+    untouched.update(name='Clean Page', subtitle='No numbers here', description='')
+    assert reconcile_self_echo([], [untouched])['sub_bands_dropped'] == []
+    assert 'stat_band' in [m['type'] for m in untouched['modules']]
+
+
+def test_the_us_spelling_of_programmed_is_not_flagged_as_british():
+    """`programme(?:s|d)?` matched "programmed", which is the US past tense of
+    "program" — three correct sentences failed the 18 Aug 2026 run on it. The
+    British noun must still be caught."""
+    from serious_shift_pipeline.mapgen.validation import _BRITISH
+
+    assert not _BRITISH.search('the model was programmed to refuse')
+    assert _BRITISH.search('a government programme')
+    assert _BRITISH.search('two funding programmes')
+    assert _BRITISH.search('they catalogued the results')
+
+
+# ── claim over-reach: routing, so prose regeneration cannot touch it ─────
+
+def test_the_page_with_the_most_to_stand_on_is_the_one_that_cedes():
+    from serious_shift_pipeline.mapgen.export import reconcile_evidence_reuse
+
+    subs = [{'claim_ids': ['c_1', 'c_2', 'c_3', 'c_4', 'c_5']},   # richest
+            {'claim_ids': ['c_1', 'c_9']},
+            {'claim_ids': ['c_1', 'c_7', 'c_8']},
+            {'claim_ids': ['c_1', 'c_6', 'c_7', 'c_8']}]
+    report = reconcile_evidence_reuse(subs)
+
+    assert report['claims_trimmed'] == 1
+    assert 'c_1' not in subs[0]['claim_ids'], 'the five-claim page gives it up'
+    assert all('c_1' in subs[i]['claim_ids'] for i in (1, 2, 3))
+
+
+def test_a_page_is_never_hollowed_out_to_pass_the_gate():
+    """If every over-cap holder is at the floor, the claim stays over the cap
+    and the gate rejects it — better a visible failure than four thin pages."""
+    from serious_shift_pipeline.mapgen.export import reconcile_evidence_reuse
+
+    subs = [{'claim_ids': ['c_1', 'c_2']} for _ in range(4)]
+    assert reconcile_evidence_reuse(subs)['claims_trimmed'] == 0
+    assert all(len(s['claim_ids']) == 2 for s in subs)
+
+
+def test_a_claim_the_page_actually_cites_is_never_un_routed():
+    """The first version trimmed on routing alone. It cleared evidence_reuse and
+    broke editorial_provenance on two pages, because the prose was left citing a
+    claim no longer routed to it — the point made, its source deleted."""
+    from serious_shift_pipeline.mapgen.export import reconcile_evidence_reuse
+
+    def page(extra):
+        return {'claim_ids': ['c_1', *extra],
+                'modules': [{'type': 'peel_tabs', 'data': {'evidence_ids': [1, *[
+                    int(c.split('_')[1]) for c in extra]]}}]}
+
+    subs = [page(['c_2', 'c_3', 'c_4']), page(['c_5']), page(['c_6']), page(['c_7'])]
+    assert reconcile_evidence_reuse(subs)['claims_trimmed'] == 0
+    assert all('c_1' in s['claim_ids'] for s in subs)
+
+
+def test_trimming_leaves_the_gate_nothing_to_find():
+    from serious_shift_pipeline.mapgen.export import reconcile_evidence_reuse
+
+    document = full_map()
+    subs = document['sub_trends']
+    # c_1001 is routed to six pages and cited by none of them — the filler-dump
+    # the cap exists to catch, and the only shape that is safe to trim.
+    for n, sub in enumerate(subs[:6]):
+        sub['claim_ids'] = ['c_1001', 'c_1002', f'c_{9000 + n}']
+        for module in sub['modules']:
+            if module.get('type') == 'peel_tabs':
+                module['data']['evidence_ids'] = [1002, 9000 + n]
+
+    def reuse_of(claim):
+        return [i for i in validate_map(document, CONTRACT)
+                if i.code == 'evidence_reuse' and claim in i.message]
+
+    # By claim, not by code: full_map() trips evidence_reuse on its own, and a
+    # bare `code in codes()` assertion passed whether or not the trim worked.
+    assert reuse_of('c_1001'), 'fixture must trip the gate on this claim'
+    provenance_before = [i for i in validate_map(document, CONTRACT)
+                         if i.code == 'editorial_provenance']
+    reconcile_evidence_reuse(subs)
+    assert not reuse_of('c_1001')
+    assert [i.path for i in validate_map(document, CONTRACT)
+            if i.code == 'editorial_provenance'] == [i.path for i in provenance_before], \
+        'the trim must not orphan a citation'
+
+
+# ── the batch queue is not worth the wait for a handful of requests ──────
+
+def test_a_small_submission_skips_the_batch_queue(monkeypatch):
+    """A one-request retry sat in the batch queue for 58 minutes on the 18 Aug
+    2026 run, protecting a discount worth under a cent."""
+    from serious_shift_pipeline.core import llm
+
+    monkeypatch.setattr(llm, 'call', lambda req: (f'body:{req.custom_id}', {'in': 1}))
+    monkeypatch.setattr(llm, 'client',
+                        lambda: pytest.fail('the batch API must not be reached'))
+
+    reqs = [llm.Req(user=f'p{n}', custom_id=f'kt-{n}')
+            for n in range(llm.SYNC_AT_OR_BELOW)]
+    out = llm.call_batch(reqs)
+
+    assert sorted(out) == sorted(r.custom_id for r in reqs)
+    assert out['kt-0'][0] == 'body:kt-0'
+    # NOT marked batch: these are billed at full price and the report must say so.
+    assert not out['kt-0'][1].get('batch')
+
+
+def test_one_failure_does_not_lose_the_others():
+    """Same contract as the batch path — callers filter on a None body."""
+    from serious_shift_pipeline.core import llm
+
+    def flaky(req):
+        if req.custom_id == 'kt-1':
+            raise RuntimeError('overloaded')
+        return ('body', {'in': 1})
+
+    original = llm.call
+    llm.call = flaky
+    try:
+        out = llm.call_batch([llm.Req(user='p', custom_id=f'kt-{n}') for n in range(2)])
+    finally:
+        llm.call = original
+
+    assert out['kt-0'][0] == 'body'
+    assert out['kt-1'][0] is None
+    assert out['kt-1'][1]['error'] == 'RuntimeError'
+
+
+def test_a_real_batch_still_goes_to_the_batch_api():
+    """The discount is the whole point above the threshold."""
+    from serious_shift_pipeline.core import llm
+
+    assert llm.SYNC_AT_OR_BELOW < 44, 'a full map must never bypass the discount'
+
+
+def test_a_failed_run_still_records_what_it_spent(monkeypatch):
+    """_record_spend runs only after a successful publish, so every gate failure
+    booked $0.00 — while having already paid for the whole generation. Four
+    failed synthesize runs on 18 Aug 2026 read $0.00 between them, which is why
+    no full rebuild has ever been costed."""
+    from serious_shift_pipeline.mapgen import cli
+    from serious_shift_pipeline.mapgen.validation import (PublicationValidationError,
+                                                          ValidationIssue)
+
+    charged = {}
+
+    class FakeRun:
+        def __init__(self, *a, **k): pass
+        def start(self): pass
+        def add_usage(self, *, cost=None, detail=None, **k):
+            if cost is not None:
+                charged['cost'] = cost
+        def finish(self, **k): pass
+
+    monkeypatch.delenv('SS_RUN_ID', raising=False)
+    monkeypatch.setattr(cli, 'RunLog', FakeRun)
+    monkeypatch.setattr(cli.observability, 'new_run_id', lambda stage: 'run-1')
+
+    cli._record_validation_failure(PublicationValidationError(
+        [ValidationIssue('evidence_reuse', 'sub_trends[1]', 'over the cap', True)]))
+
+    assert charged.get('cost') is cli.mapgen_llm.COST, \
+        'the run row must carry the spend the failed generation already incurred'

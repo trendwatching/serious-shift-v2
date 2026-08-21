@@ -45,6 +45,13 @@ WRITING RULES
   (Mollick), (Acemoglu), (Zuboff). Never a bare surname on first mention, never
   a full name twice.
 - Numbers anchor abstraction. When you have a specific figure, use it.
+- Plain language over insider vocabulary. The reader is a strategist, not an AI
+  researcher or an economist. A term of art from AI or economics — "model
+  weights", "pre-deployment checkpoint", "frontier lab", "inference", "autarky",
+  "Kaldor facts" — appears only with a plain-English gloss in the same sentence
+  ("liability now travels with model weights, the files that store what an AI
+  has learned"), or not at all. If the sentence works without the term, cut the
+  term. Never gloss the everyday ("chatbot", "algorithm").
 - End on an action or implication — what the reader should think, feel, or do next.
 
 NEVER SOUND LIKE

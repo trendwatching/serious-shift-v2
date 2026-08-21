@@ -39,13 +39,25 @@ def route_claims_for_domain(conn, domain: dict, limit: int = CLAIMS_PER_DOM) -> 
         LEFT JOIN sources s ON c.source_id = s.id
         WHERE c.signal_strength IN ('signal','strong_signal')
           AND c.duplicate_of IS NULL
+          AND c.claim_type = 'evidence'
     """
+    # claim_type = 'evidence' retires the scraped-thinker corpus from
+    # selection (2026-08-20 pivot): only claims produced by the research
+    # passes — every one span-anchored to a document we fetched and stored —
+    # can reach a page.
     ORDER = """
         ORDER BY COALESCE(c.claim_weight,0) * COALESCE(c.freshness_score,0.5)
-                 * (GREATEST(COALESCE(t.credibility_score,50.0), 30.0) / 100.0) DESC,
+                 * (GREATEST(COALESCE(t.credibility_score,50.0), 30.0) / 100.0)
+                 * (CASE WHEN COALESCE(c.corroboration_count, 1) <= 1 THEN 0.85
+                         ELSE LEAST(1.0 + 0.05 * (c.corroboration_count - 2), 1.15)
+                    END) DESC,
                  c.id
         LIMIT %s
     """
+    # The CASE is the corroboration factor: single-host claims are discounted
+    # (0.85), two independent hosts is par (1.0), each further host adds 5%
+    # capped at 1.15. Bounded so corroboration breaks ties rather than letting
+    # a well-syndicated banality outrank a strong single-source claim.
 
     # Tier 1: primary domains
     p_ph = ','.join(['%s'] * len(primary))
@@ -103,3 +115,26 @@ def _diversify(candidates: list, min_thinkers: int = 5, total: int = 100) -> lis
         if c['id'] not in seeded_ids:
             result.append(c)
     return result
+
+
+def claims_by_ids(conn, ids: list[int]) -> list:
+    """The routed-claim dict shape for specific claim ids — the same SELECT
+    the tiers use, so research top-up claims can join the in-memory pools
+    (phase 4 clustering and the editorial ALLOWED EVIDENCE both read those
+    pools, never the tables)."""
+    if not ids:
+        return []
+    rows = conn.execute("""
+        SELECT c.id, c.claim_text, c.quote, c.consumer_implication,
+               c.claim_type, c.signal_strength, c.specificity,
+               c.has_statistic, c.statistic, c.domain AS claim_domain,
+               t.name AS thinker, t.credibility_score, t.discovered AS thinker_discovered,
+               s.title AS source_title, s.date_published, s.url AS source_url,
+               s.source_type, s.confidence AS source_confidence
+        FROM claims c
+        JOIN thinkers t ON c.thinker_id = t.id
+        LEFT JOIN sources s ON c.source_id = s.id
+        WHERE c.id = ANY(%s)
+        ORDER BY c.id
+    """, (list(ids),)).fetchall()
+    return [dict(r) for r in rows]

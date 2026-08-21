@@ -17,7 +17,7 @@ from ..core.observability import RunLog
 from . import llm as mapgen_llm
 from .art import generate_and_attach
 from .carryover import load_published_taxonomy
-from .config import CLAIMS_PER_DOM, DOMAINS
+from .config import CLAIMS_PER_DOM, DOMAINS, load_gates
 from .dbutil import get_conn, reset_v2_tables
 from .export import (
     _write_map_document, build_map_json_v2, load_kts_from_db,
@@ -27,12 +27,13 @@ from .phases.domains import phase1_domain_definitions
 from .phases.editorial import phase4b_editorial
 from .phases.hero_stats import phase8_hero_stats
 from .phases.key_trends import phase3_key_trends
+from .phases.research_topup import phase3b_research_topup
 from .phases.routing import phase2_claim_routing
 from .phases.sub_trends import phase4_sub_trends
 from .publish_hook import post_shift_map
 from .routing import route_claims_for_domain
 from .validation import (PublicationValidationError, _load_contract,
-                         validate_map)
+                         advisory_issues, skipped_issue_codes, validate_map)
 
 #: How many parent shifts one targeted repair may regenerate, as a SHARE of the
 #: map. It was a flat 12, which is a third of a 36-shift map and a fifth of a
@@ -48,9 +49,12 @@ from .validation import (PublicationValidationError, _load_contract,
 #: everywhere, not to refuse one that needs a lot of small fixes, so it sits just
 #: below "all of them": a run where EVERY shift is defective is systemic and
 #: should still fail loudly rather than be rewritten wholesale.
-REPAIR_SHIFT_SHARE = float(os.environ.get('SS_REPAIR_SHIFT_SHARE', '0.85'))
+#: The value lives in packages/contracts/gates.json — a reviewed file, not an
+#: env var, so loosening it is a diff someone signed off on (the
+#: SS_REPAIR_SHIFT_SHARE override this replaced left no trace).
+REPAIR_SHIFT_SHARE = float(load_gates().get('repair_shift_share', 0.85))
 #: Floor, so a small map still gets a useful repair.
-MIN_TARGETED_REPAIR_SHIFTS = 12
+MIN_TARGETED_REPAIR_SHIFTS = int(load_gates().get('min_targeted_repair_shifts', 12))
 
 
 def _repair_limit(out: dict) -> int:
@@ -65,15 +69,23 @@ def _record_validation_failure(exc: PublicationValidationError) -> None:
     orchestrated = bool(os.environ.get('SS_RUN_ID'))
     run_id = os.environ.get('SS_RUN_ID') or observability.new_run_id('synthesize')
     run = RunLog(run_id, 'synthesize')
+    # `cost=` on both paths. Spend was only recorded by _record_spend, which runs
+    # AFTER a successful publish, so every failed run booked $0.00 — and a run
+    # that fails at the gate has already paid for the whole generation. The
+    # ledger therefore showed nothing for the most expensive events in it: four
+    # failed synthesize runs on 18 Aug 2026 read $0.00 between them, which is
+    # also why no full rebuild has ever been costed and the budget ceilings had
+    # to be guessed.
     if orchestrated:
         # The row belongs to run.py, which closes it after the remaining steps.
         # `finish()` matches on run_id alone, so stamping it here set
         # finished_at and status='failed' while classify had yet to run — the
         # exact double-close `_open_export_run` documents avoiding, forty lines
         # below. Attach the detail and leave the lifecycle to its owner.
-        run.add_usage(detail=exc.detail())
+        run.add_usage(cost=mapgen_llm.COST, detail=exc.detail())
     else:
         run.start()
+        run.add_usage(cost=mapgen_llm.COST)
         run.finish(status='failed', detail=exc.detail())
     # Capped. A stale taxonomy produces thousands of issues — 2,004 in one real
     # case — and dumping them all buries the one line that says the work is
@@ -177,7 +189,12 @@ def _issue_shift_ids(out: dict, issues) -> set[str]:
 #: and topicality are assignment decisions, and stat coverage can recover when
 #: the assignment shuffles. Runs before any paid editorial regen, because the
 #: stat_band the editorial builds is derived from hero_stat.
-HERO_REPAIR_CODES = {'duplicate_hero_claim', 'hero_topicality', 'stat_coverage'}
+#: `stat_echo_subtitle` belongs here because the copy half of that pair can
+#: never move — phase 8 (which now avoids echoing candidates) reassigns the
+#: hero, and export's reconcile_self_echo mops up the sub-shift bands.
+HERO_REPAIR_CODES = {'duplicate_hero_claim', 'hero_topicality', 'stat_coverage',
+                     'stat_echo_subtitle', 'hero_stat_undated'}
+
 
 
 def _targeted_repair_once(conn, api_key: str, out: dict, issues,
@@ -246,16 +263,32 @@ def _targeted_repair_once(conn, api_key: str, out: dict, issues,
 
 def _publish_candidate(conn, out: dict, *, api_key: str = '', domain_claims=None,
                        domain_kts=None, allow_repair: bool = False) -> dict:
-    issues = validate_map(out)
+    def _blocking(found):
+        skipped_codes = skipped_issue_codes()
+        skipped = [i for i in found if i.code in skipped_codes]
+        if skipped:
+            print(f'  gates.json skip_issue_codes: {len(skipped)} issue(s) printed but '
+                  f'not blocking ({", ".join(sorted({i.code for i in skipped}))}):')
+            for issue in skipped[:MAX_PRINTED_ISSUES]:
+                print(f'    - {issue.code} at {issue.path}')
+        return [i for i in found if i.code not in skipped_codes]
+
+    issues = _blocking(validate_map(out))
     if issues and allow_repair and api_key and domain_claims is not None and domain_kts is not None:
         print(f'Candidate invalid ({len(issues)} issue(s)); running one targeted repair pass…')
         if _targeted_repair_once(conn, api_key, out, issues, domain_claims, domain_kts):
             out = build_map_json_v2(conn)
-            issues = validate_map(out)
+            issues = _blocking(validate_map(out))
     if issues:
         exc = PublicationValidationError(issues)
         _record_validation_failure(exc)
         raise exc
+
+    # Advisory findings ride every publish as a report: real defects the
+    # machine cannot fix (name-family monotony, an em dash in a subtitle) that
+    # must reach the operator without holding the map hostage.
+    for issue in advisory_issues(out)[:MAX_PRINTED_ISSUES]:
+        print(f'  advisory: {issue.code} at {issue.path} — {issue.message}')
 
     # Artwork, after the gate and before the write. The taxonomy is final here
     # and nowhere earlier — the repair pass above can re-cluster sub-shifts and
@@ -459,6 +492,11 @@ def main():
         # ── Phase 3: Key Trend generation per domain ─────────────────────────
         domain_kts = phase3_key_trends(conn, api_key, domain_claims, previous=previous)
 
+        # ── Phase 3b: per-shift research top-up (web) — each named shift gets
+        #    its own deep-research pass; verified claims join the pools phase 4
+        #    and the editorial read. ────────────────────────────────────────────
+        phase3b_research_topup(conn, domain_claims, domain_kts)
+
         # ── Phase 4: sub-trend clustering ────────────────────────────────────
         phase4_sub_trends(conn, api_key, domain_claims, domain_kts)
 
@@ -474,9 +512,14 @@ def main():
             run_id = observability.new_run_id('synthesize')
             budget_run = RunLog(run_id, 'synthesize')
             budget_run.start()
-            budget_run.finish(status='failed', detail={'budget': {'error': str(exc)}})
+            budget_run.add_usage(cost=mapgen_llm.COST,
+                                 detail={'budget': {'error': str(exc)}})
+            budget_run.finish(status='failed')
         else:
+            # cost= included: a run stopped by its own brake has still spent
+            # real money, and attempt 2 recorded $0 for a $130 map phase.
             RunLog(orchestrated_id, 'synthesize').add_usage(
+                cost=mapgen_llm.COST,
                 detail={'budget': {'error': str(exc)}})
         print(
             f'\nERROR: spend ceiling reached — {exc}\n'
@@ -489,6 +532,14 @@ def main():
             file=sys.stderr,
         )
         conn.close(); sys.exit(1)
+    except Exception:
+        # A crash mid-generation has still spent real money — book it before
+        # the traceback (attempt 2's map phase was invisible in pipeline_runs).
+        orchestrated_id = os.environ.get('SS_RUN_ID')
+        if orchestrated_id and mapgen_llm.COST.cost > 0:
+            RunLog(orchestrated_id, 'synthesize').add_usage(
+                cost=mapgen_llm.COST, detail={'mapgen': {'crashed': True}})
+        raise
 
     # ── Phases 5 (attribution/voices), 6 (interrelatedness/links) and
     # 7 (synthesis insights) are DORMANT — deliberately not called. They were

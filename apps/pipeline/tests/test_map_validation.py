@@ -569,3 +569,129 @@ def test_a_sub_shift_may_not_be_named_after_a_key_shift():
 def test_a_clean_map_raises_none_of_the_name_gates():
     assert not ({'duplicate_shift_name', 'duplicate_sub_shift_name',
                  'sub_shift_shadows_shift_name'} & codes(valid_map()))
+
+
+# ── 2026-08-19 content review: figure echoes, em dashes, AI tells ─────────────
+
+
+def _with_hero(document, value='72% of consumers switched', subtitle='A subtitle'):
+    shift = document['key_trends'][0]
+    shift['hero_stat'] = {'value': value, 'text': 'measured by Example Research',
+                          'url': 'https://example.com/1'}
+    shift['subtitle'] = subtitle
+    return shift
+
+
+def test_a_body_restating_the_fronted_figure_is_repairable():
+    document = valid_map()
+    shift = _with_hero(document)
+    shift['modules'][0]['data']['text'] = 'Fully 72% of consumers now switch.'
+    found = [i for i in validate_map(document, CONTRACT) if i.code == 'stat_echo']
+    assert found and all(i.repairable for i in found)
+    assert found[0].path.startswith('key_trends[0].modules[0]'), 'names the dek module'
+
+
+def test_a_subtitle_carrying_the_fronted_figure_is_a_hero_problem():
+    document = valid_map()
+    _with_hero(document, subtitle='After 72 percent of consumers switched, brands noticed.')
+    found = [i for i in validate_map(document, CONTRACT)
+             if i.code == 'stat_echo_subtitle']
+    assert found and all(i.repairable for i in found)
+    assert 'stat_echo_subtitle' in cli.HERO_REPAIR_CODES, \
+        'the remedy is the free phase-8 re-run, not editorial regen'
+
+
+def test_indistinct_figures_never_count_as_echoes():
+    document = valid_map()
+    # bare small integer and a year: coincidence, not repetition
+    _with_hero(document, value='30 labs signed in 2026',
+               subtitle='All 30 labs signed the 2026 accord')
+    assert not {'stat_echo', 'stat_echo_subtitle'} & codes(document)
+
+
+def test_a_sub_band_echoed_by_its_own_signals_is_flagged():
+    document = valid_map()
+    sub = document['sub_trends'][0]
+    sub['modules'].insert(3, {'type': 'stat_band', 'data': {
+        'value': '660,000', 'text': 'smuggled units', 'url': 'https://example.com/2'}})
+    sub['modules'][5]['data']['whats_changing'] = 'An estimated 660,000 units moved.'
+    found = [i for i in validate_map(document, CONTRACT) if i.code == 'stat_echo']
+    assert found and 'sub_trends[0]' in found[0].path
+
+
+def test_em_dash_in_authored_prose_is_repairable():
+    document = valid_map()
+    document['key_trends'][0]['modules'][0]['data']['text'] = 'A claim — and a dash.'
+    found = [i for i in validate_map(document, CONTRACT) if i.code == 'em_dash']
+    assert found and all(i.repairable for i in found)
+
+
+def test_em_dash_in_quotes_evidence_and_ranges_is_not_flagged():
+    document = valid_map()
+    # a quoted human's dash is theirs; evidence text is scraped source material
+    document['key_trends'][0]['modules'][2]['data']['quote'] = 'Their words — verbatim.'
+    document['sub_trends'][0]['modules'][7]['data']['items'][0]['text'] = 'Source — dash.'
+    # a bare en dash is a range, not rhetoric
+    document['key_trends'][0]['modules'][0]['data']['text'] = 'Adoption grew 1–3 years out.'
+    assert 'em_dash' not in codes(document)
+
+
+def test_ai_tells_are_rejected_in_authored_prose():
+    document = valid_map()
+    document['key_trends'][0]['modules'][3]['data']['why_now'] = \
+        "It's worth noting that brands will delve into this."
+    found = [i for i in validate_map(document, CONTRACT) if i.code == 'ai_tell']
+    assert found and all(i.repairable for i in found)
+
+
+def test_counter_signal_meta_catches_methods_audits_only():
+    document = valid_map()
+    sub = document['sub_trends'][0]
+    sub['modules'][6]['data']['items'] = [
+        'The sample size is small and self-reported, limiting generalizability.']
+    found = [i for i in validate_map(document, CONTRACT)
+             if i.code == 'counter_signal_meta']
+    assert found and all(i.repairable for i in found)
+    # a real market counter-signal citing a study is NOT a methods audit
+    sub['modules'][6]['data']['items'] = [
+        'MIT reported adoption stalling among enterprise buyers in a peer-reviewed study.']
+    assert 'counter_signal_meta' not in codes(document)
+
+
+def test_name_families_are_advisory_never_blocking():
+    from serious_shift_pipeline.mapgen.validation import advisory_issues
+    document = valid_map()
+    for index, name in enumerate(['Proxy Blindspot', 'Deflation Blind Spot',
+                                  'Visibility Blindspot']):
+        document['sub_trends'][index]['name'] = name
+    advisory = {issue.code for issue in advisory_issues(document)}
+    assert 'name_family_repeat' in advisory
+    assert 'name_family_repeat' not in codes(document), \
+        'the live map violates the cap 9x over; blocking would strand every publish'
+
+
+def test_skip_valve_unblocks_only_the_named_codes(monkeypatch):
+    from serious_shift_pipeline.mapgen import config as mapgen_config
+    from serious_shift_pipeline.mapgen.validation import require_valid_map
+    document = valid_map()
+    document['key_trends'][0]['modules'][0]['data']['text'] = 'A claim — and a dash.'
+    with pytest.raises(PublicationValidationError):
+        require_valid_map(document, CONTRACT)
+    monkeypatch.setattr(mapgen_config, 'load_gates',
+                        lambda: {'skip_issue_codes': ['em_dash']})
+    require_valid_map(document, CONTRACT)   # must not raise
+    monkeypatch.setattr(mapgen_config, 'load_gates',
+                        lambda: {'skip_issue_codes': ['ai_tell']})
+    with pytest.raises(PublicationValidationError):
+        require_valid_map(document, CONTRACT)
+
+
+def test_env_skip_valve_is_dead(monkeypatch):
+    """SS_SKIP_ISSUE_CODES was the untracked loosening vector — the skip list
+    now lives only in the versioned gates.json, so the env var must do nothing."""
+    from serious_shift_pipeline.mapgen.validation import require_valid_map
+    document = valid_map()
+    document['key_trends'][0]['modules'][0]['data']['text'] = 'A claim — and a dash.'
+    monkeypatch.setenv('SS_SKIP_ISSUE_CODES', 'em_dash')
+    with pytest.raises(PublicationValidationError):
+        require_valid_map(document, CONTRACT)

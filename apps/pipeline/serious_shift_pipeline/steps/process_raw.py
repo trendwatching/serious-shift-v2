@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import hashlib
 import os
 import re
 import sys
@@ -112,21 +113,89 @@ def mark_processed(filepath):
 # path for local iteration.
 _USE_BATCH = os.environ.get("SS_DISABLE_BATCH", "") not in ("1", "true", "yes")
 
+# Long sources are CHUNKED, not truncated. Extraction previously saw
+# raw_text[:12000] — a third of a typical podcast transcript — so every claim in
+# the back two thirds of a long source never entered the corpus. One request per
+# ~24k chars, split at paragraph seams, with enough overlap that a claim
+# straddling a boundary appears whole in one of the chunks.
+CHUNK_CHARS = int(os.environ.get("SS_EXTRACTION_CHUNK_CHARS", "24000"))
+CHUNK_OVERLAP = 1000
 
-def _extraction_req(prep, custom_id: str) -> llm.Req:
+
+def chunk_body(body: str) -> list[str]:
+    """Split a long body into overlapping chunks at paragraph/sentence seams.
+    Bodies within 25% of the limit stay whole — a tiny tail chunk would just
+    re-extract the overlap."""
+    limit = CHUNK_CHARS
+    if len(body) <= limit + limit // 4:
+        return [body]
+    chunks, start = [], 0
+    while start < len(body):
+        end = min(start + limit, len(body))
+        if end < len(body):
+            seam = body.rfind("\n\n", start + limit // 2, end)
+            if seam == -1:
+                dot = body.rfind(". ", start + limit // 2, end)
+                seam = dot + 2 if dot != -1 else -1
+            if seam > start:
+                end = seam
+        chunks.append(body[start:end])
+        if end >= len(body):
+            break
+        start = end - CHUNK_OVERLAP if end - CHUNK_OVERLAP > start else end
+    return chunks
+
+
+def _norm_claim_text(text) -> str:
+    return re.sub(r"[^a-z0-9 ]+", "", str(text or "").lower()).strip()
+
+
+def merge_extractions(parts: list[dict]) -> dict:
+    """Combine per-chunk extractions of one source. The first chunk's `source`
+    block wins (titles/dates live in the opening text); claims, predictions and
+    position changes concatenate, deduped on normalized text so the chunk
+    overlap doesn't double-extract the seam."""
+    merged = dict(parts[0])
+    for key in ("claims", "predictions", "position_changes"):
+        seen, rows = set(), []
+        for part in parts:
+            for row in part.get(key) or []:
+                text = _norm_claim_text(
+                    (row.get("claim_text") or row.get("description") or row)
+                    if isinstance(row, dict) else row)
+                if text and text in seen:
+                    continue
+                seen.add(text)
+                rows.append(row)
+        merged[key] = rows
+    return merged
+
+
+def _extraction_req(prep, custom_id: str, chunk: str,
+                    part: tuple[int, int] | None) -> llm.Req:
     return llm.Req(
-        user=extraction_prompt(prep["thinker"], prep["meta"], prep["body"],
-                               prep["context_claims"], prep["context_preds"]),
+        user=extraction_prompt(prep["thinker"], prep["meta"], chunk,
+                               prep["context_claims"], prep["context_preds"],
+                               part=part),
         max_tokens=8192,
         custom_id=custom_id,
     )
 
 
 def extract_batch(preps, cost_tracker):
-    """Extract every prep in one batch. Returns a list aligned with `preps`,
-    each entry either the parsed JSON or an Exception (never raises, so one bad
-    file cannot sink the chunk)."""
-    reqs = [_extraction_req(p, f"f{i}") for i, p in enumerate(preps)]
+    """Extract every prep in one batch (one request per chunk of each file).
+    Returns a list aligned with `preps`, each entry either the merged parsed
+    JSON or an Exception (never raises, so one bad file cannot sink the chunk).
+    A file whose chunks partially fail keeps the successful chunks — never
+    worse than the old 12k truncation."""
+    reqs, chunk_counts = [], []
+    for i, prep in enumerate(preps):
+        chunks = chunk_body(prep["body"])
+        chunk_counts.append(len(chunks))
+        for j, chunk in enumerate(chunks):
+            part = (j + 1, len(chunks)) if len(chunks) > 1 else None
+            reqs.append(_extraction_req(prep, f"f{i}c{j}", chunk, part))
+
     if _USE_BATCH:
         results = llm.call_batch(reqs)
     else:
@@ -139,16 +208,28 @@ def extract_batch(preps, cost_tracker):
 
     out: list[object] = []
     for i, prep in enumerate(preps):
-        text, usage = results.get(f"f{i}", (None, {"error": "no result"}))
-        if usage and not usage.get("error"):
-            cost_tracker.add(usage, thinker_name=prep["thinker"]["name"])
-        if text is None:
-            out.append(RuntimeError(f"extraction failed: {usage.get('error')}"))
+        parts: list[dict] = []
+        failure: Exception | None = None
+        for j in range(chunk_counts[i]):
+            text, usage = results.get(f"f{i}c{j}", (None, {"error": "no result"}))
+            if usage and not usage.get("error"):
+                cost_tracker.add(usage, thinker_name=prep["thinker"]["name"])
+            if text is None:
+                failure = failure or RuntimeError(
+                    f"extraction failed (chunk {j + 1}/{chunk_counts[i]}): "
+                    f"{usage.get('error')}")
+                continue
+            try:
+                parts.append(llm.parse_model_json(text))
+            except ValueError as exc:
+                failure = failure or exc
+        if not parts:
+            out.append(failure or RuntimeError("extraction produced no chunks"))
             continue
-        try:
-            out.append(llm.parse_model_json(text))
-        except ValueError as exc:
-            out.append(exc)
+        if failure:
+            print(f"    ⚠  {prep['thinker_name']}: kept {len(parts)}/"
+                  f"{chunk_counts[i]} chunks ({failure})")
+        out.append(merge_extractions(parts))
     return out
 
 # ── DB writer ─────────────────────────────────────────────────────────────────
@@ -218,12 +299,14 @@ def write_to_database(conn, thinker, meta, raw_text, extracted):
     filename = f"{date_pub} - {thinker['name'].split()[-1]} - {re.sub(r'[^a-zA-Z0-9 -]', '', title)[:50].strip()}.md"
     source_id = db.insert_returning_id(conn, """INSERT INTO sources
         (thinker_id, title, date_published, source_type, platform, url, summary, full_text,
+         content_sha256,
          consumer_implication, signal_strength, novelty, keynote_impact, confidence, filename,
          doi, venue, external_id, citation_count, peer_reviewed, authors, authority)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s) RETURNING id""",
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s) RETURNING id""",
         (thinker_id, title, date_pub,
          source_type, platform,
-         url, src.get("summary", "")[:2000], raw_text[:50000],
+         url, src.get("summary", "")[:2000], raw_text,
+         hashlib.sha256(raw_text.encode("utf-8")).hexdigest(),
          src.get("consumer_implication", "")[:1000],
          src.get("signal_strength") if src.get("signal_strength") in {"noise", "background", "signal", "strong_signal"} else "signal",
          src.get("novelty") if src.get("novelty") in {"new_thinking", "repeating_position", "position_shift"} else "repeating_position",
@@ -245,15 +328,22 @@ def write_to_database(conn, thinker, meta, raw_text, extracted):
         for field in drops:
             downgraded[field] += 1
         has_stat = bool(cl.get("has_statistic", False))
+        # Anchor the surviving quote to its exact character span in full_text.
+        # From here on "does the source say this" is a slice comparison
+        # (claim_integrity.verify_at_offset), not a fuzzy search; a quote that
+        # only fuzzy-matches gets no span and stays at the weaker tier.
+        span = claim_integrity.locate_quote(cl.get("quote") or "", raw_text)
         cid = db.insert_returning_id(conn, """INSERT INTO claims
             (source_id, thinker_id, claim_text, claim_type, domain, consumer_implication,
-             signal_strength, specificity, quote, has_statistic, statistic)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+             signal_strength, specificity, quote, has_statistic, statistic,
+             quote_start, quote_end)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
             (source_id, thinker_id, cl["claim_text"], cl.get("claim_type", "analysis"), domain,
              cl.get("consumer_implication", ""),
              cl.get("signal_strength") if cl.get("signal_strength") in {"noise", "background", "signal", "strong_signal"} else "signal",
              cl.get("specificity", 3), cl.get("quote", ""),
-             has_stat, (cl.get("statistic") or "")[:500] if has_stat else None))
+             has_stat, (cl.get("statistic") or "")[:500] if has_stat else None,
+             span[0] if span else None, span[1] if span else None))
         claim_ids.append(cid)
     if downgraded["quote"] or downgraded["statistic"]:
         print(f"    integrity: dropped {downgraded['quote']} unverifiable quote(s), "
@@ -339,7 +429,7 @@ def prepare_file(filepath, conn, error_log=None):
         "thinker": thinker,
         "thinker_name": thinker_name,
         "meta": meta,
-        "body": body[:30000],
+        "body": body,
         "context_claims": context_claims,
         "context_preds": context_preds,
     }

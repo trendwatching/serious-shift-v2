@@ -8,10 +8,12 @@ from urllib.parse import urlparse
 
 from ..core.text import url_slug as slugify
 from .config import (DOMAINS, MAX_KTS_PER_DOM, MAX_SUB_TRENDS,
-                     MIN_KTS_PER_DOM, MIN_SUB_TRENDS)
+                     MIN_KTS_PER_DOM, MIN_SUB_TRENDS, load_gates)
 from .modules import (_LEAKED_BARE, _LEAKED_CREF, _LEAKED_PAREN, NOT_PROSE,
                       FIELD_WORD_LIMITS, LIST_ITEM_WORD_LIMITS, PAIR_TEXT_WORD_LIMITS,
-                      STEP_TEXT_WORD_LIMIT, count_words, stat_claim_key)
+                      STEP_TEXT_WORD_LIMIT, UNAUTHORED_MODULE_TYPES, count_words,
+                      figure_echoes, stat_claim_key)
+from .naming import NAME_FAMILY_CAP, family_keys
 from .phases.hero_stats import stat_matches_shift
 
 #: A stat band displays a statistic, and a statistic contains a number.
@@ -287,7 +289,11 @@ def _validate_modules(modules, scope: str, path: str, contract: dict) -> list[Va
 _BRITISH = re.compile(
     r'\b('
     r'organis(?:e|es|ed|ing|ation|ations|ational)|'
-    r'catalogu(?:e|es|ed|ing)|behaviour(?:s|al|ally)?|programme(?:s|d)?|'
+    r'catalogu(?:e|es|ed|ing)|behaviour(?:s|al|ally)?|programme(?:s)?|'
+    # NOT programmed: that is the standard US past tense of "program"
+    # (Merriam-Webster's primary form), and the `d` alternative failed
+    # three correct sentences on the 18 Aug 2026 run. The trailing \b
+    # already keeps `programme` from matching inside it.
     r'centre[sd]?|recognis(?:e|es|ed|ing|able)|'
     r'optimis(?:e|es|ed|ing|ation|ations)|realis(?:e|es|ed|ing|ation)|'
     r'utilis(?:e|es|ed|ing|ation)|analys(?:e|ed|ing)|'
@@ -315,6 +321,41 @@ _SLUGGISH = re.compile(r'\b[a-z0-9]+(?:-[a-z0-9]+){2,}\b')
 #: labour to labor inside a quotation misquotes the person who said it.
 _QUOTED = frozenset({'quote'})
 
+#: Module types whose text is scraped source material or code-derived data,
+#: not authored editorial. A lint that fires on a source author's em dash asks
+#: the repair pass to rewrite a quotation it must never touch — the issue can
+#: only loop. One definition, in modules.py, shared with the dash-conform pass
+#: so the writer and the gate agree on what "authored" means.
+_UNAUTHORED_TYPES = UNAUTHORED_MODULE_TYPES
+
+#: An em dash, or a spaced en dash doing an em dash's job. The voice file has
+#: banned them since the redesign ("No em dashes; use a period or a comma") and
+#: the ban was advisory — nothing rejected one. A bare en dash stays legal:
+#: "1–3 years" and "ages 18–34" are ranges, not rhetoric.
+_EM_DASH = re.compile(r'—|\s–\s')
+
+#: Vocabulary that reads as generated rather than written. Deliberately tiny —
+#: the `_BRITISH` calibration lesson applies with force here, since half the
+#: internet now writes like this on purpose. Each entry is a phrase the voice
+#: file already bans or a word ("delve") with no innocent use in this corpus;
+#: anything broader must be calibrated against the live map before it ships.
+_AI_TELL = re.compile(
+    r'\b(delv(?:e|es|ed|ing)|'
+    r"it(?:\s+is|['’]s)\s+worth\s+noting|"
+    r'at the end of the day|it goes without saying|'
+    r"in today['’]s rapidly|rapidly evolving landscape|"
+    r'is a testament to)\b', re.IGNORECASE)
+
+#: A counter-signal that audits the study instead of the world. Scoped to
+#: counter_signals items ONLY, and deliberately four patterns: "survey" and
+#: "peer-reviewed" are unsafe ("MIT reported adoption stalling in a
+#: peer-reviewed study" is a legitimate counter-signal), so the lint catches
+#: the flagrant methods-appendix register and the rewritten prompt spec does
+#: the rest.
+_METHODS_AUDIT = re.compile(
+    r'\b(sample size|self-reported|methodolog\w*|generalizab\w*)\b',
+    re.IGNORECASE)
+
 
 # ── Content gates (2026-08-10) ────────────────────────────────────────────────
 #
@@ -325,12 +366,16 @@ _QUOTED = frozenset({'quote'})
 # is map-sized — the unit-test fixtures are four shifts and would trip them
 # meaninglessly.
 
+# Threshold VALUES live in packages/contracts/gates.json so every change is a
+# reviewed diff; the rationale for each number stays here, beside its consumer.
+_GATES = load_gates()
+
 #: Below this many key shifts, population-level gates stay quiet.
-FULL_MAP_MIN_SHIFTS = 10
+FULL_MAP_MIN_SHIFTS = int(_GATES.get('full_map_min_shifts', 10))
 
 #: A velocity distribution where one bucket holds more than this share of
 #: shifts is prompt-anchoring, not grading ("accelerating" × 51).
-VELOCITY_MAX_SHARE = 0.8
+VELOCITY_MAX_SHARE = float(_GATES.get('velocity_max_share', 0.8))
 
 #: At least this share of key shifts must carry a stat_band.
 #:
@@ -342,7 +387,7 @@ VELOCITY_MAX_SHARE = 0.8
 #: 36 distinct on-topic statistics to clear 0.6. The claim budget rising to 350
 #: per domain is what actually improves coverage; this floor stops the gate
 #: failing a map for a shortage the generator cannot invent its way out of.
-STAT_COVERAGE_FLOOR = 0.45
+STAT_COVERAGE_FLOOR = float(_GATES.get('stat_coverage_floor', 0.45))
 
 #: A proper-noun bigram may headline at most this many shift FAMILIES ("Adam
 #: Raine" carried ~12); a bare figure gets more slack (different 40%s exist).
@@ -354,12 +399,12 @@ STAT_COVERAGE_FLOOR = 0.45
 #: 36 families a recurring name had 36 chances to exceed 4, at 60 it has 60.
 #: Scaled with the ceiling so the rule keeps meaning "a handful of pages", not
 #: "a progressively smaller fraction".
-CRUTCH_ENTITY_PAGE_LIMIT = 6
-CRUTCH_FIGURE_PAGE_LIMIT = 9
+CRUTCH_ENTITY_PAGE_LIMIT = int(_GATES.get('crutch_entity_page_limit', 6))
+CRUTCH_FIGURE_PAGE_LIMIT = int(_GATES.get('crutch_figure_page_limit', 9))
 
 #: How many sub-shifts one claim may anchor, as a share of the map's sub-shifts.
 #: At 180 sub-shifts this reproduces the historical cap of 3; at 300 it gives 5.
-EVIDENCE_REUSE_SHARE = 3 / 180
+EVIDENCE_REUSE_SHARE = float(_GATES.get('evidence_reuse_share', 3 / 180))
 
 #: Everyday bigrams/figures that legitimately recur across an AGI map.
 #: Frontier-model names are domain vocabulary here, like "AI" itself.
@@ -475,6 +520,18 @@ def _prose_strings(value, path: str, skip=frozenset()):
             yield from _prose_strings(nested, f'{path}[{index}]', skip)
     elif isinstance(value, str):
         yield path, value
+
+
+def _authored_strings(row: dict, base: str, skip=frozenset()):
+    """Module prose the editorial phase actually WROTE — the only text a
+    repairable prose lint may fire on, because it is the only text a repair
+    regen can change. Skips `_UNAUTHORED_TYPES` wholesale; key-level skips
+    (`_QUOTED`, 'source', 'label') are the caller's to choose."""
+    for index, module in enumerate(row.get('modules') or []):
+        if not isinstance(module, dict) or module.get('type') in _UNAUTHORED_TYPES:
+            continue
+        yield from _prose_strings(module.get('data') or {},
+                                  f'{base}.modules[{index}].data', skip)
 
 
 def validate_map(document: dict, contract: dict | None = None) -> list[ValidationIssue]:
@@ -668,7 +725,7 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
         for row_index, row in enumerate(rows):
             for module_index, module in enumerate((row or {}).get('modules') or []):
                 type_ = module.get('type')
-                if type_ in {'evidence', 'voices', 'stat_band', 'related_shifts'}:
+                if type_ in _UNAUTHORED_TYPES:
                     continue
                 data = module.get('data') or {}
                 values = []
@@ -734,6 +791,24 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
                             'slug_in_prose', path,
                             f'{match.group(0)!r} is a URL slug, not a name', True))
                         break
+            # Authored module prose only, quoted fields exempt: an em dash or
+            # an AI-tell in a name/subtitle/description is real but the repair
+            # pass cannot rewrite phase-3/4 copy, so those are reported by
+            # `advisory_issues` instead of blocking here.
+            for path, text in _authored_strings(row, base,
+                                                _QUOTED | {'source', 'label'}):
+                dash = _EM_DASH.search(text)
+                if dash:
+                    issues.append(ValidationIssue(
+                        'em_dash', path,
+                        'em dash in editorial prose; the voice spec is a period '
+                        'or a comma', True))
+                tell = _AI_TELL.search(text)
+                if tell:
+                    issues.append(ValidationIssue(
+                        'ai_tell', path,
+                        f'{tell.group(0)!r} reads as generated boilerplate; say '
+                        f'the specific thing instead', True))
 
     # ── Content gates: what the 2026-08-10 audit found, made unpublishable ──
 
@@ -781,6 +856,13 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
             issues.append(ValidationIssue(
                 'hero_topicality', path,
                 'hero statistic shares no topical vocabulary with the shift it fronts', True))
+        # Backstop for the dated-candidates filter in phase 8: an undated
+        # figure fronting a page gives the reader no way to tell last month
+        # from 2019. Repairable — the hero re-run only offers dated claims.
+        if not str(hero.get('year') or '').strip():
+            issues.append(ValidationIssue(
+                'hero_stat_undated', path,
+                'hero statistic carries no year — undated figures cannot front a page', True))
 
     # Sub-shift stat bands join the same exclusivity registry as the heroes,
     # so a child fronting its parent's headline — or another family's — is
@@ -818,6 +900,41 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
                         'dek_recycles_subtitle', f'key_trends[{index}].modules.dek',
                         'dek is the subtitle verbatim — the page says one sentence twice', True))
 
+    # A page must not restate the figure it fronts. Phase 8 avoids picking such
+    # heroes, editorial retries reject such bodies, and export drops the band
+    # when the fixed copy carries the figure — so on a fresh publish both codes
+    # are invariants, like `evidence_reuse` below. `stat_echo` names authored
+    # prose the repair pass CAN rewrite; `stat_echo_subtitle` names phase-3/4
+    # copy it cannot, and its remedy is the free phase-8 re-run
+    # (cli.HERO_REPAIR_CODES) followed by export's reconcile_self_echo.
+    for label, rows in (('key_trends', shifts), ('sub_trends', subs)):
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                continue
+            base = f'{label}[{index}]'
+            if label == 'key_trends':
+                hero = row.get('hero_stat')
+                fronted = hero.get('value') if isinstance(hero, dict) else None
+            else:
+                fronted = next(
+                    ((m.get('data') or {}).get('value')
+                     for m in row.get('modules') or []
+                     if isinstance(m, dict) and m.get('type') == 'stat_band'),
+                    None)
+            if not fronted:
+                continue
+            for path, figure in figure_echoes(
+                    fronted, _authored_strings(row, base, {'source', 'label'})):
+                issues.append(ValidationIssue(
+                    'stat_echo', path,
+                    f'restates the fronted figure {figure!r} — the stat band '
+                    f'already displays it', True))
+            for path, figure in figure_echoes(fronted, _copy_strings(row, base)):
+                issues.append(ValidationIssue(
+                    'stat_echo_subtitle', path,
+                    f'the fronted figure {figure!r} already sits in this fixed '
+                    f'copy; the statistic must cede (re-run phase 8 / export)', True))
+
     # No amputated prose, no internal vocabulary, no self-declared filler.
     for label, rows in (('key_trends', shifts), ('sub_trends', subs)):
         for index, row in enumerate(rows):
@@ -849,6 +966,17 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
                             'industries_filler',
                             f'{base}.modules[{module_index}].data.items[{item_index}]',
                             'sector note declares its own irrelevance — leave it empty instead', True))
+            for module_index, module in enumerate(row.get('modules') or []):
+                if not isinstance(module, dict) or module.get('type') != 'counter_signals':
+                    continue
+                for item_index, item in enumerate((module.get('data') or {}).get('items') or []):
+                    audit = _METHODS_AUDIT.search(str(item or ''))
+                    if audit:
+                        issues.append(ValidationIssue(
+                            'counter_signal_meta',
+                            f'{base}.modules[{module_index}].data.items[{item_index}]',
+                            f'{audit.group(0)!r} audits the evidence, not the world — '
+                            f'a counter-signal is market evidence against the shift', True))
 
     # Population-level gates: only meaningful on a full-sized map.
     if len(shifts) >= FULL_MAP_MIN_SHIFTS:
@@ -938,12 +1066,12 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
         # few pages, not a dozen") while dropping the pretence that a fixed
         # number expresses it at every size.
         reuse_cap = max(3, round(EVIDENCE_REUSE_SHARE * len(subs)))
-        # REPAIRABLE. It was not, and on the 18 Aug staging run a single claim
-        # sitting one page over the cap was the only thing standing between a
-        # finished 44-shift map and publication — 28 other issues were all
-        # repairable. Re-clustering the parent that over-reached is exactly what
-        # the repair pass does; failing a whole run instead is not proportionate
-        # to one claim anchoring a fourth page.
+        # Repairable in name only, and the 18 Aug 2026 run proved it: the
+        # targeted repair rewrites editorial prose and never re-routes claims,
+        # so it fixed all four of this issue's neighbours and re-published the
+        # identical claim_ids. Routing is settled deterministically at export
+        # now (export.reconcile_evidence_reuse), which is why this should no
+        # longer fire on a generated map; it stays here as the check on that.
         for number, holders in sorted(reuse.items()):
             if len(holders) > reuse_cap:
                 issues.append(ValidationIssue(
@@ -955,7 +1083,78 @@ def validate_map(document: dict, contract: dict | None = None) -> list[Validatio
     return issues
 
 
+def advisory_issues(document: dict) -> list[ValidationIssue]:
+    """Report-only findings — printed beside the gate, never raised by it.
+
+    Everything here is real but unrepairable-by-machine: name-family monotony
+    needs an editor to rename (the repair pass never renames — see the
+    duplicate_sub_shift_name note above), and an em dash or AI-tell inside a
+    name/subtitle/description is phase-3/4 copy the repair cannot rewrite. A
+    blocking gate whose issues nothing can fix strands every publish; a report
+    tells the operator without holding the map hostage. The live 2026-08-19
+    map violates the family cap nine times over, which is also why this must
+    not block: the first publish after the rule would otherwise be impossible.
+    """
+    issues: list[ValidationIssue] = []
+    shifts = document.get('key_trends') or []
+    subs = document.get('sub_trends') or []
+
+    holders: dict[str, list[tuple[str, str]]] = {}
+    for label, rows in (('key_trends', shifts), ('sub_trends', subs)):
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict) or not row.get('name'):
+                continue
+            for key in family_keys(row['name']):
+                holders.setdefault(key, []).append(
+                    (f'{label}[{index}]', str(row['name'])))
+    for key, pages in sorted(holders.items()):
+        if len(pages) > NAME_FAMILY_CAP:
+            names = ', '.join(sorted({name for _, name in pages}))
+            issues.append(ValidationIssue(
+                'name_family_repeat', pages[NAME_FAMILY_CAP][0],
+                f'{len(pages)} pages share the name family {key!r}: {names}'))
+
+    for label, rows in (('key_trends', shifts), ('sub_trends', subs)):
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                continue
+            for path, text in _copy_strings(row, f'{label}[{index}]'):
+                if _EM_DASH.search(text):
+                    issues.append(ValidationIssue(
+                        'em_dash_fixed_copy', path,
+                        'em dash in name/subtitle/description — regeneration or '
+                        'a hand edit, the repair pass cannot rewrite this'))
+                tell = _AI_TELL.search(text)
+                if tell:
+                    issues.append(ValidationIssue(
+                        'ai_tell_fixed_copy', path,
+                        f'{tell.group(0)!r} in name/subtitle/description'))
+    return issues
+
+
+def skipped_issue_codes() -> set[str]:
+    """Remediation valve: issue codes listed under `skip_issue_codes` in
+    packages/contracts/gates.json are reported but never block.
+
+    Exists for the first publish after a new lint lands, when the live map may
+    violate it more widely than one repair pass can absorb. This replaced the
+    SS_SKIP_ISSUE_CODES env var: every silent gate loosening in the August
+    audit traced back to valves that left no diff, so the list now lives in a
+    versioned file and changing it is a reviewed edit. Read at call time, not
+    import time, so a remediation branch can carry the list and the next
+    deploy drops it. Honored by `require_valid_map` — the write-time gate —
+    and by the CLI's publish path, so the two can never disagree about what
+    blocks. Empty on main; keep it that way.
+    """
+    from . import config as _config  # attribute lookup at call time, not import
+    return {str(code).strip()
+            for code in _config.load_gates().get('skip_issue_codes') or []
+            if str(code).strip()}
+
+
 def require_valid_map(document: dict, contract: dict | None = None) -> None:
-    issues = validate_map(document, contract)
+    skipped = skipped_issue_codes()
+    issues = [issue for issue in validate_map(document, contract)
+              if issue.code not in skipped]
     if issues:
         raise PublicationValidationError(issues)

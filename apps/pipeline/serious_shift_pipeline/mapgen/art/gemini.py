@@ -16,9 +16,18 @@ API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
 #: reporting and for the runaway ceiling — never to decide whether to generate.
 COST_PER_IMAGE = 0.067
 
-MAX_ATTEMPTS = 6
+MAX_ATTEMPTS = 8
 CONNECT_TIMEOUT = 10
 READ_TIMEOUT = 180
+
+#: Longest single backoff. Was 60s, which made the whole ladder ~63 seconds —
+#: fine for a burst 429, useless against the one that actually stops a fleet run.
+#: Gemini rate-limits on SPEND as well as on requests ("your spending rate has
+#: exceeded the allowed limit for your account's billing history and tier"), and
+#: that window does not clear in a minute: a 474-image run tripped it on 19 Aug
+#: 2026 and then failed images faster than it generated them. Backing off into
+#: minutes costs a slow run; not backing off costs the images.
+MAX_BACKOFF = 300.0
 
 
 class GeminiError(RuntimeError):
@@ -76,7 +85,7 @@ def generate_image(prompt: str, aspect: str, *, model: str = '') -> bytes:
         if attempt == MAX_ATTEMPTS - 1:
             break
         delay = locals().get('wait') or (2 ** attempt) + random.random()  # noqa: S311
-        time.sleep(min(float(delay), 60.0))
+        time.sleep(min(float(delay), MAX_BACKOFF))
     raise GeminiError(f'gave up after {MAX_ATTEMPTS} attempts — {last}')
 
 

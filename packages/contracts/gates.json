@@ -1,0 +1,13 @@
+{
+  "_comment": "Publication-gate thresholds and the remediation skip list. Versioned so every change is a reviewed diff — the env-var valves this file replaced (SS_SKIP_ISSUE_CODES, SS_REPAIR_SHIFT_SHARE) let thresholds loosen without leaving a trace. Rationale for each number lives beside its consumer in mapgen/validation.py and mapgen/cli.py. skip_issue_codes must stay empty on main.",
+  "version": 1,
+  "full_map_min_shifts": 10,
+  "velocity_max_share": 0.8,
+  "stat_coverage_floor": 0.45,
+  "crutch_entity_page_limit": 6,
+  "crutch_figure_page_limit": 9,
+  "evidence_reuse_share": 0.0166667,
+  "repair_shift_share": 0.85,
+  "min_targeted_repair_shifts": 12,
+  "skip_issue_codes": []
+}

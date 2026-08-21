@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 
 from ...core.matching import normalize
-from ..modules import stat_claim_key
+from ..modules import _short_figure, figure_echoes, stat_claim_key
 
 #: Attributions render as a single small line under the statistic. A scraped
 #: article title can be 200+ characters of pipe-separated newsletter sections,
@@ -59,7 +59,12 @@ def _hero_candidates(conn) -> dict[int, list[dict]]:
         SELECT DISTINCT ON (st.kt_id, c.id)
                st.kt_id, c.id AS claim_id, c.statistic, c.claim_text,
                t.name AS thinker, s.title AS source,
-               s.date_published AS pub_date, s.url,
+               -- A chased statistic fronts its shift with the ORIGIN's URL and
+               -- date (claims.primary_source_id), not the newsletter that
+               -- quoted it. Keying dedup on the primary URL also collapses two
+               -- commentators quoting the same study into one hero.
+               COALESCE(ps.date_published, s.date_published) AS pub_date,
+               COALESCE(NULLIF(ps.url, ''), s.url) AS url,
                COALESCE(c.claim_weight, 0)
                  * (GREATEST(COALESCE(t.credibility_score, 50.0), 30.0) / 100.0)
                  AS score
@@ -68,10 +73,16 @@ def _hero_candidates(conn) -> dict[int, list[dict]]:
         JOIN claims c   ON c.id = stc.claim_id
         JOIN thinkers t ON t.id = c.thinker_id
         JOIN sources s  ON s.id = c.source_id
+        LEFT JOIN sources ps ON ps.id = c.primary_source_id
+                            AND ps.url ~* '^https?://'
         WHERE c.has_statistic IS TRUE
           AND c.statistic IS NOT NULL
           AND s.url ~* '^https?://'
           AND c.duplicate_of IS NULL
+          -- An undated figure cannot front a page: the reader has no way to
+          -- know if it is from last month or 2019. Same rule as the
+          -- hero_stat_undated gate, so writer and gate cannot disagree.
+          AND COALESCE(ps.date_published, s.date_published) IS NOT NULL
         ORDER BY st.kt_id, c.id
     """).fetchall()
     by_kt: dict[int, list[dict]] = {}
@@ -105,22 +116,44 @@ def assign_heroes(kt_rows: list[dict],
     candidate is either taken or off-topic gets None — no stat_band beats a
     recycled or unrelated one.
 
-    `fronted` is the set of stat_claim_keys already carried by persisted
-    sub-shift stat bands. Exclusivity via `taken` only covers this run's own
-    picks; on a targeted regen the children's bands survive from a previous
-    run, and assigning one of their claims as a hero creates exactly the
-    duplicate_hero_claim the gate rejects (the 1,337 petition figure fronted
-    governance-void's hero and pacing-schism's band at once, 2026-08-12).
+    Candidates are filtered to statistics that actually REDUCE to a display
+    figure. `kt_modules` renders the band as `_short_figure(hero.value)` and
+    drops the module when that returns None, so a hero picked from prose with no
+    numeral in it satisfies this phase and then renders nothing: the 18 Aug 2026
+    staging run reported 30/44 shifts with a hero and the gate found 16/44
+    carrying a band, failing stat_coverage from the other side of the same
+    exclusive assignment. A pick that cannot render is worse than no pick, since
+    it also consumes the claim.
+
+    `fronted` — the stat_claim_keys already carried by persisted sub-shift bands
+    — is a PREFERENCE, not a filter. It was a hard exclusion, which inverted the
+    gate: validation registers key shifts first and blames the SUB for
+    re-fronting, so treating a child's band as senior prior art cost the parent
+    its figure and left the collision in place anyway. Children's bands that
+    still collide are ceded to their parent at export instead
+    (`reconcile_fronted_stats`), which is the same parent-priority policy that
+    remediated 2026-08-12 by hand.
     """
     fronted = fronted or set()
     eligible: dict[int, list[dict]] = {}
     for kt in kt_rows:
-        eligible[kt['id']] = [
+        rows = [
             row for row in by_kt.get(kt['id'], [])
-            if stat_claim_key(row['statistic'], row['url']) not in fronted
+            if _short_figure(row['statistic']) is not None
             and stat_matches_shift(kt['name'], kt['subtitle'],
                                    row['statistic'], row['claim_text'])
+            # Never front a figure the shift's own fixed copy already states:
+            # the subtitle is phase-3 prose no later pass can rewrite, so a
+            # hero echoing it puts the same number on the page twice, forever.
+            # The topicality test above wants VOCABULARY overlap; this rejects
+            # only the FIGURE recurring — the two must never be merged.
+            and not figure_echoes(row['statistic'],
+                                  [('name', kt['name']),
+                                   ('subtitle', kt['subtitle'])])
         ]
+        # Stable partition, so strength order survives inside each half.
+        rows.sort(key=lambda r: stat_claim_key(r['statistic'], r['url']) in fronted)
+        eligible[kt['id']] = rows
 
     taken: set[int] = set()
     heroes: dict[int, dict | None] = {}

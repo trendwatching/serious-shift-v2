@@ -278,7 +278,13 @@ export function Industries({ data }) {
   )
 }
 
-/** Opportunity cards, then the Work With Us card as the last cell. */
+/**
+ * Opportunity cards.
+ *
+ * The Work With Us card used to be the last cell of this rail, which tied the
+ * site's only CTA to a module three spheres out of four hide. It is its own
+ * page-level band now — see chrome/WorkWithUs.jsx.
+ */
 export function Territories({ data, ctx }) {
   const items = (data.items || []).filter((t) => t?.name)
   if (!items.length) return null
@@ -305,34 +311,6 @@ export function Territories({ data, ctx }) {
             <span className="text-pretty" style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-mid)' }}>{t.text}</span>
           </div>
         ))}
-
-        {/* Sunset, unscrimmed — this card is a step outside the reading flow,
-            which is exactly what the gradient marks everywhere else. */}
-        <div
-          className="box-border flex shrink-0 flex-col text-white"
-          style={{
-            width: 250, padding: '20px 18px', gap: 10, borderRadius: 18, scrollSnapAlign: 'center',
-            backgroundImage: 'var(--grad-sunset)', boxShadow: '0 12px 26px rgba(94,0,51,0.24)',
-            animation: still ? undefined : 'ssRise 0.6s var(--ease-out) 0.34s',
-          }}
-        >
-          {/* Copy and destination from the 12 Aug 2026 Miro review. The photo is
-              the review's "small beautiful visual" — the card was reading as
-              copy-only; @Antara may swap in bespoke art later. */}
-          <img
-            src="/shift/about-team.jpg" alt="" aria-hidden="true" draggable="false"
-            className="block w-full object-cover"
-            style={{ height: 84, borderRadius: 10, objectPosition: 'center 42%' }}
-          />
-          <span className="t-eyebrow" style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--color-yellow)' }}>Work with us</span>
-          <span className="t-title" style={{ fontSize: 21, lineHeight: 1.14 }}>Ready for the shift?</span>
-          <span className="text-pretty" style={{ fontSize: 13, lineHeight: 1.48, opacity: 0.94 }}>
-            Work directly with our team to turn AI shifts into things worth building. From Bangkok to Boston.
-          </span>
-          <Link to="/about#services" className="pill-contact mt-auto self-start">
-            TALK TO US <span aria-hidden="true" style={{ fontSize: 15 }}>→</span>
-          </Link>
-        </div>
       </div>
     </section>
   )

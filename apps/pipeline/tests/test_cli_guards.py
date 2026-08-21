@@ -71,7 +71,8 @@ def test_a_succeeding_stage_still_runs_every_step(monkeypatch):
 
     outcomes = run_mod.run_stage(
         'synthesize', args=_Args(), error_log=_Log(), subprocess_env=None)
-    assert outcomes == {'mapgen': 'ok', 'classify': 'ok'}
+    assert outcomes == {'scan': 'ok', 'score': 'ok', 'dedupe': 'ok',
+                        'mapgen': 'ok', 'classify': 'ok'}
 
 
 # ── the orchestrator's run row is not mapgen's to close ──────────────────
@@ -121,4 +122,6 @@ def test_a_standalone_gate_failure_still_opens_and_closes_its_own_row(monkeypatc
 
     monkeypatch.setattr(cli, 'RunLog', _Run)
     cli._record_validation_failure(cli.PublicationValidationError([]))
-    assert calls == ['start', 'finish']
+    # add_usage carries the spend the failed generation already incurred; the
+    # lifecycle this test guards is still open-first, close-last.
+    assert calls == ['start', 'add_usage', 'finish']

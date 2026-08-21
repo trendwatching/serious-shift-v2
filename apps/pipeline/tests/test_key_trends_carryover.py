@@ -54,7 +54,9 @@ def _capture(monkeypatch, *, previous, domains=TWO_SPHERES, returns=None):
         prompts[dom['name']] = prompt_of(dom)
         names = (returns or {}).get(dom['id'])
         if names is None:
-            names = [f'{dom["name"]} Trend {i}' for i in range(kt_phase.MIN_KTS_PER_DOM)]
+            # Distinct words per name: shared head/tail words now count as a
+            # family and are deliberately walked past.
+            names = [f'{dom["name"]}{i} Trend{i}' for i in range(kt_phase.MIN_KTS_PER_DOM)]
         return [{'key_trends': [_kt(n) for n in names]}]
 
     monkeypatch.setattr(kt_phase, 'generate_json', fake)

@@ -116,6 +116,42 @@ def collapse_duplicate_sources(conn, dry_run):
     return marked
 
 
+def refresh_corroboration(conn, dry_run):
+    """Write claims.corroboration_count on every primary claim: distinct
+    source hosts across its duplicate group (itself included).
+
+    The dedup groups ARE the corroboration signal read the other way:
+    syndicated repetition collapses into one group with the same few hosts,
+    while independent confirmation adds hosts. Routing discounts
+    single-host claims and gives corroborated ones a bounded boost — the
+    audit's one-Microsoft-post-cited-23-times stays corroboration 1 no
+    matter how many newsletters repeat it."""
+    if dry_run:
+        print("  (dry run) corroboration_count refresh skipped")
+        return
+    conn.execute("""
+        WITH member_hosts AS (
+            SELECT COALESCE(c.duplicate_of, c.id) AS primary_id,
+                   NULLIF(regexp_replace(COALESCE(s.url, ''),
+                          '^https?://(www\\.)?([^/]+).*$', '\\2'), '') AS host
+            FROM claims c LEFT JOIN sources s ON s.id = c.source_id
+        ), counts AS (
+            SELECT primary_id, GREATEST(COUNT(DISTINCT host), 1) AS n
+            FROM member_hosts GROUP BY primary_id
+        )
+        UPDATE claims SET corroboration_count = counts.n
+        FROM counts
+        WHERE claims.id = counts.primary_id AND claims.duplicate_of IS NULL""")
+    conn.commit()
+    row = db.query_one(conn, """
+        SELECT COUNT(*) FILTER (WHERE corroboration_count > 1) AS multi,
+               COUNT(*) AS total
+        FROM claims WHERE duplicate_of IS NULL""")
+    if row:
+        print(f"  Corroboration: {row['multi']}/{row['total']} primary claims "
+              f"confirmed by 2+ independent hosts")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Deduplicate claims")
     parser.add_argument("--execute", action="store_true", help="Write changes")
@@ -211,6 +247,8 @@ def main():
             if not dry_run:
                 for cid in non_primary:
                     db.execute(conn, "UPDATE claims SET duplicate_of = %s WHERE id = %s", (primary_id, cid))
+
+        refresh_corroboration(conn, dry_run)
 
         total = len(claims)
         pct = total_marked / total * 100 if total else 0

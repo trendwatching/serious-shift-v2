@@ -6,16 +6,10 @@ with values computed in code. Response parsing (parse_thinker_attribution, …)
 stays in the step — these functions only build requests.
 """
 import json
-import os
 
+from ..core.config import INSIGHTS_MODEL, SYNTHESIS_MODEL  # noqa: F401 — re-exported
 from ._loader import load_and_render
 from .voice import VOICE
-
-# ── Model assignment ─────────────────────────────────────────
-# Editorial synthesis (Key Trends, sub-trends, attribution) runs on Sonnet 4.6.
-SYNTHESIS_MODEL = 'claude-sonnet-4-6'
-# Synthesis insights — the most editorially demanding, lowest-volume phase — runs on Opus 4.7.
-INSIGHTS_MODEL = os.environ.get('INSIGHTS_MODEL', 'claude-sonnet-4-6')
 
 # Single source of truth for how many Key Trends a domain carries — a range,
 # owned by mapgen (which also gates on it at publication).
@@ -261,23 +255,34 @@ def prompt_synthesis_insights(domain_name: str, domain_desc: str, claims: list) 
 # ── Art briefs: one image description per shift and sub-shift ───────────────
 
 def prompt_art_brief(kt_name: str, kt_subtitle: str, kt_context: str,
-                     sub_trends: list) -> str:
+                     sub_trends: list, kt_register: str = '') -> str:
     """One call per Key Trend, covering the shift and all of its children.
 
     Batched the way `prompt_st_editorial` is, so a partial answer stays
     recoverable per sub-shift by name, and so the five sub-briefs are written
     with sight of each other — which is the only way "each one is a different
     detail of the same world" can be asked for at all.
+
+    Each sub-trend carries its own visual register on its own line. Assigning
+    them here rather than letting the model vary the scenes by itself is what
+    stopped the first fleet converging: asked for variety it produced the same
+    composition every time, and asked for a landscape it produced a landscape.
+    `register` on a sub-trend dict is optional — an omitted one simply leaves the
+    choice to the model, which is the pre-19-Aug-2026 behaviour.
     """
     lines = []
     for st in sub_trends:
         subtitle = str(st.get('subtitle') or st.get('description') or '').strip()
         lines.append(f"- {st['name']}" + (f" — {subtitle}" if subtitle else ''))
+        register = str(st.get('register') or '').strip()
+        if register:
+            lines.append(f"  REGISTER: {register}")
     return load_and_render(
         "map/art_brief.txt",
         voice=VOICE,
         kt_name=kt_name,
         kt_subtitle=kt_subtitle,
         kt_context=kt_context,
+        kt_register=kt_register or '(your choice — vary it from the sub-trends below)',
         sub_trends='\n'.join(lines) or '- (none)',
     )

@@ -137,6 +137,50 @@ def scrub_module_tree(value):
     return value
 
 
+#: The voice file has said "No em dashes; use a period or a comma" since the
+#: redesign, and the model ignored it 748 times on the 2026-08-19 live map —
+#: far more than one repair pass may rewrite. Punctuation is mechanical, so it
+#: is conformed here at export (the same reasoning as scrub_module_tree: the
+#: offending strings are already baked into published rows, and --export-only
+#: cleans them for free) and the em_dash gate stays as the invariant.
+_EM_DASH_RANGE = re.compile(r'(?<=\d)\s*—\s*(?=\d)')
+_EM_DASH_PROSE = re.compile(r'\s*—\s*')
+_SPACED_EN_DASH = re.compile(r'\s+–\s+')
+
+
+def normalize_dashes(text) -> str:
+    """`text` with rhetorical dashes replaced by the comma the voice file asks
+    for. A digit range keeps a dash — "2026—2028" becomes "2026–2028", never
+    "2026, 2028", which would change its meaning."""
+    t = str(text)
+    t = _EM_DASH_RANGE.sub('–', t)
+    t = _EM_DASH_PROSE.sub(', ', t)
+    t = _SPACED_EN_DASH.sub(', ', t)
+    return t
+
+
+#: Keys whose text is someone else's or code-derived: a quoted human's dash is
+#: theirs, and source/label strings are attribution, not prose.
+_DASH_EXEMPT_KEYS = frozenset({'quote', 'source', 'label'})
+
+#: Module types whose data is scraped or derived, never authored editorial.
+#: Mirrored by validation._UNAUTHORED_TYPES; the gate and this conform pass
+#: must agree on what "authored" means or the gate flags text nobody wrote.
+UNAUTHORED_MODULE_TYPES = frozenset({'evidence', 'voices', 'stat_band',
+                                     'related_shifts'})
+
+
+def _normalize_dash_tree(value, skip=_DASH_EXEMPT_KEYS):
+    if isinstance(value, dict):
+        return {k: v if (k in NOT_PROSE or k in skip) else _normalize_dash_tree(v, skip)
+                for k, v in value.items()}
+    if isinstance(value, list):
+        return [_normalize_dash_tree(v, skip) for v in value]
+    if isinstance(value, str):
+        return normalize_dashes(value)
+    return value
+
+
 #: How the publication gate counts a word. `str.split()` is NOT the same
 #: measure: it treats "cost/benefit", "U.S." and "2026—2028" as one word each,
 #: where this counts them as two, three and two. Clamping by one definition and
@@ -288,6 +332,10 @@ _SCALE_WORDS = (
     (re.compile(r'\s*million\b', re.I), 'M'),
     (re.compile(r'\s*thousand\b', re.I), 'K'),
     (re.compile(r'\s*percent\b', re.I), '%'),
+    # "3.5 times" and "30-fold" are the multiplier "x" in a band's spelling —
+    # and in an echo check, "converts at 3.5 times the rate" restates a fronted
+    # "3.5x" whichever way either side spells it.
+    (re.compile(r'[\s-]*(?:times|fold)\b', re.I), 'x'),
 )
 
 
@@ -345,6 +393,91 @@ def stat_claim_key(value, url) -> tuple[str, str]:
     """
     text = _short_figure(value) or str(value or '')
     return (' '.join(re.findall(r'[a-z0-9]+', text.lower())), str(url or ''))
+
+
+#: A figure as prose carries it, after `_SCALE_WORDS` compression: an optional
+#: currency mark, the numerals, then the unit that makes it recognizable —
+#: "$54.2M", "72%", "3.5x", "660,000". The unit suffix is matched WITHOUT
+#: whitespace because compression already glued it on, and a bare "x" is only a
+#: multiplier when it trails the number directly ("3.5 x" is prose).
+_FIGURE_WITH_UNIT = re.compile(r'[$€£]?\d[\d,]*(?:\.\d+)?(?:[TBMK]\b|%|[x×])?')
+
+_YEAR = re.compile(r'(19|20)\d\d')
+
+
+def is_distinctive_figure(token) -> bool:
+    """Whether a figure token is specific enough to identify a statistic.
+
+    The predicate `_crutch_signatures` calibrated on the 2026-08-09 live map:
+    a figure must carry a unit — %, currency, a decimal, a scale letter, a
+    multiplier, or a thousands separator on 4+ digits — or be 5+ digits. Bare
+    small integers ("30", "88") collide across unrelated prose by coincidence,
+    and bare years are just evidence dating.
+    """
+    token = str(token or '').strip().rstrip(',.')
+    if not token or not _HAS_DIGIT.search(token):
+        return False
+    bare = token.strip('$€£')
+    digits = re.sub(r'\D', '', token)
+    if _YEAR.fullmatch(digits):
+        return False
+    return ('%' in token or token[0] in '$€£' or '.' in bare
+            or bare[-1] in 'TBMKx×'
+            or (',' in bare and len(digits) >= 4) or len(digits) >= 5)
+
+
+def figure_key(token) -> str:
+    """The identity two spellings of one figure share.
+
+    Currency marks and case are dropped, "×" folds into "x", separators go:
+    "$54.2 Million" ≡ "54.2M", "72 percent" ≡ "72%" (both after `_SCALE_WORDS`
+    compression, which every caller applies via `figure_tokens`).
+    """
+    t = ' '.join(str(token or '').split()).strip().rstrip(',.')
+    for pattern, short in _SCALE_WORDS:
+        t = pattern.sub(short, t)
+    t = t.replace('×', 'x').strip('$€£').replace(',', '')
+    return t.lower()
+
+
+def figure_tokens(text) -> set[str]:
+    """The distinctive figures a stretch of prose carries, as `figure_key`s."""
+    t = ' '.join(str(text or '').split())
+    for pattern, short in _SCALE_WORDS:
+        t = pattern.sub(short, t)
+    out = set()
+    for match in _FIGURE_WITH_UNIT.findall(t):
+        token = match.strip().rstrip(',.')
+        if is_distinctive_figure(token):
+            out.add(figure_key(token))
+    return out
+
+
+def figure_echoes(fronted_value, texts) -> list[tuple[str, str]]:
+    """Where a page restates the statistic it already fronts.
+
+    `fronted_value` is the figure the page displays large — a KT `hero_stat`
+    value or a sub-shift stat_band value, in either its long-form or reduced
+    spelling (both reduce through `_short_figure`, as `stat_claim_key` does).
+    `texts` is an iterable of `(path, prose)` pairs to scan. Returns one
+    `(path, figure)` per field that repeats the fronted figure; an empty list
+    when the fronted value carries no distinctive figure at all, because a
+    match on an indistinct number would be coincidence, not an echo.
+
+    This is the one definition of "repeats the headline statistic": phase 8
+    avoids it, editorial retries reject it, export reconciles it and the gate
+    reports it, so the writer and the gate can never disagree.
+    """
+    fronted = _short_figure(fronted_value) or str(fronted_value or '')
+    wanted = figure_tokens(fronted)
+    if not wanted:
+        return []
+    hits = []
+    for path, text in texts:
+        matched = wanted & figure_tokens(text)
+        if matched:
+            hits.append((str(path), sorted(matched)[0]))
+    return hits
 
 
 def _jsonb(value) -> str | None:
@@ -427,6 +560,11 @@ def conform_modules(modules: list) -> list:
         type_ = module.get('type')
         data = dict(module.get('data') or {})
 
+        # Authored prose only: a source author's dash is theirs, and the
+        # em_dash gate exempts the same types and keys, so the two agree.
+        if type_ not in UNAUTHORED_MODULE_TYPES:
+            data = _normalize_dash_tree(data)
+
         for (limited_type, field), limit in FIELD_WORD_LIMITS.items():
             if type_ == limited_type and data.get(field):
                 data[field] = clamp_words(data[field], limit)
@@ -460,6 +598,27 @@ def conform_modules(modules: list) -> list:
     return out
 
 
+def stat_band_from_hero(hero) -> dict | None:
+    """The stat band a key shift's `hero_stat` renders, or None.
+
+    Phase 8 assigns heroes with free SQL and runs AFTER phase 4b in both the
+    repair pass and a full build, so the band 4b persisted is stale by
+    construction — the export re-derives from this rather than trusting it.
+    One definition, so what phase 4b writes and what the export publishes cannot
+    disagree about whether a shift carries a statistic (they did on 18 Aug 2026:
+    30 heroes, 16 bands, and a stat_coverage failure between them).
+    """
+    hero = hero if isinstance(hero, dict) else {}
+    return _module('stat_band', {
+        # The model is asked for a display figure; hero_stat.value is a
+        # fallback and is usually prose, so it has to be reduced first.
+        'value': _short_figure(hero.get('value')) or '',
+        'text': hero.get('text') or hero.get('value') or '',
+        'source': hero.get('source') or hero.get('thinker') or '',
+        'url': hero.get('url') or '',
+    }, ('value', 'url'))
+
+
 def kt_modules(kt_row: dict, editorial: dict) -> list:
     """Module list for a key shift, in the design's reading order."""
     e = editorial or {}
@@ -479,14 +638,7 @@ def kt_modules(kt_row: dict, editorial: dict) -> list:
         _module('from_to', {'from': clamp_words(e.get('from'), 30),
                             'to': clamp_words(e.get('to'), 30)}, ('from', 'to')),
         _module('pull_quote', {'quote': clamp_words(e.get('pull_quote'), 18)}, ('quote',)),
-        _module('stat_band', {
-            # The model is asked for a display figure; hero_stat.value is a
-            # fallback and is usually prose, so it has to be reduced first.
-            'value': _short_figure(hero.get('value')) or '',
-            'text': hero.get('text') or hero.get('value') or '',
-            'source': hero.get('source') or hero.get('thinker') or '',
-            'url': hero.get('url') or '',
-        }, ('value', 'url')),
+        stat_band_from_hero(hero),
         _module('peel_tabs', {
             'whats_changing': clamp_words(e.get('whats_changing'), 90),
             'why_now': clamp_words(e.get('why_now'), 70),

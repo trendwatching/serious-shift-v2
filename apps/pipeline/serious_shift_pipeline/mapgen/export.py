@@ -13,8 +13,9 @@ from ..core.text import url_slug as slugify
 from .art.store import publish_art
 from .carryover import load_published_taxonomy, pin_slugs
 from .config import DOMAINS, MODULE_ORDER
-from .modules import conform_modules, scrub_module_tree
-from .validation import require_valid_map
+from .modules import (conform_modules, figure_echoes, normalize_dashes,
+                      scrub_module_tree, stat_band_from_hero, stat_claim_key)
+from .validation import EVIDENCE_REUSE_SHARE, require_valid_map
 
 
 def _attr(stored):
@@ -179,25 +180,42 @@ def build_map_json_v2(conn) -> dict:
             links_by_kt.setdefault(src, []).append((dst, r['relationship'], r['reasoning']))
 
     claim_rows_by_st: dict = {}
+    # A claim whose statistic was chased to its verified origin
+    # (claims.primary_source_id) publishes the PRIMARY document's URL and
+    # title, with the commentator kept visible as the via — the reader lands
+    # on the study, not on the newsletter that quoted it.
     for r in conn.execute("""
         SELECT stc.sub_trend_id, c.claim_text, t.name AS thinker, s.title AS source,
-               s.date_published, s.url, c.signal_strength, c.consumer_implication
+               s.date_published, s.url, c.signal_strength, c.consumer_implication,
+               ps.title AS primary_title, ps.url AS primary_url,
+               ps.date_published AS primary_date
         FROM domain_sub_trend_claims stc
         JOIN claims c   ON c.id = stc.claim_id
         JOIN thinkers t ON t.id = c.thinker_id
-        LEFT JOIN sources s ON s.id = c.source_id
+        LEFT JOIN sources s  ON s.id = c.source_id
+        LEFT JOIN sources ps ON ps.id = c.primary_source_id
         WHERE c.duplicate_of IS NULL AND c.claim_text IS NOT NULL
         ORDER BY stc.sub_trend_id, COALESCE(c.claim_weight, 0) DESC, c.id
     """).fetchall():
         source_url = _http_url(r['url'])
-        if not source_url:
+        primary_url = _http_url(r['primary_url'])
+        if not source_url and not primary_url:
             continue
+        source_label = r['source'] or ''
+        date = r['date_published']
+        if primary_url:
+            primary_label = (r['primary_title'] or '').strip()
+            if primary_label and source_label:
+                source_label = f'{primary_label} (via {source_label})'
+            elif primary_label:
+                source_label = primary_label
+            date = r['primary_date'] or date
         claim_rows_by_st.setdefault(r['sub_trend_id'], []).append({
             'text': r['claim_text'],
             'thinker': r['thinker'] or '',
-            'source': r['source'] or '',
-            'date': str(r['date_published'])[:10] if r['date_published'] else '',
-            'url': source_url,
+            'source': source_label,
+            'date': str(date)[:10] if date else '',
+            'url': primary_url or source_url,
             'strength': r['signal_strength'] or '',
             'implication': r['consumer_implication'] or '',
         })
@@ -314,8 +332,8 @@ def build_map_json_v2(conn) -> dict:
             'db_id':       kt['id'],
             'domain_id':   kt['domain_id'],
             'name':        kt['name'],
-            'subtitle':    kt['subtitle'],
-            'description': kt['subtitle'],   # back-compat alias
+            'subtitle':    normalize_dashes(kt['subtitle']),
+            'description': normalize_dashes(kt['subtitle']),   # back-compat alias
             'velocity':    kt['velocity'] or 'rising',
             'hero_stat':   kt['hero_stat'],  # {value, thinker, source, year} or null
             'sub_trend_ids': [f'st-{i}' for i in st_ids_by_kt.get(kt['id'], [])],
@@ -347,6 +365,14 @@ def build_map_json_v2(conn) -> dict:
             continue
         mods = entry['modules']
         mods = _insert_after(mods, ('tension_band', 'timeline'), _voices_module(row))
+
+        # Phase 8 runs after phase 4b, so the persisted band can be a hero ago.
+        # Re-derived, never trusted; dropped outright when the current hero has
+        # no figure in it, because that band would render as an empty box.
+        band = stat_band_from_hero(entry['hero_stat'])
+        mods = [m for m in mods if not (isinstance(m, dict) and m.get('type') == 'stat_band')]
+        if band:
+            mods = mods + [band]
 
         seen, items = set(), []
         for dst, rel, why in links_by_kt.get(row['id'], []):
@@ -384,8 +410,11 @@ def build_map_json_v2(conn) -> dict:
             'key_trend_id': f'kt-{st["kt_id"]}',
             'domain_id':   st['domain_id'],
             'name':        st['name'],
-            'subtitle':    st['subtitle'],
-            'description': st['description'],
+            # Same dash conform as module prose: subtitle/description are
+            # phase-3/4 authored copy, and seo.rs publishes the description
+            # verbatim as the meta description.
+            'subtitle':    normalize_dashes(st['subtitle']),
+            'description': normalize_dashes(st['description']),
             'claim_ids':   [f'c_{i}' for i in claim_ids_by_st.get(st['id'], [])],
             'slug':    url_slug,
             'modules': st_modules,
@@ -409,6 +438,32 @@ def build_map_json_v2(conn) -> dict:
         print(f'  ⚠  {len(_suffixed)} sub-shift(s) needed a numeric suffix — two '
               f'pages share a name: {", ".join(_suffixed[:5])}'
               + (' …' if len(_suffixed) > 5 else ''))
+
+    reuse_report = reconcile_evidence_reuse(sub_trends_j)
+    if reuse_report['claims_trimmed']:
+        print(f"  ↳ {reuse_report['claims_trimmed']} over-reaching claim citation(s) "
+              f"trimmed — no claim anchors more than {reuse_report['cap']} pages.")
+
+    # A page must not restate the figure it fronts — its fixed copy can't move,
+    # so the fronted half cedes. Runs BEFORE the cross-page dedup so a doomed
+    # hero never claims seniority over a sub-shift band it would then not use.
+    echo_report = reconcile_self_echo(key_trends_j, sub_trends_j)
+    if echo_report['shift_heroes_dropped'] or echo_report['sub_bands_dropped']:
+        gone = echo_report['shift_heroes_dropped'] + echo_report['sub_bands_dropped']
+        print(f"  ↳ {len(gone)} fronted statistic(s) dropped for restating the "
+              f"page's own name or subtitle: {', '.join(gone[:5])}"
+              + (' …' if len(gone) > 5 else ''))
+
+    # One claim, one page — settled here rather than asked of the writers.
+    stat_report = reconcile_fronted_stats(key_trends_j, sub_trends_j)
+    if stat_report['sub_bands_ceded'] or stat_report['sub_bands_deduped']:
+        print(f"  ↳ {stat_report['sub_bands_ceded']} sub-shift stat band(s) ceded to "
+              f"their parent shift, {stat_report['sub_bands_deduped']} deduplicated "
+              f"between sub-shifts — one claim fronts one page.")
+    if stat_report['shift_heroes_dropped']:
+        print(f"  ⚠  {len(stat_report['shift_heroes_dropped'])} shift(s) lost a hero "
+              f"statistic to a duplicate figure: "
+              f"{', '.join(stat_report['shift_heroes_dropped'][:5])}")
 
     unmatched = sorted(f'{s}:{sl}' for (s, sl) in overrides.keys() - used_overrides)
     if unmatched:
@@ -440,20 +495,36 @@ def build_map_json_v2(conn) -> dict:
         rows = conn.execute("""
             SELECT c.id, c.claim_text, c.consumer_implication,
                    t.name AS thinker,
-                   s.title AS source_title, s.date_published, s.url AS source_url
+                   s.title AS source_title, s.date_published, s.url AS source_url,
+                   ps.title AS primary_title, ps.url AS primary_url,
+                   ps.date_published AS primary_date
             FROM claims c
             JOIN thinkers t ON c.thinker_id = t.id
-            LEFT JOIN sources s ON c.source_id = s.id
+            LEFT JOIN sources s  ON c.source_id = s.id
+            LEFT JOIN sources ps ON ps.id = c.primary_source_id
             WHERE c.id = ANY(%s)
         """, (list(all_cids),)).fetchall()
         for r in rows:
+            # Chased statistics publish the origin's URL/title/date; the
+            # commentator stays visible as the via (same rule as the evidence
+            # module above, so the whole document points one way).
+            primary_url = _http_url(r['primary_url'])
+            title = r['source_title'] or ''
+            date = r['date_published']
+            if primary_url:
+                primary_title = (r['primary_title'] or '').strip()
+                if primary_title and title:
+                    title = f'{primary_title} (via {title})'
+                elif primary_title:
+                    title = primary_title
+                date = r['primary_date'] or date
             claims_j.append({
                 'id':                f'c_{r["id"]}',
                 'text':              r['claim_text'] or '',
                 'thinker':           r['thinker'] or '',
-                'source_title':      r['source_title'] or '',
-                'source_date':       r['date_published'] or '',
-                'source_url':        _http_url(r['source_url']),
+                'source_title':      title,
+                'source_date':       date or '',
+                'source_url':        primary_url or _http_url(r['source_url']),
                 'consumer_implication': r['consumer_implication'] or '',
             })
 
@@ -496,6 +567,197 @@ def build_map_json_v2(conn) -> dict:
         'claims':              claims_j,
         'synthesis_insights':  insights_j,
     }
+
+
+
+#: A sub-shift below this has too little behind it to be worth publishing, so a
+#: reuse trim stops rather than hollow one out.
+MIN_CLAIMS_PER_SUB_ON_TRIM = 2
+
+
+def reconcile_evidence_reuse(sub_trends: list) -> dict:
+    """Keep a claim on the pages that most need it, and take it off the rest.
+
+    "The same evidence cannot anchor more than N pages" is a routing fact, and
+    routing is decided in phase 4. The targeted repair only rewrites editorial
+    prose, so it re-published the same claim_ids every time: on the 18 Aug 2026
+    run this was the LAST issue standing, survived a repair pass that fixed all
+    four of its neighbours, and would have failed the map on its own. Marking it
+    repairable (this morning) was not enough — nothing downstream could actually
+    repair it.
+
+    Which page cedes is decided by how much else it has to stand on: holders are
+    ranked by their own claim count, fewest first, so a page resting on three
+    claims keeps the evidence and a page with five gives it up. Ties break on
+    document order. A page is never trimmed below
+    MIN_CLAIMS_PER_SUB_ON_TRIM — the next-richest holder cedes instead, and if
+    none can, the claim is left over the cap for the gate to reject rather than
+    quietly gutting a page to pass.
+    """
+    cap = max(3, round(EVIDENCE_REUSE_SHARE * len(sub_trends)))
+    holders: dict[str, list[int]] = {}
+    for index, sub in enumerate(sub_trends):
+        # Only routing padding is trimmable: a claim the page's own editorial
+        # CITES cannot be un-routed here, because the citation would be left
+        # pointing outside the page's evidence and the prose would be making a
+        # point with its source removed. Blind trimming did exactly that on the
+        # first attempt — it fixed evidence_reuse and broke editorial_provenance
+        # on two pages instead. A cited claim over the cap is a clustering
+        # decision, and only phase 4 can take it back.
+        cited = set()
+        for module in sub.get('modules') or []:
+            if isinstance(module, dict) and module.get('type') == 'peel_tabs':
+                for value in (module.get('data') or {}).get('evidence_ids') or []:
+                    cited.add(f'c_{value}' if str(value).isdigit() else str(value))
+        for value in sub.get('claim_ids') or []:
+            if str(value) not in cited:
+                holders.setdefault(str(value), []).append(index)
+
+    total_holders: dict[str, int] = {}
+    for sub in sub_trends:
+        for value in sub.get('claim_ids') or []:
+            total_holders[str(value)] = total_holders.get(str(value), 0) + 1
+
+    trimmed = 0
+    for value, indexes in sorted(holders.items()):
+        indexes = indexes[:]  # local
+
+        # Re-read the length each time: an earlier claim's trim may already have
+        # taken pages off this one, and the counter has to be per-claim — a
+        # single running total let the second over-reaching claim exit
+        # immediately on the first claim's arithmetic.
+        over = total_holders.get(value, 0) - cap
+        if over <= 0:
+            continue
+        ranked = sorted(indexes, key=lambda i: (len(sub_trends[i]['claim_ids']), i))
+        for index in reversed(ranked):          # richest page cedes first
+            if over <= 0:
+                break
+            claims = sub_trends[index]['claim_ids']
+            if len(claims) - 1 < MIN_CLAIMS_PER_SUB_ON_TRIM:
+                continue
+            sub_trends[index]['claim_ids'] = [c for c in claims if str(c) != value]
+            over -= 1
+            trimmed += 1
+    return {'claims_trimmed': trimmed, 'cap': cap}
+
+
+def reconcile_fronted_stats(key_trends: list, sub_trends: list) -> dict:
+    """Apply the gate's own statistic dedup, in the gate's own order, by
+    stripping the loser. Parent priority.
+
+    One claim may front one page. `validate_map` enforces that by registering
+    every key shift's `hero_stat` first and every sub-shift's `stat_band` after,
+    so the SUB is always the one blamed for a cross-form collision. Nothing
+    upstream honoured that order: phase 8 treated persisted child bands as
+    senior and skipped the claim, and two distinct claim rows quoting the same
+    figure from the same article still collided because the key is
+    (figure, source), not the claim id.
+
+    The 2026-08-12 remediation established that editorial regeneration CANNOT
+    converge these — ~$4.50 of targeted regen re-formed the same pairs, because
+    the avoid-list is advisory and both pages genuinely rest on the same
+    evidence. So this is settled deterministically at export, where the whole
+    document is visible, rather than asked for at generation. Every publish path
+    passes through here, including --export-only.
+
+    Prose defects (spelling, crutch, meta-language) do regen away and are left
+    to the repair pass; only fronted-statistic identity is resolved here.
+    """
+    seen: dict[tuple, str] = {}
+    dropped: list[str] = []
+    ceded = deduped = 0
+
+    for index, shift in enumerate(key_trends):
+        hero = shift.get('hero_stat')
+        if not isinstance(hero, dict) or not hero.get('value'):
+            continue
+        key = stat_claim_key(hero.get('value'), hero.get('url'))
+        if key in seen:
+            # A parent cannot cede to another parent — there is no second place
+            # to put a hero — so the later shift loses both the field and the
+            # band derived from it, and renders as a shift without a statistic.
+            shift['hero_stat'] = None
+            shift['modules'] = [m for m in shift.get('modules') or []
+                                if not (isinstance(m, dict) and m.get('type') == 'stat_band')]
+            dropped.append(shift.get('slug') or f'key_trends[{index}]')
+        else:
+            seen[key] = f'key_trends[{index}]'
+
+    for index, sub in enumerate(sub_trends):
+        kept = []
+        for module in sub.get('modules') or []:
+            if not (isinstance(module, dict) and module.get('type') == 'stat_band'):
+                kept.append(module)
+                continue
+            data = module.get('data') or {}
+            if not data.get('value'):
+                kept.append(module)
+                continue
+            key = stat_claim_key(data.get('value'), data.get('url'))
+            owner = seen.get(key)
+            if owner is None:
+                seen[key] = f'sub_trends[{index}]'
+                kept.append(module)
+                continue
+            # Dropped, not blanked: `sub_modules` requires value+url, so a band
+            # with the figure removed is not a band.
+            if owner.startswith('key_trends'):
+                ceded += 1
+            else:
+                deduped += 1
+        sub['modules'] = kept
+
+    return {'shift_heroes_dropped': dropped,
+            'sub_bands_ceded': ceded, 'sub_bands_deduped': deduped}
+
+
+def reconcile_self_echo(key_trends: list, sub_trends: list) -> dict:
+    """Drop a fronted statistic the page's own fixed copy already states.
+
+    A hero whose figure sits in the shift's name or subtitle puts the same
+    number on the page twice, and the copy half of that pair cannot move: the
+    subtitle is phase-3/4 prose the repair pass never rewrites, and there is no
+    safe deterministic edit that removes a number from a sentence. So — same
+    policy as `reconcile_fronted_stats` above — the movable half cedes: the
+    hero (and the band derived from it) is stripped, and the page renders as a
+    shift without a statistic rather than a shift that says one thing twice.
+
+    Phase 8 now avoids picking such heroes at all, so on a fresh run this is a
+    no-op. It exists because --export-only republishes persisted picks without
+    re-running phase 8, and a pick made before the avoidance landed (all 32
+    subtitle echoes on the 2026-08-19 live map) must not survive an export.
+    """
+    heroes_dropped: list[str] = []
+    bands_dropped: list[str] = []
+
+    for index, shift in enumerate(key_trends):
+        hero = shift.get('hero_stat')
+        if not isinstance(hero, dict) or not hero.get('value'):
+            continue
+        if figure_echoes(hero.get('value'),
+                         [('name', shift.get('name')),
+                          ('subtitle', shift.get('subtitle'))]):
+            shift['hero_stat'] = None
+            shift['modules'] = [m for m in shift.get('modules') or []
+                                if not (isinstance(m, dict) and m.get('type') == 'stat_band')]
+            heroes_dropped.append(shift.get('slug') or f'key_trends[{index}]')
+
+    for index, sub in enumerate(sub_trends):
+        kept = []
+        for module in sub.get('modules') or []:
+            if (isinstance(module, dict) and module.get('type') == 'stat_band'
+                    and (module.get('data') or {}).get('value')
+                    and figure_echoes(module['data'].get('value'),
+                                      [('name', sub.get('name')),
+                                       ('subtitle', sub.get('subtitle')),
+                                       ('description', sub.get('description'))])):
+                bands_dropped.append(sub.get('slug') or f'sub_trends[{index}]')
+                continue
+            kept.append(module)
+        sub['modules'] = kept
+
+    return {'shift_heroes_dropped': heroes_dropped, 'sub_bands_dropped': bands_dropped}
 
 
 def _write_map_document(conn, out):

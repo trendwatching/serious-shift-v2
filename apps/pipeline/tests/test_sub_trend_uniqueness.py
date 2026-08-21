@@ -8,7 +8,9 @@ candidates the model already returned rather than asking for new ones.
 """
 from __future__ import annotations
 
-from serious_shift_pipeline.mapgen.naming import choose_unique, name_key
+from serious_shift_pipeline.mapgen.naming import (
+    NAME_FAMILY_CAP, breaches_family_cap, choose_unique, family_counter,
+    family_keys, name_key)
 
 
 def _sub(name):
@@ -80,3 +82,86 @@ def test_a_nameless_candidate_is_skipped_without_being_reported():
     kept, dropped = choose_unique([{'name': '  '}, _sub('Real')], 5, claimed)
     assert [k['name'] for k in kept] == ['Real']
     assert dropped == []
+
+
+# ── Name families ────────────────────────────────────────────────────────────
+# The 2026-08-19 content review counted nine "…Blindspot"s and seven
+# "…Premium"s — every one legal by exact-slug uniqueness, together a monotone.
+
+
+def test_blind_spot_and_blindspot_are_one_family():
+    assert family_keys('Deflation Blind Spot') & family_keys('Proxy Blindspot')
+    assert family_keys('Liability Blind Spot') & family_keys('Deflation Blindspot')
+
+
+def test_short_and_stop_words_never_form_a_family():
+    # "AI" (2 chars) and "of" must not register; nothing here collides
+    assert not (family_keys('AI Shift') & family_keys('AI Premium'))
+
+
+def test_no_stemming_blindness_is_not_blindspot():
+    assert not (family_keys('Proxy Blindness') & family_keys('Proxy Blindspot') - {'proxy'})
+
+
+def test_the_third_family_member_is_walked_past():
+    families = family_counter(['Evaluation Premium', 'Collapse Premium'])
+    assert breaches_family_cap('Toil Premium', families)
+    kept, dropped = choose_unique(
+        [_sub('Toil Premium'), _sub('Craft Amnesia')], 1, set(), families=families)
+    assert [k['name'] for k in kept] == ['Craft Amnesia']
+    assert dropped == ['Toil Premium']
+
+
+def test_kept_names_count_toward_the_cap():
+    families = family_counter(['Origin Debt'])
+    kept, dropped = choose_unique(
+        [_sub('Privacy Debt'), _sub('Graph Debt'), _sub('Verification Gap')],
+        3, set(), families=families)
+    # second "Debt" fills the cap; the third is rejected
+    assert [k['name'] for k in kept] == ['Privacy Debt', 'Verification Gap']
+    assert dropped == ['Graph Debt']
+
+
+def test_head_words_form_families_too():
+    families = family_counter(['Context Capture', 'Context Ransom'])
+    assert breaches_family_cap('Context Prerequisite', families)
+
+
+def test_families_none_preserves_old_behavior():
+    claimed: set = set()
+    kept, dropped = choose_unique(
+        [_sub('Evaluation Premium'), _sub('Collapse Premium'), _sub('Toil Premium')],
+        3, claimed)
+    assert len(kept) == 3 and dropped == []
+
+
+def test_the_cap_is_two():
+    assert NAME_FAMILY_CAP == 2, "the review's finding: a pair rhymes, three is a tic"
+
+
+def test_the_family_cap_yields_to_the_sub_count_floor():
+    """2026-08-19: with ~200 names claimed, every candidate of a late family
+    echoed something and the strict walk left shifts 0-2 children against a
+    gate of 3. Family-breaching spares are re-admitted up to min_want; exact
+    twins never are."""
+    families = family_counter(['Evaluation Premium', 'Collapse Premium',
+                               'Origin Debt', 'Privacy Debt'])
+    claimed = {name_key('Toil Premium')}
+    kept, dropped = choose_unique(
+        [_sub('Toil Premium'),      # exact collision — stays out even at the floor
+         _sub('Slippage Premium'),  # family breach — re-admitted at the floor
+         _sub('Graph Debt'),        # family breach — re-admitted at the floor
+         _sub('Craft Amnesia')],    # clean — kept strictly
+        5, claimed, families=families, min_want=3)
+    assert [k['name'] for k in kept] == ['Craft Amnesia', 'Slippage Premium', 'Graph Debt']
+    assert dropped == ['Toil Premium']
+
+
+def test_the_floor_never_readmits_when_the_strict_walk_suffices():
+    families = family_counter(['Evaluation Premium', 'Collapse Premium'])
+    kept, dropped = choose_unique(
+        [_sub('Craft Amnesia'), _sub('Vernacular Suspicion'), _sub('Gut Veto'),
+         _sub('Toil Premium')],
+        3, set(), families=families, min_want=3)
+    assert [k['name'] for k in kept] == ['Craft Amnesia', 'Vernacular Suspicion', 'Gut Veto']
+    assert dropped == []  # never visited: want was satisfied before its turn

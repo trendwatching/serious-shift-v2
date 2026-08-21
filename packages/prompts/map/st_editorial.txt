@@ -45,9 +45,11 @@ PER SUB-TRENDS FIELDS
 
 `human_needs` — `{"unlocked","threatened"}`. The need this genuinely satisfies (steelmanned) and the need it puts at risk. One or two sentences and at most 40 words each, starting with the need itself. Both are required: the page sets them side by side as a pair, so one without the other is a half-empty section and the module is dropped.
 
-`signals` — 3–5 strings. Each is one concrete, evidenced development that shows this sub-shift is real. A complete sentence of at most 30 words. No numbering — the interface numbers them.
+`signals` — 3–5 strings. Each is one concrete, evidenced development that shows this sub-shift is real. A complete sentence of at most 35 words. No numbering — the interface numbers them.
 
-`counter_signals` — 2–3 strings. The honest case against: evidence that this sub-shift is weaker, slower, or more reversible than it appears. Each is at most 30 words. This section is what makes the analysis credible; do not straw-man it.
+`counter_signals` — 2–3 strings. The market case against: concrete, evidenced developments suggesting this sub-shift is weaker, slower, or already reversing — a company thriving on the old model, an adoption stalling or being rolled back, a cost, regulation, or consumer behavior that blunts it. Each is a complete sentence of at most 35 words that names an actor or event, exactly as `signals` does. This is counter-evidence about the WORLD, never commentary about the evidence: do not audit the sources. "The survey covers only US consumers", "not yet peer-reviewed", "the sample size is small" are notes for a methods appendix, not counter-signals — if the strongest case against is a methodology caveat, find market evidence in the allowed block instead, or return two items rather than pad. Do not straw-man it; the honest case against is what makes the analysis credible.
+  Right: "Klarna re-hired human service agents in 2025 after AI-only support dented customer satisfaction, reversing the delegation this sub-shift predicts."
+  Wrong: "The underlying survey covers only US and UK respondents, limiting generalizability." (audits the study, not the shift)
 
 `timeline` — `{"today","next","beyond"}` for 0–12 months, 1–3 years, 3–10 years. One or two sentences and at most 40 words each, each a different order of consequence. `today` is what is already true or already visible: the page carries a separate WHY NOW panel, so do not use this step to argue the sub-shift is timely.
 

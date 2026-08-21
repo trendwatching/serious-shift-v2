@@ -18,6 +18,7 @@
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:layers": "node scripts/check-layers.mjs",
     "check:classes": "node scripts/check-classes.mjs",
+    "art": "node scripts/generate-art.mjs",
     "heroes": "node scripts/generate-heroes.mjs",
     "heroes:og": "node scripts/render-og.mjs",
     "check:heroes": "node scripts/check-heroes.mjs",

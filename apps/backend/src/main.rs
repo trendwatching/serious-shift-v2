@@ -749,9 +749,11 @@ fn key_shift_summary(shift: &Value, sub_count: usize) -> Value {
 /// `nest_service`, and an overlapping route panics at router construction.
 ///
 /// `frame` is hero | wide | og | tile. `path` is the slug plus `.jpg`; for a
-/// tile it is the two-segment `parent/child.jpg`, which is why it is a wildcard
-/// rather than a single segment. The scope follows from the frame — only a
-/// sub-shift has a tile — so the URL does not have to carry it.
+/// sub-shift it is the two-segment `parent/child.jpg`, which is why it is a
+/// wildcard rather than a single segment. The scope follows from the SLUG, not
+/// from the frame: sub-shifts now generate their own poster and share card as
+/// well as their tile, so `hero` is no longer proof of a key shift. Reading it
+/// off the frame is what made every per-sub hero 404.
 async fn shift_art(
     State(s): State<AppState>,
     AxumPath((frame, path)): AxumPath<(String, String)>,
@@ -774,7 +776,7 @@ async fn shift_art(
     if slug.is_empty() || slug.len() > 200 || slug.contains("..") || slug.starts_with('/') {
         return Err(not_found());
     }
-    let scope = if frame == "tile" {
+    let scope = if slug.contains('/') {
         "sub_trend"
     } else {
         "key_trend"

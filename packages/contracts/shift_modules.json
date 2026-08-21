@@ -305,7 +305,7 @@
       ]
     },
     "territories": {
-      "summary": "Opportunity-territory cards plus a work-with-us card.",
+      "summary": "Opportunity-territory cards. The work-with-us CTA that used to close this rail is page chrome now, not a module.",
       "data": {
         "items": [
           {
