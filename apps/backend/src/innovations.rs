@@ -128,7 +128,7 @@ const MODULE_ORDER_SUB_TREND: [&str; 13] = [
 
 /// Which reading order a row belongs to. The two shift scopes the map document
 /// and `shift_refs` both use.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Scope {
     KeyTrend,
     SubTrend,
@@ -323,12 +323,60 @@ struct Valid {
     cover_image: Option<Value>,
     cover_url: Option<String>,
     cover_mime: Option<String>,
-    shifts: Vec<(Scope, String)>,
+    /// The `shifts` field, in payload order, each entry still either a name or a
+    /// slug.
+    ///
+    /// Names are resolved against `shift_refs.title` in the handler, because
+    /// `validate` is sync and this is the one field that needs the database to
+    /// finish validating. Each entry keeps the field path it came from, so a name
+    /// that resolves to nothing can be reported as the exact entry it was.
+    shifts: Vec<ShiftEntry>,
     state: String,
+}
+
+/// One entry of the `shifts` field.
+#[derive(Debug, Clone)]
+struct ShiftEntry {
+    scope: Scope,
+    reference: ShiftRef,
+    /// e.g. `shifts.key shifts[1]` or `shifts[0]` — the caller's own coordinates
+    /// for this entry, so an issue points at what they wrote.
+    field: String,
+}
+
+/// How an entry identified its shift.
+///
+/// A name has to be looked up; a slug already *is* the identity the link table
+/// wants, so it skips resolution entirely. Keeping them apart matters because a
+/// slug would never match a title — `psyche-capture` is not `Psyche Capture` —
+/// so treating one as a name would refuse a perfectly precise reference. It also
+/// leaves a caller somewhere to go when a name turns out to be ambiguous.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ShiftRef {
+    Name(String),
+    Slug(String),
+}
+
+impl ShiftRef {
+    fn as_str(&self) -> &str {
+        match self {
+            ShiftRef::Name(name) => name,
+            ShiftRef::Slug(slug) => slug,
+        }
+    }
 }
 
 fn issue(field: &str, code: &str) -> Value {
     json!({ "field": field, "code": code })
+}
+
+/// The same, naming the value that failed.
+///
+/// A payload can carry four shift names; `{field, code}` alone tells the caller
+/// one of them is unknown but not which, and the field path is an index into a
+/// list they have to reconstruct to read.
+fn named_issue(field: &str, code: &str, name: &str) -> Value {
+    json!({ "field": field, "code": code, "name": name })
 }
 
 fn http_url(value: &str) -> bool {
@@ -351,6 +399,113 @@ fn clean(value: Option<String>) -> Option<String> {
     value
         .map(|text| text.trim().to_string())
         .filter(|text| !text.is_empty())
+}
+
+/// Fold a tag key to its comparison form: lowercase, alphanumerics only.
+///
+/// `"Key Shifts"`, `"key_shifts"`, `"key-shifts"` and `"keyShifts"` all fold to
+/// `"keyshifts"`. Used *only* to spot the two shift keys — the eight real facets
+/// keep their exact-match check, so no existing tag behaviour moves.
+fn tag_key(key: &str) -> String {
+    key.chars()
+        .filter(|character| character.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
+}
+
+/// The scope a tag key names, if it names one at all.
+///
+/// Singular is accepted alongside plural because a payload carrying exactly one
+/// shift tends to be written that way, and `trend` alongside `shift` because
+/// that is the spelling `shifts[].scope` already uses — a caller who reads the
+/// rest of the contract and guesses should be right. None of these can collide
+/// with the eight real facets, which is what
+/// `no_real_facet_looks_like_a_shift_key` holds true.
+fn shift_scope_for_key(key: &str) -> Option<Scope> {
+    match tag_key(key).as_str() {
+        "keyshift" | "keyshifts" | "keytrend" | "keytrends" => Some(Scope::KeyTrend),
+        "subshift" | "subshifts" | "subtrend" | "subtrends" => Some(Scope::SubTrend),
+        _ => None,
+    }
+}
+
+/// Read one entry of a shift key: a bare name, or an object naming or slugging it.
+///
+/// `name` and `title` are names; `slug` is consulted only when neither is present,
+/// so `{"name": "Psyche Capture", "slug": "stale-slug"}` follows the name. That
+/// ordering is the point of the feature — a rename strands a slug, not a name.
+fn shift_reference(entry: &Value) -> Option<ShiftRef> {
+    if let Some(text) = entry.as_str() {
+        let text = text.trim();
+        return (!text.is_empty()).then(|| ShiftRef::Name(text.to_string()));
+    }
+    let field = |key: &str| {
+        entry
+            .get(key)
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|text| !text.is_empty())
+            .map(str::to_string)
+    };
+    field("name")
+        .or_else(|| field("title"))
+        .map(ShiftRef::Name)
+        .or_else(|| field("slug").map(ShiftRef::Slug))
+}
+
+/// Collect the entries of one scope-keyed group in the object form of `shifts`.
+///
+/// Accepts a list of entries or a lone one — a single shift tends to be written
+/// unwrapped. Deduplicated case-insensitively per scope, because the same shift
+/// twice would otherwise become two link rows competing for one `sort_order`.
+fn collect_shift_group(
+    key: &str,
+    scope: Scope,
+    entries: &Value,
+    shifts: &mut Vec<ShiftEntry>,
+    issues: &mut Vec<Value>,
+) {
+    let items: &[Value] = match entries {
+        Value::Null => &[],
+        Value::Array(items) => items,
+        // A lone name or object, rather than a list of one.
+        Value::String(_) | Value::Object(_) => std::slice::from_ref(entries),
+        _ => {
+            issues.push(issue(&format!("shifts.{key}"), "not_an_array"));
+            return;
+        }
+    };
+
+    for (index, item) in items.iter().enumerate() {
+        let field = format!("shifts.{key}[{index}]");
+        match shift_reference(item) {
+            Some(reference) => push_shift(scope, reference, field, shifts),
+            None => issues.push(issue(&field, "empty")),
+        }
+    }
+}
+
+/// Add one reference unless this scope already carries it.
+///
+/// Case-insensitive, and it deliberately compares names to names and slugs to
+/// slugs: `Psyche Capture` and `psyche-capture` are the same shift but this cannot
+/// know that yet, so the duplicate is caught after resolution instead.
+fn push_shift(scope: Scope, reference: ShiftRef, field: String, shifts: &mut Vec<ShiftEntry>) {
+    let already = shifts.iter().any(|entry| {
+        entry.scope == scope
+            && std::mem::discriminant(&entry.reference) == std::mem::discriminant(&reference)
+            && entry
+                .reference
+                .as_str()
+                .eq_ignore_ascii_case(reference.as_str())
+    });
+    if !already {
+        shifts.push(ShiftEntry {
+            scope,
+            reference,
+            field,
+        });
+    }
 }
 
 fn validate(req: IngestReq) -> Result<Valid, Vec<Value>> {
@@ -493,30 +648,70 @@ fn validate(req: IngestReq) -> Result<Valid, Vec<Value>> {
         Some(_) => issues.push(issue("cover_image", "not_an_object")),
     }
 
-    let mut shifts = Vec::new();
+    // `shifts` takes two shapes, and they are the same thing spelled differently.
+    //
+    // The object form groups references under a scope key — the shape upstream
+    // thinks in, because it knows shifts by name and by which tier they sit on:
+    //
+    //     "shifts": { "key shifts": ["PSYCHE CAPTURE"], "sub shifts": ["COGNITION LIEN"] }
+    //
+    // The array form is the original contract, one object per shift, and still
+    // works unchanged — it just also accepts a `name` where it took only a `slug`:
+    //
+    //     "shifts": [{ "scope": "key_trend", "slug": "psyche-capture" }]
+    let mut shifts: Vec<ShiftEntry> = Vec::new();
     match req.shifts.as_ref() {
         None | Some(Value::Null) => {}
+        // Object form: each key names a scope, each value its references.
+        Some(Value::Object(groups)) => {
+            // The object form carries no order we can honour: `serde_json`'s Map is
+            // a BTreeMap here, so keys arrive sorted rather than as written. Rather
+            // than let the resulting `sort_order` fall out of the alphabet — which
+            // is what `k` < `s` was quietly deciding — the tier fixes it: key
+            // shifts first, then sub shifts. Stable however the caller wrote it,
+            // and it makes the broader shift the primary link.
+            //
+            // Order matters because the position becomes `sort_order`, which orders
+            // the `shifts` array in `GET /api/v1/innovations`. Callers who need an
+            // exact order should send the array form, which preserves theirs.
+            let mut by_scope: Vec<(Scope, &String, &Value)> = Vec::new();
+            for (key, entries) in groups {
+                match shift_scope_for_key(key) {
+                    Some(scope) => by_scope.push((scope, key, entries)),
+                    // Unlike a tag facet, an unrecognised key here is a mistake
+                    // with no second meaning — there are exactly two tiers — so it
+                    // is reported rather than quietly dropped.
+                    None => issues.push(issue(&format!("shifts.{key}"), "unknown_scope")),
+                }
+            }
+            // Stable, so two spellings of one scope keep their relative order.
+            by_scope.sort_by_key(|(scope, _, _)| *scope);
+            for (scope, key, entries) in by_scope {
+                collect_shift_group(key, scope, entries, &mut shifts, &mut issues);
+            }
+        }
         Some(Value::Array(items)) => {
             for (index, item) in items.iter().enumerate() {
+                // A bare string is a key-shift name; the scope key is what makes
+                // it anything else.
                 let scope = item
                     .get("scope")
                     .and_then(Value::as_str)
                     .unwrap_or("key_trend");
-                let slug = item
-                    .get("slug")
-                    .and_then(Value::as_str)
-                    .map(str::trim)
-                    .unwrap_or_default();
-                match (Scope::parse(scope), slug.is_empty()) {
-                    (Some(scope), false) => shifts.push((scope, slug.to_string())),
-                    (None, _) => {
-                        issues.push(issue(&format!("shifts[{index}].scope"), "unknown_scope"))
-                    }
-                    (_, true) => issues.push(issue(&format!("shifts[{index}].slug"), "empty")),
+                let Some(scope) = Scope::parse(scope) else {
+                    issues.push(issue(&format!("shifts[{index}].scope"), "unknown_scope"));
+                    continue;
+                };
+                let field = format!("shifts[{index}]");
+                match shift_reference(item) {
+                    Some(reference) => push_shift(scope, reference, field, &mut shifts),
+                    // Still reported against `.slug`, the field code this form has
+                    // always used for an entry that identifies nothing.
+                    None => issues.push(issue(&format!("{field}.slug"), "empty")),
                 }
             }
         }
-        Some(_) => issues.push(issue("shifts", "not_an_array")),
+        Some(_) => issues.push(issue("shifts", "not_an_object_or_array")),
     }
 
     let state = match req.state.as_deref().map(str::trim) {
@@ -645,6 +840,28 @@ pub async fn ingest(
 
     let mut tx = s.pool.begin().await?;
 
+    // Names in `shifts` are resolved first, before a single write, so a name we
+    // cannot resolve is a 422 that leaves nothing behind: returning here drops the
+    // transaction, which rolls it back. Inside the transaction rather than ahead
+    // of it so a publication landing mid-ingest cannot let a name resolve against
+    // one shift while the link is written against another.
+    //
+    // A name is stricter than a slug, which is applied-around and reported when it
+    // matches nothing. A slug is a machine identity that a rename legitimately
+    // breaks; a *name* is what upstream believes the shift is called, and quietly
+    // filing an innovation under nothing because that belief went stale is worse
+    // than refusing the write. The cost is that a rename fails every ingest naming
+    // the old title until upstream catches up — which is the alarm, not a
+    // regression.
+    let (resolved, name_issues) = resolve_shifts(&mut tx, &valid.shifts).await?;
+    if !name_issues.is_empty() {
+        return Err(AppError::validation(name_issues));
+    }
+    let shifts: Vec<(Scope, String)> = resolved
+        .iter()
+        .map(|(scope, slug, _)| (*scope, slug.clone()))
+        .collect();
+
     // Lock the row, so two concurrent POSTs for the same upstream id serialise
     // instead of racing the tag and link replacement below.
     let previous: Option<(i64, Option<String>, String)> = sqlx::query_as(
@@ -692,7 +909,7 @@ pub async fn ingest(
     // Ingest only ever owns its own links. An editor's curation of the same
     // innovation survives every re-POST, which is the whole point of recording
     // `source`.
-    let (linked, unknown) = replace_shift_links(&mut tx, id, &valid.shifts, "ingest").await?;
+    let (linked, unknown) = replace_shift_links(&mut tx, id, &shifts, "ingest").await?;
 
     tx.commit().await?;
 
@@ -742,7 +959,21 @@ pub async fn ingest(
         "cover_image": cover,
         "tags": { "linked": valid.tags.len(), "ignored_facets": valid.ignored_facets },
         "brands": valid.brands,
-        "shift_links": { "linked": strip_domain(&linked), "unknown": unknown },
+        // `named` echoes what each *name* in `shifts` resolved to, so the caller can
+        // confirm the mapping — and learn the slug — without a second request. A
+        // slug is absent from it: there was nothing to resolve, and it is already
+        // reported in `linked`.
+        "shift_links": {
+            "linked": strip_domain(&linked),
+            "unknown": unknown,
+            "named": resolved
+                .iter()
+                .filter_map(|(scope, slug, name)| {
+                    let name = name.as_deref()?;
+                    Some(json!({ "name": name, "scope": scope.as_str(), "slug": slug }))
+                })
+                .collect::<Vec<Value>>(),
+        },
         "visible_at": visible_at,
         "request_id": crate::next_error_id(),
     });
@@ -824,6 +1055,84 @@ async fn replace_tag_links(
     Ok(())
 }
 
+/// Turn every `shifts` entry into the `(scope, slug)` pair the link writer wants.
+///
+/// Names are matched case-insensitively against `shift_refs.title` — the shift's
+/// name as publication recorded it, in Title Case, whereas callers and the site
+/// both render it in caps.
+///
+/// Restricted to the newest publication on purpose. `shift_refs` keeps a row per
+/// slug it has ever published, so a renamed shift leaves its old row behind; that
+/// row's slug no longer routes anywhere, and matching it would write a link to a
+/// page that does not exist. `RECORDS` and the pipeline's classifier filter the
+/// same way.
+///
+/// Returns each entry as `(scope, slug, the name it was resolved from)` — `None`
+/// when the entry was already a slug and needed no resolving — and, separately,
+/// one issue per name that resolved to nothing or to more than one shift. The
+/// caller decides what a failure means.
+async fn resolve_shifts(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    entries: &[ShiftEntry],
+) -> Result<(Vec<(Scope, String, Option<String>)>, Vec<Value>), AppError> {
+    // Slugs need no lookup, so a payload that only ever sends slugs — and every
+    // payload that sends no shifts at all — issues no query.
+    let names: Vec<&ShiftEntry> = entries
+        .iter()
+        .filter(|entry| matches!(entry.reference, ShiftRef::Name(_)))
+        .collect();
+
+    let matched: Vec<(i64, i64, Option<String>)> = if names.is_empty() {
+        Vec::new()
+    } else {
+        let scopes: Vec<&str> = names.iter().map(|entry| entry.scope.as_str()).collect();
+        let titles: Vec<&str> = names.iter().map(|entry| entry.reference.as_str()).collect();
+        sqlx::query_as(RESOLVE_SHIFT_NAMES)
+            .bind(&scopes)
+            .bind(&titles)
+            .fetch_all(&mut **tx)
+            .await?
+    };
+
+    let mut resolved: Vec<(Scope, String, Option<String>)> = Vec::new();
+    let mut issues = Vec::new();
+    let mut ordinal = 0i64;
+    // Deduplicated here rather than at parse time: a name and a slug for the same
+    // shift only become visibly identical once the name has a slug, and
+    // `replace_shift_links` inserts one row per position — the same pair twice
+    // would have the second insert overwrite the first's `sort_order`.
+    let mut push = |scope: Scope, slug: String, name: Option<String>| {
+        if !resolved
+            .iter()
+            .any(|(seen_scope, seen_slug, _)| *seen_scope == scope && *seen_slug == slug)
+        {
+            resolved.push((scope, slug, name));
+        }
+    };
+    for entry in entries {
+        let name = match &entry.reference {
+            // Taken as sent. `replace_shift_links` reports a slug that matches no
+            // shift, the same as it always has.
+            ShiftRef::Slug(slug) => {
+                push(entry.scope, slug.clone(), None);
+                continue;
+            }
+            ShiftRef::Name(name) => name,
+        };
+        // ORDINALITY is 1-based, and counts only the names the query was asked
+        // about — the slugs above were never sent.
+        ordinal += 1;
+        match matched.iter().find(|(ord, _, _)| *ord == ordinal) {
+            Some((_, 1, Some(slug))) => push(entry.scope, slug.clone(), Some(name.clone())),
+            Some((_, matches, _)) if *matches > 1 => {
+                issues.push(named_issue(&entry.field, "ambiguous_shift", name))
+            }
+            _ => issues.push(named_issue(&entry.field, "unknown_shift", name)),
+        }
+    }
+    Ok((resolved, issues))
+}
+
 /// Replace exactly the links this writer owns, and report the slugs that matched
 /// no published shift.
 ///
@@ -843,11 +1152,16 @@ async fn replace_shift_links(
     let resolved: Vec<(i64, String, String, Option<String>)> = if shifts.is_empty() {
         Vec::new()
     } else {
+        // Ordered by the caller's position, not by whatever the join happens to
+        // emit. The loop below turns this order into `sort_order`, which orders the
+        // `shifts` array in `GET /api/v1/innovations` and the cards on a shift
+        // page — so an unordered read here made a documented ordering arbitrary.
         sqlx::query_as(
             "SELECT sr.id, sr.scope, sr.slug, sr.domain_id
                FROM shift_refs sr
-               JOIN unnest($1::text[], $2::text[]) AS want(scope, slug)
-                 ON want.scope = sr.scope AND want.slug = sr.slug",
+               JOIN unnest($1::text[], $2::text[]) WITH ORDINALITY AS want(scope, slug, ord)
+                 ON want.scope = sr.scope AND want.slug = sr.slug
+              ORDER BY want.ord",
         )
         .bind(&scopes)
         .bind(&slugs)
@@ -1530,6 +1844,34 @@ ON CONFLICT (source_innovation_id) DO UPDATE SET
   updated_at   = now()
 RETURNING id"#;
 
+/// Resolve `(scope, name)` pairs to the slug of the live shift with that title.
+///
+/// Exactly one row per pair asked about: `WITH ORDINALITY` maps each answer back
+/// to its question by position, so Rust's casefolding and Postgres' never have to
+/// agree, and `count` is what tells an ambiguous name from a missing one.
+/// `min(slug)` is only read when that count is 1.
+///
+/// `lower(btrim(…))` on both sides. Titles are stored Title Case ("Psyche
+/// Capture") and arrive from upstream in caps — the caps on the site are a
+/// presentation transform in `theme.js` and `seo.rs`, not the stored form.
+///
+/// `count(l.slug)`, not `count(*)`: the left join must count 0 for a miss.
+const RESOLVE_SHIFT_NAMES: &str = r#"
+WITH want AS (
+  SELECT scope, name, ordinality
+    FROM unnest($1::text[], $2::text[]) WITH ORDINALITY AS w(scope, name, ordinality)
+), live AS (
+  SELECT scope, slug, lower(btrim(title)) AS name
+    FROM shift_refs
+   WHERE title IS NOT NULL
+     AND last_published_at = (SELECT max(last_published_at) FROM shift_refs)
+)
+SELECT w.ordinality, count(l.slug) AS matches, min(l.slug) AS slug
+  FROM want w
+  LEFT JOIN live l ON l.scope = w.scope AND l.name = lower(btrim(w.name))
+ GROUP BY w.ordinality
+ ORDER BY w.ordinality"#;
+
 /// Intern this payload's tags, returning their ids in the order given.
 ///
 /// The caller deduplicates first: `ON CONFLICT DO UPDATE` cannot touch the same
@@ -1802,11 +2144,22 @@ mod tests {
                 "innovation-type": [{ "slug": "product-launch" }],
                 "basic-human-need": []
             },
+            "shifts": {
+                "key shifts": ["PSYCHE CAPTURE"],
+                "sub shifts": ["COGNITION LIEN"]
+            },
             "cover_image": {
                 "url": "https://tw-the-engine.up.railway.app/api/innovations/1234/cover-image?v=1720900000&exp=99&sig=abc",
                 "mime": "image/jpeg"
             }
         })
+    }
+
+    /// `sample()` with `shifts` taken back out, for the tests that set their own.
+    fn sample_without_shifts() -> Value {
+        let mut payload = sample();
+        payload.as_object_mut().unwrap().remove("shifts");
+        payload
     }
 
     #[test]
@@ -1818,9 +2171,15 @@ mod tests {
         // Empty facets contribute nothing; the four populated ones do.
         assert_eq!(valid.tags.len(), 4);
         assert!(valid.ignored_facets.is_empty());
+        assert_eq!(
+            refs(&valid),
+            [
+                ("key_trend", "PSYCHE CAPTURE"),
+                ("sub_trend", "COGNITION LIEN"),
+            ]
+        );
         assert_eq!(valid.cover_mime.as_deref(), Some("image/jpeg"));
         assert_eq!(valid.state, "active");
-        assert!(valid.shifts.is_empty());
     }
 
     #[test]
@@ -1903,6 +2262,271 @@ mod tests {
                 .filter(|(facet, slug, _)| facet == "industry" && slug == "food-beverage")
                 .count(),
             1
+        );
+    }
+
+    /// The shift references a validated payload carried, for brevity below.
+    fn refs(valid: &Valid) -> Vec<(&'static str, &str)> {
+        valid
+            .shifts
+            .iter()
+            .map(|shift| (shift.scope.as_str(), shift.reference.as_str()))
+            .collect()
+    }
+
+    #[test]
+    fn the_object_form_groups_shifts_by_scope() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!({
+            "key shifts": ["PSYCHE CAPTURE", "LEGITIMACY COLLAPSE"],
+            "sub shifts": ["COGNITION LIEN", "ALIGNMENT LAG"],
+        });
+        let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+
+        assert_eq!(
+            refs(&valid),
+            [
+                ("key_trend", "PSYCHE CAPTURE"),
+                ("key_trend", "LEGITIMACY COLLAPSE"),
+                ("sub_trend", "COGNITION LIEN"),
+                ("sub_trend", "ALIGNMENT LAG"),
+            ]
+        );
+        // Shifts live in their own field now, so `tags` is untouched by them.
+        assert!(valid.ignored_facets.is_empty());
+        assert_eq!(valid.tags.len(), 4);
+    }
+
+    /// The original array form is still the contract it was.
+    #[test]
+    fn the_array_form_still_takes_scope_and_slug() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!([
+            { "scope": "key_trend", "slug": "psyche-capture" },
+            { "scope": "sub_trend", "slug": "psyche-capture/cognition-lien" },
+            // No scope at all still means a key shift.
+            { "slug": "safety-theater" },
+        ]);
+        let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+        assert_eq!(
+            refs(&valid),
+            [
+                ("key_trend", "psyche-capture"),
+                ("sub_trend", "psyche-capture/cognition-lien"),
+                ("key_trend", "safety-theater"),
+            ]
+        );
+        assert!(valid
+            .shifts
+            .iter()
+            .all(|shift| matches!(shift.reference, ShiftRef::Slug(_))));
+    }
+
+    /// The two shapes are spellings of one thing, so a name works in either.
+    #[test]
+    fn the_array_form_also_takes_a_name() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!([
+            { "scope": "sub_trend", "name": "COGNITION LIEN" },
+            "PSYCHE CAPTURE",
+        ]);
+        let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+        assert_eq!(
+            valid
+                .shifts
+                .iter()
+                .map(|shift| (shift.scope.as_str(), shift.reference.clone()))
+                .collect::<Vec<(&str, ShiftRef)>>(),
+            [
+                ("sub_trend", ShiftRef::Name("COGNITION LIEN".into())),
+                ("key_trend", ShiftRef::Name("PSYCHE CAPTURE".into())),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_scope_key_is_matched_however_it_is_spelled() {
+        for key in [
+            "key shifts",
+            "Key Shifts",
+            "KEY SHIFTS",
+            "key_shifts",
+            "key-shifts",
+            "keyShifts",
+            "key shift",
+            "key_trends",
+        ] {
+            let mut payload = sample_without_shifts();
+            payload["shifts"] = json!({ key: ["PSYCHE CAPTURE"] });
+            let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+            assert_eq!(
+                refs(&valid),
+                [("key_trend", "PSYCHE CAPTURE")],
+                "{key} was not read as the key-shift scope"
+            );
+        }
+    }
+
+    /// Two tiers exist, so a third key is a mistake with no second meaning — unlike
+    /// an unknown tag facet, which is taxonomy drift and tolerated.
+    #[test]
+    fn an_unknown_scope_key_is_refused() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!({ "micro shifts": ["SOMETHING"] });
+        let issues = validate(serde_json::from_value(payload).unwrap()).unwrap_err();
+        assert_eq!(issues, [issue("shifts.micro shifts", "unknown_scope")]);
+    }
+
+    /// A single value arrives unwrapped often enough that refusing it would be a
+    /// puzzle rather than a contract.
+    #[test]
+    fn a_lone_shift_name_string_is_accepted() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!({ "sub shifts": "COGNITION LIEN" });
+        let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+        assert_eq!(refs(&valid), [("sub_trend", "COGNITION LIEN")]);
+    }
+
+    /// A slug is the identity the link table already wants, so it must not be sent
+    /// off to be matched against a title it could never equal.
+    #[test]
+    fn an_object_entry_is_read_as_a_name_or_a_slug() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!({ "key shifts": [
+            { "name": "PSYCHE CAPTURE" },
+            { "title": "LEGITIMACY COLLAPSE" },
+            { "slug": "safety-theater" },
+            // A name and a slug together follows the name: a rename strands the
+            // slug, which is the whole reason to send a name.
+            { "name": "INFERRED IDENTITY", "slug": "stale-slug" },
+        ]});
+        let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+        assert_eq!(
+            valid
+                .shifts
+                .iter()
+                .map(|shift| shift.reference.clone())
+                .collect::<Vec<ShiftRef>>(),
+            [
+                ShiftRef::Name("PSYCHE CAPTURE".into()),
+                ShiftRef::Name("LEGITIMACY COLLAPSE".into()),
+                ShiftRef::Slug("safety-theater".into()),
+                ShiftRef::Name("INFERRED IDENTITY".into()),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_blank_entry_is_refused_by_field() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!({ "key shifts": ["PSYCHE CAPTURE", "   ", { "unrelated": 1 }] });
+        let issues = validate(serde_json::from_value(payload).unwrap()).unwrap_err();
+        let fields: Vec<&str> = issues
+            .iter()
+            .map(|issue| issue["field"].as_str().unwrap_or_default())
+            .collect();
+        assert_eq!(fields, ["shifts.key shifts[1]", "shifts.key shifts[2]"]);
+        assert!(issues.iter().all(|issue| issue["code"] == "empty"));
+
+        // The array form keeps reporting against `.slug`, as it always has.
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!([{ "scope": "key_trend" }]);
+        let issues = validate(serde_json::from_value(payload).unwrap()).unwrap_err();
+        assert_eq!(issues, [issue("shifts[0].slug", "empty")]);
+    }
+
+    #[test]
+    fn a_scope_key_that_is_not_a_list_is_refused() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!({ "sub shifts": 7 });
+        let issues = validate(serde_json::from_value(payload).unwrap()).unwrap_err();
+        assert_eq!(issues, [issue("shifts.sub shifts", "not_an_array")]);
+
+        // And the field as a whole takes only the two shapes.
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!("PSYCHE CAPTURE");
+        let issues = validate(serde_json::from_value(payload).unwrap()).unwrap_err();
+        assert_eq!(issues, [issue("shifts", "not_an_object_or_array")]);
+    }
+
+    /// One name twice would become two link rows competing for one `sort_order`.
+    #[test]
+    fn a_repeated_reference_is_taken_once() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] =
+            json!({ "key shifts": ["PSYCHE CAPTURE", "psyche capture", "Psyche Capture"] });
+        let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+        assert_eq!(refs(&valid), [("key_trend", "PSYCHE CAPTURE")]);
+    }
+
+    /// A JSON object's keys reach us sorted, not as written, so the tier decides
+    /// the order instead of the alphabet — and `sort_order` with it.
+    #[test]
+    fn the_object_form_puts_key_shifts_before_sub_shifts() {
+        let mut payload = sample_without_shifts();
+        // Written sub-first, and under a spelling that sorts before "key shifts".
+        payload["shifts"] = json!({
+            "sub shifts": ["COGNITION LIEN"],
+            "key shifts": ["PSYCHE CAPTURE"],
+        });
+        let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+        assert_eq!(
+            refs(&valid),
+            [
+                ("key_trend", "PSYCHE CAPTURE"),
+                ("sub_trend", "COGNITION LIEN"),
+            ]
+        );
+    }
+
+    /// The array form is the one that keeps the caller's exact order, including a
+    /// sub shift ahead of a key shift.
+    #[test]
+    fn the_array_form_keeps_the_payloads_order() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!([
+            { "scope": "sub_trend", "name": "COGNITION LIEN" },
+            { "scope": "key_trend", "name": "PSYCHE CAPTURE" },
+        ]);
+        let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+        assert_eq!(
+            refs(&valid),
+            [
+                ("sub_trend", "COGNITION LIEN"),
+                ("key_trend", "PSYCHE CAPTURE"),
+            ]
+        );
+    }
+
+    /// A key shift and a sub shift may legitimately share a name — the scope is
+    /// part of the identity, so one must not shadow the other.
+    #[test]
+    fn the_same_name_in_both_scopes_survives() {
+        let mut payload = sample_without_shifts();
+        payload["shifts"] = json!({
+            "key shifts": ["PSYCHE CAPTURE"],
+            "sub shifts": ["PSYCHE CAPTURE"],
+        });
+        let valid = validate(serde_json::from_value(payload).unwrap()).unwrap();
+        assert_eq!(
+            refs(&valid),
+            [
+                ("key_trend", "PSYCHE CAPTURE"),
+                ("sub_trend", "PSYCHE CAPTURE"),
+            ]
+        );
+    }
+
+    /// Naming a shift changes what links exist, so it is content by definition —
+    /// excluding the keys from the hash would make the first POST after upstream
+    /// turns the feature on a no-op that never links anything. The cost, written
+    /// down here so it is not a surprise: that first POST reports `updated` for
+    /// every innovation upstream re-sends.
+    #[test]
+    fn naming_a_shift_is_a_content_change() {
+        assert_ne!(
+            content_hash(&sample()),
+            content_hash(&sample_without_shifts())
         );
     }
 
