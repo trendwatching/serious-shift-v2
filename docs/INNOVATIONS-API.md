@@ -85,8 +85,13 @@ A body over 1 MB is rejected with `413` before the handler runs.
 
 **Field codes** used in `details`: `required`, `empty`, `not_an_array`,
 `not_an_object`, `not_http_url`, `not_a_positive_integer`,
-`unsupported_image_type`, `unknown_scope`, `unknown_state`, `unknown_shift`,
-`malformed`, `expected_scope_colon_slug`, `expected_facet_colon_slug`.
+`not_an_object_or_array`, `unsupported_image_type`, `unknown_scope`,
+`unknown_state`, `unknown_shift`, `ambiguous_shift`, `malformed`,
+`expected_scope_colon_slug`, `expected_facet_colon_slug`.
+
+A detail entry for a shift **name** carries a third key, `name`, echoing the value
+that failed — a payload can name four shifts and a field path alone does not say
+which of them the caller should fix.
 
 ---
 
@@ -129,8 +134,10 @@ X-Request-Id: <your correlation id>        # optional, echoed back
     "url": "https://tw-the-engine.up.railway.app/api/innovations/1234/cover-image?v=…&exp=…&sig=…",
     "mime": "image/jpeg"
   },
-
-  "shifts": [{ "scope": "key_trend", "slug": "…" }],
+  "shifts": {
+    "key shifts": ["PSYCHE CAPTURE", "LEGITIMACY COLLAPSE"],
+    "sub shifts": ["COGNITION LIEN", "ALIGNMENT LAG"]
+  },
   "state": "active"
 }
 ```
@@ -144,9 +151,9 @@ X-Request-Id: <your correlation id>        # optional, echoed back
 | `body` | no | Free text. Used as the card's description when `trendbite` is absent, clamped to 240 characters |
 | `trendbite` | no | Free text. Preferred as the card's description |
 | `brands` | no | Array of non-empty strings. **Element 1 is the primary brand** and is what the card shows |
-| `tags` | no | Object of facet → `[{slug, external_uuid?}]`. Facets: `industry`, `subindustry`, `region`, `country`, `audience`, `season`, `innovation-type`, `basic-human-need`. A facet outside that list is **ignored, not rejected** — it stays in the stored payload and is listed in `tags.ignored_facets`. A malformed `external_uuid` is dropped; the tag is still recorded |
+| `tags` | no | Object of facet → `[{slug, external_uuid?}]`. Facets: `industry`, `subindustry`, `region`, `country`, `audience`, `season`, `innovation-type`, `basic-human-need`. A facet outside that list is **ignored, not rejected** — it stays in the stored payload and is listed in `tags.ignored_facets`. A malformed `external_uuid` is dropped; the tag is still recorded. **Shifts do not belong here** — they have their own field |
 | `cover_image` | no | `{url, mime}`. `mime` must be one of `image/jpeg`, `image/png`, `image/webp`, `image/avif` |
-| `shifts` | no | Extension: shifts you already know this is an example of. Stored with `source: "ingest"`, and **never touches editor-made links** |
+| `shifts` | no | The shifts this is an example of, **by name or by slug** — see [The `shifts` field](#the-shifts-field). Stored with `source: "ingest"`, and **never touches editor-made links**. A name matching no currently published shift, or more than one, is a **`422` with nothing written** |
 | `state` | no | `active` (default) or `withdrawn`. `withdrawn` hides the innovation everywhere without deleting it — this is how to retract one |
 
 ### Idempotency
@@ -186,7 +193,8 @@ which.
   "brands": ["Primary Brand", "Another Brand"],
   "shift_links": {
     "linked": [{ "scope": "key_trend", "slug": "ai-matches-professional-expertise-institutions-cant" }],
-    "unknown": []
+    "unknown": [],
+    "named": [{ "name": "PSYCHE CAPTURE", "scope": "key_trend", "slug": "psyche-capture" }]
   },
   "visible_at": ["/map/frontier/ai-matches-professional-expertise-institutions-cant"],
   "request_id": "ss-41-7"
@@ -199,7 +207,8 @@ which.
 | `result` | `created` · `updated` · `unchanged` |
 | `cover_image.state` | `stored` · `failed` · `none`. When `failed`, `cover_image.error` says why |
 | `tags.ignored_facets` | Facets we do not model. Non-fatal, but worth alerting on: it means our taxonomy is behind yours |
-| `shift_links.unknown` | Slugs in `shifts` that matched no published shift. **Not an error** — the innovation is still stored. Usually a rename |
+| `shift_links.unknown` | **Slugs** in `shifts` that matched no published shift. **Not an error** — the innovation is still stored. Usually a rename |
+| `shift_links.named` | What each **name** in `shifts` resolved to. Read it back to learn the slug, and to confirm a name landed on the shift you meant. A slug is absent here — there was nothing to resolve |
 | `visible_at` | The page paths where this innovation now renders. Check these rather than deriving our URL scheme |
 
 Response headers: `RateLimit-Limit`, `RateLimit-Remaining`, and
@@ -236,10 +245,96 @@ POST … 61st request this minute       → 429  rate_limited     (Retry-After: 
 
 ## 4. Curating the shift mapping
 
-The payload carries no shift reference of its own, so mapping is normally an
-editorial act. Both writers coexist: **ingest owns `source: "ingest"` links and
+A payload can map itself through its `shifts` field, and anything it does not map is
+an editorial act. Both writers coexist: **ingest owns `source: "ingest"` links and
 curation owns `source: "editor"` links**, and neither deletes the other's. That is
 why re-ingesting an innovation cannot undo curation.
+
+### The `shifts` field
+
+`shifts` takes two shapes, and they are the same thing spelled differently. Use
+whichever fits what you hold.
+
+**Grouped by scope** — the shape to reach for when you know shifts by name:
+
+```json
+"shifts": {
+  "key shifts": ["PSYCHE CAPTURE", "LEGITIMACY COLLAPSE"],
+  "sub shifts": ["COGNITION LIEN", "ALIGNMENT LAG"]
+}
+```
+
+**A list of entries** — the original form, unchanged:
+
+```json
+"shifts": [
+  { "scope": "key_trend", "slug": "psyche-capture" },
+  { "scope": "sub_trend", "name": "COGNITION LIEN" }
+]
+```
+
+Either way the innovation appears on those pages within the cache TTL, with no
+publication run.
+
+- **Scope keys are read loosely.** `key shifts`, `Key Shifts`, `key_shifts`,
+  `key-shifts`, `keyShifts`, `key shift` and `key trends` are all the same key;
+  likewise for `sub`. Case and punctuation are ignored. A key that names neither
+  tier is a `422 unknown_scope` — there are exactly two, so a third is a typo, not
+  drift.
+- **Entries may be** a bare name, or an object carrying `name`, `title`, or `slug`.
+  A `slug` is taken as a slug and skips the name lookup entirely; a `name`
+  alongside one wins, because a rename strands a slug and not a name. A lone value
+  need not be wrapped in a list.
+- **In the list form, `scope` defaults to `key_trend`**, so a bare `"PSYCHE
+  CAPTURE"` in the array is a key shift.
+- **Name matching is case- and whitespace-insensitive.** Names are stored Title
+  Case (`Psyche Capture`); the caps you see on the site are a display transform, so
+  `PSYCHE CAPTURE` matches.
+- **A sub shift is named by its own name alone.** You do not need its parent — the
+  two-segment slug (`psyche-capture/cognition-lien`) is resolved for you and comes
+  back in `shift_links.named`.
+- **Only the current publication is matchable by name.** A shift from an earlier one
+  has a slug that no longer routes anywhere, so resolving onto it would file the
+  innovation on a page that 404s.
+- **Naming a sub shift links that sub shift only** — it does not also appear on the
+  parent key shift's page. Name both if you want both.
+- **Order becomes `sort_order`**, which is the order the `shifts` array comes back
+  in from `GET /api/v1/innovations`. The **list form keeps your exact order**. The
+  **object form always puts key shifts first**, then sub shifts, however you write
+  the keys — a JSON object's key order does not survive parsing, so the tier decides
+  it rather than the alphabet. Send the list form if you need a specific order.
+- **Duplicates collapse**, including a shift sent once by name and once by slug.
+
+#### An unresolvable name is a `422`, and nothing is written
+
+A **name** is stricter than a **slug**, deliberately. An unknown slug is
+applied-around and reported in `shift_links.unknown`, because a slug is a machine
+identity that a rename legitimately breaks. A name is what you believe the shift is
+called, and quietly filing an innovation under nothing because that belief went
+stale is worse than refusing the write.
+
+```json
+{ "error": { "code": "validation_failed", "details": [
+  { "field": "shifts.key shifts[1]", "code": "unknown_shift",   "name": "NO SUCH SHIFT" },
+  { "field": "shifts.sub shifts[0]", "code": "ambiguous_shift", "name": "TWINNED" }
+] } }
+```
+
+- `unknown_shift` — no currently published shift has that name. Usually a rename:
+  re-send with the new name.
+- `ambiguous_shift` — two published shifts share that name. Sub-shift names are
+  only unique within a parent, so this is reachable. Nothing is guessed; send that
+  one as `{"slug": …}` instead to disambiguate.
+
+The whole payload is refused and no row is touched, so a retry is safe and loses
+nothing. The consequence to plan for: **once a shift is renamed, every ingest still
+naming it fails** — including a re-POST of otherwise unchanged content, which would
+previously have answered `result: "unchanged"`. That is the intended alarm.
+
+One more thing worth knowing: switching an innovation from slugs to names, or
+adding `shifts` where there was none, is a content change — so it answers `updated`
+rather than `unchanged`. Expect one pass of `updated` results across your back
+catalogue when you make the switch.
 
 ### `PUT /api/innovations/{id}/shifts`
 
@@ -416,6 +511,13 @@ stops showing the innovation. Publication reports this:
 ```
 
 Re-point them with `PUT /api/innovations/{id}/shifts` using the new slug.
+
+A link made from a **name** behaves differently, and better: the name is
+re-resolved on every POST, so a re-POST after the rename moves the link to the new
+slug with no editorial action. The trade is that the ingest *fails* (`422
+unknown_shift`) between the rename and the moment upstream sends the new name,
+rather than silently stranding the link — see
+[The `shifts` field](#the-shifts-field).
 
 **A stranded link is omitted from `GET /api/v1/innovations`.** The `shifts[]`
 array lists only shifts in the current publication, because a link the site will
