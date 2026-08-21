@@ -12,7 +12,7 @@ Use web_search and web_fetch to research this shift NOW, on the live web. Requir
 
 Only cite pages you actually opened with web_fetch. Prefer the last 90 days; nothing older than 18 months unless it is the baseline a new number moves against.
 
-OUTPUT: after researching, respond with ONLY a JSON array of 14-28 evidence items:
+OUTPUT: after researching, respond with ONLY a JSON array of 12-18 evidence items — the STRONGEST ones, not everything you saw:
 {"url": "the page you fetched",
  "title": "page title",
  "publisher": "site/organization name",

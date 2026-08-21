@@ -512,9 +512,14 @@ def main():
             run_id = observability.new_run_id('synthesize')
             budget_run = RunLog(run_id, 'synthesize')
             budget_run.start()
-            budget_run.finish(status='failed', detail={'budget': {'error': str(exc)}})
+            budget_run.add_usage(cost=mapgen_llm.COST,
+                                 detail={'budget': {'error': str(exc)}})
+            budget_run.finish(status='failed')
         else:
+            # cost= included: a run stopped by its own brake has still spent
+            # real money, and attempt 2 recorded $0 for a $130 map phase.
             RunLog(orchestrated_id, 'synthesize').add_usage(
+                cost=mapgen_llm.COST,
                 detail={'budget': {'error': str(exc)}})
         print(
             f'\nERROR: spend ceiling reached — {exc}\n'
@@ -527,6 +532,14 @@ def main():
             file=sys.stderr,
         )
         conn.close(); sys.exit(1)
+    except Exception:
+        # A crash mid-generation has still spent real money — book it before
+        # the traceback (attempt 2's map phase was invisible in pipeline_runs).
+        orchestrated_id = os.environ.get('SS_RUN_ID')
+        if orchestrated_id and mapgen_llm.COST.cost > 0:
+            RunLog(orchestrated_id, 'synthesize').add_usage(
+                cost=mapgen_llm.COST, detail={'mapgen': {'crashed': True}})
+        raise
 
     # ── Phases 5 (attribution/voices), 6 (interrelatedness/links) and
     # 7 (synthesis insights) are DORMANT — deliberately not called. They were

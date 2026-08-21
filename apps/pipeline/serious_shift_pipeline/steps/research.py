@@ -40,8 +40,14 @@ from ..core.text import url_slug
 from ..mapgen.config import DOMAINS, INDUSTRY_SECTORS
 from ..prompts.research import shift_research_prompt
 
-MAX_SEARCHES = int(os.environ.get("SS_RESEARCH_MAX_SEARCHES", "25"))
-MAX_FETCHES = int(os.environ.get("SS_RESEARCH_MAX_FETCHES", "40"))
+#: Tight by design: a research call's cost is dominated by fetched-page
+#: tokens riding along in the (continued) conversation. 15 searches and 25
+#: fetches at 8k tokens apiece is plenty to source 12-18 quotable items;
+#: attempt 2 ran 25/40 at 20k and cost ~3x the estimate.
+MAX_SEARCHES = int(os.environ.get("SS_RESEARCH_MAX_SEARCHES", "15"))
+MAX_FETCHES = int(os.environ.get("SS_RESEARCH_MAX_FETCHES", "25"))
+FETCH_TOKENS = int(os.environ.get("SS_RESEARCH_FETCH_TOKENS", "8000"))
+OUTPUT_TOKENS = int(os.environ.get("SS_RESEARCH_OUTPUT_TOKENS", "12000"))
 #: Soft per-shift spend note (the run-level Budget still hard-stops).
 SHIFT_USD_NOTE = float(os.environ.get("SS_RESEARCH_SHIFT_USD", "2.50"))
 MAX_ITEMS = 30
@@ -83,7 +89,7 @@ def research_tools() -> list[dict]:
     return [
         {"type": "web_search_20250305", "name": "web_search", "max_uses": MAX_SEARCHES},
         {"type": "web_fetch_20250910", "name": "web_fetch", "max_uses": MAX_FETCHES,
-         "max_content_tokens": 20000},
+         "max_content_tokens": FETCH_TOKENS},
     ]
 
 
@@ -297,7 +303,7 @@ def build_pack(conn, shift: dict, run_id: str, cost_tracker: CostTracker,
                 user=prompt if attempt == 1 else prompt +
                 "\nNOTE: a previous attempt failed on an unreadable PDF; "
                 "prefer HTML pages this pass.",
-                model=SYNTHESIS_MODEL, max_tokens=20000,
+                model=SYNTHESIS_MODEL, max_tokens=OUTPUT_TOKENS, cache=True,
                 tools=research_tools(), betas=["web-fetch-2025-09-10"],
                 custom_id=f"research-{shift['slug']}-a{attempt}"))
             cost_tracker.add(usage, thinker_name=f"RESEARCH:{shift['slug']}")

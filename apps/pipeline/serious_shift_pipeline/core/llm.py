@@ -79,12 +79,20 @@ class Req:
     tools: list[dict] | None = None
     documents: list[dict] | None = None
     betas: list[str] | None = None
+    #: Prompt-cache the request prefix. Essential for continued server-tool
+    #: turns: every pause_turn segment resends the whole conversation — all
+    #: fetched pages included — and without caching each resend bills at full
+    #: input price. With it, the already-sent prefix bills at 0.1x.
+    cache: bool = False
     metadata: dict = field(default_factory=dict)  # caller's own bookkeeping
 
     def params(self) -> dict:
         content: str | list[dict] = self.user
-        if self.documents:
-            content = [*self.documents, {"type": "text", "text": self.user}]
+        if self.documents or self.cache:
+            text_block: dict = {"type": "text", "text": self.user}
+            if self.cache:
+                text_block["cache_control"] = {"type": "ephemeral"}
+            content = [*(self.documents or []), text_block]
         p = {
             "model": self.model or EXTRACTION_MODEL,
             "max_tokens": self.max_tokens,
@@ -125,9 +133,10 @@ def _usage(msg, *, batch: bool = False) -> dict:
 
 
 #: How many pause_turn continuations one logical call may make. Long
-#: server-tool research turns legitimately pause several times; a turn that
-#: pauses more than this is runaway.
-MAX_TURN_SEGMENTS = 6
+#: server-tool research turns legitimately pause a few times; a turn that
+#: pauses more than this is runaway — and every extra segment resends the
+#: conversation, so the cap is a cost brake too.
+MAX_TURN_SEGMENTS = 4
 
 
 def merge_usages(usages: list[dict]) -> dict:
@@ -172,9 +181,16 @@ def call_raw(req: Req):
         contents.extend(msg.content)
         if getattr(msg, "stop_reason", None) != "pause_turn":
             break
+        # Continuation resends everything so far as input. Serialize the
+        # paused turn's blocks and, when caching, mark the tail as the cache
+        # breakpoint — the next segment then reads the prefix at 0.1x instead
+        # of re-buying every fetched page at full input price.
+        blocks = [b.model_dump(exclude_none=True) if hasattr(b, "model_dump")
+                  else b for b in msg.content]
+        if req.cache and blocks:
+            blocks[-1] = dict(blocks[-1], cache_control={"type": "ephemeral"})
         p = dict(p)
-        p["messages"] = [*p["messages"],
-                         {"role": "assistant", "content": msg.content}]
+        p["messages"] = [*p["messages"], {"role": "assistant", "content": blocks}]
 
     assert msg is not None  # MAX_TURN_SEGMENTS >= 1, so the loop ran
     if len(usages) == 1:
