@@ -15,7 +15,7 @@ serde_json = "1"
 # decoding — these responses are already-compressed images.
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 # Content hashes: the ingest idempotency key, and the cover image's ETag.
-sha2 = "0.10"
+sha2 = "0.11"
 tower = "0.5"          # ServiceBuilder, to layer headers onto a ServeDir
 tower-http = { version = "0.6", features = ["cors", "trace", "compression-br", "compression-gzip", "fs", "set-header", "timeout"] }
 tracing = "0.1"
